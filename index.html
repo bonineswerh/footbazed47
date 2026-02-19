@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FOOTBAZED ⚽</title>
+  
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --bg-primary: #0f0f0f;
+      --bg-secondary: #1a1a1a;
+      --bg-card: #252525;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --accent: #00d4aa;
+      --accent-hover: #00b894;
+      --danger: #ff4757;
+      --warning: #ffa502;
+      --success: #2ed573;
+      --border: #333;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      padding: 0;
+      padding-bottom: 80px;
+    }
+
+    .app-container {
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--bg-primary);
+      min-height: 100vh;
+      position: relative;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg-primary);
+      z-index: 100;
+    }
+    
+    .logo { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    
+    .user-info { display: flex; align-items: center; gap: 12px; }
+    
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 14px; color: #000;
+    }
+    
+    .notifications-btn {
+      position: relative;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 22px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .notification-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      background: var(--danger);
+      color: white;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 4px;
+      border-radius: 8px;
+      min-width: 14px;
+      text-align: center;
+    }
+    
+    .filters { display: flex; gap: 8px; padding: 16px; overflow-x: auto; }
+    .filter-btn {
+      padding: 8px 16px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 20px; color: var(--text-secondary); font-size: 13px;
+      white-space: nowrap; cursor: pointer;
+    }
+    .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+    
+    .match-card {
+      background: var(--bg-card); border-radius: 12px; padding: 16px;
+      margin: 0 16px 12px; border: 1px solid var(--border);
+    }
+    .match-league { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 12px; }
+    .match-teams { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .team { flex: 1; text-align: center; }
+    .team-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+    .team-score { font-size: 24px; font-weight: 700; color: var(--accent); }
+    .vs { color: var(--text-secondary); font-size: 14px; padding: 0 12px; }
+    .match-info { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+    .match-status { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .status-live { background: var(--danger); color: white; }
+    .status-finished { background: var(--bg-secondary); color: var(--text-secondary); }
+    .status-scheduled { background: var(--accent); color: #000; }
+    
+    .match-actions { display: flex; gap: 8px; }
+    .action-btn {
+      flex: 1; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-size: 13px; cursor: pointer;
+    }
+    .action-btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+    
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8); z-index: 1000; align-items: flex-end; justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--bg-card); border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 480px; padding: 20px; max-height: 85vh; overflow-y: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .modal-title { font-size: 18px; font-weight: 600; }
+    .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
+    
+    .registration-modal {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center;
+    }
+    .registration-modal.active { display: flex; }
+    .registration-content {
+      background: var(--bg-card); border-radius: 20px;
+      width: 90%; max-width: 400px; padding: 30px;
+    }
+    .registration-title { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+    .registration-subtitle { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; display: block; }
+    .form-input {
+      width: 100%; padding: 14px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text-primary); font-size: 16px;
+    }
+    .form-input:focus { outline: none; border-color: var(--accent); }
+    .form-hint { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+    
+    .rating-section { margin-bottom: 20px; }
+    .rating-label { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
+    .rating-stars { display: flex; gap: 4px; flex-wrap: wrap; }
+    .rating-star {
+      width: 36px; height: 36px; border-radius: 8px; background: var(--bg-secondary);
+      border: 2px solid var(--border); color: var(--text-primary); font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .rating-star.selected { background: var(--accent); color: #000; border-color: var(--accent); }
+    
+    .tags-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .tag-btn {
+      padding: 6px 12px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 16px; font-size: 12px; color: var(--text-secondary); cursor: pointer;
+    }
+    .tag-btn.selected { background: var(--accent); color: #000; border-color: var(--accent); }
+    
+    .comment-input {
+      width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text-primary); font-size: 14px; resize: none; margin-bottom: 20px;
+    }
+    .save-btn {
+      width: 100%; padding: 14px; background: var(--accent); color: #000; border: none;
+      border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
+    }
+    .save-btn:disabled { background: var(--bg-secondary); color: var(--text-secondary); cursor: not-allowed; }
+    
+    .chat-container { display: none; flex-direction: column; height: calc(100vh - 140px); padding: 16px; }
+    .chat-container.active { display: flex; }
+    .chat-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .chat-back { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; }
+    .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .chat-message { background: var(--bg-secondary); border-radius: 12px; padding: 10px 14px; max-width: 85%; }
+    .chat-message.own { align-self: flex-end; background: var(--accent); color: #000; }
+    .chat-input-area { display: flex; gap: 8px; margin-top: 12px; }
+    .chat-input { flex: 1; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 24px; color: var(--text-primary); }
+    .chat-send { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); border: none; color: #000; cursor: pointer; }
+    
+    .profile-container, .friends-container, .feed-container, .notifications-container { display: none; padding: 16px; }
+    .profile-container.active, .friends-container.active, .feed-container.active, .notifications-container.active { display: block; }
+    .profile-header { text-align: center; padding: 20px; background: var(--bg-card); border-radius: 12px; margin-bottom: 16px; }
+    .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: #000; margin: 0 auto 12px; }
+    .profile-stats { display: flex; justify-content: space-around; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .stat-item { text-align: center; }
+    .stat-value { font-size: 20px; font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: 12px; color: var(--text-secondary); }
+    
+    .invite-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .invite-box {
+      background: var(--bg-secondary); padding: 12px; border-radius: 10px;
+      margin-top: 12px; word-break: break-all; font-size: 12px; color: var(--text-secondary);
+    }
+    .invite-code {
+      font-size: 16px; color: var(--accent); font-weight: 700; letter-spacing: 1px;
+    }
+    .copy-btn {
+      width: 100%; padding: 12px; background: var(--accent); color: #000;
+      border: none; border-radius: 10px; font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+    }
+    
+    .friends-search { margin-bottom: 16px; }
+    .search-input { width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 14px; }
+    .friend-card { background: var(--bg-card); padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .friend-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; font-weight: 600; }
+    .add-friend-btn {
+      margin-left: auto; padding: 6px 12px; background: var(--accent); color: #000;
+      border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .friend-status { margin-left: auto; font-size: 12px; color: var(--success); }
+    
+    .notification-item {
+      background: var(--bg-card); padding: 16px; border-radius: 12px;
+      margin-bottom: 12px; border: 1px solid var(--border);
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .notification-icon {
+      font-size: 24px; padding: 8px; background: var(--bg-secondary);
+      border-radius: 10px;
+    }
+    .notification-content { flex: 1; }
+    .notification-title { font-weight: 600; margin-bottom: 4px; }
+    .notification-text { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .notification-time { font-size: 11px; color: var(--text-secondary); }
+    .notification-action {
+      padding: 6px 12px; background: var(--accent); color: #000;
+      border: none; border-radius: 6px; font-size: 12px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+    }
+    
+    .feed-sort { display: flex; gap: 8px; margin-bottom: 16px; }
+    .feed-card {
+      background: var(--bg-card); border-radius: 12px; padding: 16px;
+      margin-bottom: 12px; border: 1px solid var(--border);
+    }
+    .feed-user { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .feed-user-avatar {
+      width: 40px; height: 40px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; color: #000; font-size: 16px;
+    }
+    .feed-user-info { flex: 1; }
+    .feed-user-name { font-weight: 600; font-size: 14px; }
+    .feed-user-username { font-size: 12px; color: var(--text-secondary); }
+    .feed-match-info { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .feed-match-teams { font-weight: 600; margin-bottom: 8px; }
+    .feed-rating { font-size: 28px; font-weight: 700; color: var(--accent); margin: 8px 0; }
+    .feed-comment { font-size: 14px; margin: 8px 0; line-height: 1.4; }
+    .feed-actions {
+      display: flex; gap: 16px; margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .like-btn {
+      display: flex; align-items: center; gap: 6px; color: var(--text-secondary);
+      cursor: pointer; font-size: 14px;
+    }
+    .like-btn.liked { color: var(--danger); }
+    .feed-date { font-size: 12px; color: var(--text-secondary); }
+    
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; padding: 8px 16px; gap: 8px; z-index: 100; max-width: 480px; margin: 0 auto; }
+    .nav-item { flex: 1; padding: 10px; text-align: center; color: var(--text-secondary); font-size: 12px; cursor: pointer; border-radius: 10px; }
+    .nav-item.active { background: var(--accent); color: #000; font-weight: 600; }
+    .nav-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--bg-card); padding: 12px 20px; border-radius: 10px; z-index: 2000; transition: transform 0.3s; max-width: 480px; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error { border-left: 4px solid var(--danger); }
+    
+    .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
+    
+    .step-indicator { display: flex; gap: 8px; margin-bottom: 16px; }
+    .step { flex: 1; height: 4px; background: var(--border); border-radius: 2px; }
+    .step.active { background: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="header">
+      <div class="logo">⚽ FOOTBAZED</div>
+      <div class="user-info">
+        <button class="notifications-btn" onclick="openNotifications()">
+          🔔
+          <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+        </button>
+        <div class="avatar" id="userAvatar">U</div>
+      </div>
+    </div>
+
+    <div id="matchesView">
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Все</button>
+        <button class="filter-btn" data-filter="live">🔴 LIVE</button>
+        <button class="filter-btn" data-filter="finished">Завершённые</button>
+        <button class="filter-btn" data-filter="scheduled">Предстоящие</button>
+      </div>
+      <div id="matchesList">
+        <div class="loading"><div class="spinner"></div>Загружаем...</div>
+      </div>
+    </div>
+
+    <div class="feed-container" id="feedView">
+      <h2 style="margin-bottom: 16px;">Лента оценок</h2>
+      <div class="feed-sort">
+        <button class="filter-btn active" data-sort="recent">🕐 Недавние</button>
+        <button class="filter-btn" data-sort="popular">🔥 Популярные</button>
+      </div>
+      <div id="feedList">
+        <div class="loading"><div class="spinner"></div>Загружаем...</div>
+      </div>
+    </div>
+
+    <div class="friends-container" id="friendsView">
+      <h2 style="margin-bottom: 16px;">Друзья</h2>
+      <div class="friends-search">
+        <input type="text" class="search-input" id="friendSearch" placeholder="🔍 Поиск по никнейму">
+      </div>
+      <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">Мои друзья</h3>
+      <div id="myFriendsList"></div>
+      <h3 style="font-size: 14px; color: var(--text-secondary); margin: 20px 0 12px;">Найти друзей</h3>
+      <div id="friendsList"></div>
+      
+      <div class="invite-section" id="inviteSection" style="display: none;">
+        <h3 style="margin-bottom: 12px;">🔗 Пригласить друга</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+          Отправь ссылку другу и он автоматически станет твоим другом!
+        </p>
+        <div class="invite-box">
+          <div style="margin-bottom: 8px;">Твоя ссылка:</div>
+          <div class="invite-code" id="inviteCodeDisplay">...</div>
+        </div>
+        <button class="copy-btn" onclick="copyInviteLink()">📋 Копировать ссылку</button>
+      </div>
+    </div>
+
+    <div class="profile-container" id="profileView">
+      <div class="profile-header">
+        <div class="profile-avatar" id="profileAvatar">U</div>
+        <h2 id="profileName">Имя</h2>
+        <p id="profileUsername" style="color: var(--text-secondary);">@username</p>
+        <div class="profile-stats">
+          <div class="stat-item"><div class="stat-value" id="statMatches">0</div><div class="stat-label">Оценок</div></div>
+          <div class="stat-item"><div class="stat-value" id="statAvg">0.0</div><div class="stat-label">Средний</div></div>
+          <div class="stat-item"><div class="stat-value" id="statFriends">0</div><div class="stat-label">Друзей</div></div>
+        </div>
+      </div>
+      <h3 style="margin-bottom: 12px;">Мои оценки</h3>
+      <div id="profileRatings"></div>
+    </div>
+
+    <div class="notifications-container" id="notificationsView">
+      <h2 style="margin-bottom: 16px;">🔔 Уведомления</h2>
+      <div id="notificationsList">
+        <div class="loading"><div class="spinner"></div>Загружаем...</div>
+      </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+      <div class="chat-header">
+        <button class="chat-back" id="chatBack">←</button>
+        <div class="chat-title" id="chatMatchTitle" style="font-weight: 600;"></div>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-area">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Напиши сообщение...">
+        <button class="chat-send" id="chatSend">➤</button>
+      </div>
+    </div>
+
+    <div class="modal" id="ratingModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title">Оценить матч</div>
+          <button class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <div class="step-indicator">
+          <div class="step active" id="step1"></div>
+          <div class="step" id="step2"></div>
+          <div class="step" id="step3"></div>
+        </div>
+        <div id="ratingStep1">
+          <div id="modalMatchInfo" style="margin-bottom: 20px; color: var(--text-secondary);"></div>
+          <div class="rating-section">
+            <div class="rating-label">Общее впечатление *</div>
+            <div class="rating-stars" id="matchRating"></div>
+          </div>
+          <button class="save-btn" id="nextToReferee" style="margin-top: 16px;">Далее: Судья →</button>
+        </div>
+        <div id="ratingStep2" style="display: none;">
+          <div class="rating-section">
+            <div class="rating-label">Оценка судьи</div>
+            <div class="rating-stars" id="refereeRating"></div>
+          </div>
+          <input type="text" class="comment-input" id="refereeName" placeholder="Имя судьи (необязательно)">
+          <div style="display: flex; gap: 8px;">
+            <button class="action-btn" id="backToMatch">← Назад</button>
+            <button class="save-btn" id="nextToPlayers">Далее: Игроки →</button>
+          </div>
+        </div>
+        <div id="ratingStep3" style="display: none;">
+          <div class="rating-section">
+            <div class="rating-label">Оцените игроков (необязательно)</div>
+            <div id="playersList"></div>
+          </div>
+          <textarea class="comment-input" id="commentInput" placeholder="Комментарий к матчу..." maxlength="500"></textarea>
+          <div style="display: flex; gap: 8px;">
+            <button class="action-btn" id="backToReferee">← Назад</button>
+            <button class="save-btn" id="saveRating">💾 Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="registration-modal" id="registrationModal">
+      <div class="registration-content">
+        <div class="registration-title">👋 Добро пожаловать!</div>
+        <div class="registration-subtitle">Настрой свой профиль FOOTBAZED</div>
+        
+        <div class="form-group">
+          <label class="form-label">Твой никнейм в приложении *</label>
+          <input type="text" class="form-input" id="regAppUsername" placeholder="Например: football_fan">
+          <div class="form-hint">Уникальный никнейм для поиска друзей</div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Telegram username</label>
+          <input type="text" class="form-input" id="regTelegramUsername" placeholder="Например: egorks2020">
+          <div class="form-hint">Для связи с твоим Telegram аккаунтом</div>
+        </div>
+        
+        <button class="save-btn" id="completeRegistration" style="margin-top: 24px;">🚀 Начать!</button>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="nav-item active" data-view="matches"><span class="nav-icon">📋</span>Матчи</div>
+      <div class="nav-item" data-view="feed"><span class="nav-icon">📰</span>Лента</div>
+      <div class="nav-item" data-view="friends"><span class="nav-icon">👥</span>Друзья</div>
+      <div class="nav-item" data-view="profile"><span class="nav-icon">👤</span>Профиль</div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://uukacnyvjvgmmhbkmfzf.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2Fjbnl2anZnbW1oYmttZnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDM3MzcsImV4cCI6MjA4NzA3OTczN30.hZIYkrWFqRwu0IciG2iF3TyP8WnVQcV1sFyjfeVUpRc';
+    
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.ready();
+    
+    let telegramUser = null;
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      telegramUser = tg.initDataUnsafe.user;
+      console.log('✅ Telegram user:', telegramUser);
+    }
+    
+    let currentUser = null;
+    let currentMatch = null;
+    let selectedRating = null;
+    let refereeRating = null;
+    let playerRatings = {};
+    let selectedTags = [];
+    let chatSubscription = null;
+    let feedSort = 'recent';
+    let notifications = [];
+    
+    async function init() {
+      try {
+        console.log('🚀 Запуск FOOTBAZED...');
+        
+        const userNameEl = document.getElementById('userName');
+        const userAvatarEl = document.getElementById('userAvatar');
+        
+        if (!telegramUser) {
+          if (userNameEl) userNameEl.textContent = 'Гость';
+          if (userAvatarEl) userAvatarEl.textContent = '!';
+          showToast('⚠️ Запустите в Telegram для полной функциональности', 'error');
+          await loadMatches();
+          setupEventListeners();
+          return;
+        }
+        
+        if (userNameEl) userNameEl.textContent = telegramUser.first_name || 'Гость';
+        if (userAvatarEl) userAvatarEl.textContent = (telegramUser.first_name?.[0] || 'U').toUpperCase();
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        await syncUser();
+        await loadMatches();
+        setupEventListeners();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteCode = urlParams.get('invite');
+        if (inviteCode && currentUser) {
+          await addFriendByInvite(inviteCode);
+        }
+        
+        showToast('FOOTBAZED готов! ⚽', 'success');
+        console.log('✅ Приложение запущено успешно');
+      } catch (e) {
+        console.error('❌ Ошибка инициализации:', e);
+        const matchesList = document.getElementById('matchesList');
+        if (matchesList) {
+          matchesList.innerHTML = '<div class="empty-state">⚠️ Ошибка: ' + e.message + '</div>';
+        }
+      }
+    }
+    
+    async function syncUser() {
+      try {
+        const telegramId = telegramUser ? telegramUser.id : null;
+        
+        if (!telegramId) {
+          console.error('❌ Нет Telegram ID');
+          showToast('❌ Ошибка: нет данных Telegram', 'error');
+          return;
+        }
+        
+        console.log('🔍 Поиск пользователя с Telegram ID:', telegramId);
+        
+        const { data: existingUser, error: fetchError } = await supabaseClient
+          .from('users')
+          .select('*')
+          .eq('id', telegramId)
+          .single();
+        
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          throw fetchError;
+        }
+        
+        if (!existingUser) {
+          console.log('📝 Новый пользователь - показываем регистрацию');
+          showRegistration();
+          return;
+        }
+        
+        await supabaseClient
+          .from('users')
+          .update({ last_seen: new Date().toISOString() })
+          .eq('id', telegramId);
+        
+        currentUser = existingUser;
+        console.log('✅ Пользователь найден:', currentUser);
+        
+        const profileNameEl = document.getElementById('profileName');
+        const profileUsernameEl = document.getElementById('profileUsername');
+        const profileAvatarEl = document.getElementById('profileAvatar');
+        const inviteSectionEl = document.getElementById('inviteSection');
+        const inviteCodeDisplayEl = document.getElementById('inviteCodeDisplay');
+        
+        if (profileNameEl) profileNameEl.textContent = currentUser.display_name || telegramUser.first_name;
+        if (profileUsernameEl) profileUsernameEl.textContent = '@' + (currentUser.username || 'user');
+        if (profileAvatarEl) profileAvatarEl.textContent = (currentUser.display_name?.[0] || telegramUser.first_name?.[0] || 'U').toUpperCase();
+        
+        if (currentUser.invite_code && inviteSectionEl && inviteCodeDisplayEl) {
+          inviteSectionEl.style.display = 'block';
+          const inviteUrl = `https://bonineswerh.github.io/footbazed47/?invite=${currentUser.invite_code}`;
+          inviteCodeDisplayEl.textContent = inviteUrl;
+        }
+        
+        loadNotifications();
+        loadMyFriends();
+        
+      } catch (e) {
+        console.error('❌ Ошибка синхронизации:', e);
+        showToast('Ошибка авторизации: ' + e.message, 'error');
+      }
+    }
+    
+    function showRegistration() {
+      document.getElementById('registrationModal').classList.add('active');
+      
+      if (telegramUser && telegramUser.username) {
+        document.getElementById('regTelegramUsername').value = telegramUser.username;
+      }
+    }
+    
+    document.getElementById('completeRegistration')?.addEventListener('click', async function() {
+      const appUsername = document.getElementById('regAppUsername')?.value.trim() || '';
+      const telegramUsername = document.getElementById('regTelegramUsername')?.value.trim() || '';
+      
+      if (!appUsername) {
+        showToast('❌ Введи никнейм для приложения', 'error');
+        return;
+      }
+      
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Создаём...';
+      
+      try {
+        const telegramId = telegramUser.id;
+        
+        const { data: newUser, error } = await supabaseClient
+          .from('users')
+          .insert({
+            id: telegramId,
+            username: appUsername,
+            display_name: telegramUser.first_name || 'User',
+            avatar_url: telegramUser.photo_url,
+            telegram_username: telegramUsername || null,
+            last_seen: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        currentUser = newUser;
+        document.getElementById('registrationModal').classList.remove('active');
+        
+        const profileNameEl = document.getElementById('profileName');
+        const profileUsernameEl = document.getElementById('profileUsername');
+        const profileAvatarEl = document.getElementById('profileAvatar');
+        const inviteSectionEl = document.getElementById('inviteSection');
+        const inviteCodeDisplayEl = document.getElementById('inviteCodeDisplay');
+        
+        if (profileNameEl) profileNameEl.textContent = currentUser.display_name;
+        if (profileUsernameEl) profileUsernameEl.textContent = '@' + currentUser.username;
+        if (profileAvatarEl) profileAvatarEl.textContent = (currentUser.display_name?.[0] || 'U').toUpperCase();
+        
+        if (currentUser.invite_code && inviteSectionEl && inviteCodeDisplayEl) {
+          inviteSectionEl.style.display = 'block';
+          const inviteUrl = `https://bonineswerh.github.io/footbazed47/?invite=${currentUser.invite_code}`;
+          inviteCodeDisplayEl.textContent = inviteUrl;
+        }
+        
+        showToast('✅ Регистрация завершена!', 'success');
+        loadNotifications();
+        loadMyFriends();
+        
+      } catch (e) {
+        console.error('❌ Ошибка регистрации:', e);
+        showToast('Не удалось: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '🚀 Начать!';
+      }
+    });
+    
+    async function loadNotifications() {
+      if (!currentUser) return;
+      
+      try {
+        const { data: friendRequests } = await supabaseClient
+          .from('friendships')
+          .select(`*, users (display_name, username, avatar_url)`)
+          .eq('friend_id', currentUser.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+        
+        notifications = [];
+        
+        if (friendRequests) {
+          friendRequests.forEach(req => {
+            notifications.push({
+              id: 'req_' + req.id,
+              type: 'friend_request',
+              title: 'Заявка в друзья',
+              text: `${req.users?.display_name || 'Пользователь'} хочет добавить тебя в друзья`,
+              time: new Date(req.created_at).toLocaleString('ru-RU'),
+              action: 'accept',
+              data: req
+            });
+          });
+        }
+        
+        const unreadCount = friendRequests?.length || 0;
+        const badge = document.getElementById('notificationBadge');
+        if (unreadCount > 0) {
+          badge.textContent = unreadCount;
+          badge.style.display = 'block';
+        } else {
+          badge.style.display = 'none';
+        }
+        
+        renderNotifications();
+        
+      } catch (e) {
+        console.error('❌ Ошибка загрузки уведомлений:', e);
+      }
+    }
+    
+    function renderNotifications() {
+      const list = document.getElementById('notificationsList');
+      
+      if (notifications.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">🔔</div><p>Пока нет уведомлений</p></div>';
+        return;
+      }
+      
+      list.innerHTML = notifications.map(notif => `
+        <div class="notification-item">
+          <div class="notification-icon">${notif.type === 'friend_request' ? '👥' : '✅'}</div>
+          <div class="notification-content">
+            <div class="notification-title">${notif.title}</div>
+            <div class="notification-text">${notif.text}</div>
+            <div class="notification-time">${notif.time}</div>
+            ${notif.action === 'accept' ? `<button class="notification-action" onclick="acceptFriendRequest(${notif.data.id})">✅ Принять</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    async function acceptFriendRequest(requestId) {
+      if (!currentUser) return;
+      
+      try {
+        const { error } = await supabaseClient
+          .from('friendships')
+          .update({ status: 'accepted' })
+          .eq('id', requestId);
+        
+        if (error) throw error;
+        
+        showToast('✅ Заявка принята!', 'success');
+        loadNotifications();
+        loadMyFriends();
+        
+      } catch (e) {
+        console.error('❌ Ошибка:', e);
+        showToast('Не удалось принять заявку', 'error');
+      }
+    }
+    
+    function openNotifications() {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      
+      document.getElementById('matchesView').style.display = 'none';
+      document.getElementById('feedView').style.display = 'none';
+      document.getElementById('friendsView').style.display = 'none';
+      document.getElementById('profileView').classList.remove('active');
+      document.getElementById('chatContainer').classList.remove('active');
+      document.getElementById('notificationsView').classList.add('active');
+      
+      loadNotifications();
+    }
+    
+    async function addFriendByInvite(inviteCode) {
+      try {
+        const { data: inviter, error: fetchError } = await supabaseClient
+          .from('users')
+          .select('id, username, display_name')
+          .eq('invite_code', inviteCode)
+          .single();
+        
+        if (fetchError || !inviter) return;
+        if (inviter.id === currentUser.id) return;
+        
+        const { error: insertError } = await supabaseClient
+          .from('friendships')
+          .insert({ user_id: currentUser.id, friend_id: inviter.id, status: 'accepted' });
+        
+        if (insertError) throw insertError;
+        
+        showToast('🎉 Вы добавили @' + (inviter.username || 'user') + ' в друзья!', 'success');
+        loadNotifications();
+        loadMyFriends();
+        
+      } catch (e) {
+        console.error('❌ Ошибка добавления друга:', e);
+      }
+    }
+    
+    function copyInviteLink() {
+      const inviteUrl = document.getElementById('inviteCodeDisplay').textContent;
+      navigator.clipboard.writeText(inviteUrl);
+      showToast('📋 Ссылка скопирована!', 'success');
+    }
+    
+    async function loadMyFriends() {
+      if (!currentUser) return;
+      
+      try {
+        const { data: friendships } = await supabaseClient
+          .from('friendships')
+          .select(`*, users (id, display_name, username, avatar_url)`)
+          .eq('user_id', currentUser.id)
+          .eq('status', 'accepted');
+        
+        const list = document.getElementById('myFriendsList');
+        
+        if (!friendships || friendships.length === 0) {
+          list.innerHTML = '<div class="empty-state" style="padding: 20px;"><p>Пока нет друзей</p></div>';
+          return;
+        }
+        
+        list.innerHTML = friendships.map(f => `
+          <div class="friend-card">
+            <div class="friend-avatar">${(f.users.display_name?.[0] || 'U').toUpperCase()}</div>
+            <div style="flex: 1;">
+              <div style="font-weight: 600;">${f.users.display_name || 'Аноним'}</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">@${f.users.username}</div>
+            </div>
+            <span class="friend-status">✓ Друг</span>
+          </div>
+        `).join('');
+        
+        document.getElementById('statFriends').textContent = friendships.length;
+        
+      } catch (e) {
+        console.error('❌ Ошибка загрузки друзей:', e);
+      }
+    }
+    
+    async function searchFriends() {
+      const query = document.getElementById('friendSearch').value.trim();
+      if (!query || !currentUser) {
+        loadMyFriends();
+        return;
+      }
+      
+      const { data: users } = await supabaseClient
+        .from('users')
+        .select('*')
+        .ilike('username', `%${query}%`)
+        .neq('id', currentUser.id)
+        .limit(10);
+      
+      const list = document.getElementById('friendsList');
+      
+      if (!users || users.length === 0) {
+        list.innerHTML = '<div class="empty-state">Никто не найден</div>';
+        return;
+      }
+      
+      list.innerHTML = users.map(u => `
+        <div class="friend-card">
+          <div class="friend-avatar">${(u.display_name?.[0] || 'U').toUpperCase()}</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600;">${u.display_name || 'Аноним'}</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">@${u.username}</div>
+          </div>
+          <button class="add-friend-btn" onclick="addFriend(${u.id})">+ Добавить</button>
+        </div>
+      `).join('');
+    }
+    
+    async function addFriend(friendId) {
+      if (!currentUser) return;
+      
+      try {
+        await supabaseClient.from('friendships').insert({
+          user_id: currentUser.id,
+          friend_id: friendId,
+          status: 'accepted'
+        });
+        
+        showToast('✅ Друг добавлен!', 'success');
+        searchFriends();
+        loadMyFriends();
+        
+      } catch (e) {
+        showToast('Не удалось добавить друга', 'error');
+      }
+    }
+    
+    async function loadMatches(filter = 'all') {
+      const list = document.getElementById('matchesList');
+      list.innerHTML = '<div class="loading"><div class="spinner"></div>Загружаем...</div>';
+      
+      try {
+        let query = supabaseClient.from('matches').select('*');
+        if (filter === 'live') query = query.eq('status', 'live');
+        else if (filter === 'finished') query = query.eq('status', 'finished');
+        else if (filter === 'scheduled') query = query.eq('status', 'scheduled');
+        query = query.order('match_date', { ascending: false });
+        
+        const { data: matches, error } = await query;
+        if (error) throw error;
+        
+        if (!matches || matches.length === 0) {
+          list.innerHTML = '<div class="empty-state"><p>Матчей нет</p></div>';
+          return;
+        }
+        list.innerHTML = matches.map(match => renderMatchCard(match)).join('');
+      } catch (e) {
+        console.error('❌ Ошибка:', e);
+        list.innerHTML = '<div class="empty-state">⚠️ Ошибка: ' + e.message + '</div>';
+      }
+    }
+    
+    function renderMatchCard(match) {
+      const date = new Date(match.match_date);
+      const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const statusText = { 'live': '🔴 LIVE', 'finished': 'Завершён', 'scheduled': 'Предстоит' }[match.status];
+      const statusClass = { 'live': 'status-live', 'finished': 'status-finished', 'scheduled': 'status-scheduled' }[match.status];
+      
+      return `
+        <div class="match-card" data-match-id="${match.id}">
+          <div class="match-league">${match.league_name}</div>
+          <div class="match-teams">
+            <div class="team"><div class="team-name">${match.home_team_name}</div><div class="team-score">${match.home_score ?? '-'}</div></div>
+            <div class="vs">VS</div>
+            <div class="team"><div class="team-name">${match.away_team_name}</div><div class="team-score">${match.away_score ?? '-'}</div></div>
+          </div>
+          <div class="match-info">
+            <span>📅 ${dateStr}</span>
+            <span class="match-status ${statusClass}">${statusText}</span>
+          </div>
+          <div class="match-actions">
+            ${match.status === 'finished' ? `<button class="action-btn primary" onclick="openRatingModal(${match.id})">⭐ Оценить</button>` : ''}
+            <button class="action-btn" onclick="openChat(${match.id})">💬 Чат</button>
+          </div>
+        </div>
+      `;
+    }
+    
+    async function openRatingModal(matchId) {
+      currentMatch = { id: matchId };
+      selectedRating = null;
+      
+      const match = document.querySelector(`[data-match-id="${matchId}"]`);
+      if (!match) return;
+      
+      const teams = match.querySelectorAll('.team-name');
+      const modalInfoEl = document.getElementById('modalMatchInfo');
+      if (modalInfoEl) modalInfoEl.textContent = `${teams[0]?.textContent} vs ${teams[1]?.textContent}`;
+      
+      const container = document.getElementById('matchRating');
+      if (container) {
+        container.innerHTML = '';
+        for (let i = 1; i <= 10; i++) {
+          const star = document.createElement('div');
+          star.className = 'rating-star';
+          star.textContent = i;
+          star.onclick = () => selectMatchRating(i, star);
+          container.appendChild(star);
+        }
+      }
+      
+      const commentInput = document.getElementById('commentInput');
+      const refereeName = document.getElementById('refereeName');
+      if (commentInput) commentInput.value = '';
+      if (refereeName) refereeName.value = '';
+      
+      showStep(1);
+      document.getElementById('ratingModal').classList.add('active');
+    }
+    
+    function selectMatchRating(value, el) {
+      selectedRating = value;
+      document.querySelectorAll('#matchRating .rating-star').forEach(s => {
+        s.classList.toggle('selected', parseInt(s.textContent) <= value);
+      });
+    }
+    
+    function showStep(step) {
+      document.getElementById('ratingStep1').style.display = step === 1 ? 'block' : 'none';
+      document.getElementById('ratingStep2').style.display = step === 2 ? 'block' : 'none';
+      document.getElementById('ratingStep3').style.display = step === 3 ? 'block' : 'none';
+      document.getElementById('step1').classList.toggle('active', step >= 1);
+      document.getElementById('step2').classList.toggle('active', step >= 2);
+      document.getElementById('step3').classList.toggle('active', step >= 3);
+    }
+    
+    async function saveRating() {
+      if (!selectedRating) { showToast('Выберите оценку', 'error'); return; }
+      if (!currentUser) { showToast('Ошибка авторизации', 'error'); return; }
+      
+      const btn = document.getElementById('saveRating');
+      btn.disabled = true;
+      btn.textContent = 'Сохраняем...';
+      
+      try {
+        const commentInput = document.getElementById('commentInput');
+        const { error } = await supabaseClient.from('ratings').upsert({
+          user_id: currentUser.id,
+          match_id: currentMatch.id,
+          match_rating: selectedRating,
+          comment: commentInput?.value || null
+        }, { onConflict: 'user_id,match_id' });
+        
+        if (error) throw error;
+        
+        showToast('✅ Оценка сохранена!', 'success');
+        document.getElementById('ratingModal').classList.remove('active');
+        loadMatches();
+        loadProfileStats();
+        loadFeed();
+      } catch (e) {
+        console.error('❌ Ошибка:', e);
+        showToast('Не удалось: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Сохранить';
+      }
+    }
+    
+    function openChat(matchId) {
+      document.getElementById('matchesView').style.display = 'none';
+      document.getElementById('chatContainer').classList.add('active');
+      
+      const match = document.querySelector(`[data-match-id="${matchId}"]`);
+      if (match) {
+        const teams = match.querySelectorAll('.team-name');
+        const chatTitle = document.getElementById('chatMatchTitle');
+        if (chatTitle) chatTitle.textContent = `${teams[0]?.textContent} vs ${teams[1]?.textContent}`;
+      }
+      loadChatMessages(matchId);
+    }
+    
+    async function loadChatMessages(matchId) {
+      const container = document.getElementById('chatMessages');
+      container.innerHTML = '<div class="loading">Загружаем чат...</div>';
+      
+      const { data: messages } = await supabaseClient.from('live_chat_messages').select('*').eq('match_id', matchId).order('created_at', { ascending: true }).limit(50);
+      
+      if (!messages || messages.length === 0) {
+        container.innerHTML = '<div class="empty-state">👋 Начни обсуждение!</div>';
+        return;
+      }
+      
+      container.innerHTML = messages.map(msg => `
+        <div class="chat-message ${msg.user_id === telegramUser?.id ? 'own' : ''}">
+          ${msg.user_id !== telegramUser?.id ? `<div style="font-size:10px;opacity:0.7">@${msg.username||'Аноним'}</div>` : ''}
+          <div>${msg.message}</div>
+        </div>
+      `).join('');
+      container.scrollTop = container.scrollHeight;
+    }
+    
+    document.getElementById('chatSend')?.addEventListener('click', async function() {
+      const input = document.getElementById('chatInput');
+      const message = input?.value.trim();
+      if (!message || !currentUser) return;
+      await supabaseClient.from('live_chat_messages').insert({
+        match_id: currentMatch?.id || 1,
+        user_id: currentUser.id,
+        username: telegramUser?.username || telegramUser?.first_name || 'Аноним',
+        message: message
+      });
+      if (input) input.value = '';
+    });
+    
+    document.getElementById('chatBack')?.addEventListener('click', function() {
+      document.getElementById('chatContainer').classList.remove('active');
+      document.getElementById('matchesView').style.display = 'block';
+      currentMatch = null;
+    });
+    
+    document.getElementById('closeModal')?.addEventListener('click', () => {
+      document.getElementById('ratingModal').classList.remove('active');
+      currentMatch = null;
+    });
+    
+    document.getElementById('nextToReferee')?.addEventListener('click', () => {
+      if (!selectedRating) { showToast('Выберите оценку', 'error'); return; }
+      showStep(2);
+    });
+    
+    document.getElementById('backToMatch')?.addEventListener('click', () => showStep(1));
+    document.getElementById('nextToPlayers')?.addEventListener('click', () => showStep(3));
+    document.getElementById('backToReferee')?.addEventListener('click', () => showStep(2));
+    document.getElementById('saveRating')?.addEventListener('click', saveRating);
+    
+    async function loadFeed() {
+      const list = document.getElementById('feedList');
+      list.innerHTML = '<div class="loading"><div class="spinner"></div>Загружаем...</div>';
+      
+      try {
+        let query = supabaseClient.from('ratings').select(`*, users (display_name, username, avatar_url), matches (home_team_name, away_team_name, league_name), rating_likes (id)`).order('created_at', { ascending: false });
+        
+        const { data: ratings, error } = await query;
+        if (error) throw error;
+        
+        if (feedSort === 'popular') {
+          ratings.sort((a, b) => (b.rating_likes?.length || 0) - (a.rating_likes?.length || 0));
+        }
+        
+        if (!ratings || ratings.length === 0) {
+          list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Пока нет оценок</p></div>';
+          return;
+        }
+        
+        list.innerHTML = ratings.map(r => renderFeedCard(r)).join('');
+      } catch (e) {
+        console.error('❌ Ошибка:', e);
+        list.innerHTML = '<div class="empty-state">⚠️ Ошибка: ' + e.message + '</div>';
+      }
+    }
+    
+    function renderFeedCard(rating) {
+      const likeCount = rating.rating_likes?.length || 0;
+      const userInitial = (rating.users?.display_name?.[0] || 'U').toUpperCase();
+      const date = new Date(rating.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      
+      return `
+        <div class="feed-card">
+          <div class="feed-user">
+            <div class="feed-user-avatar">${userInitial}</div>
+            <div class="feed-user-info">
+              <div class="feed-user-name">${rating.users?.display_name || 'Аноним'}</div>
+              <div class="feed-user-username">@${rating.users?.username || 'user'}</div>
+            </div>
+          </div>
+          <div class="feed-match-info">${rating.matches?.league_name || ''}</div>
+          <div class="feed-match-teams">${rating.matches?.home_team_name || ''} vs ${rating.matches?.away_team_name || ''}</div>
+          <div class="feed-rating">${rating.match_rating || 0}/10</div>
+          ${rating.comment ? `<div class="feed-comment">${rating.comment}</div>` : ''}
+          <div class="feed-actions">
+            <div class="like-btn" onclick="toggleLike(${rating.id})">❤️ ${likeCount}</div>
+            <div class="feed-date" style="margin-left: auto;">${date}</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    async function toggleLike(ratingId) {
+      if (!currentUser) { showToast('Сначала войдите', 'error'); return; }
+      try {
+        const { data: existing } = await supabaseClient.from('rating_likes').select('id').eq('user_id', currentUser.id).eq('rating_id', ratingId).single();
+        
+        if (existing) {
+          await supabaseClient.from('rating_likes').delete().eq('id', existing.id);
+        } else {
+          await supabaseClient.from('rating_likes').insert({ user_id: currentUser.id, rating_id: ratingId });
+        }
+        loadFeed();
+      } catch (e) {
+        console.error('Ошибка лайка:', e);
+      }
+    }
+    
+    function setupEventListeners() {
+      document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+        btn.onclick = function() {
+          this.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          if (this.closest('#matchesView')) loadMatches(this.dataset.filter);
+        };
+      });
+      
+      document.querySelectorAll('.filter-btn[data-sort]').forEach(btn => {
+        btn.onclick = function() {
+          this.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          feedSort = this.dataset.sort;
+          loadFeed();
+        };
+      });
+      
+      document.getElementById('friendSearch')?.addEventListener('input', searchFriends);
+      
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.onclick = function() {
+          document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+          this.classList.add('active');
+          
+          const view = this.dataset.view;
+          document.getElementById('matchesView').style.display = 'none';
+          document.getElementById('feedView').style.display = 'none';
+          document.getElementById('friendsView').style.display = 'none';
+          document.getElementById('profileView').classList.remove('active');
+          document.getElementById('chatContainer').classList.remove('active');
+          document.getElementById('notificationsView').classList.remove('active');
+          
+          if (view === 'matches') {
+            document.getElementById('matchesView').style.display = 'block';
+            loadMatches();
+          } else if (view === 'feed') {
+            document.getElementById('feedView').style.display = 'block';
+            loadFeed();
+          } else if (view === 'friends') {
+            document.getElementById('friendsView').style.display = 'block';
+            loadMyFriends();
+            searchFriends();
+          } else if (view === 'profile') {
+            document.getElementById('profileView').classList.add('active');
+            loadProfileStats();
+          }
+        };
+      });
+    }
+    
+    async function loadProfileStats() {
+      if (!currentUser) return;
+      
+      const { data: ratings } = await supabaseClient.from('ratings').select('match_rating, matches(home_team_name, away_team_name)').eq('user_id', currentUser.id);
+      
+      if (ratings) {
+        const statMatchesEl = document.getElementById('statMatches');
+        const statAvgEl = document.getElementById('statAvg');
+        
+        if (statMatchesEl) statMatchesEl.textContent = ratings.length;
+        if (statAvgEl) {
+          const avg = ratings.length > 0 ? (ratings.reduce((sum, r) => sum + (r.match_rating || 0), 0) / ratings.length).toFixed(1) : '0.0';
+          statAvgEl.textContent = avg;
+        }
+        
+        const container = document.getElementById('profileRatings');
+        if (container) {
+          container.innerHTML = ratings.slice(0, 5).map(r => `
+            <div style="background:var(--bg-card);padding:12px;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;">
+              <span>${r.matches?.home_team_name || 'Матч'} vs ${r.matches?.away_team_name || ''}</span>
+              <span style="color:var(--accent);font-weight:700">${r.match_rating}/10</span>
+            </div>
+          `).join('') || '<div class="empty-state">Пока нет оценок</div>';
+        }
+      }
+    }
+    
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      if (toast) {
+        toast.textContent = message;
+        toast.className = `toast ${type} show`;
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+    }
+    
+    init();
+  </script>
+</body>
+</html>
