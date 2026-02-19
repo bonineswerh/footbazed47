@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FOOTBAZED ⚽</title>
+  
+  <!-- Подключаем Telegram WebApp -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- Подключаем Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --bg-primary: #0f0f0f;
+      --bg-secondary: #1a1a1a;
+      --bg-card: #252525;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --accent: #00d4aa;
+      --accent-hover: #00b894;
+      --danger: #ff4757;
+      --warning: #ffa502;
+      --success: #2ed573;
+      --border: #333;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .logo-icon { font-size: 24px; }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    
+    .filter-btn {
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .filter-btn.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    
+    .match-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+    }
+    
+    .match-league {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    
+    .match-teams {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .team {
+      flex: 1;
+      text-align: center;
+      padding: 0 8px;
+    }
+    
+    .team-name {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    
+    .team-score {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .vs {
+      color: var(--text-secondary);
+      font-size: 14px;
+      padding: 0 12px;
+    }
+    
+    .match-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    
+    .match-status {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .status-live {
+      background: var(--danger);
+      color: white;
+      animation: pulse 2s infinite;
+    }
+    
+    .status-finished {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+    }
+    
+    .status-scheduled {
+      background: var(--accent);
+      color: #000;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .match-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .action-btn {
+      flex: 1;
+      padding: 10px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .action-btn:hover { background: var(--border); }
+    
+    .action-btn.primary {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    
+    .action-btn.primary:hover { background: var(--accent-hover); }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    
+    .modal.active { display: flex; }
+    
+    .modal-content {
+      background: var(--bg-card);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 500px;
+      padding: 20px;
+      animation: slideUp 0.3s ease;
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    
+    .rating-section { margin-bottom: 20px; }
+    
+    .rating-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .rating-stars {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    
+    .rating-star {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .rating-star.selected {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+    
+    .rating-star:hover { border-color: var(--accent); }
+    
+    .tags-input { margin-bottom: 20px; }
+    
+    .tags-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .tags-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .tag-btn {
+      padding: 6px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .tag-btn.selected {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+    
+    .comment-input {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 14px;
+      resize: none;
+      margin-bottom: 20px;
+    }
+    
+    .comment-input::placeholder { color: var(--text-secondary); }
+    
+    .comment-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    .save-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .save-btn:hover { background: var(--accent-hover); }
+    
+    .save-btn:disabled {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: not-allowed;
+    }
+    
+    .chat-container {
+      display: none;
+      flex-direction: column;
+      height: calc(100vh - 100px);
+    }
+    
+    .chat-container.active { display: flex; }
+    
+    .chat-header {
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .chat-back {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    
+    .chat-title {
+      font-weight: 600;
+      font-size: 16px;
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .chat-message {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 10px 14px;
+      max-width: 85%;
+    }
+    
+    .chat-message.own {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #000;
+    }
+    
+    .chat-username {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    
+    .chat-message.own .chat-username { color: rgba(0,0,0,0.7); }
+    
+    .chat-text {
+      font-size: 14px;
+      word-wrap: break-word;
+    }
+    
+    .chat-input-area {
+      padding: 12px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+    
+    .chat-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+    
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    .chat-send {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      color: #000;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-secondary);
+    }
+    
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding: 8px 16px;
+      gap: 8px;
+      z-index: 100;
+    }
+    
+    .nav-item {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all 0.2s;
+    }
+    
+    .nav-item.active {
+      background: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+    
+    .nav-icon {
+      font-size: 20px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      z-index: 2000;
+      transition: transform 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    
+    .toast.success { border-left: 4px solid var(--success); }
+    
+    .toast.error { border-left: 4px solid var(--danger); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">
+      <span class="logo-icon">⚽</span>
+      FOOTBAZED
+    </div>
+    <div class="user-info">
+      <div class="avatar" id="userAvatar">U</div>
+      <span id="userName">Гость</span>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">Все</button>
+    <button class="filter-btn" data-filter="live">🔴 LIVE</button>
+    <button class="filter-btn" data-filter="finished">Завершённые</button>
+    <button class="filter-btn" data-filter="scheduled">Предстоящие</button>
+    <button class="filter-btn" data-filter="rated">Мои оценки</button>
+  </div>
+
+  <div id="matchesList">
+    <div class="loading">
+      <div class="spinner"></div>
+      Загружаем матчи...
+    </div>
+  </div>
+
+  <div class="modal" id="ratingModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Оценить матч</div>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      
+      <div id="modalMatchInfo" style="margin-bottom: 20px; font-size: 14px; color: var(--text-secondary);"></div>
+      
+      <div class="rating-section">
+        <div class="rating-label">Общее впечатление</div>
+        <div class="rating-stars" id="matchRating"></div>
+      </div>
+      
+      <div class="tags-input">
+        <div class="rating-label">Теги</div>
+        <div class="tags-list">
+          <button class="tag-btn" data-tag="валидол">💊 Валидол</button>
+          <button class="tag-btn" data-tag="судейский беспредел">⚖️ Судейский беспредел</button>
+          <button class="tag-btn" data-tag="красивый футбол">✨ Красивый футбол</button>
+          <button class="tag-btn" data-tag="скучно">😴 Скучно</button>
+          <button class="tag-btn" data-tag="драма">🎭 Драма</button>
+          <button class="tag-btn" data-tag="голы">⚽ Голы!</button>
+        </div>
+      </div>
+      
+      <textarea class="comment-input" id="commentInput" placeholder="Добавь комментарий (мат цензурится)..." maxlength="500"></textarea>
+      
+      <button class="save-btn" id="saveRating">💾 Сохранить оценку</button>
+    </div>
+  </div>
+
+  <div class="chat-container" id="chatContainer">
+    <div class="chat-header">
+      <button class="chat-back" id="chatBack">←</button>
+      <div class="chat-title" id="chatMatchTitle">Чат матча</div>
+    </div>
+    
+    <div class="chat-messages" id="chatMessages"></div>
+    
+    <div class="chat-input-area">
+      <input type="text" class="chat-input" id="chatInput" placeholder="Напиши сообщение...">
+      <button class="chat-send" id="chatSend">➤</button>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" data-view="matches">
+      <span class="nav-icon">📋</span>
+      Матчи
+    </div>
+    <div class="nav-item" data-view="chat">
+      <span class="nav-icon">💬</span>
+      Чат
+    </div>
+    <div class="nav-item" data-view="profile">
+      <span class="nav-icon">👤</span>
+      Профиль
+    </div>
+    <div class="nav-item" data-view="export">
+      <span class="nav-icon">📤</span>
+      Экспорт
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ============================================
+    // 🔧 НАСТРОЙКИ SUPABASE
+    // ============================================
+    
+    const SUPABASE_URL = 'https://uukacnyvjvgmmhbkmfzf.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2Fjbnl2anZnbW1oYmttZnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDM3MzcsImV4cCI6MjA4NzA3OTczN30.hZIYkrWFqRwu0IciG2iF3TyP8WnVQcV1sFyjfeVUpRc';
+    
+    // Создаем клиент Supabase
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // ============================================
+    // 📱 TELEGRAM WEBAPP
+    // ============================================
+    
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.enableClosingConfirmation();
+    
+    const user = tg.initDataUnsafe?.user || {
+      id: Date.now(),
+      first_name: 'Гость',
+      username: 'guest'
+    };
+    
+    // ============================================
+    // 🌍 ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+    // ============================================
+    
+    let currentUser = null;
+    let currentMatch = null;
+    let selectedRating = null;
+    let selectedTags = [];
+    let chatSubscription = null;
+    
+    // ============================================
+    // 🚀 ИНИЦИАЛИЗАЦИЯ
+    // ============================================
+    
+    async function init() {
+      document.getElementById('userName').textContent = user.first_name || 'Гость';
+      document.getElementById('userAvatar').textContent = (user.first_name?.[0] || 'U').toUpperCase();
+      
+      await syncUser();
+      await loadMatches();
+      setupEventListeners();
+      
+      showToast('FOOTBAZED готов! ⚽', 'success');
+    }
+    
+    async function syncUser() {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .upsert({
+            id: user.id,
+            username: user.username,
+            display_name: user.first_name + (user.last_name ? ' ' + user.last_name : ''),
+            avatar_url: user.photo_url,
+            last_seen: new Date().toISOString()
+          }, { onConflict: 'id' })
+          .select()
+          .single();
+        
+        if (data) {
+          currentUser = data;
+          console.log('✅ Пользователь синхронизирован:', currentUser);
+        }
+      } catch (e) {
+        console.error('❌ Ошибка синхронизации:', e);
+      }
+    }
+    
+    async function loadMatches(filter = 'all') {
+      const list = document.getElementById('matchesList');
+      list.innerHTML = '<div class="loading"><div class="spinner"></div>Загружаем...</div>';
+      
+      try {
+        let query = supabase.from('matches').select('*');
+        
+        if (filter === 'live') query = query.eq('status', 'live');
+        else if (filter === 'finished') query = query.eq('status', 'finished');
+        else if (filter === 'scheduled') query = query.eq('status', 'scheduled');
+        else if (filter === 'rated' && currentUser) {
+          const { data: rated } = await supabase
+            .from('ratings')
+            .select('match_id')
+            .eq('user_id', currentUser.id);
+          const ratedIds = rated?.map(r => r.match_id) || [];
+          query = query.in('id', ratedIds.length ? ratedIds : [0]);
+        }
+        
+        query = query.order('match_date', { ascending: false });
+        
+        const { data: matches, error } = await query;
+        
+        if (error) throw error;
+        
+        if (!matches || matches.length === 0) {
+          list.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">📭</div>
+              <p>Матчей не найдено</p>
+            </div>
+          `;
+          return;
+        }
+        
+        list.innerHTML = matches.map(match => renderMatchCard(match)).join('');
+        
+      } catch (e) {
+        console.error('❌ Ошибка загрузки матчей:', e);
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⚠️</div>
+            <p>Не удалось загрузить матчи</p>
+            <button class="action-btn primary" onclick="loadMatches()" style="margin-top: 12px;">
+              🔁 Повторить
+            </button>
+          </div>
+        `;
+        showToast('Ошибка загрузки', 'error');
+      }
+    }
+    
+    function renderMatchCard(match) {
+      const date = new Date(match.match_date);
+      const dateStr = date.toLocaleDateString('ru-RU', { 
+        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
+      });
+      
+      const statusText = {
+        'live': '🔴 LIVE',
+        'finished': 'Завершён',
+        'scheduled': 'Предстоит'
+      }[match.status] || match.status;
+      
+      const statusClass = {
+        'live': 'status-live',
+        'finished': 'status-finished',
+        'scheduled': 'status-scheduled'
+      }[match.status] || '';
+      
+      return `
+        <div class="match-card" data-match-id="${match.id}">
+          <div class="match-league">${match.league_name}</div>
+          
+          <div class="match-teams">
+            <div class="team">
+              <div class="team-name">${match.home_team_name}</div>
+              <div class="team-score">${match.home_score ?? '-'}</div>
+            </div>
+            <div class="vs">VS</div>
+            <div class="team">
+              <div class="team-name">${match.away_team_name}</div>
+              <div class="team-score">${match.away_score ?? '-'}</div>
+            </div>
+          </div>
+          
+          <div class="match-info">
+            <span>📅 ${dateStr}</span>
+            <span class="match-status ${statusClass}">${statusText}</span>
+          </div>
+          
+          <div class="match-actions">
+            ${match.status === 'finished' ? `
+              <button class="action-btn primary" onclick="openRatingModal(${match.id})">
+                ⭐ Оценить
+              </button>
+            ` : ''}
+            <button class="action-btn" onclick="openChat(${match.id})">
+              💬 Чат
+            </button>
+            <button class="action-btn" onclick="shareMatch(${match.id})">
+              🔗 Поделиться
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    
+    function openRatingModal(matchId) {
+      const match = document.querySelector(`[data-match-id="${matchId}"]`);
+      if (!match) return;
+      
+      currentMatch = { id: matchId };
+      
+      const homeTeam = match.querySelector('.team-name')?.textContent || '';
+      const awayTeam = match.querySelectorAll('.team-name')[1]?.textContent || '';
+      document.getElementById('modalMatchInfo').textContent = `${homeTeam} vs ${awayTeam}`;
+      
+      const ratingContainer = document.getElementById('matchRating');
+      ratingContainer.innerHTML = '';
+      for (let i = 1; i <= 10; i++) {
+        const star = document.createElement('div');
+        star.className = 'rating-star';
+        star.textContent = i;
+        star.onclick = () => selectRating(i, star);
+        ratingContainer.appendChild(star);
+      }
+      
+      selectedRating = null;
+      selectedTags = [];
+      document.querySelectorAll('.tag-btn').forEach(btn => btn.classList.remove('selected'));
+      document.getElementById('commentInput').value = '';
+      
+      document.getElementById('ratingModal').classList.add('active');
+    }
+    
+    function selectRating(value, element) {
+      selectedRating = value;
+      document.querySelectorAll('#matchRating .rating-star').forEach(star => {
+        star.classList.toggle('selected', parseInt(star.textContent) <= value);
+      });
+    }
+    
+    document.querySelectorAll('.tag-btn').forEach(btn => {
+      btn.onclick = function() {
+        const tag = this.dataset.tag;
+        this.classList.toggle('selected');
+        
+        if (selectedTags.includes(tag)) {
+          selectedTags = selectedTags.filter(t => t !== tag);
+        } else {
+          selectedTags.push(tag);
+        }
+      };
+    });
+    
+    document.getElementById('closeModal').onclick = () => {
+      document.getElementById('ratingModal').classList.remove('active');
+      currentMatch = null;
+    };
+    
+    document.getElementById('saveRating').onclick = async function() {
+      if (!selectedRating) {
+        showToast('Выберите оценку от 1 до 10', 'error');
+        return;
+      }
+      
+      if (!currentUser) {
+        showToast('Ошибка: пользователь не авторизован', 'error');
+        return;
+      }
+      
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Сохраняем...';
+      
+      try {
+        let comment = document.getElementById('commentInput').value;
+        const badWords = ['хер', 'пизд', 'бля', 'еб', 'сука', 'мудак'];
+        badWords.forEach(word => {
+          const regex = new RegExp(word, 'gi');
+          comment = comment.replace(regex, '*'.repeat(word.length));
+        });
+        
+        const { error } = await supabase
+          .from('ratings')
+          .upsert({
+            user_id: currentUser.id,
+            match_id: currentMatch.id,
+            match_rating: selectedRating,
+            comment: comment || null,
+            tags: selectedTags.length ? selectedTags : null
+          }, { onConflict: 'user_id,match_id' });
+        
+        if (error) throw error;
+        
+        showToast('✅ Оценка сохранена!', 'success');
+        document.getElementById('ratingModal').classList.remove('active');
+        loadMatches(document.querySelector('.filter-btn.active')?.dataset.filter || 'all');
+        
+      } catch (e) {
+        console.error('❌ Ошибка сохранения:', e);
+        showToast('Не удалось сохранить оценку', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Сохранить оценку';
+      }
+    };
+    
+    function openChat(matchId) {
+      document.getElementById('matchesList').style.display = 'none';
+      document.querySelector('.filters').style.display = 'none';
+      document.getElementById('chatContainer').classList.add('active');
+      
+      const match = document.querySelector(`[data-match-id="${matchId}"]`);
+      if (match) {
+        const teams = match.querySelectorAll('.team-name');
+        document.getElementById('chatMatchTitle').textContent = 
+          `${teams[0]?.textContent} vs ${teams[1]?.textContent}`;
+      }
+      
+      loadChatMessages(matchId);
+      subscribeToChat(matchId);
+    }
+    
+    async function loadChatMessages(matchId) {
+      const container = document.getElementById('chatMessages');
+      container.innerHTML = '<div class="loading" style="padding: 20px;">Загружаем чат...</div>';
+      
+      try {
+        const { data: messages, error } = await supabase
+          .from('live_chat_messages')
+          .select('*')
+          .eq('match_id', matchId)
+          .order('created_at', { ascending: true })
+          .limit(50);
+        
+        if (error) throw error;
+        
+        if (!messages || messages.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state" style="padding: 20px;">
+              <p>👋 Начни обсуждение!</p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = messages.map(renderChatMessage).join('');
+        container.scrollTop = container.scrollHeight;
+        
+      } catch (e) {
+        console.error('❌ Ошибка загрузки чата:', e);
+        container.innerHTML = '<div class="empty-state">Не удалось загрузить чат</div>';
+      }
+    }
+    
+    function renderChatMessage(msg) {
+      const isOwn = msg.user_id === user.id;
+      const time = new Date(msg.created_at).toLocaleTimeString('ru-RU', { 
+        hour: '2-digit', minute: '2-digit' 
+      });
+      
+      return `
+        <div class="chat-message ${isOwn ? 'own' : ''}">
+          ${!isOwn ? `<div class="chat-username">@${msg.username || 'Аноним'}</div>` : ''}
+          <div class="chat-text">${escapeHtml(msg.message)}</div>
+          <div style="font-size: 10px; opacity: 0.6; margin-top: 4px; text-align: ${isOwn ? 'right' : 'left'}">
+            ${time}
+          </div>
+        </div>
+      `;
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function subscribeToChat(matchId) {
+      if (chatSubscription) {
+        supabase.removeChannel(chatSubscription);
+      }
+      
+      chatSubscription = supabase
+        .channel(`chat:${matchId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'live_chat_messages',
+          filter: `match_id=eq.${matchId}`
+        }, payload => {
+          const container = document.getElementById('chatMessages');
+          const newMsg = renderChatMessage(payload.new);
+          
+          if (container.querySelector('.empty-state')) {
+            container.innerHTML = '';
+          }
+          
+          container.insertAdjacentHTML('beforeend', newMsg);
+          container.scrollTop = container.scrollHeight;
+          
+          if (payload.new.user_id !== user.id && tg.HapticFeedback) {
+            tg.HapticFeedback.notificationOccurred('success');
+          }
+        })
+        .subscribe();
+    }
+    
+    document.getElementById('chatSend').onclick = async function() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      
+      if (!message) return;
+      if (!currentUser) {
+        showToast('Ошибка авторизации', 'error');
+        return;
+      }
+      
+      let cleanMessage = message;
+      const badWords = ['хер', 'пизд', 'бля', 'еб', 'сука', 'мудак'];
+      badWords.forEach(word => {
+        const regex = new RegExp(word, 'gi');
+        cleanMessage = cleanMessage.replace(regex, '*'.repeat(word.length));
+      });
+      
+      const { error } = await supabase
+        .from('live_chat_messages')
+        .insert({
+          match_id: currentMatch?.id || 1,
+          user_id: currentUser.id,
+          username: user.username || user.first_name || 'Аноним',
+          message: cleanMessage
+        });
+      
+      if (error) {
+        console.error('❌ Ошибка отправки:', error);
+        showToast('Не удалось отправить сообщение', 'error');
+      } else {
+        input.value = '';
+      }
+    };
+    
+    document.getElementById('chatInput').addEventListener('keypress', e => {
+      if (e.key === 'Enter') {
+        document.getElementById('chatSend').click();
+      }
+    });
+    
+    document.getElementById('chatBack').onclick = function() {
+      if (chatSubscription) {
+        supabase.removeChannel(chatSubscription);
+        chatSubscription = null;
+      }
+      
+      document.getElementById('chatContainer').classList.remove('active');
+      document.getElementById('matchesList').style.display = 'block';
+      document.querySelector('.filters').style.display = 'flex';
+      currentMatch = null;
+    };
+    
+    function shareMatch(matchId) {
+      const match = document.querySelector(`[data-match-id="${matchId}"]`);
+      if (!match) return;
+      
+      const teams = match.querySelectorAll('.team-name');
+      const scores = match.querySelectorAll('.team-score');
+      const league = match.querySelector('.match-league')?.textContent || '';
+      
+      const text = `⚽ ${league}\n${teams[0]?.textContent} ${scores[0]?.textContent} : ${scores[1]?.textContent} ${teams[1]?.textContent}\n\nОцени этот матч в FOOTBAZED!`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: 'FOOTBAZED ⚽',
+          text: text,
+          url: window.location.href
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(text);
+        showToast('📋 Скопировано в буфер!', 'success');
+      }
+    }
+    
+    async function exportUserData() {
+      if (!currentUser) {
+        showToast('Сначала авторизуйтесь', 'error');
+        return;
+      }
+      
+      showToast('📦 Готовим экспорт...', 'success');
+      
+      try {
+        const { data: ratings, error } = await supabase
+          .from('ratings')
+          .select(`
+            *,
+            matches (
+              league_name,
+              home_team_name,
+              away_team_name,
+              match_date,
+              home_score,
+              away_score
+            )
+          `)
+          .eq('user_id', currentUser.id);
+        
+        if (error) throw error;
+        
+        const exportData = {
+          user: {
+            id: currentUser.id,
+            username: currentUser.username,
+            display_name: currentUser.display_name
+          },
+          ratings: ratings || [],
+          exported_at: new Date().toISOString()
+        };
+        
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `footbazed_export_${user.username || user.id}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        showToast('✅ Экспорт скачан!', 'success');
+        
+      } catch (e) {
+        console.error('❌ Ошибка экспорта:', e);
+        showToast('Не удалось экспортировать данные', 'error');
+      }
+    }
+    
+    function setupEventListeners() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.onclick = function() {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          loadMatches(this.dataset.filter);
+        };
+      });
+      
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.onclick = function() {
+          document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+          this.classList.add('active');
+          
+          const view = this.dataset.view;
+          
+          if (view === 'matches') {
+            document.getElementById('matchesList').style.display = 'block';
+            document.querySelector('.filters').style.display = 'flex';
+            document.getElementById('chatContainer').classList.remove('active');
+            loadMatches(document.querySelector('.filter-btn.active')?.dataset.filter || 'all');
+          }
+          else if (view === 'chat') {
+            showToast('💡 Выберите матч для чата', 'success');
+          }
+          else if (view === 'profile') {
+            showToast('👤 Профиль в разработке', 'success');
+          }
+          else if (view === 'export') {
+            exportUserData();
+          }
+        };
+      });
+      
+      document.getElementById('ratingModal').onclick = function(e) {
+        if (e.target === this) {
+          this.classList.remove('active');
+          currentMatch = null;
+        }
+      };
+      
+      tg.BackButton.onClick(() => {
+        if (document.getElementById('chatContainer').classList.contains('active')) {
+          document.getElementById('chatBack').click();
+        } else if (document.getElementById('ratingModal').classList.contains('active')) {
+          document.getElementById('closeModal').click();
+        } else {
+          tg.close();
+        }
+      });
+    }
+    
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+    
+    if (tg.initData) {
+      init();
+    } else {
+      console.log('🧪 Запуск в режиме разработки');
+      init();
+    }
+  </script>
+</body>
+</html>
