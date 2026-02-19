@@ -734,7 +734,13 @@
     const SUPABASE_URL = 'https://uukacnyvjvgmmhbkmfzf.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2Fjbnl2anZnbW1oYmttZnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDM3MzcsImV4cCI6MjA4NzA3OTczN30.hZIYkrWFqRwu0IciG2iF3TyP8WnVQcV1sFyjfeVUpRc';
     
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Создаем клиент Supabase (ПРОВЕРКА чтобы не было дублирования)
+    let supabase;
+    if (typeof window.supabase !== 'undefined') {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+      console.error('❌ Supabase library not loaded!');
+    }
     
     // ============================================
     // 📱 TELEGRAM WEBAPP
@@ -813,7 +819,7 @@
         else if (filter === 'finished') query = query.eq('status', 'finished');
         else if (filter === 'scheduled') query = query.eq('status', 'scheduled');
         else if (filter === 'rated' && currentUser) {
-          const { data: rated } = await supabase
+          const {  rated } = await supabase
             .from('ratings')
             .select('match_id')
             .eq('user_id', currentUser.id);
@@ -1040,7 +1046,7 @@
       container.innerHTML = '<div class="loading" style="padding: 20px;">Загружаем чат...</div>';
       
       try {
-        const { data: messages, error } = await supabase
+        const {  messages, error } = await supabase
           .from('live_chat_messages')
           .select('*')
           .eq('match_id', matchId)
@@ -1207,7 +1213,7 @@
       showToast('📦 Готовим экспорт...', 'success');
       
       try {
-        const { data: ratings, error } = await supabase
+        const {  ratings, error } = await supabase
           .from('ratings')
           .select(`
             *,
