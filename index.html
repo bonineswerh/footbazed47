@@ -673,8 +673,8 @@
     const SUPABASE_URL = 'https://uukacnyvjvgmmhbkmfzf.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2Fjbnl2anZnbW1oYmttZnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDM3MzcsImV4cCI6MjA4NzA3OTczN30.hZIYkrWFqRwu0IciG2iF3TyP8WnVQcV1sFyjfeVUpRc';
     
-    // Создаем клиент Supabase
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Создаем клиент Supabase (ИМЯ: supabaseClient)
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // ============================================
     // 📱 TELEGRAM WEBAPP
@@ -717,7 +717,7 @@
     
     async function syncUser() {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('users')
           .upsert({
             id: user.id,
@@ -743,13 +743,13 @@
       list.innerHTML = '<div class="loading"><div class="spinner"></div>Загружаем...</div>';
       
       try {
-        let query = supabase.from('matches').select('*');
+        let query = supabaseClient.from('matches').select('*');
         
         if (filter === 'live') query = query.eq('status', 'live');
         else if (filter === 'finished') query = query.eq('status', 'finished');
         else if (filter === 'scheduled') query = query.eq('status', 'scheduled');
         else if (filter === 'rated' && currentUser) {
-          const { data: rated } = await supabase
+          const { data: rated } = await supabaseClient
             .from('ratings')
             .select('match_id')
             .eq('user_id', currentUser.id);
@@ -922,7 +922,7 @@
           comment = comment.replace(regex, '*'.repeat(word.length));
         });
         
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('ratings')
           .upsert({
             user_id: currentUser.id,
@@ -968,7 +968,7 @@
       container.innerHTML = '<div class="loading" style="padding: 20px;">Загружаем чат...</div>';
       
       try {
-        const { data: messages, error } = await supabase
+        const { data: messages, error } = await supabaseClient
           .from('live_chat_messages')
           .select('*')
           .eq('match_id', matchId)
@@ -1020,10 +1020,10 @@
     
     function subscribeToChat(matchId) {
       if (chatSubscription) {
-        supabase.removeChannel(chatSubscription);
+        supabaseClient.removeChannel(chatSubscription);
       }
       
-      chatSubscription = supabase
+      chatSubscription = supabaseClient
         .channel(`chat:${matchId}`)
         .on('postgres_changes', {
           event: 'INSERT',
@@ -1065,7 +1065,7 @@
         cleanMessage = cleanMessage.replace(regex, '*'.repeat(word.length));
       });
       
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('live_chat_messages')
         .insert({
           match_id: currentMatch?.id || 1,
@@ -1090,7 +1090,7 @@
     
     document.getElementById('chatBack').onclick = function() {
       if (chatSubscription) {
-        supabase.removeChannel(chatSubscription);
+        supabaseClient.removeChannel(chatSubscription);
         chatSubscription = null;
       }
       
@@ -1131,7 +1131,7 @@
       showToast('📦 Готовим экспорт...', 'success');
       
       try {
-        const { data: ratings, error } = await supabase
+        const { data: ratings, error } = await supabaseClient
           .from('ratings')
           .select(`
             *,
