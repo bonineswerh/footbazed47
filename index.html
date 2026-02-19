@@ -12,7 +12,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
-    /* 🎨 ТЁМНАЯ ТЕМА FOOTBAZED */
     :root {
       --bg-primary: #0f0f0f;
       --bg-secondary: #1a1a1a;
@@ -27,12 +26,7 @@
       --border: #333;
     }
     
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -43,7 +37,6 @@
       padding-bottom: 80px;
     }
     
-    /* Заголовок */
     .header {
       display: flex;
       justify-content: space-between;
@@ -61,9 +54,7 @@
       gap: 8px;
     }
     
-    .logo-icon {
-      font-size: 24px;
-    }
+    .logo-icon { font-size: 24px; }
     
     .user-info {
       display: flex;
@@ -85,7 +76,6 @@
       font-size: 14px;
     }
     
-    /* Фильтры */
     .filters {
       display: flex;
       gap: 8px;
@@ -113,7 +103,6 @@
       font-weight: 600;
     }
     
-    /* Карточка матча */
     .match-card {
       background: var(--bg-card);
       border-radius: 12px;
@@ -199,7 +188,6 @@
       50% { opacity: 0.7; }
     }
     
-    /* Кнопки действий */
     .match-actions {
       display: flex;
       gap: 8px;
@@ -221,9 +209,7 @@
       gap: 6px;
     }
     
-    .action-btn:hover {
-      background: var(--border);
-    }
+    .action-btn:hover { background: var(--border); }
     
     .action-btn.primary {
       background: var(--accent);
@@ -232,11 +218,8 @@
       font-weight: 600;
     }
     
-    .action-btn.primary:hover {
-      background: var(--accent-hover);
-    }
+    .action-btn.primary:hover { background: var(--accent-hover); }
     
-    /* Модальное окно оценки */
     .modal {
       display: none;
       position: fixed;
@@ -250,9 +233,7 @@
       justify-content: center;
     }
     
-    .modal.active {
-      display: flex;
-    }
+    .modal.active { display: flex; }
     
     .modal-content {
       background: var(--bg-card);
@@ -291,10 +272,7 @@
       padding: 4px;
     }
     
-    /* Рейтинги */
-    .rating-section {
-      margin-bottom: 20px;
-    }
+    .rating-section { margin-bottom: 20px; }
     
     .rating-label {
       font-size: 14px;
@@ -329,14 +307,9 @@
       border-color: var(--accent);
     }
     
-    .rating-star:hover {
-      border-color: var(--accent);
-    }
+    .rating-star:hover { border-color: var(--accent); }
     
-    /* Теги */
-    .tags-input {
-      margin-bottom: 20px;
-    }
+    .tags-input { margin-bottom: 20px; }
     
     .tags-label {
       font-size: 14px;
@@ -367,7 +340,6 @@
       border-color: var(--accent);
     }
     
-    /* Комментарий */
     .comment-input {
       width: 100%;
       padding: 12px;
@@ -380,16 +352,13 @@
       margin-bottom: 20px;
     }
     
-    .comment-input::placeholder {
-      color: var(--text-secondary);
-    }
+    .comment-input::placeholder { color: var(--text-secondary); }
     
     .comment-input:focus {
       outline: none;
       border-color: var(--accent);
     }
     
-    /* Кнопка сохранить */
     .save-btn {
       width: 100%;
       padding: 14px;
@@ -403,9 +372,7 @@
       transition: background 0.2s;
     }
     
-    .save-btn:hover {
-      background: var(--accent-hover);
-    }
+    .save-btn:hover { background: var(--accent-hover); }
     
     .save-btn:disabled {
       background: var(--bg-secondary);
@@ -413,16 +380,13 @@
       cursor: not-allowed;
     }
     
-    /* LIVE чат */
     .chat-container {
       display: none;
       flex-direction: column;
       height: calc(100vh - 100px);
     }
     
-    .chat-container.active {
-      display: flex;
-    }
+    .chat-container.active { display: flex; }
     
     .chat-header {
       padding: 12px 16px;
@@ -474,9 +438,7 @@
       margin-bottom: 4px;
     }
     
-    .chat-message.own .chat-username {
-      color: rgba(0,0,0,0.7);
-    }
+    .chat-message.own .chat-username { color: rgba(0,0,0,0.7); }
     
     .chat-text {
       font-size: 14px;
@@ -520,7 +482,6 @@
       justify-content: center;
     }
     
-    /* Загрузка */
     .loading {
       text-align: center;
       padding: 40px;
@@ -537,11 +498,8 @@
       margin: 0 auto 16px;
     }
     
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     
-    /* Пустое состояние */
     .empty-state {
       text-align: center;
       padding: 40px 20px;
@@ -553,7 +511,6 @@
       margin-bottom: 16px;
     }
     
-    /* Нижняя навигация */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -590,7 +547,6 @@
       margin-bottom: 4px;
     }
     
-    /* Уведомления */
     .toast {
       position: fixed;
       top: 20px;
@@ -607,22 +563,15 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
     
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
     
-    .toast.success {
-      border-left: 4px solid var(--success);
-    }
+    .toast.success { border-left: 4px solid var(--success); }
     
-    .toast.error {
-      border-left: 4px solid var(--danger);
-    }
+    .toast.error { border-left: 4px solid var(--danger); }
   </style>
 </head>
 <body>
 
-  <!-- Заголовок -->
   <div class="header">
     <div class="logo">
       <span class="logo-icon">⚽</span>
@@ -634,7 +583,6 @@
     </div>
   </div>
 
-  <!-- Фильтры -->
   <div class="filters">
     <button class="filter-btn active" data-filter="all">Все</button>
     <button class="filter-btn" data-filter="live">🔴 LIVE</button>
@@ -643,7 +591,6 @@
     <button class="filter-btn" data-filter="rated">Мои оценки</button>
   </div>
 
-  <!-- Список матчей -->
   <div id="matchesList">
     <div class="loading">
       <div class="spinner"></div>
@@ -651,7 +598,6 @@
     </div>
   </div>
 
-  <!-- Модальное окно оценки -->
   <div class="modal" id="ratingModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -663,9 +609,7 @@
       
       <div class="rating-section">
         <div class="rating-label">Общее впечатление</div>
-        <div class="rating-stars" id="matchRating">
-          <!-- Звёзды генерируются JS -->
-        </div>
+        <div class="rating-stars" id="matchRating"></div>
       </div>
       
       <div class="tags-input">
@@ -686,16 +630,13 @@
     </div>
   </div>
 
-  <!-- LIVE чат -->
   <div class="chat-container" id="chatContainer">
     <div class="chat-header">
       <button class="chat-back" id="chatBack">←</button>
       <div class="chat-title" id="chatMatchTitle">Чат матча</div>
     </div>
     
-    <div class="chat-messages" id="chatMessages">
-      <!-- Сообщения генерируются JS -->
-    </div>
+    <div class="chat-messages" id="chatMessages"></div>
     
     <div class="chat-input-area">
       <input type="text" class="chat-input" id="chatInput" placeholder="Напиши сообщение...">
@@ -703,7 +644,6 @@
     </div>
   </div>
 
-  <!-- Нижняя навигация -->
   <div class="bottom-nav">
     <div class="nav-item active" data-view="matches">
       <span class="nav-icon">📋</span>
@@ -723,7 +663,6 @@
     </div>
   </div>
 
-  <!-- Уведомления -->
   <div class="toast" id="toast"></div>
 
   <script>
@@ -734,13 +673,8 @@
     const SUPABASE_URL = 'https://uukacnyvjvgmmhbkmfzf.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2Fjbnl2anZnbW1oYmttZnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDM3MzcsImV4cCI6MjA4NzA3OTczN30.hZIYkrWFqRwu0IciG2iF3TyP8WnVQcV1sFyjfeVUpRc';
     
-    // Создаем клиент Supabase (ПРОВЕРКА чтобы не было дублирования)
-    let supabase;
-    if (typeof window.supabase !== 'undefined') {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } else {
-      console.error('❌ Supabase library not loaded!');
-    }
+    // Создаем клиент Supabase
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // ============================================
     // 📱 TELEGRAM WEBAPP
@@ -804,10 +738,6 @@
       }
     }
     
-    // ============================================
-    // ⚽ ЗАГРУЗКА МАТЧЕЙ
-    // ============================================
-    
     async function loadMatches(filter = 'all') {
       const list = document.getElementById('matchesList');
       list.innerHTML = '<div class="loading"><div class="spinner"></div>Загружаем...</div>';
@@ -819,7 +749,7 @@
         else if (filter === 'finished') query = query.eq('status', 'finished');
         else if (filter === 'scheduled') query = query.eq('status', 'scheduled');
         else if (filter === 'rated' && currentUser) {
-          const {  rated } = await supabase
+          const { data: rated } = await supabase
             .from('ratings')
             .select('match_id')
             .eq('user_id', currentUser.id);
@@ -915,10 +845,6 @@
         </div>
       `;
     }
-    
-    // ============================================
-    // ⭐ СИСТЕМА ОЦЕНОК
-    // ============================================
     
     function openRatingModal(matchId) {
       const match = document.querySelector(`[data-match-id="${matchId}"]`);
@@ -1021,10 +947,6 @@
       }
     };
     
-    // ============================================
-    // 💬 LIVE ЧАТ
-    // ============================================
-    
     function openChat(matchId) {
       document.getElementById('matchesList').style.display = 'none';
       document.querySelector('.filters').style.display = 'none';
@@ -1046,7 +968,7 @@
       container.innerHTML = '<div class="loading" style="padding: 20px;">Загружаем чат...</div>';
       
       try {
-        const {  messages, error } = await supabase
+        const { data: messages, error } = await supabase
           .from('live_chat_messages')
           .select('*')
           .eq('match_id', matchId)
@@ -1178,10 +1100,6 @@
       currentMatch = null;
     };
     
-    // ============================================
-    // 🔗 ШЕРИНГ И ЭКСПОРТ
-    // ============================================
-    
     function shareMatch(matchId) {
       const match = document.querySelector(`[data-match-id="${matchId}"]`);
       if (!match) return;
@@ -1213,7 +1131,7 @@
       showToast('📦 Готовим экспорт...', 'success');
       
       try {
-        const {  ratings, error } = await supabase
+        const { data: ratings, error } = await supabase
           .from('ratings')
           .select(`
             *,
@@ -1255,10 +1173,6 @@
         showToast('Не удалось экспортировать данные', 'error');
       }
     }
-    
-    // ============================================
-    // 🎛️ ОБРАБОТЧИКИ СОБЫТИЙ
-    // ============================================
     
     function setupEventListeners() {
       document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -1312,10 +1226,6 @@
       });
     }
     
-    // ============================================
-    // 🔔 УВЕДОМЛЕНИЯ
-    // ============================================
-    
     function showToast(message, type = 'success') {
       const toast = document.getElementById('toast');
       toast.textContent = message;
@@ -1326,17 +1236,12 @@
       }, 3000);
     }
     
-    // ============================================
-    // 🚀 ЗАПУСК
-    // ============================================
-    
     if (tg.initData) {
       init();
     } else {
       console.log('🧪 Запуск в режиме разработки');
       init();
     }
-    
   </script>
 </body>
 </html>
