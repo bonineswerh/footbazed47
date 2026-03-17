@@ -2,14 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FOOTBAZED ⚽ | Оценивай матчи, общайся с друзьями</title>
-  <meta name="description" content="Социальная сеть для футбольных болельщиков. Оценивай матчи, игроков, общайся в чатах!">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FOOTBAZED ⚽</title>
   
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
-  
-  <!-- Telegram WebApp (опционально) -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
@@ -18,155 +13,71 @@
       --bg-primary: #0f0f0f;
       --bg-secondary: #1a1a1a;
       --bg-card: #252525;
-      --bg-hover: #2a2a2a;
       --text-primary: #ffffff;
       --text-secondary: #b0b0b0;
-      --text-muted: #666666;
       --accent: #00d4aa;
       --accent-hover: #00b894;
       --danger: #ff4757;
       --warning: #ffa502;
       --success: #2ed573;
       --border: #333;
-      --shadow: 0 4px 20px rgba(0,0,0,0.3);
-      --radius: 12px;
-      --header-height: 64px;
-      --nav-height: 60px;
-      --max-width: 1200px;
+    }
+    
+    /* ТЕМЫ - НОВОЕ */
+    [data-theme="light"] {
+      --bg-primary: #f5f5f5;
+      --bg-secondary: #e0e0e0;
+      --bg-card: #ffffff;
+      --text-primary: #000000;
+      --text-secondary: #666666;
+      --border: #ddd;
+    }
+    
+    [data-theme="blue"] {
+      --bg-primary: #0a1628;
+      --bg-secondary: #1a2a4a;
+      --bg-card: #2a3a5a;
+      --accent: #4da6ff;
+      --accent-hover: #3d96ef;
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     
-    html { scroll-behavior: smooth; }
-    
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
-      line-height: 1.6;
-      min-height: 100vh;
-    }
-
-    /* ============================================
-       АДАПТИВНАЯ СЕТКА
-       ============================================ */
-    
-    .app-container {
-      max-width: var(--max-width);
-      margin: 0 auto;
+      line-height: 1.5;
       padding: 0;
-    }
-    
-    /* Мобильные (320px - 767px) */
-    @media (max-width: 767px) {
-      .app-container { padding: 0; }
-      .header { padding: 12px 16px; }
-      .main-content { padding: 0; }
-      .match-card { margin: 0 0 12px; border-radius: var(--radius); }
-      .filters { padding: 12px 16px; }
-    }
-    
-    /* Планшеты (768px - 1023px) */
-    @media (min-width: 768px) and (max-width: 1023px) {
-      .app-container { padding: 0 24px; }
-      .header { padding: 16px 24px; }
-      .main-content { padding: 24px 0; }
-      .match-grid { 
-        display: grid; 
-        grid-template-columns: repeat(2, 1fr); 
-        gap: 16px; 
-      }
-    }
-    
-    /* ПК (1024px+) */
-    @media (min-width: 1024px) {
-      .app-container { padding: 0 32px; }
-      .header { padding: 16px 32px; }
-      .main-content { padding: 32px 0; }
-      .match-grid { 
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 20px; 
-      }
-      .sidebar { display: block; }
-    }
-    
-    /* Большие экраны (1440px+) */
-    @media (min-width: 1440px) {
-      .match-grid { grid-template-columns: repeat(4, 1fr); }
+      padding-bottom: 80px;
     }
 
-    /* ============================================
-       ШАПКА
-       ============================================ */
+    .app-container {
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--bg-primary);
+      min-height: 100vh;
+      position: relative;
+    }
     
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: var(--header-height);
-      background: var(--bg-primary);
+      padding: 16px;
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
+      background: var(--bg-primary);
       z-index: 100;
-      backdrop-filter: blur(10px);
     }
     
-    .logo {
-      font-size: 24px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--text-primary);
-      text-decoration: none;
-    }
-    
-    .logo-icon { font-size: 28px; }
-    
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    
-    .search-box {
-      display: none;
-      position: relative;
-    }
-    
-    @media (min-width: 768px) {
-      .search-box { display: block; }
-    }
-    
-    .search-input {
-      width: 250px;
-      padding: 10px 16px 10px 40px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      color: var(--text-primary);
-      font-size: 14px;
-    }
-    
-    .search-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    
-    .search-icon {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-secondary);
-    }
-    
-    .user-menu {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .logo { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .user-info { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 14px; color: #000;
     }
     
     .notifications-btn {
@@ -176,1320 +87,807 @@
       color: var(--text-primary);
       font-size: 22px;
       cursor: pointer;
-      padding: 8px;
-      border-radius: 50%;
-      transition: background 0.2s;
+      padding: 4px;
     }
-    
-    .notifications-btn:hover { background: var(--bg-hover); }
-    
     .notification-badge {
       position: absolute;
-      top: 2px;
-      right: 2px;
+      top: -2px;
+      right: -2px;
       background: var(--danger);
       color: white;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
-      padding: 2px 5px;
-      border-radius: 10px;
-      min-width: 16px;
+      padding: 2px 4px;
+      border-radius: 8px;
+      min-width: 14px;
       text-align: center;
     }
     
-    .user-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      font-size: 16px;
-      color: #000;
-      cursor: pointer;
-    }
-    
-    .auth-buttons {
-      display: flex;
-      gap: 12px;
-    }
-    
-    .btn {
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
-    }
-    
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-primary);
-    }
-    
-    .btn-outline:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    
-    .btn-primary {
-      background: var(--accent);
-      color: #000;
-    }
-    
-    .btn-primary:hover {
-      background: var(--accent-hover);
-    }
-
-    /* ============================================
-       НАВИГАЦИЯ
-       ============================================ */
-    
-    .main-nav {
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border);
-      display: none;
-    }
-    
-    @media (min-width: 1024px) {
-      .main-nav { display: block; }
-    }
-    
-    .nav-list {
-      display: flex;
-      list-style: none;
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 0 32px;
-    }
-    
-    .nav-item {
-      padding: 16px 24px;
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s;
-      border-bottom: 2px solid transparent;
-    }
-    
-    .nav-item:hover, .nav-item.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
-
-    /* ============================================
-       ОСНОВНОЙ КОНТЕНТ
-       ============================================ */
-    
-    .main-content {
-      min-height: calc(100vh - var(--header-height) - var(--nav-height) - 100px);
-    }
-    
-    .content-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 24px;
-      padding: 24px 0;
-    }
-    
-    @media (min-width: 1024px) {
-      .content-grid {
-        grid-template-columns: 1fr 320px;
-      }
-    }
-
-    /* ============================================
-       ФИЛЬТРЫ
-       ============================================ */
-    
-    .filters {
-      display: flex;
-      gap: 8px;
-      padding: 16px;
-      overflow-x: auto;
-      margin-bottom: 16px;
-    }
-    
+    .filters { display: flex; gap: 8px; padding: 16px; overflow-x: auto; }
     .filter-btn {
-      padding: 10px 20px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      color: var(--text-secondary);
-      font-size: 14px;
-      white-space: nowrap;
-      cursor: pointer;
-      transition: all 0.2s;
+      padding: 8px 16px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 20px; color: var(--text-secondary); font-size: 13px;
+      white-space: nowrap; cursor: pointer;
     }
+    .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
     
-    .filter-btn:hover {
-      background: var(--bg-hover);
+    .search-bar { padding: 0 16px 16px; }
+    .search-input-large {
+      width: 100%; padding: 12px 16px; background: var(--bg-secondary);
+      border: 1px solid var(--border); border-radius: 12px;
+      color: var(--text-primary); font-size: 14px;
     }
-    
-    .filter-btn.active {
-      background: var(--accent);
-      color: #000;
-      border-color: var(--accent);
-      font-weight: 600;
-    }
-
-    /* ============================================
-       КАРТОЧКИ МАТЧЕЙ
-       ============================================ */
+    .search-input-large:focus { outline: none; border-color: var(--accent); }
     
     .match-card {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      padding: 20px;
-      border: 1px solid var(--border);
-      transition: transform 0.2s, box-shadow 0.2s;
+      background: var(--bg-card); border-radius: 12px; padding: 16px;
+      margin: 0 16px 12px; border: 1px solid var(--border);
     }
+    .match-league { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 12px; }
+    .match-teams { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .team { flex: 1; text-align: center; }
+    .team-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+    .team-score { font-size: 24px; font-weight: 700; color: var(--accent); }
+    .vs { color: var(--text-secondary); font-size: 14px; padding: 0 12px; }
+    .match-info { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+    .match-status { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+    .status-live { background: var(--danger); color: white; }
+    .status-finished { background: var(--bg-secondary); color: var(--text-secondary); }
+    .status-scheduled { background: var(--accent); color: #000; }
     
-    .match-card:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow);
+    /* ДЕРБИ РЕЖИМ - НОВОЕ */
+    .match-card.derby {
+      border: 2px solid var(--warning);
+      background: linear-gradient(135deg, var(--bg-card) 0%, rgba(255, 165, 2, 0.1) 100%);
     }
-    
-    .match-league {
-      font-size: 12px;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
-    .match-teams {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    
-    .team {
-      flex: 1;
-      text-align: center;
-      padding: 0 8px;
-    }
-    
-    .team-name {
-      font-weight: 600;
-      font-size: 15px;
-      margin-bottom: 6px;
-      line-height: 1.3;
-    }
-    
-    .team-score {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--accent);
-    }
-    
-    .vs {
-      color: var(--text-muted);
-      font-size: 14px;
-      padding: 0 16px;
-      font-weight: 600;
-    }
-    
-    .match-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-bottom: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .match-status {
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    
-    .status-live {
-      background: var(--danger);
-      color: white;
-      animation: pulse 2s infinite;
-    }
-    
-    .status-finished {
-      background: var(--bg-secondary);
-      color: var(--text-secondary);
-    }
-    
-    .status-scheduled {
-      background: var(--accent);
+    .derby-badge {
+      display: inline-block;
+      background: var(--warning);
       color: #000;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-    
-    .match-actions {
-      display: flex;
-      gap: 8px;
-    }
-    
-    .action-btn {
-      flex: 1;
-      padding: 12px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    
-    .action-btn:hover {
-      background: var(--bg-hover);
-      border-color: var(--accent);
-    }
-    
-    .action-btn.primary {
-      background: var(--accent);
-      color: #000;
-      border-color: var(--accent);
-      font-weight: 600;
-    }
-    
-    .action-btn.primary:hover {
-      background: var(--accent-hover);
-    }
-
-    /* ============================================
-       БОКОВАЯ ПАНЕЛЬ
-       ============================================ */
-    
-    .sidebar {
-      display: none;
-    }
-    
-    @media (min-width: 1024px) {
-      .sidebar { display: block; }
-    }
-    
-    .sidebar-card {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      padding: 20px;
-      border: 1px solid var(--border);
-      margin-bottom: 20px;
-    }
-    
-    .sidebar-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .top-team-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .top-team-item:last-child { border-bottom: none; }
-    
-    .top-team-name {
-      font-weight: 500;
-      font-size: 14px;
-    }
-    
-    .top-team-points {
+      font-size: 10px;
       font-weight: 700;
-      color: var(--accent);
-    }
-
-    /* ============================================
-       МОДАЛЬНЫЕ ОКНА
-       ============================================ */
-    
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.8);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    
-    .modal.active { display: flex; }
-    
-    .modal-content {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      width: 100%;
-      max-width: 500px;
-      max-height: 85vh;
-      overflow-y: auto;
-      animation: modalSlide 0.3s ease;
-    }
-    
-    @keyframes modalSlide {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .modal-title {
-      font-size: 20px;
-      font-weight: 600;
-    }
-    
-    .modal-close {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 24px;
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 50%;
-      transition: background 0.2s;
-    }
-    
-    .modal-close:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
-    }
-    
-    .modal-body {
-      padding: 20px;
-    }
-
-    /* ============================================
-       ФОРМА ВХОДА/РЕГИСТРАЦИИ
-       ============================================ */
-    
-    .auth-modal {
-      max-width: 420px;
-    }
-    
-    .auth-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 24px;
-    }
-    
-    .auth-tab {
-      flex: 1;
-      padding: 16px;
-      text-align: center;
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-    }
-    
-    .auth-tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
-    
-    .auth-form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    
-    .form-label {
-      font-size: 14px;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-    
-    .form-input {
-      padding: 14px 16px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-size: 16px;
-      transition: border-color 0.2s;
-    }
-    
-    .form-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    
-    .form-input::placeholder {
-      color: var(--text-muted);
-    }
-    
-    .social-login {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 24px;
-    }
-    
-    .social-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 14px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .social-btn:hover {
-      background: var(--bg-hover);
-      border-color: var(--accent);
-    }
-    
-    .social-icon {
-      width: 20px;
-      height: 20px;
-    }
-
-    /* ============================================
-       ПРОФИЛЬ
-       ============================================ */
-    
-    .profile-header {
-      text-align: center;
-      padding: 32px;
-      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
-      border-radius: var(--radius);
-      margin-bottom: 24px;
-    }
-    
-    .profile-avatar-large {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 48px;
-      font-weight: 700;
-      color: #000;
-      margin: 0 auto 20px;
-      border: 4px solid var(--bg-card);
-    }
-    
-    .profile-name {
-      font-size: 28px;
-      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
       margin-bottom: 8px;
     }
     
-    .profile-username {
-      font-size: 16px;
-      color: var(--text-secondary);
-      margin-bottom: 20px;
+    .match-actions { display: flex; gap: 8px; }
+    .action-btn {
+      flex: 1; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-size: 13px; cursor: pointer;
+    }
+    .action-btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+    
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8); z-index: 1000; align-items: flex-end; justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--bg-card); border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 480px; padding: 20px; max-height: 85vh; overflow-y: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .modal-title { font-size: 18px; font-weight: 600; }
+    .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
+    
+    .registration-modal {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center;
+    }
+    .registration-modal.active { display: flex; }
+    .registration-content {
+      background: var(--bg-card); border-radius: 20px;
+      width: 90%; max-width: 400px; padding: 30px;
+    }
+    .registration-title { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+    .registration-subtitle { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; display: block; }
+    .form-input {
+      width: 100%; padding: 14px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text-primary); font-size: 16px;
+    }
+    .form-input:focus { outline: none; border-color: var(--accent); }
+    .form-hint { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+    
+    .rating-section { margin-bottom: 20px; }
+    .rating-label { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
+    .rating-stars { display: flex; gap: 4px; flex-wrap: wrap; }
+    .rating-star {
+      width: 36px; height: 36px; border-radius: 8px; background: var(--bg-secondary);
+      border: 2px solid var(--border); color: var(--text-primary); font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .rating-star.selected { background: var(--accent); color: #000; border-color: var(--accent); }
+    
+    .players-section { margin-bottom: 20px; }
+    .players-group { margin-bottom: 16px; }
+    .players-group-title {
+      font-size: 14px; font-weight: 600; color: var(--accent);
+      margin-bottom: 8px; padding: 8px; background: var(--bg-secondary);
+      border-radius: 8px;
+    }
+    .player-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px; background: var(--bg-secondary); border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .player-info { flex: 1; }
+    .player-name { font-weight: 600; font-size: 14px; }
+    .player-position { font-size: 11px; color: var(--text-secondary); }
+    .player-rating-compact { display: flex; align-items: center; gap: 8px; }
+    .rating-number-input {
+      width: 50px; padding: 6px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-primary); font-size: 14px; text-align: center; font-weight: 600;
+    }
+    .player-best-select {
+      padding: 4px 8px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 6px; font-size: 11px; cursor: pointer;
+    }
+    .player-best-select.selected { background: var(--warning); color: #000; border-color: var(--warning); }
+    
+    .comment-input {
+      width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text-primary); font-size: 14px; resize: none; margin-bottom: 20px;
+    }
+    .save-btn {
+      width: 100%; padding: 14px; background: var(--accent); color: #000; border: none;
+      border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
+    }
+    .save-btn:disabled { background: var(--bg-secondary); color: var(--text-secondary); cursor: not-allowed; }
+    
+    .chat-container { display: none; flex-direction: column; height: calc(100vh - 140px); padding: 16px; }
+    .chat-container.active { display: flex; }
+    .chat-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .chat-back { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; }
+    .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .chat-message { background: var(--bg-secondary); border-radius: 12px; padding: 10px 14px; max-width: 85%; }
+    .chat-message.own { align-self: flex-end; background: var(--accent); color: #000; }
+    .chat-input-area { display: flex; gap: 8px; margin-top: 12px; }
+    .chat-input { flex: 1; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 24px; color: var(--text-primary); }
+    .chat-send { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); border: none; color: #000; cursor: pointer; }
+    
+    .profile-container, .friends-container, .feed-container, .notifications-container, .stats-container, .topusers-container, .settings-container { display: none; padding: 16px; }
+    .profile-container.active, .friends-container.active, .feed-container.active, .notifications-container.active, .stats-container.active, .topusers-container.active, .settings-container.active { display: block; }
+    
+    /* ПРОФИЛЬ - ОБНОВЛЁННЫЙ */
+    .profile-header {
+      text-align: center;
+      padding: 24px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .profile-avatar-large {
+      width: 100px; height: 100px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; font-weight: 700; color: #000; margin: 0 auto 16px;
+    }
+    .profile-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .profile-username { font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; }
+    .profile-joined { font-size: 12px; color: var(--text-secondary); }
+    .profile-bio { font-size: 14px; color: var(--text-secondary); margin-top: 12px; font-style: italic; }
+    
+    /* УРОВНИ ПОЛЬЗОВАТЕЛЯ - НОВОЕ */
+    .user-level {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #000;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 12px;
+      margin-top: 8px;
+    }
+    .level-progress {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-secondary);
+      border-radius: 3px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .level-progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.3s;
     }
     
     .profile-stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-top: 24px;
-      padding-top: 24px;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 20px;
       border-top: 1px solid var(--border);
     }
+    .profile-stat-item { text-align: center; }
+    .profile-stat-value { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+    .profile-stat-label { font-size: 12px; color: var(--text-secondary); }
     
-    .profile-stat-item {
-      text-align: center;
-    }
-    
-    .profile-stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--accent);
-      margin-bottom: 4px;
-    }
-    
-    .profile-stat-label {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    /* ============================================
-       ЛЕНТА ОЦЕНОК
-       ============================================ */
-    
-    .feed-card {
+    .profile-section {
       background: var(--bg-card);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 16px;
-      border: 1px solid var(--border);
-    }
-    
-    .feed-user {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      border-radius: 12px;
+      padding: 16px;
       margin-bottom: 16px;
     }
-    
-    .feed-user-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: var(--accent);
+    .profile-section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      color: #000;
-      font-size: 18px;
+      gap: 8px;
     }
-    
-    .feed-user-info {
-      flex: 1;
-    }
-    
-    .feed-user-name {
-      font-weight: 600;
-      font-size: 15px;
-    }
-    
-    .feed-user-username {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-    
-    .feed-rating {
-      font-size: 36px;
-      font-weight: 700;
-      color: var(--accent);
-      margin: 12px 0;
-    }
-    
-    .feed-comment {
-      font-size: 15px;
-      margin: 12px 0;
-      line-height: 1.5;
-      color: var(--text-secondary);
-    }
-    
-    .feed-actions {
+    .recent-rating-item {
       display: flex;
-      gap: 20px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .recent-rating-match { font-size: 14px; }
+    .recent-rating-value { font-size: 18px; font-weight: 700; color: var(--accent); }
+    
+    /* СРАВНЕНИЕ С ДРУЗЬЯМИ - НОВОЕ */
+    .compatibility-section {
       margin-top: 16px;
       padding-top: 16px;
       border-top: 1px solid var(--border);
     }
+    .compatibility-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .compatibility-value { font-size: 16px; font-weight: 700; color: var(--accent); }
+    .compatibility-bar {
+      height: 8px;
+      background: var(--bg-card);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .compatibility-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      border-radius: 4px;
+    }
     
-    .like-btn {
+    /* КОММЕНТАРИИ К ОЦЕНКАМ - НОВОЕ */
+    .rating-comments {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .comment-item {
+      background: var(--bg-secondary);
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+    .comment-author { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+    .comment-text { font-size: 13px; color: var(--text-secondary); }
+    .comment-input-small {
+      width: 100%;
+      padding: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    
+    .stats-header {
+      text-align: center;
+      padding: 20px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .stats-avatar {
+      width: 80px; height: 80px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: 700; color: #000; margin: 0 auto 12px;
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .stat-card { background: var(--bg-card); padding: 16px; border-radius: 12px; text-align: center; }
+    .stat-card-value { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+    .stat-card-label { font-size: 12px; color: var(--text-secondary); }
+    
+    .stats-section {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .stats-section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 8px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 15px;
-      padding: 8px 12px;
+    }
+    
+    /* КОМАНДА НЕДЕЛИ - НОВОЕ */
+    .team-of-week {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .tow-player {
+      background: var(--bg-secondary);
+      padding: 12px 8px;
       border-radius: 8px;
-      transition: all 0.2s;
-      background: none;
-      border: none;
+      text-align: center;
     }
+    .tow-position { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; }
+    .tow-name { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+    .tow-rating { font-size: 16px; font-weight: 700; color: var(--accent); }
     
-    .like-btn:hover {
-      background: var(--bg-hover);
+    .top-player-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 8px;
     }
-    
-    .like-btn.liked {
-      color: var(--danger);
+    .top-player-info { display: flex; align-items: center; gap: 12px; }
+    .top-player-rank {
+      width: 24px; height: 24px; border-radius: 50%; background: var(--accent);
+      color: #000; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
     }
-
-    /* ============================================
-       ТОП ПОЛЬЗОВАТЕЛЕЙ
-       ============================================ */
+    .top-player-rating { font-size: 18px; font-weight: 700; color: var(--accent); }
     
+    .rating-history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .rating-history-match { font-size: 14px; }
+    .rating-history-value { display: flex; align-items: center; gap: 8px; }
+    .rating-bar { width: 100px; height: 8px; background: var(--bg-card); border-radius: 4px; overflow: hidden; }
+    .rating-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+    
+    /* ТОП ПОЛЬЗОВАТЕЛЕЙ */
     .top-user-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 16px;
-      background: var(--bg-secondary);
-      border-radius: 8px;
-      margin-bottom: 12px;
-      transition: transform 0.2s;
-    }
-    
-    .top-user-item:hover {
-      transform: translateX(4px);
-    }
-    
-    .top-user-rank {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 700;
-      margin-right: 16px;
-      flex-shrink: 0;
-    }
-    
-    .top-user-info {
-      flex: 1;
-      min-width: 0;
-    }
-    
-    .top-user-name {
-      font-weight: 600;
-      font-size: 15px;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .top-user-username {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-    
-    .top-user-stats {
-      text-align: right;
-      flex-shrink: 0;
-      margin-left: 16px;
-    }
-    
-    .top-user-likes {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--danger);
-    }
-    
-    .top-user-label {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    /* ============================================
-       НИЖНЯЯ НАВИГАЦИЯ (МОБИЛЬНАЯ)
-       ============================================ */
-    
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
       background: var(--bg-card);
-      border-top: 1px solid var(--border);
-      display: flex;
-      padding: 8px 16px;
-      gap: 8px;
-      z-index: 100;
-    }
-    
-    @media (min-width: 1024px) {
-      .bottom-nav { display: none; }
-    }
-    
-    .nav-item {
-      flex: 1;
-      padding: 10px;
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 11px;
-      cursor: pointer;
-      border-radius: 10px;
-      transition: all 0.2s;
-    }
-    
-    .nav-item.active {
-      background: var(--accent);
-      color: #000;
-      font-weight: 600;
-    }
-    
-    .nav-icon {
-      font-size: 22px;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    /* ============================================
-       УВЕДОМЛЕНИЯ
-       ============================================ */
-    
-    .toast {
-      position: fixed;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-100px);
-      background: var(--bg-card);
-      padding: 14px 24px;
-      border-radius: 10px;
-      z-index: 2000;
-      transition: transform 0.3s;
-      max-width: 90%;
-      box-shadow: var(--shadow);
-      border-left: 4px solid var(--success);
-    }
-    
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-    }
-    
-    .toast.error {
-      border-left-color: var(--danger);
-    }
-
-    /* ============================================
-       ЗАГРУЗКА И ПУСТОЕ СОСТОЯНИЕ
-       ============================================ */
-    
-    .loading {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-secondary);
-    }
-    
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 20px;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-secondary);
-    }
-    
-    .empty-icon {
-      font-size: 64px;
-      margin-bottom: 20px;
-      opacity: 0.5;
-    }
-    
-    .empty-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: var(--text-primary);
-    }
-    
-    .empty-text {
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-
-    /* ============================================
-       ЧАТ
-       ============================================ */
-    
-    .chat-container {
-      display: none;
-      flex-direction: column;
-      height: calc(100vh - var(--header-height));
-      position: fixed;
-      top: var(--header-height);
-      left: 0;
-      right: 0;
-      background: var(--bg-primary);
-      z-index: 200;
-    }
-    
-    .chat-container.active { display: flex; }
-    
-    .chat-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px 20px;
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .chat-back {
-      background: none;
-      border: none;
-      color: var(--accent);
-      font-size: 24px;
-      cursor: pointer;
-      padding: 4px;
-    }
-    
-    .chat-title {
-      font-weight: 600;
-      font-size: 18px;
-      flex: 1;
-    }
-    
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    
-    .chat-message {
-      background: var(--bg-secondary);
       border-radius: 12px;
-      padding: 12px 16px;
-      max-width: 80%;
+      margin-bottom: 12px;
     }
-    
-    .chat-message.own {
-      align-self: flex-end;
-      background: var(--accent);
-      color: #000;
+    .top-user-rank {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--accent);
+      color: #000; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; margin-right: 12px;
     }
+    .top-user-info { flex: 1; }
+    .top-user-name { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+    .top-user-username { font-size: 12px; color: var(--text-secondary); }
+    .top-user-stats { text-align: right; }
+    .top-user-likes { font-size: 20px; font-weight: 700; color: var(--danger); }
+    .top-user-label { font-size: 11px; color: var(--text-secondary); }
     
-    .chat-input-area {
-      padding: 16px 20px;
-      background: var(--bg-card);
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 12px;
-    }
-    
-    .chat-input {
-      flex: 1;
-      padding: 14px 20px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      color: var(--text-primary);
-      font-size: 15px;
-    }
-    
-    .chat-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    
-    .chat-send {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: none;
-      color: #000;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex;
+    /* СЕРИИ (STREAKS) - НОВОЕ */
+    .streak-badge {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
+      gap: 4px;
+      background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+      margin-top: 8px;
     }
     
-    .chat-send:hover {
-      background: var(--accent-hover);
+    .invite-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .invite-box {
+      background: var(--bg-secondary); padding: 12px; border-radius: 10px;
+      margin-top: 12px; word-break: break-all; font-size: 12px; color: var(--text-secondary);
     }
-
-    /* ============================================
-       СКРЫТИЕ КОНТЕЙНЕРОВ
-       ============================================ */
-    
-    .view-container { display: none; }
-    .view-container.active { display: block; }
-    
-    .matches-view.active,
-    .feed-view.active,
-    .topusers-view.active,
-    .friends-view.active,
-    .profile-view.active,
-    .stats-view.active {
-      display: block;
+    .invite-code { font-size: 16px; color: var(--accent); font-weight: 700; letter-spacing: 1px; }
+    .copy-btn {
+      width: 100%; padding: 12px; background: var(--accent); color: #000;
+      border: none; border-radius: 10px; font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
     }
+    
+    .friends-search { margin-bottom: 16px; }
+    .search-input { width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 14px; }
+    .friend-card { background: var(--bg-card); padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .friend-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; font-weight: 600; }
+    .add-friend-btn {
+      margin-left: auto; padding: 6px 12px; background: var(--accent); color: #000;
+      border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .friend-status { margin-left: auto; font-size: 12px; color: var(--success); }
+    
+    .notification-item {
+      background: var(--bg-card); padding: 16px; border-radius: 12px;
+      margin-bottom: 12px; border: 1px solid var(--border);
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .notification-icon { font-size: 24px; padding: 8px; background: var(--bg-secondary); border-radius: 10px; }
+    .notification-content { flex: 1; }
+    .notification-title { font-weight: 600; margin-bottom: 4px; }
+    .notification-text { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .notification-time { font-size: 11px; color: var(--text-secondary); }
+    .notification-action {
+      padding: 6px 12px; background: var(--accent); color: #000;
+      border: none; border-radius: 6px; font-size: 12px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+    }
+    
+    .feed-sort { display: flex; gap: 8px; margin-bottom: 16px; }
+    .feed-card {
+      background: var(--bg-card); border-radius: 12px; padding: 16px;
+      margin-bottom: 12px; border: 1px solid var(--border);
+    }
+    .feed-user { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .feed-user-avatar {
+      width: 40px; height: 40px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; color: #000; font-size: 16px;
+    }
+    .feed-user-info { flex: 1; }
+    .feed-user-name { font-weight: 600; font-size: 14px; }
+    .feed-user-username { font-size: 12px; color: var(--text-secondary); }
+    .feed-match-info { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .feed-match-teams { font-weight: 600; margin-bottom: 8px; }
+    .feed-rating { font-size: 28px; font-weight: 700; color: var(--accent); margin: 8px 0; }
+    .feed-comment { font-size: 14px; margin: 8px 0; line-height: 1.4; }
+    .feed-actions {
+      display: flex; gap: 16px; margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .like-btn { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); cursor: pointer; font-size: 14px; }
+    .like-btn.liked { color: var(--danger); }
+    .feed-date { font-size: 12px; color: var(--text-secondary); }
+    
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; padding: 8px 16px; gap: 8px; z-index: 100; max-width: 480px; margin: 0 auto; }
+    .nav-item { flex: 1; padding: 10px; text-align: center; color: var(--text-secondary); font-size: 12px; cursor: pointer; border-radius: 10px; }
+    .nav-item.active { background: var(--accent); color: #000; font-weight: 600; }
+    .nav-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--bg-card); padding: 12px 20px; border-radius: 10px; z-index: 2000; transition: transform 0.3s; max-width: 480px; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error { border-left: 4px solid var(--danger); }
+    
+    .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
+    
+    .step-indicator { display: flex; gap: 8px; margin-bottom: 16px; }
+    .step { flex: 1; height: 4px; background: var(--border); border-radius: 2px; }
+    .step.active { background: var(--accent); }
+    
+    /* ЭКСПОРТ СТАТИСТИКИ - НОВОЕ */
+    .export-preview {
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .export-stats { font-size: 32px; font-weight: 700; color: var(--accent); margin: 16px 0; }
   </style>
 </head>
 <body>
 
-  <!-- ШАПКА -->
-  <header class="header">
-    <a href="#" class="logo">
-      <span class="logo-icon">⚽</span>
-      <span>FOOTBAZED</span>
-    </a>
-    
-    <div class="header-actions">
-      <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" placeholder="Поиск команд, матчей...">
-      </div>
-      
-      <div class="user-menu" id="userMenu" style="display: none;">
+  <div class="app-container">
+    <div class="header">
+      <div class="logo">⚽ FOOTBAZED</div>
+      <div class="user-info">
         <button class="notifications-btn" onclick="openNotifications()">
           🔔
           <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
         </button>
-        <div class="user-avatar" id="userAvatar" onclick="openView('profile')">U</div>
+        <div class="avatar" id="userAvatar">U</div>
+      </div>
+    </div>
+
+    <div id="matchesView">
+      <div class="search-bar">
+        <input type="text" class="search-input-large" id="matchSearch" placeholder="🔍 Поиск команды...">
       </div>
       
-      <div class="auth-buttons" id="authButtons">
-        <button class="btn btn-outline" onclick="openAuthModal('login')">Войти</button>
-        <button class="btn btn-primary" onclick="openAuthModal('register')">Регистрация</button>
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Все</button>
+        <button class="filter-btn" data-filter="live">🔴 LIVE</button>
+        <button class="filter-btn" data-filter="finished">Завершённые</button>
+        <button class="filter-btn" data-filter="scheduled">Предстоящие</button>
+        <button class="filter-btn" data-filter="favorites">❤️ Любимые</button>
+      </div>
+      <div id="matchesList">
+        <div class="loading"><div class="spinner"></div>Загружаем...</div>
       </div>
     </div>
-  </header>
 
-  <!-- НАВИГАЦИЯ (ПК) -->
-  <nav class="main-nav" id="mainNav" style="display: none;">
-    <ul class="nav-list">
-      <li><a href="#" class="nav-item active" onclick="openView('matches'); return false;">Матчи</a></li>
-      <li><a href="#" class="nav-item" onclick="openView('feed'); return false;">Лента</a></li>
-      <li><a href="#" class="nav-item" onclick="openView('topusers'); return false;">Топ</a></li>
-      <li><a href="#" class="nav-item" onclick="openView('friends'); return false;">Друзья</a></li>
-    </ul>
-  </nav>
+    <div class="feed-container" id="feedView">
+      <h2 style="margin-bottom: 16px;">Лента оценок</h2>
+      <div class="feed-sort">
+        <button class="filter-btn active" data-sort="all">🌍 Все</button>
+        <button class="filter-btn" data-sort="friends">👥 Друзья</button>
+        <button class="filter-btn" data-sort="popular">🔥 Популярные</button>
+      </div>
+      <div id="feedList">
+        <div class="loading"><div class="spinner"></div>Загружаем...</div>
+      </div>
+    </div>
 
-  <!-- ОСНОВНОЙ КОНТЕНТ -->
-  <main class="main-content">
-    <div class="app-container">
+    <div class="topusers-container" id="topUsersView">
+      <h2 style="margin-bottom: 16px;">🏆 Топ пользователей</h2>
+      <div id="topUsersList">
+        <div class="loading"><div class="spinner"></div>Загружаем...</div>
+      </div>
+    </div>
+
+    <div class="friends-container" id="friendsView">
+      <h2 style="margin-bottom: 16px;">Друзья</h2>
+      <div class="friends-search">
+        <input type="text" class="search-input" id="friendSearch" placeholder="🔍 Поиск по никнейму">
+      </div>
+      <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">Мои друзья</h3>
+      <div id="myFriendsList"></div>
+      <h3 style="font-size: 14px; color: var(--text-secondary); margin: 20px 0 12px;">Найти друзей</h3>
+      <div id="friendsList"></div>
       
-      <!-- МАТЧИ -->
-      <div class="view-container matches-view active" id="matchesView">
-        <div class="filters">
-          <button class="filter-btn active" data-filter="all">Все матчи</button>
-          <button class="filter-btn" data-filter="live">🔴 LIVE</button>
-          <button class="filter-btn" data-filter="finished">Завершённые</button>
-          <button class="filter-btn" data-filter="scheduled">Предстоящие</button>
-          <button class="filter-btn" data-filter="favorites">❤️ Любимые</button>
+      <div class="invite-section" id="inviteSection" style="display: none;">
+        <h3 style="margin-bottom: 12px;">🔗 Пригласить друга</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+          Отправь ссылку другу и он автоматически станет твоим другом!
+        </p>
+        <div class="invite-box">
+          <div style="margin-bottom: 8px;">Твоя ссылка:</div>
+          <div class="invite-code" id="inviteCodeDisplay">...</div>
         </div>
-        <div class="match-grid" id="matchesList">
-          <div class="loading">
-            <div class="spinner"></div>
-            <p>Загружаем матчи...</p>
-          </div>
-        </div>
+        <button class="copy-btn" onclick="copyInviteLink()">📋 Копировать ссылку</button>
       </div>
-
-      <!-- ЛЕНТА -->
-      <div class="view-container feed-view" id="feedView">
-        <h2 style="margin-bottom: 20px; font-size: 24px;">Лента оценок</h2>
-        <div class="filters">
-          <button class="filter-btn active" data-sort="recent">🕐 Недавние</button>
-          <button class="filter-btn" data-sort="popular">🔥 Популярные</button>
-          <button class="filter-btn" data-sort="friends">👥 Друзья</button>
-        </div>
-        <div id="feedList">
-          <div class="loading">
-            <div class="spinner"></div>
-            <p>Загружаем ленту...</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- ТОП ПОЛЬЗОВАТЕЛЕЙ -->
-      <div class="view-container topusers-view" id="topUsersView">
-        <h2 style="margin-bottom: 20px; font-size: 24px;">🏆 Топ пользователей</h2>
-        <div id="topUsersList">
-          <div class="loading">
-            <div class="spinner"></div>
-            <p>Загружаем топ...</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- ДРУЗЬЯ -->
-      <div class="view-container friends-view" id="friendsView">
-        <h2 style="margin-bottom: 20px; font-size: 24px;">Друзья</h2>
-        <div class="sidebar-card">
-          <input type="text" class="form-input" id="friendSearch" placeholder="🔍 Поиск по никнейму" style="margin-bottom: 16px;">
-          <h3 style="font-size: 16px; margin-bottom: 12px;">Мои друзья</h3>
-          <div id="myFriendsList"></div>
-          
-          <div class="invite-section" id="inviteSection" style="display: none; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
-            <h3 style="font-size: 16px; margin-bottom: 12px;">🔗 Твоя ссылка</h3>
-            <div style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; word-break: break-all; font-size: 13px; color: var(--accent); margin-bottom: 12px;" id="inviteCodeDisplay"></div>
-            <button class="btn btn-primary" style="width: 100%;" onclick="copyInviteLink()">📋 Копировать</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- СТАТИСТИКА -->
-      <div class="view-container stats-view" id="statsView">
-        <div class="stats-header">
-          <div class="profile-avatar-large" id="statsAvatar">U</div>
-          <h2 id="statsName">Имя</h2>
-          <p id="statsUsername" style="color: var(--text-secondary); margin-top: 8px;">@username</p>
-        </div>
-        
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-card-value" id="statTotalRatings">0</div>
-            <div class="stat-card-label">Оценок</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-card-value" id="statAvgRating">0.0</div>
-            <div class="stat-card-label">Средний</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-card-value" id="statMatchesCount">0</div>
-            <div class="stat-card-label">Матчей</div>
-          </div>
-        </div>
-        
-        <div class="sidebar-card" style="margin-top: 24px;">
-          <div class="sidebar-title">🏆 Топ игроков</div>
-          <div id="topPlayersList"></div>
-        </div>
-        
-        <div class="sidebar-card">
-          <div class="sidebar-title">📊 История оценок</div>
-          <div id="ratingHistoryList"></div>
-        </div>
-      </div>
-
-      <!-- ПРОФИЛЬ -->
-      <div class="view-container profile-view" id="profileView">
-        <div class="profile-header">
-          <div class="profile-avatar-large" id="profileAvatarLarge">U</div>
-          <h1 class="profile-name" id="profileNameLarge">Имя</h1>
-          <p class="profile-username" id="profileUsernameLarge">@username</p>
-          <p class="profile-joined" id="profileJoined" style="color: var(--text-secondary); font-size: 14px;">В FOOTBAZED</p>
-          
-          <div class="profile-stats-grid">
-            <div class="profile-stat-item">
-              <div class="profile-stat-value" id="profileLikesReceived">0</div>
-              <div class="profile-stat-label">👍 Лайков</div>
-            </div>
-            <div class="profile-stat-item">
-              <div class="profile-stat-value" id="profileFriendsCount">0</div>
-              <div class="profile-stat-label">👥 Друзей</div>
-            </div>
-            <div class="profile-stat-item">
-              <div class="profile-stat-value" id="profileRatingsCount">0</div>
-              <div class="profile-stat-label">⭐ Оценок</div>
-            </div>
-          </div>
-          
-          <button class="btn btn-outline" onclick="editUsername()" style="margin-top: 20px; width: 100%; max-width: 300px;">✏️ Изменить никнейм</button>
-        </div>
-        
-        <div class="sidebar-card">
-          <div class="sidebar-title">🕐 Последние оценки</div>
-          <div id="profileRecentRatings"></div>
-        </div>
-        
-        <div class="sidebar-card" id="profileInviteSection" style="display: none;">
-          <div class="sidebar-title">🔗 Твоя ссылка</div>
-          <div style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; word-break: break-all; font-size: 13px; color: var(--accent); margin-bottom: 12px;" id="profileInviteCode"></div>
-          <button class="btn btn-primary" style="width: 100%;" onclick="copyProfileInvite()">📋 Копировать</button>
-        </div>
-      </div>
-
     </div>
-  </main>
 
-  <!-- ЧАТ -->
-  <div class="chat-container" id="chatContainer">
-    <div class="chat-header">
-      <button class="chat-back" id="chatBack">←</button>
-      <div class="chat-title" id="chatMatchTitle">Чат матча</div>
+    <div class="stats-container" id="statsView">
+      <div class="stats-header">
+        <div class="stats-avatar" id="statsAvatar">U</div>
+        <h2 id="statsName">Имя</h2>
+        <p id="statsUsername" style="color: var(--text-secondary);">@username</p>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-value" id="statTotalRatings">0</div>
+          <div class="stat-card-label">Оценок</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-value" id="statAvgRating">0.0</div>
+          <div class="stat-card-label">Средний</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-value" id="statMatchesCount">0</div>
+          <div class="stat-card-label">Матчей</div>
+        </div>
+      </div>
+      
+      <!-- КОМАНДА НЕДЕЛИ - НОВОЕ -->
+      <div class="stats-section">
+        <div class="stats-section-title">⭐ Команда недели</div>
+        <div class="team-of-week" id="teamOfWeekList">
+          <div class="loading"><div class="spinner"></div>Загружаем...</div>
+        </div>
+      </div>
+      
+      <div class="stats-section">
+        <div class="stats-section-title">🏆 Топ игроков (по твоей версии)</div>
+        <div id="topPlayersList">
+          <div class="loading"><div class="spinner"></div>Загружаем...</div>
+        </div>
+      </div>
+      
+      <div class="stats-section">
+        <div class="stats-section-title">📊 История оценок</div>
+        <div id="ratingHistoryList">
+          <div class="loading"><div class="spinner"></div>Загружаем...</div>
+        </div>
+      </div>
     </div>
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-input-area">
-      <input type="text" class="chat-input" id="chatInput" placeholder="Напиши сообщение...">
-      <button class="chat-send" id="chatSend">➤</button>
+
+    <div class="profile-container" id="profileView">
+      <div class="profile-header">
+        <div class="profile-avatar-large" id="profileAvatarLarge">U</div>
+        <div class="profile-name" id="profileNameLarge">Имя</div>
+        <div class="profile-username" id="profileUsernameLarge">@username</div>
+        <div class="profile-joined" id="profileJoined">В FOOTBAZED с февраля 2026</div>
+        <div class="profile-bio" id="profileBio" style="display: none;"></div>
+        
+        <!-- УРОВЕНЬ ПОЛЬЗОВАТЕЛЯ - НОВОЕ -->
+        <div class="user-level" id="userLevel">🌱 Новичок</div>
+        <div class="level-progress">
+          <div class="level-progress-fill" id="levelProgress" style="width: 0%"></div>
+        </div>
+        
+        <!-- СЕРИИ - НОВОЕ -->
+        <div class="streak-badge" id="streakBadge" style="display: none;">
+          🔥 <span id="streakCount">0</span> дней подряд
+        </div>
+        
+        <div class="profile-stats-grid">
+          <div class="profile-stat-item">
+            <div class="profile-stat-value" id="profileLikesReceived">0</div>
+            <div class="profile-stat-label">👍 Лайков</div>
+          </div>
+          <div class="profile-stat-item">
+            <div class="profile-stat-value" id="profileFriendsCount">0</div>
+            <div class="profile-stat-label">👥 Друзей</div>
+          </div>
+          <div class="profile-stat-item">
+            <div class="profile-stat-value" id="profileRatingsCount">0</div>
+            <div class="profile-stat-label">⭐ Оценок</div>
+          </div>
+        </div>
+        
+        <!-- РЕДАКТИРОВАНИЕ НИКНЕЙМА - НОВОЕ -->
+        <button class="action-btn" onclick="editUsername()" style="margin-top: 16px; width: 100%;">✏️ Изменить никнейм</button>
+      </div>
+      
+      <div class="profile-section">
+        <div class="profile-section-title">🕐 Последние оценки</div>
+        <div id="profileRecentRatings">
+          <div class="loading"><div class="spinner"></div>Загружаем...</div>
+        </div>
+      </div>
+      
+      <!-- СРАВНЕНИЕ С ДРУЗЬЯМИ - НОВОЕ -->
+      <div class="profile-section" id="friendCompatibilitySection" style="display: none;">
+        <div class="profile-section-title">📊 Совместимость с другом</div>
+        <div id="friendCompatibilityContent"></div>
+      </div>
+      
+      <div class="profile-section" id="profileInviteSection" style="display: none;">
+        <div class="profile-section-title">🔗 Твоя ссылка</div>
+        <div class="invite-box">
+          <div class="invite-code" id="profileInviteCode">...</div>
+        </div>
+        <button class="copy-btn" onclick="copyProfileInvite()">📋 Копировать</button>
+      </div>
+      
+      <!-- ЭКСПОРТ СТАТИСТИКИ - НОВОЕ -->
+      <div class="profile-section">
+        <div class="profile-section-title">📤 Экспорт статистики</div>
+        <div class="export-preview">
+          <div>Твоя статистика FOOTBAZED</div>
+          <div class="export-stats" id="exportStatsPreview">0 оценок</div>
+          <button class="action-btn primary" onclick="exportStatsImage()">📸 Создать картинку</button>
+        </div>
+      </div>
     </div>
+
+    <div class="notifications-container" id="notificationsView">
+      <h2 style="margin-bottom: 16px;">🔔 Уведомления</h2>
+      <div id="notificationsList">
+        <div class="loading"><div class="spinner"></div>Загружаем...</div>
+      </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+      <div class="chat-header">
+        <button class="chat-back" id="chatBack">←</button>
+        <div class="chat-title" id="chatMatchTitle" style="font-weight: 600;"></div>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-area">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Напиши сообщение...">
+        <button class="chat-send" id="chatSend">➤</button>
+      </div>
+    </div>
+
+    <div class="modal" id="ratingModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title">Оценить матч</div>
+          <button class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <div class="step-indicator">
+          <div class="step active" id="step1"></div>
+          <div class="step" id="step2"></div>
+        </div>
+        <div id="ratingStep1">
+          <div id="modalMatchInfo" style="margin-bottom: 20px; color: var(--text-secondary);"></div>
+          <div class="rating-section">
+            <div class="rating-label">Общее впечатление *</div>
+            <div class="rating-stars" id="matchRating"></div>
+          </div>
+          <div class="form-group" style="margin-top: 16px;">
+            <label class="form-label">
+              <input type="checkbox" id="ratingPrivacy" checked> Публичная оценка
+            </label>
+          </div>
+          <button class="save-btn" id="nextToPlayers" style="margin-top: 16px;">Далее: Игроки →</button>
+        </div>
+        <div id="ratingStep2" style="display: none;">
+          <div class="players-section">
+            <div class="rating-label">Оцените игроков (необязательно)</div>
+            <div id="playersList"></div>
+          </div>
+          <textarea class="comment-input" id="commentInput" placeholder="Комментарий к матчу..." maxlength="500"></textarea>
+          <div style="display: flex; gap: 8px;">
+            <button class="action-btn" id="backToMatch">← Назад</button>
+            <button class="save-btn" id="saveRating">💾 Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="registration-modal" id="registrationModal">
+      <div class="registration-content">
+        <div class="registration-title">👋 Добро пожаловать!</div>
+        <div class="registration-subtitle">Настрой свой профиль FOOTBAZED</div>
+        
+        <div class="form-group">
+          <label class="form-label">Твой никнейм в приложении *</label>
+          <input type="text" class="form-input" id="regAppUsername" placeholder="Например: football_fan">
+          <div class="form-hint">Уникальный никнейм для поиска друзей</div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Telegram username</label>
+          <input type="text" class="form-input" id="regTelegramUsername" placeholder="Например: egorks2020">
+          <div class="form-hint">Для связи с твоим Telegram аккаунтом</div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Bio (о себе)</label>
+          <input type="text" class="form-input" id="regBio" placeholder="Например: Люблю футбол!" maxlength="100">
+          <div class="form-hint">Необязательно</div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">❤️ Любимые команды (через запятую)</label>
+          <input type="text" class="form-input" id="regFavoriteTeams" placeholder="Например: Зенит, Спартак">
+          <div class="form-hint">Необязательно</div>
+        </div>
+        
+        <button class="save-btn" id="completeRegistration" style="margin-top: 24px;">🚀 Начать!</button>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="nav-item active" data-view="matches"><span class="nav-icon">📋</span>Матчи</div>
+      <div class="nav-item" data-view="feed"><span class="nav-icon">📰</span>Лента</div>
+      <div class="nav-item" data-view="topusers"><span class="nav-icon">🏆</span>Топ</div>
+      <div class="nav-item" data-view="friends"><span class="nav-icon">👥</span>Друзья</div>
+      <div class="nav-item" data-view="profile"><span class="nav-icon">👤</span>Профиль</div>
+    </div>
+    <div class="toast" id="toast"></div>
   </div>
-
-  <!-- МОДАЛКА ОЦЕНКИ -->
-  <div class="modal" id="ratingModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">Оценить матч</h3>
-        <button class="modal-close" id="closeModal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div id="modalMatchInfo" style="margin-bottom: 20px; color: var(--text-secondary);"></div>
-        
-        <div class="form-group" style="margin-bottom: 24px;">
-          <label class="form-label">Общее впечатление *</label>
-          <div class="rating-stars" id="matchRating" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
-        </div>
-        
-        <div class="players-section" id="playersSection" style="display: none;">
-          <label class="form-label" style="margin-bottom: 12px; display: block;">Оцените игроков (необязательно)</label>
-          <div id="playersList"></div>
-        </div>
-        
-        <div class="form-group" style="margin-top: 20px;">
-          <label class="form-label">Комментарий</label>
-          <textarea class="form-input" id="commentInput" placeholder="Напиши комментарий..." maxlength="500" rows="3" style="resize: none;"></textarea>
-        </div>
-        
-        <div style="display: flex; gap: 12px; margin-top: 24px;">
-          <button class="btn btn-outline" id="backToMatch" style="flex: 1; display: none;">← Назад</button>
-          <button class="btn btn-primary" id="nextToPlayers" style="flex: 1;">Далее: Игроки →</button>
-          <button class="btn btn-primary" id="saveRating" style="flex: 1; display: none;">💾 Сохранить</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- МОДАЛКА ВХОДА/РЕГИСТРАЦИИ -->
-  <div class="modal" id="authModal">
-    <div class="modal-content auth-modal">
-      <div class="modal-header">
-        <h3 class="modal-title">Вход в FOOTBAZED</h3>
-        <button class="modal-close" onclick="closeAuthModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="auth-tabs">
-          <button class="auth-tab active" onclick="switchAuthTab('login')">Вход</button>
-          <button class="auth-tab" onclick="switchAuthTab('register')">Регистрация</button>
-        </div>
-        
-        <form class="auth-form" id="loginForm">
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-input" placeholder="example@mail.ru" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Пароль</label>
-            <input type="password" class="form-input" placeholder="••••••••" required>
-          </div>
-          <button type="submit" class="btn btn-primary" style="margin-top: 8px;">Войти</button>
-        </form>
-        
-        <form class="auth-form" id="registerForm" style="display: none;">
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-input" placeholder="example@mail.ru" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Пароль</label>
-            <input type="password" class="form-input" placeholder="••••••••" minlength="6" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Никнейм</label>
-            <input type="text" class="form-input" placeholder="football_fan" required>
-          </div>
-          <button type="submit" class="btn btn-primary" style="margin-top: 8px;">Зарегистрироваться</button>
-        </form>
-        
-        <div class="social-login">
-          <p style="text-align: center; color: var(--text-secondary); font-size: 14px;">или войдите через</p>
-          <button class="social-btn" onclick="loginWithTelegram()">
-            <span>✈️</span> Telegram
-          </button>
-          <button class="social-btn" onclick="loginWithVK()">
-            <span>💙</span> ВКонтакте
-          </button>
-          <button class="social-btn" onclick="loginWithGoogle()">
-            <span>🔴</span> Google
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- НИЖНЯЯ НАВИГАЦИЯ (МОБИЛЬНАЯ) -->
-  <nav class="bottom-nav" id="bottomNav">
-    <div class="nav-item active" data-view="matches">
-      <span class="nav-icon">📋</span>
-      Матчи
-    </div>
-    <div class="nav-item" data-view="feed">
-      <span class="nav-icon">📰</span>
-      Лента
-    </div>
-    <div class="nav-item" data-view="topusers">
-      <span class="nav-icon">🏆</span>
-      Топ
-    </div>
-    <div class="nav-item" data-view="friends">
-      <span class="nav-icon">👥</span>
-      Друзья
-    </div>
-    <div class="nav-item" data-view="profile">
-      <span class="nav-icon">👤</span>
-      Профиль
-    </div>
-  </nav>
-
-  <!-- УВЕДОМЛЕНИЯ -->
-  <div class="toast" id="toast"></div>
 
   <script>
-    // ============================================
-    // НАСТРОЙКИ
-    // ============================================
-    
     const SUPABASE_URL = 'https://uukacnyvjvgmmhbkmfzf.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2Fjbnl2anZnbW1oYmttZnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDM3MzcsImV4cCI6MjA4NzA3OTczN30.hZIYkrWFqRwu0IciG2iF3TyP8WnVQcV1sFyjfeVUpRc';
     
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    // Telegram (если запущено в Telegram)
     const tg = window.Telegram.WebApp;
-    if (tg && tg.initDataUnsafe) {
-      tg.expand();
-    }
+    tg.expand();
+    tg.ready();
     
     let telegramUser = null;
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
       telegramUser = tg.initDataUnsafe.user;
       console.log('✅ Telegram user:', telegramUser);
     }
@@ -1499,46 +897,87 @@
     let selectedRating = null;
     let playerRatings = {};
     let bestPlayerId = null;
-    let feedSort = 'recent';
+    let chatSubscription = null;
+    let feedSort = 'all';
+    let notifications = [];
     let matchSearchQuery = '';
     let currentFilter = 'all';
-    let notifications = [];
+    let selectedFriendId = null;
     
-    // ============================================
-    // ИНИЦИАЛИЗАЦИЯ
-    // ============================================
+    // Уровни пользователя
+    const USER_LEVELS = [
+      { name: '🌱 Новичок', minRatings: 0 },
+      { name: '🌿 Любитель', minRatings: 5 },
+      { name: '⭐ Профи', minRatings: 20 },
+      { name: '🏆 Эксперт', minRatings: 50 },
+      { name: '👑 Легенда', minRatings: 100 }
+    ];
+    
+    // Дерби матчи
+    const DERBY_MATCHES = [
+      { home: 'Зенит', away: 'Спартак' },
+      { home: 'Реал', away: 'Барселона' },
+      { home: 'Ман Сити', away: 'Ливерпуль' },
+      { home: 'Ювентус', away: 'Милан' },
+      { home: 'Бавария', away: 'Дортмунд' }
+    ];
     
     async function init() {
-      console.log('🚀 Запуск FOOTBAZED Web...');
-      
-      // Проверка сохранённой сессии
-      const savedUser = localStorage.getItem('footbazed_user');
-      if (savedUser) {
-        try {
-          currentUser = JSON.parse(savedUser);
-          updateUIForLoggedInUser();
-        } catch (e) {
-          localStorage.removeItem('footbazed_user');
+      try {
+        console.log('🚀 Запуск FOOTBAZED v3.0...');
+        
+        const userNameEl = document.getElementById('userName');
+        const userAvatarEl = document.getElementById('userAvatar');
+        
+        if (!telegramUser) {
+          if (userNameEl) userNameEl.textContent = 'Гость';
+          if (userAvatarEl) userAvatarEl.textContent = '!';
+          showToast('⚠️ Запустите в Telegram для полной функциональности', 'error');
+          await loadMatches();
+          setupEventListeners();
+          return;
+        }
+        
+        if (userNameEl) userNameEl.textContent = telegramUser.first_name || 'Гость';
+        if (userAvatarEl) userAvatarEl.textContent = (telegramUser.first_name?.[0] || 'U').toUpperCase();
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        await syncUser();
+        await loadMatches();
+        setupEventListeners();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteCode = urlParams.get('invite');
+        if (inviteCode && currentUser) {
+          await addFriendByInvite(inviteCode);
+        }
+        
+        // Запрос push уведомлений
+        requestPushNotifications();
+        
+        showToast('FOOTBAZED готов! ⚽', 'success');
+        console.log('✅ Приложение запущено успешно');
+      } catch (e) {
+        console.error('❌ Ошибка инициализации:', e);
+        const matchesList = document.getElementById('matchesList');
+        if (matchesList) {
+          matchesList.innerHTML = '<div class="empty-state">⚠️ Ошибка: ' + e.message + '</div>';
         }
       }
-      
-      // Если Telegram - используем его данные
-      if (telegramUser && !currentUser) {
-        await syncUser();
-      }
-      
-      await loadMatches();
-      setupEventListeners();
-      
-      showToast('FOOTBAZED готов! ⚽', 'success');
     }
     
     async function syncUser() {
       try {
         const telegramId = telegramUser ? telegramUser.id : null;
-        if (!telegramId) return;
         
-        console.log('🔍 Синхронизация пользователя:', telegramId);
+        if (!telegramId) {
+          console.error('❌ Нет Telegram ID');
+          showToast('❌ Ошибка: нет данных Telegram', 'error');
+          return;
+        }
+        
+        console.log('🔍 Поиск пользователя с Telegram ID:', telegramId);
         
         const { data: existingUser, error: fetchError } = await supabaseClient
           .from('users')
@@ -1551,204 +990,443 @@
         }
         
         if (!existingUser) {
-          console.log('📝 Создание нового пользователя...');
-          const { data: newUser, error } = await supabaseClient
-            .from('users')
-            .insert({
-              id: telegramId,
-              username: telegramUser.username || 'user_' + telegramId,
-              display_name: telegramUser.first_name || 'User',
-              avatar_url: telegramUser.photo_url,
-              last_seen: new Date().toISOString()
-            })
-            .select()
-            .single();
-          
-          if (error) throw error;
-          currentUser = newUser;
-        } else {
-          await supabaseClient.from('users').update({ last_seen: new Date().toISOString() }).eq('id', telegramId);
-          currentUser = existingUser;
+          console.log('📝 Новый пользователь - показываем регистрацию');
+          showRegistration();
+          return;
         }
         
-        localStorage.setItem('footbazed_user', JSON.stringify(currentUser));
-        updateUIForLoggedInUser();
-        console.log('✅ Пользователь синхронизирован:', currentUser);
+        await supabaseClient
+          .from('users')
+          .update({ last_seen: new Date().toISOString() })
+          .eq('id', telegramId);
+        
+        currentUser = existingUser;
+        console.log('✅ Пользователь найден:', currentUser);
+        
+        updateProfileUI();
+        updateStatsUI();
+        
+        loadNotifications();
+        loadMyFriends();
         
       } catch (e) {
         console.error('❌ Ошибка синхронизации:', e);
+        showToast('Ошибка авторизации: ' + e.message, 'error');
       }
-    }
-    
-    function updateUIForLoggedInUser() {
-      if (!currentUser) return;
-      
-      document.getElementById('authButtons').style.display = 'none';
-      document.getElementById('userMenu').style.display = 'flex';
-      document.getElementById('mainNav').style.display = 'block';
-      
-      const avatar = currentUser.display_name?.[0] || currentUser.username?.[0] || 'U';
-      document.getElementById('userAvatar').textContent = avatar.toUpperCase();
-      
-      updateProfileUI();
-      loadMyFriends();
     }
     
     function updateProfileUI() {
+      const profileNameLargeEl = document.getElementById('profileNameLarge');
+      const profileUsernameLargeEl = document.getElementById('profileUsernameLarge');
+      const profileAvatarLargeEl = document.getElementById('profileAvatarLarge');
+      const profileJoinedEl = document.getElementById('profileJoined');
+      const profileBioEl = document.getElementById('profileBio');
+      const profileInviteSectionEl = document.getElementById('profileInviteSection');
+      const profileInviteCodeEl = document.getElementById('profileInviteCode');
+      const userLevelEl = document.getElementById('userLevel');
+      const levelProgressEl = document.getElementById('levelProgress');
+      
+      if (profileNameLargeEl) profileNameLargeEl.textContent = currentUser.display_name || telegramUser.first_name;
+      if (profileUsernameLargeEl) profileUsernameLargeEl.textContent = '@' + (currentUser.username || 'user');
+      if (profileAvatarLargeEl) profileAvatarLargeEl.textContent = (currentUser.display_name?.[0] || telegramUser.first_name?.[0] || 'U').toUpperCase();
+      
+      if (profileJoinedEl) {
+        const joinDate = new Date(currentUser.created_at || Date.now());
+        const monthNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+        profileJoinedEl.textContent = `В FOOTBAZED с ${joinDate.getDate()} ${monthNames[joinDate.getMonth()]} ${joinDate.getFullYear()}`;
+      }
+      
+      if (currentUser.bio && profileBioEl) {
+        profileBioEl.textContent = currentUser.bio;
+        profileBioEl.style.display = 'block';
+      }
+      
+      if (currentUser.invite_code && profileInviteSectionEl && profileInviteCodeEl) {
+        profileInviteSectionEl.style.display = 'block';
+        const inviteUrl = `https://bonineswerh.github.io/footbazed47/?invite=${currentUser.invite_code}`;
+        profileInviteCodeEl.textContent = inviteUrl;
+      }
+      
+      // Уровень пользователя
+      if (userLevelEl && levelProgressEl) {
+        const ratingsCount = currentUser.ratings_count || 0;
+        const currentLevel = USER_LEVELS.slice().reverse().find(l => ratingsCount >= l.minRatings) || USER_LEVELS[0];
+        const nextLevel = USER_LEVELS[USER_LEVELS.indexOf(currentLevel) + 1];
+        
+        userLevelEl.textContent = currentLevel.name;
+        
+        if (nextLevel) {
+          const progress = ((ratingsCount - currentLevel.minRatings) / (nextLevel.minRatings - currentLevel.minRatings)) * 100;
+          levelProgressEl.style.width = `${Math.min(progress, 100)}%`;
+        } else {
+          levelProgressEl.style.width = '100%';
+        }
+      }
+    }
+    
+    function updateStatsUI() {
+      const statsNameEl = document.getElementById('statsName');
+      const statsUsernameEl = document.getElementById('statsUsername');
+      const statsAvatarEl = document.getElementById('statsAvatar');
+      
+      if (statsNameEl) statsNameEl.textContent = currentUser.display_name || telegramUser.first_name;
+      if (statsUsernameEl) statsUsernameEl.textContent = '@' + (currentUser.username || 'user');
+      if (statsAvatarEl) statsAvatarEl.textContent = (currentUser.display_name?.[0] || telegramUser.first_name?.[0] || 'U').toUpperCase();
+    }
+    
+    function showRegistration() {
+      document.getElementById('registrationModal').classList.add('active');
+      if (telegramUser && telegramUser.username) {
+        document.getElementById('regTelegramUsername').value = telegramUser.username;
+      }
+    }
+    
+    document.getElementById('completeRegistration')?.addEventListener('click', async function() {
+      const appUsername = document.getElementById('regAppUsername')?.value.trim() || '';
+      const telegramUsername = document.getElementById('regTelegramUsername')?.value.trim() || '';
+      const bio = document.getElementById('regBio')?.value.trim() || '';
+      const favoriteTeams = document.getElementById('regFavoriteTeams')?.value.trim() || '';
+      
+      if (!appUsername) {
+        showToast('❌ Введи никнейм для приложения', 'error');
+        return;
+      }
+      
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Создаём...';
+      
+      try {
+        const telegramId = telegramUser.id;
+        
+        const { data: newUser, error } = await supabaseClient
+          .from('users')
+          .insert({
+            id: telegramId,
+            username: appUsername,
+            display_name: telegramUser.first_name || 'User',
+            avatar_url: telegramUser.photo_url,
+            telegram_username: telegramUsername || null,
+            bio: bio || null,
+            favorite_teams: favoriteTeams || null,
+            last_seen: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        currentUser = newUser;
+        document.getElementById('registrationModal').classList.remove('active');
+        
+        updateProfileUI();
+        updateStatsUI();
+        
+        showToast('✅ Регистрация завершена!', 'success');
+        loadNotifications();
+        loadMyFriends();
+        
+      } catch (e) {
+        console.error('❌ Ошибка регистрации:', e);
+        showToast('Не удалось: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '🚀 Начать!';
+      }
+    });
+    
+    async function editUsername() {
+      const newUsername = prompt('Введи новый никнейм:', currentUser.username || '');
+      if (!newUsername || newUsername === currentUser.username) return;
+      
+      try {
+        const { error } = await supabaseClient
+          .from('users')
+          .update({ username: newUsername })
+          .eq('id', currentUser.id);
+        
+        if (error) throw error;
+        
+        currentUser.username = newUsername;
+        updateProfileUI();
+        updateStatsUI();
+        
+        showToast('✅ Никнейм обновлён!', 'success');
+        
+      } catch (e) {
+        console.error('❌ Ошибка обновления никнейма:', e);
+        showToast('Не удалось обновить никнейм', 'error');
+      }
+    }
+    
+    async function loadNotifications() {
       if (!currentUser) return;
       
-      const els = {
-        name: document.getElementById('profileNameLarge'),
-        username: document.getElementById('profileUsernameLarge'),
-        avatar: document.getElementById('profileAvatarLarge'),
-        joined: document.getElementById('profileJoined'),
-        invite: document.getElementById('profileInviteSection'),
-        inviteCode: document.getElementById('profileInviteCode'),
-        statsName: document.getElementById('statsName'),
-        statsUsername: document.getElementById('statsUsername'),
-        statsAvatar: document.getElementById('statsAvatar')
-      };
-      
-      if (els.name) els.name.textContent = currentUser.display_name || 'Пользователь';
-      if (els.username) els.username.textContent = '@' + (currentUser.username || 'user');
-      if (els.avatar) els.avatar.textContent = (currentUser.display_name?.[0] || 'U').toUpperCase();
-      if (els.joined) {
-        const date = new Date(currentUser.created_at || Date.now());
-        els.joined.textContent = `В FOOTBAZED с ${date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}`;
-      }
-      if (els.invite && els.inviteCode && currentUser.invite_code) {
-        els.invite.style.display = 'block';
-        els.inviteCode.textContent = `https://footbazed.ru/?invite=${currentUser.invite_code}`;
-      }
-      if (els.statsName) els.statsName.textContent = currentUser.display_name || 'Пользователь';
-      if (els.statsUsername) els.statsUsername.textContent = '@' + (currentUser.username || 'user');
-      if (els.statsAvatar) els.statsAvatar.textContent = (currentUser.display_name?.[0] || 'U').toUpperCase();
-    }
-    
-    // ============================================
-    // АВТОРИЗАЦИЯ
-    // ============================================
-    
-    function openAuthModal(tab = 'login') {
-      document.getElementById('authModal').classList.add('active');
-      switchAuthTab(tab);
-    }
-    
-    function closeAuthModal() {
-      document.getElementById('authModal').classList.remove('active');
-    }
-    
-    function switchAuthTab(tab) {
-      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
-      
-      if (tab === 'login') {
-        document.getElementById('loginForm').style.display = 'flex';
-        document.getElementById('registerForm').style.display = 'none';
-      } else {
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('registerForm').style.display = 'flex';
+      try {
+        const { data: friendRequests } = await supabaseClient
+          .from('friendships')
+          .select(`*, users (display_name, username, avatar_url)`)
+          .eq('friend_id', currentUser.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+        
+        notifications = [];
+        
+        if (friendRequests) {
+          friendRequests.forEach(req => {
+            notifications.push({
+              id: 'req_' + req.id,
+              type: 'friend_request',
+              title: 'Заявка в друзья',
+              text: `${req.users?.display_name || 'Пользователь'} хочет добавить тебя в друзья`,
+              time: new Date(req.created_at).toLocaleString('ru-RU'),
+              action: 'accept',
+              data: req
+            });
+          });
+        }
+        
+        const unreadCount = friendRequests?.length || 0;
+        const badge = document.getElementById('notificationBadge');
+        if (unreadCount > 0) {
+          badge.textContent = unreadCount;
+          badge.style.display = 'block';
+        } else {
+          badge.style.display = 'none';
+        }
+        
+        renderNotifications();
+        
+      } catch (e) {
+        console.error('❌ Ошибка загрузки уведомлений:', e);
       }
     }
     
-    async function loginWithTelegram() {
-      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        await syncUser();
-        closeAuthModal();
-        showToast('✅ Вход через Telegram выполнен!', 'success');
-      } else {
-        showToast('⚠️ Откройте в Telegram для входа', 'error');
+    function renderNotifications() {
+      const list = document.getElementById('notificationsList');
+      if (notifications.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">🔔</div><p>Пока нет уведомлений</p></div>';
+        return;
+      }
+      list.innerHTML = notifications.map(notif => `
+        <div class="notification-item">
+          <div class="notification-icon">${notif.type === 'friend_request' ? '👥' : '✅'}</div>
+          <div class="notification-content">
+            <div class="notification-title">${notif.title}</div>
+            <div class="notification-text">${notif.text}</div>
+            <div class="notification-time">${notif.time}</div>
+            ${notif.action === 'accept' ? `<button class="notification-action" onclick="acceptFriendRequest(${notif.data.id})">✅ Принять</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    async function acceptFriendRequest(requestId) {
+      if (!currentUser) return;
+      try {
+        const { error } = await supabaseClient.from('friendships').update({ status: 'accepted' }).eq('id', requestId);
+        if (error) throw error;
+        showToast('✅ Заявка принята!', 'success');
+        loadNotifications();
+        loadMyFriends();
+      } catch (e) {
+        console.error('❌ Ошибка:', e);
+        showToast('Не удалось принять заявку', 'error');
       }
     }
     
-    function loginWithVK() {
-      showToast('🔜 Скоро будет доступно!', 'success');
+    function openNotifications() {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.getElementById('matchesView').style.display = 'none';
+      document.getElementById('feedView').style.display = 'none';
+      document.getElementById('friendsView').style.display = 'none';
+      document.getElementById('profileView').classList.remove('active');
+      document.getElementById('chatContainer').classList.remove('active');
+      document.getElementById('statsView').classList.remove('active');
+      document.getElementById('topUsersView').classList.remove('active');
+      document.getElementById('notificationsView').classList.add('active');
+      loadNotifications();
     }
     
-    function loginWithGoogle() {
-      showToast('🔜 Скоро будет доступно!', 'success');
-    }
-    
-    // Обработка форм
-    document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const email = this.querySelector('input[type="email"]').value;
-      const password = this.querySelector('input[type="password"]').value;
-      
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        showToast('❌ ' + error.message, 'error');
-      } else {
-        currentUser = data.user;
-        localStorage.setItem('footbazed_user', JSON.stringify(currentUser));
-        updateUIForLoggedInUser();
-        closeAuthModal();
-        showToast('✅ Вход выполнен!', 'success');
+    async function addFriendByInvite(inviteCode) {
+      try {
+        const { data: inviter, error: fetchError } = await supabaseClient
+          .from('users')
+          .select('id, username, display_name')
+          .eq('invite_code', inviteCode)
+          .single();
+        
+        if (fetchError || !inviter) return;
+        if (inviter.id === currentUser.id) return;
+        
+        const { error: insertError } = await supabaseClient
+          .from('friendships')
+          .insert({ user_id: currentUser.id, friend_id: inviter.id, status: 'accepted' });
+        
+        if (insertError) throw insertError;
+        showToast('🎉 Вы добавили @' + (inviter.username || 'user') + ' в друзья!', 'success');
+        loadNotifications();
+        loadMyFriends();
+      } catch (e) {
+        console.error('❌ Ошибка добавления друга:', e);
       }
-    });
+    }
     
-    document.getElementById('registerForm')?.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const email = this.querySelector('input[type="email"]').value;
-      const password = this.querySelector('input[type="password"]').value;
-      const username = this.querySelector('input[type="text"]').value;
+    function copyInviteLink() {
+      const inviteUrl = document.getElementById('inviteCodeDisplay').textContent;
+      navigator.clipboard.writeText(inviteUrl);
+      showToast('📋 Ссылка скопирована!', 'success');
+    }
+    
+    function copyProfileInvite() {
+      const inviteUrl = document.getElementById('profileInviteCode').textContent;
+      navigator.clipboard.writeText(inviteUrl);
+      showToast('📋 Ссылка скопирована!', 'success');
+    }
+    
+    async function loadMyFriends() {
+      if (!currentUser) return;
+      try {
+        const { data: friendships } = await supabaseClient
+          .from('friendships')
+          .select(`*, users (id, display_name, username, avatar_url)`)
+          .eq('user_id', currentUser.id)
+          .eq('status', 'accepted');
+        
+        const list = document.getElementById('myFriendsList');
+        if (!friendships || friendships.length === 0) {
+          list.innerHTML = '<div class="empty-state" style="padding: 20px;"><p>Пока нет друзей</p></div>';
+          return;
+        }
+        
+        list.innerHTML = friendships.map(f => `
+          <div class="friend-card" onclick="viewFriendProfile(${f.users.id})">
+            <div class="friend-avatar">${(f.users.display_name?.[0] || 'U').toUpperCase()}</div>
+            <div style="flex: 1;">
+              <div style="font-weight: 600;">${f.users.display_name || 'Аноним'}</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">@${f.users.username}</div>
+            </div>
+            <span class="friend-status">✓ Друг</span>
+          </div>
+        `).join('');
+        
+        const profileFriendsCountEl = document.getElementById('profileFriendsCount');
+        if (profileFriendsCountEl) profileFriendsCountEl.textContent = friendships.length;
+      } catch (e) {
+        console.error('❌ Ошибка загрузки друзей:', e);
+      }
+    }
+    
+    async function viewFriendProfile(friendId) {
+      selectedFriendId = friendId;
+      document.getElementById('friendsView').style.display = 'none';
+      document.getElementById('profileView').classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.querySelector('[data-view="profile"]').classList.add('active');
       
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
-      
-      if (error) {
-        showToast('❌ ' + error.message, 'error');
-      } else {
-        // Создаём запись в users
-        await supabaseClient.from('users').insert({
-          id: data.user.id,
-          email: email,
-          username: username,
-          display_name: username
+      await loadFriendCompatibility(friendId);
+    }
+    
+    async function loadFriendCompatibility(friendId) {
+      try {
+        // Загружаем оценки друга
+        const { data: friendRatings } = await supabaseClient
+          .from('ratings')
+          .select('match_id, match_rating')
+          .eq('user_id', friendId);
+        
+        // Загружаем наши оценки
+        const { data: myRatings } = await supabaseClient
+          .from('ratings')
+          .select('match_id, match_rating')
+          .eq('user_id', currentUser.id);
+        
+        if (!friendRatings || !myRatings || friendRatings.length === 0 || myRatings.length === 0) {
+          document.getElementById('friendCompatibilitySection').style.display = 'none';
+          return;
+        }
+        
+        // Считаем совпадения
+        const commonMatches = friendRatings.filter(fr => myRatings.some(mr => mr.match_id === fr.match_id));
+        
+        if (commonMatches.length === 0) {
+          document.getElementById('friendCompatibilitySection').style.display = 'none';
+          return;
+        }
+        
+        let totalDiff = 0;
+        commonMatches.forEach(fr => {
+          const myRating = myRatings.find(mr => mr.match_id === fr.match_id);
+          if (myRating) {
+            totalDiff += Math.abs(fr.match_rating - myRating.match_rating);
+          }
         });
         
-        showToast('✅ Регистрация успешна! Проверьте email', 'success');
-        closeAuthModal();
-      }
-    });
-    
-    // ============================================
-    // НАВИГАЦИЯ
-    // ============================================
-    
-    function openView(viewName) {
-      // Скрываем все view
-      document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      
-      // Показываем нужный
-      const targetView = document.getElementById(viewName + 'View');
-      if (targetView) {
-        targetView.classList.add('active');
+        const avgDiff = totalDiff / commonMatches.length;
+        const compatibility = Math.max(0, 100 - (avgDiff * 10));
         
-        // Обновляем навигацию
-        document.querySelectorAll(`.nav-item[data-view="${viewName}"]`).forEach(n => n.classList.add('active'));
+        document.getElementById('friendCompatibilitySection').style.display = 'block';
+        document.getElementById('friendCompatibilityContent').innerHTML = `
+          <div class="compatibility-label">Совпадение оценок</div>
+          <div class="compatibility-value">${compatibility.toFixed(0)}%</div>
+          <div class="compatibility-bar">
+            <div class="compatibility-fill" style="width: ${compatibility}%"></div>
+          </div>
+          <div class="compatibility-label" style="margin-top: 8px;">${commonMatches.length} общих матчей</div>
+        `;
         
-        // Загружаем данные
-        if (viewName === 'matches') loadMatches();
-        else if (viewName === 'feed') loadFeed();
-        else if (viewName === 'topusers') loadTopUsers();
-        else if (viewName === 'friends') loadMyFriends();
-        else if (viewName === 'profile') loadProfile();
-        else if (viewName === 'stats') loadStats();
+      } catch (e) {
+        console.error('❌ Ошибка загрузки совместимости:', e);
       }
-      
-      // Скролл вверх
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
-    // ============================================
-    // МАТЧИ
-    // ============================================
+    async function searchFriends() {
+      const query = document.getElementById('friendSearch').value.trim();
+      if (!query || !currentUser) { loadMyFriends(); return; }
+      
+      const { data: users } = await supabaseClient
+        .from('users')
+        .select('*')
+        .ilike('username', `%${query}%`)
+        .neq('id', currentUser.id)
+        .limit(10);
+      
+      const list = document.getElementById('friendsList');
+      if (!users || users.length === 0) {
+        list.innerHTML = '<div class="empty-state">Никто не найден</div>';
+        return;
+      }
+      
+      list.innerHTML = users.map(u => `
+        <div class="friend-card">
+          <div class="friend-avatar">${(u.display_name?.[0] || 'U').toUpperCase()}</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600;">${u.display_name || 'Аноним'}</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">@${u.username}</div>
+          </div>
+          <button class="add-friend-btn" onclick="addFriend(${u.id})">+ Добавить</button>
+        </div>
+      `).join('');
+    }
+    
+    async function addFriend(friendId) {
+      if (!currentUser) return;
+      try {
+        await supabaseClient.from('friendships').insert({
+          user_id: currentUser.id,
+          friend_id: friendId,
+          status: 'accepted'
+        });
+        showToast('✅ Друг добавлен!', 'success');
+        searchFriends();
+        loadMyFriends();
+      } catch (e) {
+        showToast('Не удалось добавить друга', 'error');
+      }
+    }
     
     async function loadMatches(filter = 'all') {
       const list = document.getElementById('matchesList');
-      list.innerHTML = '<div class="loading"><div class="spinner"></div><p>Загружаем матчи...</p></div>';
+      list.innerHTML = '<div class="loading"><div class="spinner"></div>Загружаем...</div>';
       currentFilter = filter;
       
       try {
@@ -1762,6 +1440,10 @@
           query = query.eq('status', 'finished');
         } else if (filter === 'scheduled') {
           query = query.eq('status', 'scheduled');
+        } else if (filter === 'favorites' && currentUser?.favorite_teams) {
+          const teams = currentUser.favorite_teams.split(',').map(t => t.trim());
+          const teamFilters = teams.map(t => `home_team_name.ilike.%${t}%,away_team_name.ilike.%${t}%`).join(',');
+          query = query.or(teamFilters);
         }
         
         query = query.order('match_date', { ascending: false });
@@ -1770,43 +1452,39 @@
         if (error) throw error;
         
         if (!matches || matches.length === 0) {
-          list.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-icon">📭</div>
-              <div class="empty-title">Матчей нет</div>
-              <div class="empty-text">Попробуйте выбрать другой фильтр</div>
-            </div>
-          `;
+          list.innerHTML = '<div class="empty-state"><p>Матчей нет</p></div>';
           return;
         }
-        
         list.innerHTML = matches.map(match => renderMatchCard(match)).join('');
-        
       } catch (e) {
         console.error('❌ Ошибка:', e);
-        list.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Ошибка загрузки</div><div class="empty-text">' + e.message + '</div></div>';
+        list.innerHTML = '<div class="empty-state">⚠️ Ошибка: ' + e.message + '</div>';
       }
+    }
+    
+    function isDerbyMatch(homeTeam, awayTeam) {
+      return DERBY_MATCHES.some(d => 
+        (d.home === homeTeam && d.away === awayTeam) ||
+        (d.home === awayTeam && d.away === homeTeam)
+      );
     }
     
     function renderMatchCard(match) {
       const date = new Date(match.match_date);
-      const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+      const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       const statusText = { 'live': '🔴 LIVE', 'finished': 'Завершён', 'scheduled': 'Предстоит' }[match.status];
       const statusClass = { 'live': 'status-live', 'finished': 'status-finished', 'scheduled': 'status-scheduled' }[match.status];
       
+      const isDerby = isDerbyMatch(match.home_team_name, match.away_team_name);
+      
       return `
-        <div class="match-card" data-match-id="${match.id}">
-          <div class="match-league">🏆 ${match.league_name}</div>
+        <div class="match-card ${isDerby ? 'derby' : ''}" data-match-id="${match.id}">
+          ${isDerby ? '<div><span class="derby-badge">🔥 ДЕРБИ</span></div>' : ''}
+          <div class="match-league">${match.league_name}</div>
           <div class="match-teams">
-            <div class="team">
-              <div class="team-name">${match.home_team_name}</div>
-              <div class="team-score">${match.home_score ?? '-'}</div>
-            </div>
+            <div class="team"><div class="team-name">${match.home_team_name}</div><div class="team-score">${match.home_score ?? '-'}</div></div>
             <div class="vs">VS</div>
-            <div class="team">
-              <div class="team-name">${match.away_team_name}</div>
-              <div class="team-score">${match.away_score ?? '-'}</div>
-            </div>
+            <div class="team"><div class="team-name">${match.away_team_name}</div><div class="team-score">${match.away_score ?? '-'}</div></div>
           </div>
           <div class="match-info">
             <span>📅 ${dateStr}</span>
@@ -1820,16 +1498,7 @@
       `;
     }
     
-    // ============================================
-    // ОЦЕНКА МАТЧА
-    // ============================================
-    
     async function openRatingModal(matchId) {
-      if (!currentUser) {
-        openAuthModal('login');
-        return;
-      }
-      
       currentMatch = { id: matchId };
       selectedRating = null;
       playerRatings = {};
@@ -1839,34 +1508,32 @@
       if (!match) return;
       
       const teams = match.querySelectorAll('.team-name');
-      document.getElementById('modalMatchInfo').textContent = `${teams[0]?.textContent} vs ${teams[1]?.textContent}`;
+      const modalInfoEl = document.getElementById('modalMatchInfo');
+      if (modalInfoEl) modalInfoEl.textContent = `${teams[0]?.textContent} vs ${teams[1]?.textContent}`;
       
       const container = document.getElementById('matchRating');
-      container.innerHTML = '';
-      for (let i = 1; i <= 10; i++) {
-        const star = document.createElement('div');
-        star.className = 'rating-star';
-        star.style.cssText = 'width: 44px; height: 44px; border-radius: 8px; background: var(--bg-secondary); border: 2px solid var(--border); color: var(--text-primary); font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px;';
-        star.textContent = i;
-        star.onclick = () => selectMatchRating(i, star);
-        container.appendChild(star);
+      if (container) {
+        container.innerHTML = '';
+        for (let i = 1; i <= 10; i++) {
+          const star = document.createElement('div');
+          star.className = 'rating-star';
+          star.textContent = i;
+          star.onclick = () => selectMatchRating(i, star);
+          container.appendChild(star);
+        }
       }
       
-      document.getElementById('commentInput').value = '';
-      document.getElementById('playersSection').style.display = 'none';
-      document.getElementById('nextToPlayers').style.display = 'block';
-      document.getElementById('saveRating').style.display = 'none';
-      document.getElementById('backToMatch').style.display = 'none';
+      const commentInput = document.getElementById('commentInput');
+      if (commentInput) commentInput.value = '';
       
+      showStep(1);
       document.getElementById('ratingModal').classList.add('active');
     }
     
     function selectMatchRating(value, el) {
       selectedRating = value;
       document.querySelectorAll('#matchRating .rating-star').forEach(s => {
-        s.style.background = parseInt(s.textContent) <= value ? 'var(--accent)' : 'var(--bg-secondary)';
-        s.style.color = parseInt(s.textContent) <= value ? '#000' : 'var(--text-primary)';
-        s.style.borderColor = parseInt(s.textContent) <= value ? 'var(--accent)' : 'var(--border)';
+        s.classList.toggle('selected', parseInt(s.textContent) <= value);
       });
     }
     
@@ -1878,11 +1545,16 @@
       const homeTeam = teams[0]?.textContent || '';
       const awayTeam = teams[1]?.textContent || '';
       
-      const { data: players } = await supabaseClient.from('players').select('*').in('team', [homeTeam, awayTeam]);
+      const { data: players, error } = await supabaseClient
+        .from('players')
+        .select('*')
+        .in('team', [homeTeam, awayTeam]);
       
       const container = document.getElementById('playersList');
-      if (!players || players.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>Игроки не найдены</p></div>';
+      if (!container) return;
+      
+      if (error || !players || players.length === 0) {
+        container.innerHTML = '<div class="empty-state">Игроки не найдены</div>';
         return;
       }
       
@@ -1890,12 +1562,12 @@
       const awayPlayers = players.filter(p => p.team === awayTeam);
       
       container.innerHTML = `
-        <div style="margin-bottom: 16px;">
-          <div style="font-weight: 600; color: var(--accent); margin-bottom: 8px;">${homeTeam}</div>
+        <div class="players-group">
+          <div class="players-group-title">${homeTeam}</div>
           ${homePlayers.map(p => renderPlayerItem(p)).join('')}
         </div>
-        <div>
-          <div style="font-weight: 600; color: var(--accent); margin-bottom: 8px;">${awayTeam}</div>
+        <div class="players-group">
+          <div class="players-group-title">${awayTeam}</div>
           ${awayPlayers.map(p => renderPlayerItem(p)).join('')}
         </div>
       `;
@@ -1903,14 +1575,14 @@
     
     function renderPlayerItem(player) {
       return `
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px;">
-          <div style="flex: 1;">
-            <div style="font-weight: 600; font-size: 14px;">${player.name}</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">${player.position || ''}</div>
+        <div class="player-item" data-player-id="${player.id}">
+          <div class="player-info">
+            <div class="player-name">${player.name}</div>
+            <div class="player-position">${player.position || ''}</div>
           </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button onclick="selectBestPlayer(${player.id}, this)" style="padding: 4px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; cursor: pointer;">🏆</button>
-            <input type="number" min="1" max="10" placeholder="1-10" onchange="selectPlayerRating(${player.id}, this.value, this)" style="width: 50px; padding: 6px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 14px; text-align: center; font-weight: 600;">
+          <div class="player-rating-compact">
+            <button class="player-best-select" onclick="selectBestPlayer(${player.id}, this)">🏆</button>
+            <input type="number" class="rating-number-input" min="1" max="10" placeholder="1-10" onchange="selectPlayerRating(${player.id}, this.value, this)">
           </div>
         </div>
       `;
@@ -1928,47 +1600,45 @@
     
     function selectBestPlayer(playerId, el) {
       bestPlayerId = playerId;
-      document.querySelectorAll('#playersList button').forEach(b => {
-        if (b.textContent === '🏆') b.style.background = 'var(--bg-card)';
-      });
-      el.style.background = 'var(--warning)';
-      el.style.color = '#000';
+      document.querySelectorAll('.player-best-select').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
     }
     
-    document.getElementById('nextToPlayers')?.addEventListener('click', () => {
-      if (!selectedRating) { showToast('Выберите оценку от 1 до 10', 'error'); return; }
-      document.getElementById('playersSection').style.display = 'block';
-      document.getElementById('nextToPlayers').style.display = 'none';
-      document.getElementById('saveRating').style.display = 'block';
-      document.getElementById('backToMatch').style.display = 'block';
-      loadPlayersForMatch();
-    });
+    function showStep(step) {
+      document.getElementById('ratingStep1').style.display = step === 1 ? 'block' : 'none';
+      document.getElementById('ratingStep2').style.display = step === 2 ? 'block' : 'none';
+      document.getElementById('step1').classList.toggle('active', step >= 1);
+      document.getElementById('step2').classList.toggle('active', step >= 2);
+      
+      if (step === 2) {
+        loadPlayersForMatch();
+      }
+    }
     
-    document.getElementById('backToMatch')?.addEventListener('click', () => {
-      document.getElementById('playersSection').style.display = 'none';
-      document.getElementById('nextToPlayers').style.display = 'block';
-      document.getElementById('saveRating').style.display = 'none';
-      document.getElementById('backToMatch').style.display = 'none';
-    });
-    
-    document.getElementById('saveRating')?.addEventListener('click', async function() {
+    async function saveRating() {
       if (!selectedRating) { showToast('Выберите оценку', 'error'); return; }
       if (!currentUser) { showToast('Ошибка авторизации', 'error'); return; }
       
-      const btn = this;
+      const btn = document.getElementById('saveRating');
       btn.disabled = true;
       btn.textContent = 'Сохраняем...';
       
       try {
         const commentInput = document.getElementById('commentInput');
+        const privacyCheckbox = document.getElementById('ratingPrivacy');
+        const isPublic = privacyCheckbox?.checked !== false;
         
-        await supabaseClient.from('ratings').upsert({
-          user_id: currentUser.id,
-          match_id: currentMatch.id,
-          match_rating: selectedRating,
-          comment: commentInput?.value || null,
-          is_public: true
-        }, { onConflict: 'user_id,match_id' });
+        const { data: ratingData, error: ratingError } = await supabaseClient
+          .from('ratings')
+          .upsert({
+            user_id: currentUser.id,
+            match_id: currentMatch.id,
+            match_rating: selectedRating,
+            comment: commentInput?.value || null,
+            is_public: isPublic
+          }, { onConflict: 'user_id,match_id' });
+        
+        if (ratingError) throw ratingError;
         
         for (const [playerId, rating] of Object.entries(playerRatings)) {
           await supabaseClient.from('player_ratings').upsert({
@@ -1979,6 +1649,9 @@
             is_best_player: (playerId == bestPlayerId)
           }, { onConflict: 'user_id,match_id,player_id' });
         }
+        
+        // Обновляем серии
+        await updateStreak();
         
         showToast('✅ Оценка сохранена!', 'success');
         document.getElementById('ratingModal').classList.remove('active');
@@ -1993,218 +1666,65 @@
         btn.disabled = false;
         btn.textContent = '💾 Сохранить';
       }
-    });
+    }
     
-    document.getElementById('closeModal')?.addEventListener('click', () => {
-      document.getElementById('ratingModal').classList.remove('active');
-      currentMatch = null;
-    });
-    
-    // ============================================
-    // ОСТАЛЬНЫЕ ФУНКЦИИ (лента, топ, друзья, профиль, чат)
-    // ============================================
-    
-    async function loadFeed() {
-      const list = document.getElementById('feedList');
-      list.innerHTML = '<div class="loading"><div class="spinner"></div><p>Загружаем ленту...</p></div>';
-      
+    async function updateStreak() {
       try {
-        const { data: ratings, error } = await supabaseClient
+        const today = new Date().toISOString().split('T')[0];
+        const { data: lastRating } = await supabaseClient
           .from('ratings')
-          .select('*, users (display_name, username), matches (home_team_name, away_team_name, league_name), rating_likes (id)')
-          .eq('is_public', true)
-          .order('created_at', { ascending: false });
+          .select('created_at')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false })
+          .limit(2);
         
-        if (error) throw error;
-        
-        if (feedSort === 'popular') {
-          ratings.sort((a, b) => (b.rating_likes?.length || 0) - (a.rating_likes?.length || 0));
-        }
-        
-        if (!ratings || ratings.length === 0) {
-          list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Пока нет оценок</div><div class="empty-text">Будь первым!</div></div>';
-          return;
-        }
-        
-        list.innerHTML = ratings.map(r => `
-          <div class="feed-card">
-            <div class="feed-user">
-              <div class="feed-user-avatar">${(r.users?.display_name?.[0] || 'U').toUpperCase()}</div>
-              <div class="feed-user-info">
-                <div class="feed-user-name">${r.users?.display_name || 'Аноним'}</div>
-                <div class="feed-user-username">@${r.users?.username || 'user'}</div>
-              </div>
-            </div>
-            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">${r.matches?.league_name || ''}</div>
-            <div style="font-weight: 600; margin-bottom: 8px;">${r.matches?.home_team_name || ''} vs ${r.matches?.away_team_name || ''}</div>
-            <div class="feed-rating">${r.match_rating || 0}/10</div>
-            ${r.comment ? `<div class="feed-comment">${r.comment}</div>` : ''}
-            <div class="feed-actions">
-              <button class="like-btn" onclick="toggleLike(${r.id})">❤️ ${r.rating_likes?.length || 0}</button>
-              <span style="font-size: 12px; color: var(--text-secondary); margin-left: auto;">${new Date(r.created_at).toLocaleDateString('ru-RU')}</span>
-            </div>
-          </div>
-        `).join('');
-        
-      } catch (e) {
-        list.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Ошибка</div><div class="empty-text">' + e.message + '</div></div>';
-      }
-    }
-    
-    async function loadTopUsers() {
-      const list = document.getElementById('topUsersList');
-      list.innerHTML = '<div class="loading"><div class="spinner"></div><p>Загружаем топ...</p></div>';
-      
-      try {
-        const { data: users } = await supabaseClient.from('users').select('id, username, display_name').limit(20);
-        if (!users) return;
-        
-        const usersWithLikes = await Promise.all(users.map(async (u) => {
-          const { data: userRatings } = await supabaseClient.from('ratings').select('id').eq('user_id', u.id);
-          let totalLikes = 0;
-          if (userRatings && userRatings.length > 0) {
-            const { data: likes } = await supabaseClient.from('rating_likes').select('id').in('rating_id', userRatings.map(r => r.id));
-            totalLikes = likes?.length || 0;
+        if (lastRating && lastRating.length >= 2) {
+          const lastDate = new Date(lastRating[1].created_at).toISOString().split('T')[0];
+          const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+          
+          if (lastDate < yesterday) {
+            // Сброс серии
+            await supabaseClient.from('users').update({ streak: 1, streak_date: today }).eq('id', currentUser.id);
+          } else {
+            // Продолжение серии
+            await supabaseClient.from('users').update({ 
+              streak: (currentUser.streak || 0) + 1,
+              streak_date: today
+            }).eq('id', currentUser.id);
           }
-          return { ...u, totalLikes };
-        }));
-        
-        usersWithLikes.sort((a, b) => b.totalLikes - a.totalLikes);
-        
-        list.innerHTML = usersWithLikes.slice(0, 10).map((u, i) => `
-          <div class="top-user-item">
-            <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
-              <div class="top-user-rank">${i + 1}</div>
-              <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 600; color: #000; flex-shrink: 0;">${(u.display_name?.[0] || 'U').toUpperCase()}</div>
-              <div class="top-user-info" style="min-width: 0;">
-                <div class="top-user-name">${u.display_name || 'Аноним'}</div>
-                <div class="top-user-username">@${u.username || 'user'}</div>
-              </div>
-            </div>
-            <div class="top-user-stats" style="flex-shrink: 0;">
-              <div class="top-user-likes">${u.totalLikes}</div>
-              <div class="top-user-label">лайков</div>
-            </div>
-          </div>
-        `).join('');
-        
-      } catch (e) {
-        list.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Ошибка</div></div>';
-      }
-    }
-    
-    async function loadMyFriends() {
-      if (!currentUser) {
-        document.getElementById('myFriendsList').innerHTML = '<div class="empty-state"><p>Войдите чтобы видеть друзей</p></div>';
-        return;
-      }
-      
-      try {
-        const { data: friendships } = await supabaseClient.from('friendships').select('*, users (display_name, username)').eq('user_id', currentUser.id).eq('status', 'accepted');
-        
-        const list = document.getElementById('myFriendsList');
-        if (!friendships || friendships.length === 0) {
-          list.innerHTML = '<div class="empty-state" style="padding: 20px;"><p>Пока нет друзей</p></div>';
-          return;
         }
-        
-        list.innerHTML = friendships.map(f => `
-          <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px;">
-            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-weight: 600;">${(f.users.display_name?.[0] || 'U').toUpperCase()}</div>
-            <div style="flex: 1;">
-              <div style="font-weight: 600;">${f.users.display_name || 'Аноним'}</div>
-              <div style="font-size: 12px; color: var(--text-secondary);">@${f.users.username}</div>
-            </div>
-            <span style="font-size: 12px; color: var(--success);">✓ Друг</span>
-          </div>
-        `).join('');
-        
-        document.getElementById('profileFriendsCount').textContent = friendships.length;
-        
       } catch (e) {
-        console.error('Ошибка:', e);
-      }
-    }
-    
-    async function loadProfile() {
-      if (!currentUser) {
-        openAuthModal('login');
-        return;
-      }
-      
-      try {
-        const { data: ratings } = await supabaseClient.from('ratings').select('match_rating, matches(home_team_name, away_team_name)').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(5);
-        
-        const { data: allRatings } = await supabaseClient.from('ratings').select('id').eq('user_id', currentUser.id);
-        let totalLikes = 0;
-        if (allRatings && allRatings.length > 0) {
-          const { data: likes } = await supabaseClient.from('rating_likes').select('id').in('rating_id', allRatings.map(r => r.id));
-          totalLikes = likes?.length || 0;
-        }
-        
-        document.getElementById('profileLikesReceived').textContent = totalLikes;
-        document.getElementById('profileRatingsCount').textContent = ratings?.length || 0;
-        
-        const recentEl = document.getElementById('profileRecentRatings');
-        if (ratings && ratings.length > 0) {
-          recentEl.innerHTML = ratings.map(r => `
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px;">
-              <div style="font-size: 14px;">${r.matches?.home_team_name || 'Матч'} vs ${r.matches?.away_team_name || ''}</div>
-              <div style="font-weight: 700; color: var(--accent);">${r.match_rating}/10</div>
-            </div>
-          `).join('');
-        } else {
-          recentEl.innerHTML = '<div class="empty-state" style="padding: 20px;"><p>Пока нет оценок</p></div>';
-        }
-        
-      } catch (e) {
-        console.error('Ошибка профиля:', e);
-      }
-    }
-    
-    async function loadStats() {
-      if (!currentUser) return;
-      
-      try {
-        const { data: ratings } = await supabaseClient.from('ratings').select('match_rating, matches(home_team_name, away_team_name)').eq('user_id', currentUser.id).order('created_at', { ascending: false });
-        
-        document.getElementById('statTotalRatings').textContent = ratings?.length || 0;
-        document.getElementById('statAvgRating').textContent = ratings && ratings.length > 0 ? (ratings.reduce((sum, r) => sum + (r.match_rating || 0), 0) / ratings.length).toFixed(1) : '0.0';
-        document.getElementById('statMatchesCount').textContent = ratings ? new Set(ratings.map(r => r.matches?.home_team_name + r.matches?.away_team_name)).size : 0;
-        
-      } catch (e) {
-        console.error('Ошибка статистики:', e);
+        console.error('Ошибка обновления серии:', e);
       }
     }
     
     function openChat(matchId) {
-      if (!currentUser) {
-        openAuthModal('login');
-        return;
-      }
-      
+      document.getElementById('matchesView').style.display = 'none';
       document.getElementById('chatContainer').classList.add('active');
+      
       const match = document.querySelector(`[data-match-id="${matchId}"]`);
       if (match) {
         const teams = match.querySelectorAll('.team-name');
-        document.getElementById('chatMatchTitle').textContent = `${teams[0]?.textContent} vs ${teams[1]?.textContent}`;
+        const chatTitle = document.getElementById('chatMatchTitle');
+        if (chatTitle) chatTitle.textContent = `${teams[0]?.textContent} vs ${teams[1]?.textContent}`;
       }
       loadChatMessages(matchId);
     }
     
     async function loadChatMessages(matchId) {
       const container = document.getElementById('chatMessages');
-      container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Загружаем чат...</p></div>';
+      container.innerHTML = '<div class="loading">Загружаем чат...</div>';
       
       const { data: messages } = await supabaseClient.from('live_chat_messages').select('*').eq('match_id', matchId).order('created_at', { ascending: true }).limit(50);
       
       if (!messages || messages.length === 0) {
-        container.innerHTML = '<div class="empty-state"><div class="empty-icon">👋</div><div class="empty-title">Начни обсуждение!</div></div>';
+        container.innerHTML = '<div class="empty-state">👋 Начни обсуждение!</div>';
         return;
       }
       
       container.innerHTML = messages.map(msg => `
-        <div class="chat-message ${msg.user_id === currentUser?.id ? 'own' : ''}">
+        <div class="chat-message ${msg.user_id === telegramUser?.id ? 'own' : ''}">
+          ${msg.user_id !== telegramUser?.id ? `<div style="font-size:10px;opacity:0.7">@${msg.username||'Аноним'}</div>` : ''}
           <div>${msg.message}</div>
         </div>
       `).join('');
@@ -2215,53 +1735,512 @@
       const input = document.getElementById('chatInput');
       const message = input?.value.trim();
       if (!message || !currentUser) return;
-      
       await supabaseClient.from('live_chat_messages').insert({
         match_id: currentMatch?.id || 1,
         user_id: currentUser.id,
-        username: currentUser.username || currentUser.display_name || 'Аноним',
+        username: telegramUser?.username || telegramUser?.first_name || 'Аноним',
         message: message
       });
       if (input) input.value = '';
-      loadChatMessages(currentMatch?.id);
     });
     
     document.getElementById('chatBack')?.addEventListener('click', function() {
       document.getElementById('chatContainer').classList.remove('active');
+      document.getElementById('matchesView').style.display = 'block';
       currentMatch = null;
     });
     
-    function editUsername() {
-      if (!currentUser) { openAuthModal('login'); return; }
-      const newUsername = prompt('Введи новый никнейм:', currentUser.username || '');
-      if (!newUsername || newUsername === currentUser.username) return;
+    document.getElementById('closeModal')?.addEventListener('click', () => {
+      document.getElementById('ratingModal').classList.remove('active');
+      currentMatch = null;
+    });
+    
+    document.getElementById('nextToPlayers')?.addEventListener('click', () => {
+      if (!selectedRating) { showToast('Выберите оценку', 'error'); return; }
+      showStep(2);
+    });
+    
+    document.getElementById('backToMatch')?.addEventListener('click', () => showStep(1));
+    document.getElementById('saveRating')?.addEventListener('click', saveRating);
+    
+    async function loadFeed() {
+      const list = document.getElementById('feedList');
+      list.innerHTML = '<div class="loading"><div class="spinner"></div>Загружаем...</div>';
       
-      supabaseClient.from('users').update({ username: newUsername }).eq('id', currentUser.id).then(({ error }) => {
-        if (error) {
-          showToast('Не удалось обновить', 'error');
-        } else {
-          currentUser.username = newUsername;
-          localStorage.setItem('footbazed_user', JSON.stringify(currentUser));
-          updateProfileUI();
-          showToast('✅ Никнейм обновлён!', 'success');
+      try {
+        let query = supabaseClient
+          .from('ratings')
+          .select(`
+            *,
+            users (display_name, username, avatar_url),
+            matches (home_team_name, away_team_name, league_name),
+            rating_likes (id)
+          `)
+          .eq('is_public', true);
+        
+        if (feedSort === 'friends') {
+          const { data: friendships } = await supabaseClient
+            .from('friendships')
+            .select('friend_id')
+            .eq('user_id', currentUser.id)
+            .eq('status', 'accepted');
+          
+          const friendIds = friendships?.map(f => f.friend_id) || [];
+          if (friendIds.length > 0) {
+            query = query.in('user_id', friendIds);
+          } else {
+            list.innerHTML = '<div class="empty-state">Пока нет друзей</div>';
+            return;
+          }
         }
+        
+        query = query.order('created_at', { ascending: false });
+        
+        const { data: ratings, error } = await query;
+        if (error) throw error;
+        
+        if (feedSort === 'popular') {
+          ratings.sort((a, b) => (b.rating_likes?.length || 0) - (a.rating_likes?.length || 0));
+        }
+        
+        if (!ratings || ratings.length === 0) {
+          list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Пока нет оценок</p></div>';
+          return;
+        }
+        
+        list.innerHTML = ratings.map(r => renderFeedCard(r)).join('');
+      } catch (e) {
+        console.error('❌ Ошибка:', e);
+        list.innerHTML = '<div class="empty-state">⚠️ Ошибка: ' + e.message + '</div>';
+      }
+    }
+    
+    function renderFeedCard(rating) {
+      const likeCount = rating.rating_likes?.length || 0;
+      const userInitial = (rating.users?.display_name?.[0] || 'U').toUpperCase();
+      const date = new Date(rating.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      
+      return `
+        <div class="feed-card">
+          <div class="feed-user">
+            <div class="feed-user-avatar">${userInitial}</div>
+            <div class="feed-user-info">
+              <div class="feed-user-name">${rating.users?.display_name || 'Аноним'}</div>
+              <div class="feed-user-username">@${rating.users?.username || 'user'}</div>
+            </div>
+          </div>
+          <div class="feed-match-info">${rating.matches?.league_name || ''}</div>
+          <div class="feed-match-teams">${rating.matches?.home_team_name || ''} vs ${rating.matches?.away_team_name || ''}</div>
+          <div class="feed-rating">${rating.match_rating || 0}/10</div>
+          ${rating.comment ? `<div class="feed-comment">${rating.comment}</div>` : ''}
+          <div class="feed-actions">
+            <div class="like-btn" onclick="toggleLike(${rating.id})">❤️ ${likeCount}</div>
+            <div class="feed-date" style="margin-left: auto;">${date}</div>
+          </div>
+          <div class="rating-comments" id="comments-${rating.id}">
+            <button class="action-btn" onclick="loadComments(${rating.id})" style="padding: 6px; font-size: 12px;">💬 Комментарии</button>
+          </div>
+        </div>
+      `;
+    }
+    
+    async function loadComments(ratingId) {
+      const container = document.getElementById(`comments-${ratingId}`);
+      if (!container) return;
+      
+      try {
+        const { data: comments } = await supabaseClient
+          .from('rating_comments')
+          .select(`
+            *,
+            users (display_name, username)
+          `)
+          .eq('rating_id', ratingId)
+          .order('created_at', { ascending: false });
+        
+        let html = `
+          <input type="text" class="comment-input-small" placeholder="Написать комментарий..." onkeypress="if(event.key==='Enter') addComment(${ratingId}, this.value)">
+        `;
+        
+        if (comments && comments.length > 0) {
+          html += comments.map(c => `
+            <div class="comment-item">
+              <div class="comment-author">@${c.users?.username || 'Аноним'}</div>
+              <div class="comment-text">${c.comment}</div>
+            </div>
+          `).join('');
+        }
+        
+        container.innerHTML = html;
+        
+      } catch (e) {
+        console.error('Ошибка загрузки комментариев:', e);
+      }
+    }
+    
+    async function addComment(ratingId, text) {
+      if (!text || !currentUser) return;
+      
+      try {
+        await supabaseClient.from('rating_comments').insert({
+          rating_id: ratingId,
+          user_id: currentUser.id,
+          comment: text
+        });
+        
+        loadComments(ratingId);
+      } catch (e) {
+        showToast('Не удалось добавить комментарий', 'error');
+      }
+    }
+    
+    async function toggleLike(ratingId) {
+      if (!currentUser) { showToast('Сначала войдите', 'error'); return; }
+      try {
+        const { data: existing } = await supabaseClient.from('rating_likes').select('id').eq('user_id', currentUser.id).eq('rating_id', ratingId).single();
+        if (existing) {
+          await supabaseClient.from('rating_likes').delete().eq('id', existing.id);
+        } else {
+          await supabaseClient.from('rating_likes').insert({ user_id: currentUser.id, rating_id: ratingId });
+        }
+        loadFeed();
+      } catch (e) {
+        console.error('Ошибка лайка:', e);
+      }
+    }
+    
+    async function loadTopUsers() {
+      try {
+        const { data: users } = await supabaseClient
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(20);
+        
+        if (!users || users.length === 0) {
+          document.getElementById('topUsersList').innerHTML = '<div class="empty-state">Пока нет пользователей</div>';
+          return;
+        }
+        
+        const usersWithLikes = await Promise.all(users.map(async (u) => {
+          const { data: userRatings } = await supabaseClient
+            .from('ratings')
+            .select('id')
+            .eq('user_id', u.id);
+          
+          let totalLikes = 0;
+          if (userRatings && userRatings.length > 0) {
+            const ratingIds = userRatings.map(r => r.id);
+            const { data: likes } = await supabaseClient
+              .from('rating_likes')
+              .select('id')
+              .in('rating_id', ratingIds);
+            totalLikes = likes?.length || 0;
+          }
+          
+          return { ...u, totalLikes, ratingsCount: userRatings?.length || 0 };
+        }));
+        
+        usersWithLikes.sort((a, b) => b.totalLikes - a.totalLikes);
+        
+        const list = document.getElementById('topUsersList');
+        list.innerHTML = usersWithLikes.slice(0, 10).map((u, index) => `
+          <div class="top-user-item">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+              <div class="top-user-rank">${index + 1}</div>
+              <div class="friend-avatar" style="width: 40px; height: 40px;">${(u.display_name?.[0] || 'U').toUpperCase()}</div>
+              <div class="top-user-info">
+                <div class="top-user-name">${u.display_name || 'Аноним'}</div>
+                <div class="top-user-username">@${u.username || 'user'}</div>
+              </div>
+            </div>
+            <div class="top-user-stats">
+              <div class="top-user-likes">${u.totalLikes}</div>
+              <div class="top-user-label">лайков</div>
+            </div>
+          </div>
+        `).join('');
+        
+      } catch (e) {
+        console.error('❌ Ошибка загрузки топа:', e);
+        document.getElementById('topUsersList').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+      }
+    }
+    
+    async function loadStats() {
+      if (!currentUser) return;
+      
+      try {
+        const { data: ratings } = await supabaseClient
+          .from('ratings')
+          .select('match_rating, matches(home_team_name, away_team_name)')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false });
+        
+        const { data: topPlayers } = await supabaseClient
+          .from('player_ratings')
+          .select(`
+            player_id,
+            rating,
+            players (name, team, position)
+          `)
+          .eq('user_id', currentUser.id)
+          .order('rating', { ascending: false })
+          .limit(5);
+        
+        // КОМАНДА НЕДЕЛИ
+        const { data: allPlayerRatings } = await supabaseClient
+          .from('player_ratings')
+          .select(`
+            player_id,
+            rating,
+            players (name, team, position)
+          `)
+          .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString())
+          .order('rating', { ascending: false })
+          .limit(11);
+        
+        const statTotalRatingsEl = document.getElementById('statTotalRatings');
+        const statAvgRatingEl = document.getElementById('statAvgRating');
+        const statMatchesCountEl = document.getElementById('statMatchesCount');
+        
+        if (statTotalRatingsEl) statTotalRatingsEl.textContent = ratings?.length || 0;
+        
+        if (statAvgRatingEl && ratings && ratings.length > 0) {
+          const avg = (ratings.reduce((sum, r) => sum + (r.match_rating || 0), 0) / ratings.length).toFixed(1);
+          statAvgRatingEl.textContent = avg;
+        }
+        
+        if (statMatchesCountEl) {
+          const uniqueMatches = new Set(ratings?.map(r => r.matches?.home_team_name + r.matches?.away_team_name)).size;
+          statMatchesCountEl.textContent = uniqueMatches;
+        }
+        
+        // Команда недели
+        const teamOfWeekList = document.getElementById('teamOfWeekList');
+        if (teamOfWeekList && allPlayerRatings && allPlayerRatings.length > 0) {
+          teamOfWeekList.innerHTML = allPlayerRatings.slice(0, 9).map(p => `
+            <div class="tow-player">
+              <div class="tow-position">${p.players?.position || 'Игрок'}</div>
+              <div class="tow-name">${p.players?.name || 'Неизвестно'}</div>
+              <div class="tow-rating">${p.rating}/10</div>
+            </div>
+          `).join('');
+        }
+        
+        const topPlayersList = document.getElementById('topPlayersList');
+        if (topPlayersList) {
+          if (!topPlayers || topPlayers.length === 0) {
+            topPlayersList.innerHTML = '<div class="empty-state">Пока нет оценок игроков</div>';
+          } else {
+            topPlayersList.innerHTML = topPlayers.map((p, index) => `
+              <div class="top-player-item">
+                <div class="top-player-info">
+                  <div class="top-player-rank">${index + 1}</div>
+                  <div>
+                    <div style="font-weight: 600;">${p.players?.name || 'Игрок'}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary);">${p.players?.team || ''}</div>
+                  </div>
+                </div>
+                <div class="top-player-rating">${p.rating}/10</div>
+              </div>
+            `).join('');
+          }
+        }
+        
+        const ratingHistoryList = document.getElementById('ratingHistoryList');
+        if (ratingHistoryList) {
+          if (!ratings || ratings.length === 0) {
+            ratingHistoryList.innerHTML = '<div class="empty-state">Пока нет оценок</div>';
+          } else {
+            ratingHistoryList.innerHTML = ratings.slice(0, 10).map(r => {
+              const percentage = (r.match_rating || 0) * 10;
+              return `
+                <div class="rating-history-item">
+                  <div class="rating-history-match">
+                    ${r.matches?.home_team_name || 'Матч'} vs ${r.matches?.away_team_name || ''}
+                  </div>
+                  <div class="rating-history-value">
+                    <div class="rating-bar">
+                      <div class="rating-bar-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <span style="font-weight: 700; color: var(--accent); min-width: 30px;">${r.match_rating}/10</span>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+        
+      } catch (e) {
+        console.error('❌ Ошибка загрузки статистики:', e);
+      }
+    }
+    
+    async function loadProfile() {
+      if (!currentUser) return;
+      
+      try {
+        const { data: ratings } = await supabaseClient
+          .from('ratings')
+          .select('match_rating, matches(home_team_name, away_team_name)')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        const { data: allRatings } = await supabaseClient
+          .from('ratings')
+          .select('id')
+          .eq('user_id', currentUser.id);
+        
+        let totalLikes = 0;
+        if (allRatings && allRatings.length > 0) {
+          const ratingIds = allRatings.map(r => r.id);
+          const { data: likes } = await supabaseClient
+            .from('rating_likes')
+            .select('id')
+            .in('rating_id', ratingIds);
+          totalLikes = likes?.length || 0;
+        }
+        
+        const { data: friendships } = await supabaseClient
+          .from('friendships')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .eq('status', 'accepted');
+        
+        // Серии
+        const streakBadge = document.getElementById('streakBadge');
+        const streakCount = document.getElementById('streakCount');
+        if (streakBadge && streakCount && currentUser.streak > 0) {
+          streakBadge.style.display = 'inline-flex';
+          streakCount.textContent = currentUser.streak || 0;
+        }
+        
+        const profileLikesReceivedEl = document.getElementById('profileLikesReceived');
+        const profileFriendsCountEl = document.getElementById('profileFriendsCount');
+        const profileRatingsCountEl = document.getElementById('profileRatingsCount');
+        const profileRecentRatingsEl = document.getElementById('profileRecentRatings');
+        const exportStatsPreviewEl = document.getElementById('exportStatsPreview');
+        
+        if (profileLikesReceivedEl) profileLikesReceivedEl.textContent = totalLikes;
+        if (profileFriendsCountEl) profileFriendsCountEl.textContent = friendships?.length || 0;
+        if (profileRatingsCountEl) profileRatingsCountEl.textContent = ratings?.length || 0;
+        if (exportStatsPreviewEl) exportStatsPreviewEl.textContent = `${ratings?.length || 0} оценок`;
+        
+        if (profileRecentRatingsEl) {
+          if (!ratings || ratings.length === 0) {
+            profileRecentRatingsEl.innerHTML = '<div class="empty-state">Пока нет оценок</div>';
+          } else {
+            profileRecentRatingsEl.innerHTML = ratings.map(r => `
+              <div class="recent-rating-item">
+                <div class="recent-rating-match">
+                  ${r.matches?.home_team_name || 'Матч'} vs ${r.matches?.away_team_name || ''}
+                </div>
+                <div class="recent-rating-value">${r.match_rating}/10</div>
+              </div>
+            `).join('');
+          }
+        }
+        
+      } catch (e) {
+        console.error('❌ Ошибка загрузки профиля:', e);
+      }
+    }
+    
+    async function exportStatsImage() {
+      showToast('📸 Генерация изображения...', 'success');
+      
+      const stats = {
+        username: currentUser.username,
+        ratings: document.getElementById('statTotalRatings')?.textContent || 0,
+        avg: document.getElementById('statAvgRating')?.textContent || 0,
+        matches: document.getElementById('statMatchesCount')?.textContent || 0
+      };
+      
+      const text = `⚽ FOOTBAZED Статистика\n\n👤 @${stats.username}\n\n⭐ Оценок: ${stats.ratings}\n📊 Средний: ${stats.avg}\n🎯 Матчей: ${stats.matches}\n\n#FOOTBAZED`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: 'FOOTBAZED Статистика',
+          text: text
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(text);
+        showToast('📋 Статистика скопирована!', 'success');
+      }
+    }
+    
+    async function requestPushNotifications() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+    
+    function setupEventListeners() {
+      document.getElementById('matchSearch')?.addEventListener('input', function(e) {
+        matchSearchQuery = e.target.value.trim();
+        loadMatches(currentFilter);
       });
-    }
-    
-    function copyInviteLink() {
-      const url = document.getElementById('inviteCodeDisplay').textContent;
-      navigator.clipboard.writeText(url);
-      showToast('📋 Скопировано!', 'success');
-    }
-    
-    function copyProfileInvite() {
-      const url = document.getElementById('profileInviteCode').textContent;
-      navigator.clipboard.writeText(url);
-      showToast('📋 Скопировано!', 'success');
-    }
-    
-    function openNotifications() {
-      showToast('🔜 Уведомления в разработке!', 'success');
+      
+      document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+        btn.onclick = function() {
+          this.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          if (this.closest('#matchesView')) loadMatches(this.dataset.filter);
+        };
+      });
+      
+      document.querySelectorAll('.filter-btn[data-sort]').forEach(btn => {
+        btn.onclick = function() {
+          this.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          feedSort = this.dataset.sort;
+          loadFeed();
+        };
+      });
+      
+      document.getElementById('friendSearch')?.addEventListener('input', searchFriends);
+      
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.onclick = function() {
+          document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+          this.classList.add('active');
+          
+          const view = this.dataset.view;
+          document.getElementById('matchesView').style.display = 'none';
+          document.getElementById('feedView').style.display = 'none';
+          document.getElementById('friendsView').style.display = 'none';
+          document.getElementById('profileView').classList.remove('active');
+          document.getElementById('chatContainer').classList.remove('active');
+          document.getElementById('notificationsView').classList.remove('active');
+          document.getElementById('statsView').classList.remove('active');
+          document.getElementById('topUsersView').classList.remove('active');
+          
+          if (view === 'matches') {
+            document.getElementById('matchesView').style.display = 'block';
+            loadMatches();
+          } else if (view === 'feed') {
+            document.getElementById('feedView').style.display = 'block';
+            loadFeed();
+          } else if (view === 'topusers') {
+            document.getElementById('topUsersView').classList.add('active');
+            loadTopUsers();
+          } else if (view === 'friends') {
+            document.getElementById('friendsView').style.display = 'block';
+            loadMyFriends();
+            searchFriends();
+          } else if (view === 'stats') {
+            document.getElementById('statsView').classList.add('active');
+            loadStats();
+          } else if (view === 'profile') {
+            document.getElementById('profileView').classList.add('active');
+            selectedFriendId = null;
+            document.getElementById('friendCompatibilitySection').style.display = 'none';
+            loadProfile();
+          }
+        };
+      });
     }
     
     function showToast(message, type = 'success') {
@@ -2273,57 +2252,6 @@
       }
     }
     
-    function setupEventListeners() {
-      // Фильтры матчей
-      document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
-        btn.onclick = function() {
-          this.parentElement.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          if (this.closest('#matchesView')) {
-            currentFilter = this.dataset.filter;
-            loadMatches(currentFilter);
-          }
-        };
-      });
-      
-      // Сортировка ленты
-      document.querySelectorAll('.filter-btn[data-sort]').forEach(btn => {
-        btn.onclick = function() {
-          this.parentElement.querySelectorAll('.filter-btn[data-sort]').forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          feedSort = this.dataset.sort;
-          loadFeed();
-        };
-      });
-      
-      // Поиск друзей
-      document.getElementById('friendSearch')?.addEventListener('input', function() {
-        loadMyFriends();
-      });
-      
-      // Нижняя навигация
-      document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
-        item.onclick = function() {
-          openView(this.dataset.view);
-        };
-      });
-      
-      // Модальные окна
-      document.getElementById('ratingModal')?.addEventListener('click', function(e) {
-        if (e.target === this) {
-          this.classList.remove('active');
-          currentMatch = null;
-        }
-      });
-      
-      document.getElementById('authModal')?.addEventListener('click', function(e) {
-        if (e.target === this) {
-          closeAuthModal();
-        }
-      });
-    }
-    
-    // Запуск
     init();
   </script>
 </body>
