@@ -104,7 +104,7 @@ button{padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;curso
 const SBU='https://uukacnyvjvgmmhbkmfzf.supabase.co';
 const SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2Fjbnl2anZnbW1oYmttZnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDM3MzcsImV4cCI6MjA4NzA3OTczN30.hZIYkrWFqRwu0IciG2iF3TyP8WnVQcV1sFyjfeVUpRc';
 const sb=window.supabase.createClient(SBU,SBK);
-const API='https://api.football-data.org/v4';
+const API='/api/football?path=';
 
 const today=new Date();const fut=new Date(today);fut.setDate(fut.getDate()+14);
 document.getElementById('dateFrom').value=today.toISOString().split('T')[0];
@@ -114,7 +114,7 @@ document.querySelectorAll('.league-check input').forEach(cb=>{cb.addEventListene
 function getKey(){const k=document.getElementById('apiKey').value.trim();if(!k){alert('Вставь ключ!');return null;}return k;}
 function getLeagues(){return[...document.querySelectorAll('.leagues-grid input:checked')].map(c=>({code:c.value,name:c.dataset.name}));}
 async function apiFetch(ep,key){
-  const r=await fetch(API+ep,{headers:{'X-Auth-Token':key}});
+  const r=await fetch(API+encodeURIComponent(ep)+'&key='+encodeURIComponent(key));
   if(r.status===429){log('mLog','Лимит — жду 65 сек...','warn');log('sLog','Лимит — жду 65 сек...','warn');await sleep(65000);return apiFetch(ep,key);}
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(`${r.status}: ${e.message||r.statusText}`);}
   return r.json();
