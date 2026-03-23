@@ -1,38 +1,28 @@
-const https = require('https');
-
-module.exports = function handler(req, res) {
-  const path = req.query.path;
-  const key = req.query.key;
-
+module.exports = function (req, res) {
+  var path = req.query.path || '';
+  var key = req.query.key || '';
   if (!path || !key) {
-    res.status(400).json({ error: 'Missing path or key' });
+    res.statusCode = 400;
+    res.end(JSON.stringify({ error: 'Missing path or key' }));
     return;
   }
-
-  const options = {
+  var https = require('https');
+  var options = {
     hostname: 'api.football-data.org',
     path: '/v4' + path,
-    method: 'GET',
     headers: { 'X-Auth-Token': key }
   };
-
-  const request = https.request(options, function(response) {
-    let body = '';
-    response.on('data', function(chunk) { body += chunk; });
-    response.on('end', function() {
-      try {
-        const data = JSON.parse(body);
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.status(response.statusCode).json(data);
-      } catch (e) {
-        res.status(500).json({ error: 'Invalid JSON response' });
-      }
+  https.get(options, function (apiRes) {
+    var body = '';
+    apiRes.on('data', function (c) { body += c; });
+    apiRes.on('end', function () {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Content-Type', 'application/json');
+      res.statusCode = apiRes.statusCode;
+      res.end(body);
     });
+  }).on('error', function (e) {
+    res.statusCode = 500;
+    res.end(JSON.stringify({ error: e.message }));
   });
-
-  request.on('error', function(e) {
-    res.status(500).json({ error: e.message });
-  });
-
-  request.end();
 };
