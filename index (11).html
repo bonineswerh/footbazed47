@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050810">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FOOTBAZED">
+<meta name="description" content="Оценивай футбольные матчи и игроков, сравнивай мнения с друзьями. Платформа, где футбол оценивают болельщики.">
+<link rel="manifest" href="manifest.json">
+<title>FOOTBAZED — Оценивай футбол</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <div class="nav-logo" onclick="go('home')">FOOT<span>BAZED</span></div>
+  <div class="nav-links">
+    <button class="nl" onclick="go('matches')">Матчи</button>
+    <button class="nl" onclick="go('leaderboard')">Лидеры</button>
+    <button class="nl" onclick="go('feed')">Лента</button>
+    <button class="nl" onclick="go('friends')">Друзья</button>
+  </div>
+  <div class="nav-right" id="navRight">
+    <button class="nbtn nbtn-lime" onclick="openAuth()">Войти</button>
+  </div>
+</nav>
+
+<!-- NOTIF PANEL -->
+<div class="notif-panel" id="notifPanel" style="display:none">
+  <div class="notif-hd"><div class="notif-hd-title">Уведомления</div><div class="notif-mark-all" onclick="markAllRead()">Всё прочитано</div></div>
+  <div class="notif-body" id="notifList"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MOBILE BOTTOM NAV -->
+<div class="mob-nav">
+  <div class="mob-nav-inner">
+    <button class="mob-nav-item active" onclick="go('home')" id="mn-home"><span class="mob-nav-ico">🏠</span><span class="mob-nav-lbl">Главная</span></button>
+    <button class="mob-nav-item" onclick="go('matches')" id="mn-matches"><span class="mob-nav-ico">⚽</span><span class="mob-nav-lbl">Матчи</span></button>
+    <button class="mob-nav-item" onclick="go('feed')" id="mn-feed"><span class="mob-nav-ico">📰</span><span class="mob-nav-lbl">Лента</span></button>
+    <button class="mob-nav-item" onclick="go('leaderboard')" id="mn-leaderboard"><span class="mob-nav-ico">🏆</span><span class="mob-nav-lbl">Лидеры</span></button>
+    <button class="mob-nav-item" onclick="go('profile')" id="mn-profile"><span class="mob-nav-ico">👤</span><span class="mob-nav-lbl">Профиль</span></button>
+  </div>
+</div>
+
+<!-- ════════ HOME (NEW LANDING) ════════ -->
+<div class="page on" id="page-home">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow g1"></div>
+    <div class="hero-glow g2"></div>
+    <div class="hero-glow g3"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-badge"><span class="hero-badge-pulse"></span>Рейтинги · Аналитика · Сообщество</div>
+    <h1 class="hero-h1">ОЦЕНИВАЙ<br><span class="fill">ФУТБОЛ</span></h1>
+    <p class="hero-sub">Ставь оценки матчам, оценивай игроков, сравнивай мнения с друзьями. <strong>FOOTBAZED</strong> — платформа, где футбол оценивают болельщики.</p>
+    <div class="hero-ctas">
+      <button class="hbtn hbtn-p" onclick="openAuth()">Присоединиться →</button>
+      <button class="hbtn hbtn-s" onclick="go('matches')">Смотреть матчи</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><div class="hstat-n" id="hU">—</div><div class="hstat-l">Пользователей</div></div>
+      <div class="hstat"><div class="hstat-n" id="hR">—</div><div class="hstat-l">Оценок</div></div>
+      <div class="hstat"><div class="hstat-n" id="hM">—</div><div class="hstat-l">Матчей</div></div>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-wrap">
+    <div class="marquee">
+      <span class="marquee-item">LA LIGA <span class="dot"></span></span>
+      <span class="marquee-item">SERIE A <span class="dot"></span></span>
+      <span class="marquee-item">BUNDESLIGA <span class="dot"></span></span>
+      <span class="marquee-item">LIGUE 1 <span class="dot"></span></span>
+      <span class="marquee-item">PREMIER LEAGUE <span class="dot"></span></span>
+      <span class="marquee-item">CHAMPIONS LEAGUE <span class="dot"></span></span>
+      <span class="marquee-item">LA LIGA <span class="dot"></span></span>
+      <span class="marquee-item">SERIE A <span class="dot"></span></span>
+      <span class="marquee-item">BUNDESLIGA <span class="dot"></span></span>
+      <span class="marquee-item">LIGUE 1 <span class="dot"></span></span>
+      <span class="marquee-item">PREMIER LEAGUE <span class="dot"></span></span>
+      <span class="marquee-item">CHAMPIONS LEAGUE <span class="dot"></span></span>
+    </div>
+  </div>
+
+  <!-- DEMO PREVIEW -->
+  <section class="demo-section reveal">
+    <div class="demo-frame">
+      <div class="demo-topbar">
+        <div class="demo-dot r"></div><div class="demo-dot y"></div><div class="demo-dot g"></div>
+        <div class="demo-url">footbazed.com/matches</div>
+      </div>
+      <div class="demo-body">
+        <div class="demo-card">
+          <div class="dc-top"><span class="dc-league">La Liga</span><span class="dc-tag live">🔴 LIVE</span></div>
+          <div class="dc-teams">
+            <div class="dc-tm"><div class="dc-tmn">REAL MADRID</div><div class="dc-sc">2</div></div>
+            <div class="dc-vs">VS</div>
+            <div class="dc-tm"><div class="dc-tmn">BARCELONA</div><div class="dc-sc">1</div></div>
+          </div>
+          <div class="dc-rating"><div class="dc-stars"><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star off"></div><div class="dc-star off"></div></div><div class="dc-avg">8.2</div></div>
+        </div>
+        <div class="demo-card">
+          <div class="dc-top"><span class="dc-league">Premier League</span><span class="dc-tag fin">Завершён</span></div>
+          <div class="dc-teams">
+            <div class="dc-tm"><div class="dc-tmn">ARSENAL</div><div class="dc-sc">3</div></div>
+            <div class="dc-vs">VS</div>
+            <div class="dc-tm"><div class="dc-tmn">MAN CITY</div><div class="dc-sc">3</div></div>
+          </div>
+          <div class="dc-rating"><div class="dc-stars"><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star off"></div></div><div class="dc-avg">9.4</div></div>
+        </div>
+        <div class="demo-card">
+          <div class="dc-top"><span class="dc-league">Serie A</span><span class="dc-tag fin">Завершён</span></div>
+          <div class="dc-teams">
+            <div class="dc-tm"><div class="dc-tmn">INTER</div><div class="dc-sc">1</div></div>
+            <div class="dc-vs">VS</div>
+            <div class="dc-tm"><div class="dc-tmn">JUVENTUS</div><div class="dc-sc">0</div></div>
+          </div>
+          <div class="dc-rating"><div class="dc-stars"><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star on"></div><div class="dc-star off"></div><div class="dc-star off"></div><div class="dc-star off"></div><div class="dc-star off"></div></div><div class="dc-avg">6.1</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how">
+    <div class="reveal"><div class="land-label">Как это работает</div><div class="land-title">Три шага до <em>оценки</em></div></div>
+    <div class="how-steps reveal">
+      <div class="how-step"><div class="how-num">01</div><div class="how-icon">📺</div><div class="how-name">Смотри матч</div><div class="how-desc">Выбери матч из расписания топ-лиг Европы. Следи за счётом и обсуждай в лайв-чате.</div></div>
+      <div class="how-step"><div class="how-num">02</div><div class="how-icon">⭐</div><div class="how-name">Оцени от 1 до 10</div><div class="how-desc">Поставь общую оценку матчу и каждому игроку. Выбери лучшего. Напиши короткий отзыв.</div></div>
+      <div class="how-step"><div class="how-num">03</div><div class="how-icon">📊</div><div class="how-name">Сравни с друзьями</div><div class="how-desc">Смотри совместимость оценок с друзьями, поднимайся в рейтинге, веди личную статистику.</div></div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="land-features">
+    <div class="reveal"><div class="land-label">Возможности</div><div class="land-title">Всё для <em>настоящего</em> фаната</div></div>
+    <div class="land-feat-grid">
+      <div class="land-feat reveal reveal-d1"><span class="land-feat-emoji">⭐</span><div class="land-feat-name">Детальные оценки</div><div class="land-feat-text">Шкала 1–10 для матча и каждого игрока. Выбирай MVP и формируй статистику сообщества своим мнением.</div></div>
+      <div class="land-feat reveal reveal-d2"><span class="land-feat-emoji">👥</span><div class="land-feat-name">Совместимость</div><div class="land-feat-text">Узнай в процентах, насколько твои вкусы совпадают с друзьями. Найди своего футбольного двойника.</div></div>
+      <div class="land-feat reveal reveal-d3"><span class="land-feat-emoji">🔥</span><div class="land-feat-name">Дерби-режим</div><div class="land-feat-text">Эль Класико, Дортмунд–Бавария — топовые дерби получают особое оформление и жаркое обсуждение.</div></div>
+      <div class="land-feat reveal reveal-d1"><span class="land-feat-emoji">💬</span><div class="land-feat-name">Живой чат</div><div class="land-feat-text">Обсуждай каждый матч в реальном времени. Чат открывается до начала — делись прогнозами и эмоциями.</div></div>
+      <div class="land-feat reveal reveal-d2"><span class="land-feat-emoji">🏆</span><div class="land-feat-name">Лидерборд</div><div class="land-feat-text">Еженедельный рейтинг самых активных. Борись за место среди лучших оценщиков платформы.</div></div>
+      <div class="land-feat reveal reveal-d3"><span class="land-feat-emoji">📈</span><div class="land-feat-name">Личная аналитика</div><div class="land-feat-text">Уровни, стрики, история оценок. Прокачивай профиль от Новичка до Легенды — каждая оценка на счету.</div></div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF -->
+  <section class="proof">
+    <div class="proof-inner">
+      <div class="reveal"><div class="land-label">Сообщество</div><div class="land-title">Что говорят <em>пользователи</em></div></div>
+      <div class="proof-grid">
+        <div class="proof-card reveal reveal-d1">
+          <div class="pc-head"><div class="pc-av c1">А</div><div><div class="pc-name">Артём</div><div class="pc-handle">@artem_fan · 24 оценки</div></div></div>
+          <div class="pc-text">«Наконец-то нормальная платформа для оценки матчей. Именно то, чего не хватало — оценки от самих болельщиков. Жду ЛЧ чтобы оценить каждую игру.»</div>
+          <div class="pc-match"><div class="pc-mname">Real Madrid vs Atleti</div><div class="pc-mrate">8/10</div></div>
+        </div>
+        <div class="proof-card reveal reveal-d2">
+          <div class="pc-head"><div class="pc-av c2">D</div><div><div class="pc-name">Даша</div><div class="pc-handle">@dasha_goals · 18 оценок</div></div></div>
+          <div class="pc-text">«Совместимость с друзьями — огонь. С братом 89% совпадений! Теперь спорим кто прав, а FOOTBAZED ведёт счёт.»</div>
+          <div class="pc-match"><div class="pc-mname">Arsenal vs Man City</div><div class="pc-mrate">9/10</div></div>
+        </div>
+        <div class="proof-card reveal reveal-d3">
+          <div class="pc-head"><div class="pc-av c3">М</div><div><div class="pc-name">Максим</div><div class="pc-handle">@max_tactic · 31 оценка</div></div></div>
+          <div class="pc-text">«Чат к матчам — мастхэв. Обсуждаем моменты в реальном времени, потом ставим оценки и смотрим кто дал больше всех.»</div>
+          <div class="pc-match"><div class="pc-mname">Bayern vs Dortmund</div><div class="pc-mrate">7/10</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section class="compare">
+    <div class="reveal"><div class="land-label">Зачем FOOTBAZED</div><div class="land-title">Не просто <em>статистика</em></div></div>
+    <div class="compare-table reveal">
+      <div class="ct-row header">
+        <div class="ct-cell header-cell"></div>
+        <div class="ct-cell header-cell" style="color:var(--lime)">FOOTBAZED</div>
+        <div class="ct-cell header-cell" style="color:var(--fog)">Другие</div>
+      </div>
+      <div class="ct-row"><div class="ct-cell">Оценки матчей от пользователей</div><div class="ct-cell"><span class="ct-check">✓</span></div><div class="ct-cell"><span class="ct-x">✗</span></div></div>
+      <div class="ct-row"><div class="ct-cell">Оценки каждого игрока</div><div class="ct-cell"><span class="ct-check">✓</span></div><div class="ct-cell"><span class="ct-x">✗</span></div></div>
+      <div class="ct-row"><div class="ct-cell">Совместимость мнений с друзьями</div><div class="ct-cell"><span class="ct-check">✓</span></div><div class="ct-cell"><span class="ct-x">✗</span></div></div>
+      <div class="ct-row"><div class="ct-cell">Живой чат к каждому матчу</div><div class="ct-cell"><span class="ct-check">✓</span></div><div class="ct-cell"><span class="ct-x">✗</span></div></div>
+      <div class="ct-row"><div class="ct-cell">Личная статистика и уровни</div><div class="ct-cell"><span class="ct-check">✓</span></div><div class="ct-cell"><span class="ct-x">✗</span></div></div>
+      <div class="ct-row"><div class="ct-cell">Бесплатно и без рекламы</div><div class="ct-cell"><span class="ct-check">✓</span></div><div class="ct-cell"><span class="ct-x">✗</span></div></div>
+    </div>
+  </section>
+
+  <!-- LAST MATCHES (dynamic from Supabase) -->
+  <div class="sec reveal">
+    <div class="sec-hd"><div class="sec-title">Последние <em>матчи</em></div><span class="sec-more" onclick="go('matches')">Все матчи →</span></div>
+    <div class="grid3" id="homeM"><div class="loading"><div class="spin"></div></div></div>
+  </div>
+
+  <!-- LAST FEED (dynamic from Supabase) -->
+  <div class="sec reveal">
+    <div class="sec-hd"><div class="sec-title">Лента <em>оценок</em></div><span class="sec-more" onclick="go('feed')">Все оценки →</span></div>
+    <div class="gridf" id="homeF"><div class="loading"><div class="spin"></div></div></div>
+  </div>
+
+  <!-- CTA FINAL -->
+  <section class="cta-final">
+    <div class="cta-final-glow"></div>
+    <div class="reveal">
+      <div class="cta-h">ГОТОВ <em>ОЦЕНИВАТЬ</em>?</div>
+      <div class="cta-sub">Присоединяйся к сообществу фанатов, которые не просто смотрят — а оценивают каждый матч.</div>
+      <div class="hero-ctas"><button class="hbtn hbtn-p" onclick="openAuth()">Создать аккаунт бесплатно →</button></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-logo">FOOT<span>BAZED</span></div>
+      <div class="footer-links">
+        <a onclick="go('matches')">Матчи</a>
+        <a onclick="go('leaderboard')">Лидеры</a>
+        <a onclick="go('feed')">Лента</a>
+      </div>
+      <div class="footer-copy">© 2025 FOOTBAZED</div>
+    </div>
+  </footer>
+</div>
+
+<!-- ════════ MATCHES ════════ -->
+<div class="page" id="page-matches">
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-title">Все <em>матчи</em></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <input id="msearch" placeholder="🔍 Поиск команды..." class="fsearch" style="max-width:320px" oninput="filterM()">
+    </div>
+    <!-- League tabs -->
+    <div class="league-tabs" id="leagueTabs">
+      <button class="league-tab on" onclick="setLeague('all',this)">🌍 Все лиги</button>
+    </div>
+    <!-- Status filter -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:26px" id="mf">
+      <button class="btn btn-l btn-sm" onclick="setMF('all',this)">Все</button>
+      <button class="btn btn-g btn-sm" onclick="setMF('live',this)">🔴 LIVE</button>
+      <button class="btn btn-g btn-sm" onclick="setMF('finished',this)">Завершённые</button>
+      <button class="btn btn-g btn-sm" onclick="setMF('scheduled',this)">Предстоящие</button>
+    </div>
+    <div id="matchG"><div class="loading"><div class="spin"></div></div></div>
+  </div>
+</div>
+
+<!-- ════════ MATCH DETAIL ════════ -->
+<div class="page" id="page-md">
+  <div class="md-wrap">
+    <button class="btn btn-g btn-sm" onclick="goBack()" style="margin-bottom:20px">← Назад</button>
+    <div id="mdC"><div class="loading"><div class="spin"></div></div></div>
+  </div>
+</div>
+
+<!-- ════════ FEED ════════ -->
+<div class="page" id="page-feed">
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-title">Лента <em>оценок</em></div></div>
+    <div style="display:flex;gap:6px;margin-bottom:26px" id="feedT">
+      <button class="btn btn-l btn-sm" onclick="setFS('all',this)">🌍 Все</button>
+      <button class="btn btn-g btn-sm" onclick="setFS('friends',this)">👥 Друзья</button>
+      <button class="btn btn-g btn-sm" onclick="setFS('popular',this)">🔥 Популярные</button>
+    </div>
+    <div class="gridf" id="feedG"><div class="loading"><div class="spin"></div></div></div>
+  </div>
+</div>
+
+<!-- ════════ LEADERBOARD ════════ -->
+<div class="page" id="page-leaderboard">
+  <div class="sec">
+    <div class="sec-hd"><div class="sec-title">Таблица <em>лидеров</em></div></div>
+    <div class="lb-wrap">
+      <div class="lb-tabs">
+        <button class="lb-tab on" onclick="setLT('likes',this)">❤️ По лайкам</button>
+        <button class="lb-tab" onclick="setLT('ratings',this)">⭐ По оценкам</button>
+      </div>
+      <div class="lb-podium" id="lbPod"></div>
+      <div class="lb-table" id="lbT"><div class="loading"><div class="spin"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ PROFILE ════════ -->
+<div class="page" id="page-profile">
+  <div class="pw" id="profileW"><div class="loading"><div class="spin"></div></div></div>
+</div>
+
+<!-- ════════ FRIENDS ════════ -->
+<div class="page" id="page-friends">
+  <div class="friends-wrap">
+    <div class="sec-hd" style="margin-bottom:28px"><div class="sec-title">Друзья <em>и сообщество</em></div></div>
+    <div class="friends-layout">
+      <div class="friends-sidebar">
+        <div class="pcard" style="margin-bottom:0">
+          <div class="pcard-title">🔍 Найти пользователей</div>
+          <input class="fsearch" id="friendSearch" placeholder="Введите никнейм..." oninput="searchFriends()">
+          <div id="friendSearchRes"></div>
+        </div>
+      </div>
+      <div>
+        <div class="friends-tabs2" id="fTabs2">
+          <button class="ftab2 on" onclick="setFTab('list',this)">👥 Мои друзья</button>
+          <button class="ftab2" onclick="setFTab('incoming',this)">📨 Входящие <span id="inBadge" style="background:var(--red);color:#fff;border-radius:5px;padding:1px 5px;font-size:10px;display:none">0</span></button>
+          <button class="ftab2" onclick="setFTab('outgoing',this)">📤 Исходящие</button>
+          <button class="ftab2" onclick="setFTab('suggest',this)">✨ Рекомендации</button>
+        </div>
+        <div id="friendsContent"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ CHAT ════════ -->
+<div class="page" id="page-chat">
+  <div class="chat-wrap">
+    <button class="btn btn-g btn-sm" onclick="goBack()" style="margin-bottom:16px">← Назад</button>
+    <div class="chat-hd"><div style="font-family:'Bebas Neue',sans-serif;font-size:19px" id="chatTitle">Чат матча</div></div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-ir">
+      <input class="ci" id="chatI" placeholder="Напиши сообщение...">
+      <button class="cs" id="chatS">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="ov" id="authOv">
+  <div class="auth-box">
+    <button class="auth-x" onclick="closeAuth()">×</button>
+    <div class="auth-title">FOOTBAZED</div>
+    <div class="auth-sub">Войди или создай аккаунт за 30 секунд</div>
+    <!-- Step 1: Email -->
+    <div id="authStep1">
+      <div class="fld"><label>Введи свой email</label><input type="email" id="authEmail" placeholder="your@email.com"></div>
+      <button class="auth-btn" id="authSendBtn" onclick="sendOTP()">Отправить код →</button>
+      <div style="font-size:11px;color:var(--fog);text-align:center;margin-top:12px">На почту придёт 6-значный код для входа</div>
+    </div>
+    <!-- Step 2: Code -->
+    <div id="authStep2" style="display:none">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:36px;margin-bottom:8px">📬</div>
+        <div style="font-size:14px;color:var(--mist)">Код отправлен на</div>
+        <div style="font-size:14px;font-weight:700;color:var(--lime);margin-top:4px" id="authEmailShow"></div>
+      </div>
+      <div class="fld"><label>Введи код из письма</label><input type="text" id="authCode" placeholder="000000" maxlength="6" style="text-align:center;font-size:24px;font-weight:700;letter-spacing:8px;font-family:'JetBrains Mono',monospace"></div>
+      <button class="auth-btn" id="authVerifyBtn" onclick="verifyOTP()">Подтвердить</button>
+      <div style="display:flex;justify-content:center;gap:16px;margin-top:14px">
+        <span style="font-size:12px;color:var(--fog);cursor:pointer;text-decoration:underline" onclick="sendOTP()">Отправить повторно</span>
+        <span style="font-size:12px;color:var(--fog);cursor:pointer;text-decoration:underline" onclick="showAuthStep(1)">Изменить email</span>
+      </div>
+    </div>
+    <!-- Step 3: Profile setup (new users) -->
+    <div id="authStep3" style="display:none">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:36px;margin-bottom:8px">🎉</div>
+        <div style="font-size:16px;font-weight:700">Добро пожаловать!</div>
+        <div style="font-size:13px;color:var(--mist);margin-top:4px">Настрой свой профиль</div>
+      </div>
+      <div class="fld"><label>Никнейм *</label><input type="text" id="rU" placeholder="football_fan"><div class="fld-hint">3–30 символов, без пробелов</div></div>
+      <div class="fld"><label>О себе</label><input type="text" id="rB" placeholder="Фанат Реала с 2001..."></div>
+      <div class="fld"><label>Любимые команды</label><input type="text" id="rT" placeholder="Реал, Манчестер Сити"></div>
+      <button class="auth-btn" onclick="saveProfile()">Сохранить и начать →</button>
+    </div>
+    <div class="auth-err" id="authE"></div>
+  </div>
+</div>
+
+<!-- RATING MODAL -->
+<div class="ov" id="rateOv">
+  <div class="rate-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:24px">Оценить матч</div>
+      <button onclick="closeRate()" style="background:var(--bg3);border:1px solid var(--b1);border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--mist);font-size:16px;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div class="rate-minfo" id="rMI"></div>
+    <div class="step-bar"><div class="step-seg on" id="ss1"></div><div class="step-seg" id="ss2"></div></div>
+    <div id="rS1">
+      <div class="rate-stars-wrap">
+        <div class="rate-score-display" id="rScoreDisp">—</div>
+        <div class="rate-score-label" id="rScoreLabel">Выберите оценку</div>
+        <div class="rate-stars-row" id="starsR"></div>
+      </div>
+      <div class="priv-row">
+        <span style="font-size:13px;color:var(--mist)">Публичная оценка</span>
+        <label class="tgl"><input type="checkbox" id="rPub" checked><span class="tsl"></span></label>
+      </div>
+      <button class="btn btn-l" style="width:100%;padding:14px;border-radius:14px;font-size:15px" onclick="rNext()">Далее: Игроки →</button>
+    </div>
+    <div id="rS2" style="display:none">
+      <div class="rlbl" style="margin-bottom:11px">Оцените игроков (необязательно)</div>
+      <div id="rPlayers"></div>
+      <textarea class="rate-cmt" id="rCmt" placeholder="Впечатления от матча..."></textarea>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-g" onclick="rBack()" style="flex:0 0 auto">← Назад</button>
+        <button class="btn btn-l" style="flex:1;padding:12px" id="rSave" onclick="saveRating()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE CARD MODAL -->
+<div class="share-ov" id="shareOv">
+  <div class="share-canvas-wrap"><canvas id="shareCanvas" width="600" height="400"></canvas></div>
+  <div class="share-actions">
+    <button class="share-btn share-btn-p" onclick="downloadShare()">📥 Скачать</button>
+    <button class="share-btn share-btn-g" onclick="copyShare()">📋 Копировать</button>
+    <button class="share-btn share-btn-g" onclick="closeShare()">✕ Закрыть</button>
+  </div>
+</div>
+
+
+<script src="app.js"></script>
+</body>
+</html>
