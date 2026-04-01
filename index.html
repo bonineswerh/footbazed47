@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FOOTBAZED ⚽ | Оценивай футбол</title>
+  <meta name="description" content="Социальная сеть для футбольных болельщиков. Оценивай матчи, игроков, общайся с друзьями!">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --bg: #050810;
+      --bg2: #0a0f1c;
+      --bg3: #0f1530;
+      --card: #121826;
+      --card2: #1a2236;
+      --lime: #c6ff00;
+      --lime2: #94f700;
+      --lime3: #6c5ce7;
+      --lime4: #a855f7;
+      --text: #eef0ff;
+      --text2: #8890b8;
+      --text3: #4a5070;
+      --b1: #1e2942;
+      --b2: #2a3858;
+      --danger: #ff4757;
+      --success: #2ed573;
+      --warning: #ffa502;
+      --fog: #6c7599;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; border: none; font-family: inherit; }
+    
+    /* ─── HEADER ─── */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: rgba(5, 8, 16, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--b1);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+    
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 2px;
+      color: var(--text);
+    }
+    
+    .logo span { color: var(--lime3); }
+    
+    .nav-center {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .nav-link {
+      padding: 8px 16px;
+      border-radius: 8px;
+      color: var(--text2);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .nav-link:hover, .nav-link.active {
+      color: var(--text);
+      background: var(--card2);
+    }
+    
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .notif-btn {
+      position: relative;
+      background: none;
+      color: var(--text2);
+      font-size: 20px;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    
+    .notif-btn:hover {
+      background: var(--card2);
+      color: var(--text);
+    }
+    
+    .notif-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: var(--danger);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 8px;
+      min-width: 16px;
+      text-align: center;
+      display: none;
+    }
+    
+    .notif-badge.on { display: block; }
+    
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .nav-user:hover { background: var(--card2); }
+    
+    .nav-av {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #000;
+    }
+    
+    .nav-uname {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .nbtn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .nbtn-lime {
+      background: linear-gradient(135deg, var(--lime3), var(--lime));
+      color: #000;
+    }
+    
+    .nbtn-lime:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(108, 92, 231, 0.4);
+    }
+    
+    .nbtn-ghost {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--b1);
+    }
+    
+    .nbtn-ghost:hover {
+      background: var(--card2);
+      color: var(--text);
+    }
+    
+    /* ─── PAGES ─── */
+    .page {
+      display: none;
+      padding-top: 64px;
+      min-height: 100vh;
+    }
+    
+    .page.on { display: block; }
+    
+    /* ─── HERO ─── */
+    .hero {
+      padding: 120px 24px 80px;
+      text-align: center;
+      background: radial-gradient(ellipse at top, var(--bg3) 0%, var(--bg) 70%);
+    }
+    
+    .hero-tag {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(108, 92, 231, 0.1);
+      border: 1px solid rgba(108, 92, 231, 0.3);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--lime3);
+      margin-bottom: 24px;
+      letter-spacing: 1px;
+    }
+    
+    .hero h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 10vw, 96px);
+      line-height: 0.9;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--text) 0%, var(--lime3) 50%, var(--lime) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero p {
+      font-size: 18px;
+      color: var(--text2);
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+    
+    .hero-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .btn-l {
+      background: linear-gradient(135deg, var(--lime3), var(--lime));
+      color: #000;
+    }
+    
+    .btn-l:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(108, 92, 231, 0.4);
+    }
+    
+    .btn-g {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--b2);
+    }
+    
+    .btn-g:hover {
+      background: var(--card2);
+      border-color: var(--lime3);
+    }
+    
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 600px;
+      margin: 60px auto 0;
+    }
+    
+    .hstat {
+      background: var(--card);
+      border: 1px solid var(--b1);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    
+    .hstat-v {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--lime);
+      margin-bottom: 4px;
+    }
+    
+    .hstat-l {
+      font-size: 13px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    /* ─── MATCHES ─── */
+    .matches-page {
+      padding: 100px 24px 40px;
+    }
+    
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+    
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    
+    .league-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+    }
+    
+    .league-tab {
+      padding: 10px 20px;
+      background: var(--card);
+      border: 1px solid var(--b1);
+      border-radius: 20px;
+      font-size: 14px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .league-tab.on {
+      background: var(--lime3);
+      color: #000;
+      border-color: var(--lime3);
+    }
+    
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    
+    .mcard {
+      background: var(--card);
+      border: 1px solid var(--b1);
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .mcard:hover {
+      transform: translateY(-4px);
+      border-color: var(--lime3);
+      box-shadow: 0 8px 30px rgba(108, 92, 231, 0.2);
+    }
+    
+    .mcard.derby {
+      border-color: var(--warning);
+      box-shadow: 0 8px 30px rgba(255, 165, 2, 0.2);
+    }
+    
+    .mcard-gradient {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--lime3), var(--lime));
+    }
+    
+    .mc-t {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .mc-lg {
+      font-size: 12px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .mc-tags {
+      display: flex;
+      gap: 6px;
+    }
+    
+    .tag {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .t-derby {
+      background: var(--warning);
+      color: #000;
+    }
+    
+    .t-live {
+      background: var(--danger);
+      color: white;
+      animation: pulse 2s infinite;
+    }
+    
+    .t-fin {
+      background: var(--card2);
+      color: var(--text2);
+    }
+    
+    .t-sched {
+      background: var(--lime3);
+      color: #000;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .mc-score-block {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .mc-score-team {
+      flex: 1;
+      text-align: center;
+    }
+    
+    .mc-score-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .mc-score-num {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--lime);
+    }
+    
+    .mc-score-vs {
+      padding: 0 16px;
+      color: var(--text3);
+      font-weight: 700;
+    }
+    
+    .mc-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 16px;
+      border-top: 1px solid var(--b1);
+    }
+    
+    .mc-meta-date {
+      font-size: 13px;
+      color: var(--text3);
+    }
+    
+    .mc-acts {
+      display: flex;
+      gap: 8px;
+    }
+    
+    /* ─── MOBILE NAV ─── */
+    .mob-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--b1);
+      display: none;
+      padding: 8px 16px;
+      z-index: 1000;
+    }
+    
+    @media (max-width: 768px) {
+      .mob-nav { display: flex; }
+      .nav-center { display: none; }
+      .hero-stats { grid-template-columns: 1fr; }
+      .grid3 { grid-template-columns: 1fr; }
+    }
+    
+    .mob-nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      color: var(--text3);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .mob-nav-item.active {
+      background: var(--lime3);
+      color: #000;
+      font-weight: 600;
+    }
+    
+    .mob-nav-icon {
+      font-size: 20px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    /* ─── OVERLAYS ─── */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+    
+    .overlay.on { display: flex; }
+    
+    .auth-box, .rate-box, .share-box {
+      background: var(--card);
+      border: 1px solid var(--b1);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 420px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .auth-box h2, .rate-box h2, .share-box h2 {
+      font-size: 24px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    
+    .auth-step { display: none; }
+    .auth-step.on { display: block; }
+    
+    .input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg2);
+      border: 1px solid var(--b1);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+    
+    .input:focus {
+      outline: none;
+      border-color: var(--lime3);
+    }
+    
+    .auth-e {
+      color: var(--danger);
+      font-size: 13px;
+      margin-bottom: 16px;
+      min-height: 20px;
+    }
+    
+    .rate-stars {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin: 24px 0;
+    }
+    
+    .rate-star {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: var(--bg2);
+      border: 2px solid var(--b1);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .rate-star.on {
+      background: var(--lime);
+      color: #000;
+      border-color: var(--lime);
+    }
+    
+    .rate-score {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--lime);
+      text-align: center;
+      margin: 16px 0;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.3s;
+    }
+    
+    .rate-score.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    .rate-label {
+      text-align: center;
+      color: var(--text3);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    
+    .rate-steps {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    
+    .rate-step {
+      flex: 1;
+      height: 4px;
+      background: var(--b1);
+      border-radius: 2px;
+    }
+    
+    .rate-step.on {
+      background: var(--lime);
+    }
+    
+    .player-group {
+      margin-bottom: 20px;
+    }
+    
+    .pg-hd {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--lime3);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--b1);
+    }
+    
+    .pitem {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: var(--bg2);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .pi-n {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    .pi-p {
+      font-size: 12px;
+      color: var(--text3);
+    }
+    
+    .pi-r {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .pi-best {
+      padding: 4px 8px;
+      background: var(--bg3);
+      border: 1px solid var(--b1);
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .pi-best.on {
+      background: var(--warning);
+      border-color: var(--warning);
+    }
+    
+    .pi-num {
+      width: 50px;
+      padding: 6px;
+      background: var(--bg3);
+      border: 1px solid var(--b1);
+      border-radius: 6px;
+      color: var(--text);
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    .pi-num:focus {
+      outline: none;
+      border-color: var(--lime);
+    }
+    
+    /* ─── NOTIFICATIONS ─── */
+    .notif-panel {
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      width: 360px;
+      background: var(--card);
+      border: 1px solid var(--b1);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 1001;
+    }
+    
+    .notif-panel.on { display: flex; flex-direction: column; }
+    
+    .notif-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--b1);
+    }
+    
+    .notif-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .notif-mark {
+      font-size: 12px;
+      color: var(--lime3);
+      cursor: pointer;
+    }
+    
+    .notif-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .notif-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--b1);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .notif-item:hover { background: var(--bg2); }
+    .notif-item.unread { background: rgba(108, 92, 231, 0.1); }
+    
+    .notif-ico {
+      font-size: 20px;
+    }
+    
+    .notif-text {
+      flex: 1;
+      font-size: 14px;
+    }
+    
+    .notif-time {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 4px;
+    }
+    
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--card);
+      border: 1px solid var(--b1);
+      border-radius: 12px;
+      padding: 14px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 3000;
+      transition: transform 0.3s;
+      max-width: 90%;
+    }
+    
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+    
+    .toast.ok {
+      border-left: 4px solid var(--success);
+    }
+    
+    .toast.err {
+      border-left: 4px solid var(--danger);
+    }
+    
+    /* ─── SHARE CANVAS ─── */
+    #shareCanvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header" id="mainNav">
+    <div class="logo">FOOT<span>BAZED</span></div>
+    <nav class="nav-center">
+      <a class="nav-link active" onclick="go('home')">🏠 Главная</a>
+      <a class="nav-link" onclick="go('matches')">⚽ Матчи</a>
+      <a class="nav-link" onclick="go('feed')">📰 Лента</a>
+      <a class="nav-link" onclick="go('leaderboard')">🏆 Лидеры</a>
+      <a class="nav-link" onclick="go('friends')">👥 Друзья</a>
+    </nav>
+    <div class="nav-right" id="navRight">
+      <button class="nbtn nbtn-lime" onclick="openAuth()">Войти</button>
+    </div>
+  </header>
+
+  <!-- NOTIFICATIONS PANEL -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-header">
+      <h3>🔔 Уведомления</h3><div class="notif-badge" id="notifBadge" style="display:none"></div>
+      <span class="notif-mark" onclick="markAllRead()">Всё прочитано</span>
+    </div>
+    <div class="notif-list" id="notifList">
+      <div style="padding:20px;text-align:center;color:var(--text3)">Нет уведомлений</div>
+    </div>
+  </div>
+
+  <!-- PAGES -->
+  
+  <!-- HOME -->
+  <div class="page on" id="page-home">
+    <section class="hero">
+      <span class="hero-tag">⚽ РЕЙТИНГИ · АНАЛИТИКА · СООБЩЕСТВО</span>
+      <h1>ОЦЕНИВАЙ<br>ФУТБОЛ</h1>
+      <p>Ставь оценки матчам, оценивай игроков, сравнивай мнения с друзьями. FOOTBAZED — платформа, где футбол оценивают болельщики.</p>
+      <div class="hero-btns">
+        <button class="btn btn-l" onclick="openAuth()">Присоединиться →</button>
+        <button class="btn btn-g" onclick="go('matches')">Смотреть матчи</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat">
+          <div class="hstat-v" id="hU">0</div>
+          <div class="hstat-l">Пользователей</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-v" id="hR">0</div>
+          <div class="hstat-l">Оценок</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-v" id="hM">0</div>
+          <div class="hstat-l">Матчей</div>
+        </div>
+      </div>
+    </section>
+    
+    <section style="padding:0 24px 60px;max-width:1200px;margin:0 auto;">
+      <h2 style="font-size:28px;margin-bottom:24px;">Последние матчи</h2>
+      <div class="grid3" id="homeM"></div>
+    </section>
+    
+    <section style="padding:0 24px 60px;max-width:1200px;margin:0 auto;">
+      <h2 style="font-size:28px;margin-bottom:24px;">Лента оценок</h2>
+      <div class="grid3" id="homeF"></div>
+    </section>
+  </div>
+
+  <!-- MATCHES -->
+  <div class="page" id="page-matches">
+    <div class="matches-page">
+      <h1 class="page-title">⚽ Матчи</h1>
+      
+      <div class="filters" id="mf">
+        <button class="btn btn-l btn-sm" onclick="setMF('all',this)">Все</button>
+        <button class="btn btn-g btn-sm" onclick="setMF('live',this)">🔴 LIVE</button>
+        <button class="btn btn-g btn-sm" onclick="setMF('finished',this)">Завершённые</button>
+        <button class="btn btn-g btn-sm" onclick="setMF('scheduled',this)">Предстоящие</button>
+      </div>
+      
+      <input class="input" placeholder="🔍 Поиск команд..." oninput="filterM()" id="msearch">
+      
+      <div class="league-tabs" id="leagueTabs">
+        <button class="league-tab on" onclick="setLeague('all',this)">🌍 Все лиги</button>
+      </div>
+      
+      <div class="grid3" id="matchG"></div>
+    </div>
+  </div>
+
+  <!-- FEED -->
+  <div class="page" id="page-feed">
+    <div class="matches-page">
+      <h1 class="page-title">📰 Лента оценок</h1>
+      
+      <div class="filters" id="feedT">
+        <button class="btn btn-l btn-sm" onclick="setFS('all',this)">🌍 Все</button>
+        <button class="btn btn-g btn-sm" onclick="setFS('friends',this)">👥 Друзья</button>
+        <button class="btn btn-g btn-sm" onclick="setFS('popular',this)">🔥 Популярные</button>
+      </div>
+      
+      <div class="grid3" id="feedG"></div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="page" id="page-leaderboard">
+    <div class="matches-page">
+      <h1 class="page-title">🏆 Таблица лидеров</h1>
+      
+      <div class="filters">
+        <button class="btn btn-l btn-sm lb-tab" onclick="setLT('likes',this)">❤️ По лайкам</button>
+        <button class="btn btn-g btn-sm lb-tab" onclick="setLT('ratings',this)">⭐ По оценкам</button>
+      </div>
+      
+      <div id="lbPod" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px;"></div>
+      <div id="lbT"></div>
+    </div>
+  </div>
+
+  <!-- FRIENDS -->
+  <div class="page" id="page-friends">
+    <div class="matches-page">
+      <h1 class="page-title">👥 Друзья и сообщество</h1>
+      
+      <input class="input" placeholder="🔍 Найти пользователей" oninput="searchFriends()" id="friendSearch">
+      
+      <div class="filters" style="margin-bottom:24px;">
+        <button class="btn btn-l btn-sm ftab2" onclick="setFTab('list',this)">👥 Мои друзья</button>
+        <button class="btn btn-g btn-sm ftab2" onclick="setFTab('incoming',this)">📨 Входящие <span id="inBadge" style="display:none;background:var(--danger);color:white;padding:2px 6px;border-radius:8px;font-size:10px;margin-left:4px;">0</span></button>
+        <button class="btn btn-g btn-sm ftab2" onclick="setFTab('outgoing',this)">📤 Исходящие</button>
+        <button class="btn btn-g btn-sm ftab2" onclick="setFTab('suggest',this)">✨ Рекомендации</button>
+      </div>
+      
+      <div id="friendsContent"></div>
+      <div id="friendSearchRes" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="page" id="page-profile">
+    <div class="matches-page">
+      <div id="profileW"></div>
+    </div>
+  </div>
+
+  <!-- MATCH DETAIL -->
+  <div class="page" id="page-md">
+    <div class="matches-page">
+      <button class="btn btn-g btn-sm" onclick="goBack()" style="margin-bottom:16px;">← Назад</button>
+      <div id="mdC"></div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="page" id="page-chat">
+    <div style="height:calc(100vh - 64px);display:flex;flex-direction:column;">
+      <div style="padding:16px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-g btn-sm" onclick="goBack()">← Назад</button>
+        <h2 style="font-size:18px;" id="chatTitle">Чат матча</h2>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px;" id="chatBody"></div>
+      <div style="padding:16px;border-top:1px solid var(--b1);display:flex;gap:12px;">
+        <input class="input" placeholder="Напиши сообщение..." id="chatI" style="margin-bottom:0;flex:1;">
+        <button class="btn btn-l" id="chatS">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERLAYS -->
+  
+  <!-- AUTH -->
+  <div class="overlay" id="authOv">
+    <div class="auth-box">
+      <h2>Войди или создай аккаунт за 30 секунд</h2>
+      
+      <div class="auth-step on" id="authStep1">
+        <p style="color:var(--text2);margin-bottom:16px;">Введи свой email</p>
+        <input class="input" type="email" placeholder="example@mail.ru" id="authEmail">
+        <div class="auth-e" id="authE"></div>
+        <button class="btn btn-l" style="width:100%" onclick="sendOTP()" id="authSendBtn">Отправить код →</button>
+        <p style="color:var(--text3);font-size:12px;margin-top:16px;">📬 На почту придёт 6-значный код для входа</p>
+      </div>
+      
+      <div class="auth-step" id="authStep2">
+        <p style="color:var(--text2);margin-bottom:16px;">Код отправлен на <strong id="authEmailShow"></strong></p>
+        <p style="color:var(--text3);font-size:12px;margin-bottom:16px;">Проверь папку «Спам» если письмо не пришло</p>
+        <input class="input" type="text" placeholder="6-значный код" id="authCode" maxlength="6">
+        <div class="auth-e" id="authE2"></div>
+        <button class="btn btn-l" style="width:100%" onclick="verifyOTP()" id="authVerifyBtn">Подтвердить</button>
+        <button class="btn btn-g" style="width:100%;margin-top:8px;" onclick="showAuthStep(1)">Изменить email</button>
+      </div>
+      
+      <div class="auth-step" id="authStep3">
+        <h3 style="margin-bottom:16px;">🎉 Добро пожаловать! Настрой свой профиль</h3>
+        <input class="input" placeholder="Никнейм *" id="rU" maxlength="30">
+        <input class="input" placeholder="О себе" id="rB" maxlength="100">
+        <input class="input" placeholder="Любимые команды" id="rT">
+        <div class="auth-e" id="authE3"></div>
+        <button class="btn btn-l" style="width:100%" onclick="saveProfile()">Сохранить и начать →</button>
+      </div>
+      
+      <button class="btn btn-g" style="width:100%;margin-top:16px;" onclick="closeAuth()">✕ Закрыть</button>
+    </div>
+  </div>
+
+  <!-- RATING -->
+  <div class="overlay" id="rateOv">
+    <div class="rate-box">
+      <h2>⭐ Оценить матч</h2>
+      
+      <div class="rate-steps">
+        <div class="rate-step on" id="ss1"></div>
+        <div class="rate-step" id="ss2"></div>
+      </div>
+      
+      <div id="rS1">
+        <p style="color:var(--text2);text-align:center;margin-bottom:8px;" id="rMI">Матч</p>
+        
+        <div class="rate-stars" id="starsR"></div>
+        
+        <div class="rate-score" id="rScoreDisp">—</div>
+        <div class="rate-label" id="rScoreLabel">Выберите оценку</div>
+        
+        <label style="display:flex;align-items:center;gap:8px;color:var(--text2);margin-bottom:24px;">
+          <input type="checkbox" id="rPub" checked> Публичная оценка
+        </label>
+        
+        <div style="display:flex;gap:12px;">
+          <button class="btn btn-g" style="flex:1" onclick="closeRate()">✕ Отмена</button>
+          <button class="btn btn-l" style="flex:1" onclick="rNext()">Далее: Игроки →</button>
+        </div>
+      </div>
+      
+      <div id="rS2" style="display:none;">
+        <p style="color:var(--text2);margin-bottom:16px;">Оцените игроков (необязательно)</p>
+        <div id="rPlayers"></div>
+        
+        <textarea class="input" placeholder="Комментарий к матчу..." id="rCmt" rows="3" style="resize:none;"></textarea>
+        
+        <div style="display:flex;gap:12px;">
+          <button class="btn btn-g" style="flex:1" onclick="rBack()">← Назад</button>
+          <button class="btn btn-l" style="flex:1" onclick="saveRating()" id="rSave">💾 Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHARE -->
+  <div class="overlay" id="shareOv">
+    <div class="share-box">
+      <h2>📸 Карточка профиля</h2>
+      <canvas id="shareCanvas"></canvas>
+      <div style="display:flex;gap:12px;margin-top:24px;">
+        <button class="btn btn-l" style="flex:1" onclick="downloadShare()">📥 Скачать</button>
+        <button class="btn btn-g" style="flex:1" onclick="copyShare()">📋 Копировать</button>
+        <button class="btn btn-g" onclick="closeShare()">✕ Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE NAV -->
+  <nav class="mob-nav">
+    <div class="mob-nav-item active" id="mn-home" onclick="go('home')">
+      <span class="mob-nav-icon">🏠</span>
+      Главная
+    </div>
+    <div class="mob-nav-item" id="mn-matches" onclick="go('matches')">
+      <span class="mob-nav-icon">⚽</span>
+      Матчи
+    </div>
+    <div class="mob-nav-item" id="mn-feed" onclick="go('feed')">
+      <span class="mob-nav-icon">📰</span>
+      Лента
+    </div>
+    <div class="mob-nav-item" id="mn-leaderboard" onclick="go('leaderboard')">
+      <span class="mob-nav-icon">🏆</span>
+      Лидеры
+    </div>
+    <div class="mob-nav-item" id="mn-friends" onclick="go('friends')">
+      <span class="mob-nav-icon">👥</span>
+      Друзья
+    </div>
+  </nav>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- APP JS -->
+  <script src="app.js?v=15"></script>
+</body>
+</html>
