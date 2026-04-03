@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#06081a">
+  <title>FOOTBAZED ⚽ | Оценивай футбол</title>
+  <meta name="description" content="Социальная сеть для футбольных болельщиков. Оценивай матчи, игроков, общайся с друзьями!">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="styles.css?v=29">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header" id="mainNav">
+    <div class="logo">FOOT<span>BAZED</span></div>
+    <nav class="nav-center">
+      <a class="nav-link active" onclick="go('home')">Главная</a>
+      <a class="nav-link" onclick="go('matches')">Матчи</a>
+      <a class="nav-link" onclick="go('feed')">Лента</a>
+      <a class="nav-link" onclick="go('leaderboard')">Лидеры</a>
+      <a class="nav-link" onclick="go('friends')">Друзья</a>
+    </nav>
+    <div class="nav-right" id="navRight">
+      <button class="nbtn nbtn-lime" onclick="openAuth()">Войти</button>
+    </div>
+  </header>
+
+  <!-- NOTIFICATIONS PANEL -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-header">
+      <h3>Уведомления</h3><div class="notif-badge" id="notifBadge"></div>
+      <span class="notif-mark" onclick="markAllRead()">Всё прочитано</span>
+    </div>
+    <div class="notif-list" id="notifList">
+      <div style="padding:20px;text-align:center;color:var(--text3)">Нет уведомлений</div>
+    </div>
+  </div>
+
+  <!-- PAGES -->
+  
+  <!-- HOME -->
+  <div class="page on" id="page-home">
+    <section class="hero">
+      <span class="hero-tag">РЕЙТИНГИ · АНАЛИТИКА · СООБЩЕСТВО</span>
+      <h1>ОЦЕНИВАЙ<br>ФУТБОЛ</h1>
+      <p>Ставь оценки матчам, оценивай игроков, сравнивай мнения с друзьями. FOOTBAZED — платформа, где футбол оценивают болельщики.</p>
+      <div class="hero-btns" id="heroBtns">
+        <button class="btn btn-l" onclick="openRegister()">Зарегистрироваться →</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat">
+          <div class="hstat-v" id="hU">0</div>
+          <div class="hstat-l">Пользователей</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-v" id="hR">0</div>
+          <div class="hstat-l">Оценок</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-v" id="hM">0</div>
+          <div class="hstat-l">Матчей</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="marquee-wrap">
+      <div class="marquee">
+        <span class="marquee-item">PREMIER LEAGUE <span class="mq-dot"></span></span>
+        <span class="marquee-item">LA LIGA <span class="mq-dot"></span></span>
+        <span class="marquee-item">SERIE A <span class="mq-dot"></span></span>
+        <span class="marquee-item">BUNDESLIGA <span class="mq-dot"></span></span>
+        <span class="marquee-item">LIGUE 1 <span class="mq-dot"></span></span>
+        <span class="marquee-item">CHAMPIONS LEAGUE <span class="mq-dot"></span></span>
+        <span class="marquee-item">EUROPA LEAGUE <span class="mq-dot"></span></span>
+        <span class="marquee-item">PREMIER LEAGUE <span class="mq-dot"></span></span>
+        <span class="marquee-item">LA LIGA <span class="mq-dot"></span></span>
+        <span class="marquee-item">SERIE A <span class="mq-dot"></span></span>
+        <span class="marquee-item">BUNDESLIGA <span class="mq-dot"></span></span>
+        <span class="marquee-item">LIGUE 1 <span class="mq-dot"></span></span>
+        <span class="marquee-item">CHAMPIONS LEAGUE <span class="mq-dot"></span></span>
+        <span class="marquee-item">EUROPA LEAGUE <span class="mq-dot"></span></span>
+      </div>
+    </div>
+    
+    <div class="home-divider"></div>
+    
+    <section class="home-section">
+      <div class="home-sec-hd">
+        <h2>🏟️ Последние матчи</h2>
+        <a class="home-sec-link" onclick="go('matches')">Все матчи →</a>
+      </div>
+      <div class="grid3" id="homeM"></div>
+    </section>
+    
+    <div class="home-divider"></div>
+    
+    <section class="home-section">
+      <div class="home-sec-hd">
+        <h2>⭐ Лента оценок</h2>
+        <a class="home-sec-link" onclick="go('feed')">Вся лента →</a>
+      </div>
+      <div class="grid3" id="homeF"></div>
+    </section>
+  </div>
+
+  <!-- MATCHES -->
+  <div class="page" id="page-matches">
+    <div class="matches-page">
+      <h1 class="page-title">Матчи</h1>
+      
+      <div class="filters" id="mf">
+        <button class="btn btn-l btn-sm" onclick="setMF('all',this)">Все</button>
+        <button class="btn btn-g btn-sm" onclick="setMF('live',this)">LIVE</button>
+        <button class="btn btn-g btn-sm" onclick="setMF('finished',this)">Завершённые</button>
+        <button class="btn btn-g btn-sm" onclick="setMF('scheduled',this)">Предстоящие</button>
+      </div>
+      
+      <input class="input" placeholder="🔍 Поиск команд..." oninput="filterM()" id="msearch">
+      
+      <div class="league-tabs" id="leagueTabs">
+        <button class="league-tab on" onclick="setLeague('all',this)">Все лиги</button>
+      </div>
+      
+      <div id="matchG"></div>
+    </div>
+  </div>
+
+  <!-- FEED -->
+  <div class="page" id="page-feed">
+    <div class="matches-page">
+      <h1 class="page-title">Лента оценок</h1>
+      
+      <div class="filters" id="feedT">
+        <button class="btn btn-l btn-sm" onclick="setFS('all',this)">Все</button>
+        <button class="btn btn-g btn-sm" onclick="setFS('friends',this)">Друзья</button>
+        <button class="btn btn-g btn-sm" onclick="setFS('popular',this)">Популярные</button>
+      </div>
+      
+      <div class="grid3" id="feedG"></div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="page" id="page-leaderboard">
+    <div class="matches-page">
+      <h1 class="page-title">Таблица лидеров</h1>
+      
+      <div class="filters">
+        <button class="btn btn-l btn-sm lb-tab" onclick="setLT('likes',this)">По лайкам</button>
+        <button class="btn btn-g btn-sm lb-tab" onclick="setLT('ratings',this)">По оценкам</button>
+      </div>
+      
+      <div id="lbPod" class="lb-podium"></div>
+      <div id="lbT"></div>
+    </div>
+  </div>
+
+  <!-- FRIENDS -->
+  <div class="page" id="page-friends">
+    <div class="matches-page">
+      <h1 class="page-title">Друзья и сообщество</h1>
+      
+      <input class="input" placeholder="🔍 Найти пользователей" oninput="searchFriends()" id="friendSearch">
+      
+      <div class="filters" style="margin-bottom:24px;">
+        <button class="btn btn-l btn-sm ftab2" onclick="setFTab('list',this)">Мои друзья</button>
+        <button class="btn btn-g btn-sm ftab2" onclick="setFTab('incoming',this)">📨 Входящие <span id="inBadge" style="display:none;background:var(--danger);color:white;padding:2px 6px;border-radius:8px;font-size:10px;margin-left:4px;">0</span></button>
+        <button class="btn btn-g btn-sm ftab2" onclick="setFTab('outgoing',this)">Исходящие</button>
+        <button class="btn btn-g btn-sm ftab2" onclick="setFTab('suggest',this)">Рекомендации</button>
+      </div>
+      
+      <div id="friendsContent"></div>
+      <div id="friendSearchRes" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="page" id="page-profile">
+    <div class="matches-page">
+      <div id="profileW"></div>
+    </div>
+  </div>
+
+  <!-- MATCH DETAIL -->
+  <div class="page" id="page-md">
+    <div class="matches-page">
+      <button class="btn btn-g btn-sm" onclick="goBack()" style="margin-bottom:16px;">← Назад</button>
+      <div id="mdC"></div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="page" id="page-chat">
+    <div style="height:calc(100vh - 64px);display:flex;flex-direction:column;">
+      <div style="padding:16px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-g btn-sm" onclick="goBack()">← Назад</button>
+        <h2 style="font-size:18px;" id="chatTitle">Чат матча</h2>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px;" id="chatBody"></div>
+      <div style="padding:16px;border-top:1px solid var(--b1);display:flex;gap:12px;">
+        <input class="input" placeholder="Напиши сообщение..." id="chatI" style="margin-bottom:0;flex:1;">
+        <button class="btn btn-l" id="chatS">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERLAYS -->
+  
+  <!-- AUTH -->
+  <div class="overlay" id="authOv">
+    <div class="auth-box">
+      <!-- LOGIN MODE -->
+      <div id="authLogin" style="display:none">
+        <h2>Вход в аккаунт</h2>
+        <p style="color:var(--text2);margin-bottom:16px;">Введи email и пароль</p>
+        <input class="input" type="email" placeholder="Email" id="loginEmail">
+        <input class="input" type="password" placeholder="Пароль" id="loginPass">
+        <div class="auth-e" id="loginErr"></div>
+        <button class="btn btn-l" style="width:100%" onclick="doLogin()" id="loginBtn">Войти</button>
+        <p style="color:var(--text3);font-size:13px;text-align:center;margin-top:16px">Нет аккаунта? <span style="color:var(--accent2);cursor:pointer;font-weight:600" onclick="switchToRegister()">Зарегистрируйся</span></p>
+      </div>
+
+      <!-- REGISTER STEP 1: Email -->
+      <div class="auth-step" id="authStep1">
+        <h2>Регистрация</h2>
+        <p style="color:var(--text2);margin-bottom:16px;">Введи свой email</p>
+        <input class="input" type="email" placeholder="example@mail.ru" id="authEmail">
+        <div class="auth-e" id="authE"></div>
+        <button class="btn btn-l" style="width:100%" onclick="sendOTP()" id="authSendBtn">Отправить код →</button>
+        <p style="color:var(--text3);font-size:12px;margin-top:16px;">📬 На почту придёт 6-значный код</p>
+        <p style="color:var(--text3);font-size:13px;text-align:center;margin-top:12px">Уже есть аккаунт? <span style="color:var(--accent2);cursor:pointer;font-weight:600" onclick="switchToLogin()">Войти</span></p>
+      </div>
+      
+      <!-- REGISTER STEP 2: OTP Code -->
+      <div class="auth-step" id="authStep2">
+        <h2>Подтверждение</h2>
+        <p style="color:var(--text2);margin-bottom:16px;">Код отправлен на <strong id="authEmailShow"></strong></p>
+        <p style="color:var(--text3);font-size:12px;margin-bottom:16px;">Проверь папку «Спам» если письмо не пришло</p>
+        <input class="input" type="text" placeholder="6-значный код" id="authCode" maxlength="6">
+        <div class="auth-e" id="authE2"></div>
+        <button class="btn btn-l" style="width:100%" onclick="verifyOTP()" id="authVerifyBtn">Подтвердить</button>
+        <button class="btn btn-g" style="width:100%;margin-top:8px;" onclick="showAuthStep(1)">Изменить email</button>
+      </div>
+      
+      <!-- REGISTER STEP 3: Profile + Password -->
+      <div class="auth-step" id="authStep3">
+        <h2>Настрой профиль</h2>
+        <input class="input" placeholder="Никнейм *" id="rU" maxlength="30">
+        <input class="input" type="password" placeholder="Придумай пароль *" id="rP" minlength="6">
+        <input class="input" placeholder="О себе" id="rB" maxlength="100">
+        <input class="input" placeholder="Любимые команды" id="rT">
+        <div class="auth-e" id="authE3"></div>
+        <button class="btn btn-l" style="width:100%" onclick="saveProfile()">Создать аккаунт →</button>
+      </div>
+      
+      <button class="btn btn-g" style="width:100%;margin-top:16px;" onclick="closeAuth()">✕ Закрыть</button>
+    </div>
+  </div>
+
+  <!-- RATING -->
+  <div class="overlay" id="rateOv">
+    <div class="rate-box">
+      <h2>⭐ Оценить матч</h2>
+      
+      <div class="rate-steps">
+        <div class="rate-step on" id="ss1"></div>
+        <div class="rate-step" id="ss2"></div>
+      </div>
+      
+      <div id="rS1">
+        <p style="color:var(--text2);text-align:center;margin-bottom:8px;" id="rMI">Матч</p>
+        
+        <div class="rate-stars" id="starsR"></div>
+        
+        <div class="rate-score" id="rScoreDisp">—</div>
+        <div class="rate-label" id="rScoreLabel">Выберите оценку</div>
+        
+        <label style="display:flex;align-items:center;gap:8px;color:var(--text2);margin-bottom:24px;">
+          <input type="checkbox" id="rPub" checked> Публичная оценка
+        </label>
+        
+        <div style="display:flex;gap:12px;">
+          <button class="btn btn-g" style="flex:1" onclick="closeRate()">✕ Отмена</button>
+          <button class="btn btn-l" style="flex:1" onclick="rNext()">Далее: Игроки →</button>
+        </div>
+      </div>
+      
+      <div id="rS2" style="display:none;">
+        <p style="color:var(--text2);margin-bottom:16px;">Оцените игроков (необязательно)</p>
+        <div id="rPlayers"></div>
+        
+        <textarea class="input" placeholder="Комментарий к матчу..." id="rCmt" rows="3" style="resize:none;"></textarea>
+        
+        <div style="display:flex;gap:12px;">
+          <button class="btn btn-g" style="flex:1" onclick="rBack()">← Назад</button>
+          <button class="btn btn-l" style="flex:1" onclick="saveRating()" id="rSave">💾 Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHARE -->
+  <div class="overlay" id="shareOv">
+    <div class="share-box">
+      <h2>📸 Карточка профиля</h2>
+      <canvas id="shareCanvas"></canvas>
+      <div style="display:flex;gap:12px;margin-top:24px;">
+        <button class="btn btn-l" style="flex:1" onclick="downloadShare()">📥 Скачать</button>
+        <button class="btn btn-g" style="flex:1" onclick="copyShare()">📋 Копировать</button>
+        <button class="btn btn-g" onclick="closeShare()">✕ Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE NAV -->
+  <nav class="mob-nav">
+    <div class="mob-nav-item active" id="mn-home" onclick="go('home')">
+      <span class="mob-nav-icon" data-i="home"></span>
+      Главная
+    </div>
+    <div class="mob-nav-item" id="mn-matches" onclick="go('matches')">
+      <span class="mob-nav-icon" data-i="football"></span>
+      Матчи
+    </div>
+    <div class="mob-nav-item" id="mn-feed" onclick="go('feed')">
+      <span class="mob-nav-icon" data-i="feed"></span>
+      Лента
+    </div>
+    <div class="mob-nav-item" id="mn-leaderboard" onclick="go('leaderboard')">
+      <span class="mob-nav-icon" data-i="trophy"></span>
+      Лидеры
+    </div>
+    <div class="mob-nav-item" id="mn-friends" onclick="go('friends')">
+      <span class="mob-nav-icon" data-i="users"></span>
+      Друзья
+    </div>
+  </nav>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- APP JS -->
+  <script src="app.js?v=29"></script>
+</body>
+</html>
