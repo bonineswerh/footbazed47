@@ -32,6 +32,15 @@ const I={
 };
 function ico(name,size){return(I[name]||'').replace('class="ico"',`class="ico" style="width:${size||16}px;height:${size||16}px"`);}
 
+// Never insert text received from Supabase directly into HTML.  This keeps a
+// comment, chat message, nickname, or team name from becoming executable code.
+function esc(value){return String(value??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
+function safeImageUrl(value){
+  const url=String(value||'').trim();
+  if(/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(url))return esc(url);
+  try{const parsed=new URL(url,window.location.origin);return /^https?:$/.test(parsed.protocol)?esc(parsed.href):'';}catch(e){return '';}
+}
+
 const DERBY=[{h:'Зенит',a:'Спартак'},{h:'Реал',a:'Барселона'},{h:'Ман Сити',a:'Ливерпуль'},{h:'Ювентус',a:'Милан'},{h:'Бавария',a:'Дортмунд'},{h:'Арсенал',a:'Тоттенхэм'}];
 const LEVELS=[{n:'🌱 Новичок',m:0},{n:'🌿 Любитель',m:5},{n:'⭐ Профи',m:20},{n:'🏆 Эксперт',m:50},{n:'👑 Легенда',m:100}];
 const AVCOLORS=['av-0','av-1','av-2','av-3','av-4','av-5','av-6','av-7'];
@@ -70,7 +79,8 @@ async function init(){
 async function onLogin(u){
   await ensureProfile(u);
   const{data:p}=await sb.from('users').select('*').eq('id',u.id).maybeSingle();
-  CU=p?{...u,...p}:u;
+  // Email comes from Supabase Auth, not from the public users table.
+  CU=p?{...p,email:u.email}:u;
   renderNav();loadNotifications();
 }
 function onLogout(){CU=null;renderNav();}
@@ -80,9 +90,11 @@ function renderNav(){
   const hb=document.getElementById('heroBtns');
   if(CU){
     const n=CU.username||CU.email?.split('@')[0]||'U';
+    const safeName=esc(n);
     const cls=avColor(n);
-    const navAv=CU.avatar_url?`<img src="${CU.avatar_url}" style="width:32px;height:32px;border-radius:8px;object-fit:cover">`:`<div class="nav-av ${cls}">${n[0].toUpperCase()}</div>`;
-    nr.innerHTML=`<div class="notif-btn" id="notifBtn" onclick="toggleNotif()" style="display:flex">${ico('bell',18)}<div class="notif-badge" id="notifBadge"></div></div><div class="nav-user" onclick="go('profile')">${navAv}<span class="nav-uname">${n}</span></div><button class="nbtn nbtn-ghost" onclick="doLogout()">Выйти</button>`;
+    const safeAvatar=safeImageUrl(CU.avatar_url);
+    const navAv=safeAvatar?`<img src="${safeAvatar}" style="width:32px;height:32px;border-radius:8px;object-fit:cover" alt="">`:`<div class="nav-av ${cls}">${esc(n[0].toUpperCase())}</div>`;
+    nr.innerHTML=`<div class="notif-btn" id="notifBtn" onclick="toggleNotif()" style="display:flex">${ico('bell',18)}<div class="notif-badge" id="notifBadge"></div></div><div class="nav-user" onclick="go('profile')">${navAv}<span class="nav-uname">${safeName}</span></div><button class="nbtn nbtn-ghost" onclick="doLogout()">Выйти</button>`;
     if(hb)hb.innerHTML=`<button class="btn btn-l" onclick="go('matches')">Смотреть матчи →</button>`;
   }else{
     nr.innerHTML=`<button class="nbtn nbtn-lime" onclick="openAuth()">Войти</button>`;
@@ -133,15 +145,18 @@ function renderMCard(m){
   const st={live:'🔴 LIVE',finished:'Завершён',scheduled:'Предстоит'}[m.status]||m.status;
   const sc={live:'t-live',finished:'t-fin',scheduled:'t-sched'}[m.status]||'';
   const derby=isDerby(m.home_team_name,m.away_team_name);
+  const league=esc(m.league_name);
+  const home=esc(m.home_team_name);
+  const away=esc(m.away_team_name);
   return`<div class="mcard${derby?' derby':''}" onclick="go('md',{mid:${m.id}})">
     <div class="mcard-gradient"></div>
     <div class="mcard-body">
-      <div class="mc-t"><span class="mc-lg">${m.league_name||''}</span>
-      <div class="mc-tags">${derby?'<span class="tag t-derby">'+ico('fire',12)+' ДЕРБИ</span>':''}<span class="tag ${sc}">${st}</span></div></div>
+      <div class="mc-t"><span class="mc-lg">${league}</span>
+      <div class="mc-tags">${derby?'<span class="tag t-derby">'+ico('fire',12)+' ДЕРБИ</span>':''}<span class="tag ${sc}">${esc(st)}</span></div></div>
       <div class="mc-score-block">
-        <div class="mc-score-team"><div class="mc-score-name">${m.home_team_name}</div><div class="mc-score-num">${m.home_score??'—'}</div></div>
+        <div class="mc-score-team"><div class="mc-score-name">${home}</div><div class="mc-score-num">${esc(m.home_score??'—')}</div></div>
         <div class="mc-score-vs">VS</div>
-        <div class="mc-score-team"><div class="mc-score-name">${m.away_team_name}</div><div class="mc-score-num">${m.away_score??'—'}</div></div>
+        <div class="mc-score-team"><div class="mc-score-name">${away}</div><div class="mc-score-num">${esc(m.away_score??'—')}</div></div>
       </div>
       <div class="mc-bottom">
         <div class="mc-meta-left">
@@ -149,7 +164,7 @@ function renderMCard(m){
         </div>
         <div class="mc-acts" onclick="event.stopPropagation()">
           ${m.status==='finished'?`<button class="mbtn lime" onclick="openRate(${m.id})">${ico('star',14)} Оценить</button>`:''}
-          <button class="mbtn" onclick="go('chat',{mid:${m.id},title:'${m.home_team_name} vs ${m.away_team_name}'})">${ico('chat',14)}</button>
+          <button class="mbtn" onclick="go('chat',{mid:${m.id},title:'Чат матча'})">${ico('chat',14)}</button>
         </div>
       </div>
       ${renderPredBlock(m)}
@@ -241,11 +256,11 @@ async function loadMD(id){
     const stText={live:'🔴 LIVE',finished:'Завершён',scheduled:'Предстоит'}[m.status]||m.status;
     el.innerHTML=`
     <div class="md-hero">
-      <div class="md-lg">${m.league_name||''} · ${stText}</div>
+      <div class="md-lg">${esc(m.league_name)} · ${esc(stText)}</div>
       <div class="md-sl">
-        <div class="md-team"><div class="md-tname">${m.home_team_name}</div><div class="md-score">${m.home_score??'—'}</div></div>
+        <div class="md-team"><div class="md-tname">${esc(m.home_team_name)}</div><div class="md-score">${esc(m.home_score??'—')}</div></div>
         <div class="md-vs">VS</div>
-        <div class="md-team"><div class="md-tname">${m.away_team_name}</div><div class="md-score">${m.away_score??'—'}</div></div>
+        <div class="md-team"><div class="md-tname">${esc(m.away_team_name)}</div><div class="md-score">${esc(m.away_score??'—')}</div></div>
       </div>
       <div class="md-meta"><span>${ico('calendar',12)} ${new Date(m.match_date).toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}</span></div>
       <div class="md-comm">
@@ -256,12 +271,12 @@ async function loadMD(id){
     </div>
     <div style="margin-bottom:20px;display:flex;gap:10px">
       ${m.status==='finished'?`<button class="btn btn-l" onclick="openRate(${m.id})">${ico('star',14)} Оценить матч</button>`:''}
-      <button class="btn btn-g" onclick="go('chat',{mid:${m.id},title:'${m.home_team_name} vs ${m.away_team_name}'})">${ico('chat',14)} Обсуждение</button>
+      <button class="btn btn-g" onclick="go('chat',{mid:${m.id},title:'Чат матча'})">${ico('chat',14)} Обсуждение</button>
     </div>
     <div class="md-grid">
       <div>
-        <div class="mdcard"><div class="mdcard-title">Топ игроков</div>${tp.length?tp.map((p,i)=>`<div class="pr-row"><div class="pr-rank">${i+1}</div><div class="pr-info"><div class="pr-name">${p.name||'—'}</div><div class="pr-team">${p.team||''}</div></div><div class="pr-r"><div class="pr-bar"><div class="pr-fill" style="width:${p.avg*10}%"></div></div><div class="pr-val">${p.avg}</div></div></div>`).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок игроков</div>'}</div>
-        <div class="mdcard"><div class="mdcard-title">Оценки</div>${ratings?.length?ratings.slice(0,8).map(r=>{const u=rUserMap[r.user_id]||{};return`<div class="rh-row"><div><div class="rh-m" style="cursor:pointer;color:var(--accent2)" onclick="go('profile',{uid:'${r.user_id}'})">${u.username||'Аноним'}</div><div class="rh-l">@${u.username||'user'}${r.comment?' · '+r.comment.substring(0,50):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
+        <div class="mdcard"><div class="mdcard-title">Топ игроков</div>${tp.length?tp.map((p,i)=>`<div class="pr-row"><div class="pr-rank">${i+1}</div><div class="pr-info"><div class="pr-name">${esc(p.name||'—')}</div><div class="pr-team">${esc(p.team)}</div></div><div class="pr-r"><div class="pr-bar"><div class="pr-fill" style="width:${p.avg*10}%"></div></div><div class="pr-val">${p.avg}</div></div></div>`).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок игроков</div>'}</div>
+        <div class="mdcard"><div class="mdcard-title">Оценки</div>${ratings?.length?ratings.slice(0,8).map(r=>{const u=rUserMap[r.user_id]||{};return`<div class="rh-row"><div><div class="rh-m" style="cursor:pointer;color:var(--accent2)" onclick="go('profile',{uid:'${r.user_id}'})">${esc(u.username||'Аноним')}</div><div class="rh-l">@${esc(u.username||'user')}${r.comment?' · '+esc(r.comment.substring(0,50)):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
       </div>
       <div>
         <div class="mdcard"><div class="mdcard-title">Распределение оценок</div><div class="rdist">${dist.map(d=>`<div class="rd-row"><div class="rd-l">${d.n}</div><div class="rd-bar"><div class="rd-fill" style="width:${d.c?Math.round(d.c/maxD*100):0}%"></div></div><div class="rd-c">${d.c}</div></div>`).join('')}</div></div>
@@ -278,20 +293,21 @@ function renderFCard(r){
   const likes=r.rating_likes?.length||0;
   const n=r.users?.username||r.users?.display_name||'U';
   const cls=avColor(n);
-  const av=r.users?.avatar_url?`<img src="${r.users.avatar_url}" class="fc-av-img" onclick="go('profile',{uid:'${r.user_id}'})">`:`<div class="fc-av ${cls}" onclick="go('profile',{uid:'${r.user_id}'})">${n[0].toUpperCase()}</div>`;
+  const avatar=safeImageUrl(r.users?.avatar_url);
+  const av=avatar?`<img src="${avatar}" class="fc-av-img" onclick="go('profile',{uid:'${r.user_id}'})" alt="">`:`<div class="fc-av ${cls}" onclick="go('profile',{uid:'${r.user_id}'})">${esc(n[0].toUpperCase())}</div>`;
   const date=new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
   const stars=Array.from({length:10},(_,i)=>`<div class="fstar ${i<(r.match_rating||0)?'on':'off'}"></div>`).join('');
   return`<div class="fcard">
     <div class="fc-hd">
       ${av}
-      <div><div class="fc-uname" onclick="go('profile',{uid:'${r.user_id}'})">${n}</div><div class="fc-handle">@${r.users?.username||'user'}</div></div>
+      <div><div class="fc-uname" onclick="go('profile',{uid:'${r.user_id}'})">${esc(n)}</div><div class="fc-handle">@${esc(r.users?.username||'user')}</div></div>
       <div class="fc-time">${date}</div>
     </div>
-    <div class="fc-lg">${r.matches?.league_name||''}</div>
-    <div class="fc-match" onclick="go('md',{mid:${r.match_id}})">${r.matches?.home_team_name||''} vs ${r.matches?.away_team_name||''}</div>
+    <div class="fc-lg">${esc(r.matches?.league_name)}</div>
+    <div class="fc-match" onclick="go('md',{mid:${r.match_id}})">${esc(r.matches?.home_team_name)} vs ${esc(r.matches?.away_team_name)}</div>
     <div class="fc-rating"><div class="fc-rnum">${r.match_rating||0}</div><div class="fc-rdenom">/10</div></div>
     <div class="fc-stars">${stars}</div>
-    ${r.comment?`<div class="fc-cmt">${r.comment}</div>`:''}
+    ${r.comment?`<div class="fc-cmt">${esc(r.comment)}</div>`:''}
     <div class="fc-ft">
       ${r.user_id!==CU?.id?`<button class="lbtn" onclick="tLike(${r.id},this)">${ico('heart',13)} ${likes}</button>`:`<span class="lbtn" style="opacity:0.4;cursor:default">${ico('heart',13)} ${likes}</span>`}
       <button class="cbtn" onclick="loadCmnts(${r.id},this,false,'${r.user_id}')">${ico('chat',13)} Комментарии</button>
@@ -368,9 +384,9 @@ async function loadCmnts(rid,btn,force,ownerId){
   if(uids.length){const{data:us}=await sb.from('users').select('id,display_name,username,avatar_url').in('id',uids);(us||[]).forEach(u=>uMap[u.id]=u);}
   const isOwn=ownerId&&CU?.id===ownerId;
   w.innerHTML=`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--b1)">
-    ${(cs||[]).map(c=>{const u=uMap[c.user_id];return`<div style="padding:8px 10px;background:var(--bg3);border-radius:8px;margin-bottom:5px"><div style="font-size:10px;font-weight:700;color:var(--accent2);margin-bottom:2px">@${u?.username||'user'}</div><div style="font-size:13px;color:var(--text2)">${c.comment}</div></div>`;}).join('')}
+    ${(cs||[]).map(c=>{const u=uMap[c.user_id];return`<div style="padding:8px 10px;background:var(--bg3);border-radius:8px;margin-bottom:5px"><div style="font-size:10px;font-weight:700;color:var(--accent2);margin-bottom:2px">@${esc(u?.username||'user')}</div><div style="font-size:13px;color:var(--text2)">${esc(c.comment)}</div></div>`;}).join('')}
     ${!isOwn&&CU?`<div style="display:flex;gap:7px;margin-top:8px">
-      <input id="ci-${rid}" style="flex:1;padding:8px 12px;background:var(--bg3);border:1px solid var(--b1);border-radius:8px;color:var(--snow);font-size:12px;font-family:inherit" placeholder="Комментарий...">
+      <input id="ci-${rid}" maxlength="1000" style="flex:1;padding:8px 12px;background:var(--bg3);border:1px solid var(--b1);border-radius:8px;color:var(--snow);font-size:12px;font-family:inherit" placeholder="Комментарий...">
       <button onclick="addCmnt(${rid})" class="btn btn-l btn-sm">→</button>
     </div>`:''}
   </div>`;
@@ -378,7 +394,7 @@ async function loadCmnts(rid,btn,force,ownerId){
 async function addCmnt(rid){
   if(!CU){openAuth();return;}
   const inp=document.getElementById(`ci-${rid}`);
-  const t=inp?.value?.trim();if(!t)return;
+  const t=inp?.value?.trim();if(!t)return;if(t.length>1000){toast('Комментарий слишком длинный','err');return;}
   const{error}=await sb.from('rating_comments').insert({rating_id:rid,user_id:CU.id,comment:t});
   if(error){toast('Ошибка','err');console.error(error);return;}
   inp.value='';loadCmnts(rid,null,true);
@@ -461,7 +477,8 @@ async function loadProfile(uid){
     const j=new Date(u.created_at||Date.now());
     const ms2=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
     const cls=avColor(u.username||'x');
-    const avatarHtml=u.avatar_url?`<img src="${u.avatar_url}" class="phero-av-img">`:`<div class="phero-av ${cls}">${(u.username?.[0]||'U').toUpperCase()}</div>`;
+    const avatar=safeImageUrl(u.avatar_url);
+    const avatarHtml=avatar?`<img src="${avatar}" class="phero-av-img" alt="">`:`<div class="phero-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
 
     // Check friendship status for non-self profiles
     let friendBtn='';
@@ -477,10 +494,9 @@ async function loadProfile(uid){
     w.innerHTML=`
     <div class="phero">
       ${avatarHtml}
-      <div class="phero-name">${u.username||'Аноним'}</div>
-      ${isMe?`<div class="phero-email">${u.email||''}</div>`:''}
-      ${u.bio?`<div class="phero-bio">${u.bio}</div>`:''}
-      ${u.favorite_teams?`<div style="font-size:12px;color:var(--accent2);margin-bottom:12px">❤️ ${u.favorite_teams}</div>`:''}
+      <div class="phero-name">${esc(u.username||'Аноним')}</div>
+      ${u.bio?`<div class="phero-bio">${esc(u.bio)}</div>`:''}
+      ${u.favorite_teams?`<div style="font-size:12px;color:var(--accent2);margin-bottom:12px">❤️ ${esc(u.favorite_teams)}</div>`:''}
       <div class="phero-badges">
         <span class="pbadge pb-l">${lv.n}</span>
         ${u.streak>0?`<span class="pbadge pb-s">🔥 ${u.streak} дней подряд</span>`:''}
@@ -502,7 +518,7 @@ async function loadProfile(uid){
     </div>
     <div class="pgrid">
       <div>
-        <div class="pcard"><div class="pcard-title">${ico('chart',14)} История оценок</div>${ratings?.length?ratings.map(r=>{const mt=matchMap[r.match_id];return`<div class="rh-row"><div><div class="rh-m">${mt?mt.home_team_name+' vs '+mt.away_team_name:'Матч #'+r.match_id}</div><div class="rh-l">${mt?.league_name||''} · ${new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
+        <div class="pcard"><div class="pcard-title">${ico('chart',14)} История оценок</div>${ratings?.length?ratings.map(r=>{const mt=matchMap[r.match_id];return`<div class="rh-row"><div><div class="rh-m">${mt?esc(mt.home_team_name)+' vs '+esc(mt.away_team_name):'Матч #'+r.match_id}</div><div class="rh-l">${esc(mt?.league_name)} · ${new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
       </div>
       <div>
         ${isMe&&u.invite_code?`<div class="pcard"><div class="pcard-title">${ico('link',14)} Пригласи друга</div><div style="background:var(--bg3);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:12px;word-break:break-all;font-size:11px;color:var(--accent2)">https://footbazed47.vercel.app/?invite=${u.invite_code}</div><button class="btn btn-l" style="width:100%" onclick="copyInv('${u.invite_code}')">${ico('copy',13)} Копировать ссылку</button></div>`:''}
@@ -535,7 +551,8 @@ function expStats(c,a,u){const t=`⚽ FOOTBAZED\n👤 @${u}\n⭐ Оценок: $
 function editProfile(){
   const w=document.getElementById('profileW');
   const cls=avColor(CU.username||'x');
-  const avatarHtml=CU.avatar_url?`<img src="${CU.avatar_url}" class="phero-av-img" id="avPreview">`:`<div class="phero-av ${cls}" id="avPreview">${(CU.username?.[0]||'U').toUpperCase()}</div>`;
+  const avatar=safeImageUrl(CU.avatar_url);
+  const avatarHtml=avatar?`<img src="${avatar}" class="phero-av-img" id="avPreview" alt="">`:`<div class="phero-av ${cls}" id="avPreview">${esc((CU.username?.[0]||'U').toUpperCase())}</div>`;
   w.innerHTML=`
   <div class="phero" style="max-width:500px;margin:0 auto">
     <div style="position:relative;cursor:pointer" onclick="document.getElementById('avFile').click()">
@@ -546,13 +563,13 @@ function editProfile(){
     <h2 style="font-family:'Bebas Neue',sans-serif;font-size:24px;margin:16px 0 20px">${ico('edit',20)} Редактирование профиля</h2>
     <div style="width:100%;max-width:380px">
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px;text-align:left">Никнейм</label>
-      <input class="input" id="ep_user" value="${(CU.username||'').replace(/"/g,'&quot;')}" placeholder="Твой никнейм">
+      <input class="input" id="ep_user" value="${esc(CU.username)}" placeholder="Твой никнейм">
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px;text-align:left">Email</label>
-      <input class="input" id="ep_email" value="${CU.email||''}" disabled style="opacity:0.5;cursor:not-allowed">
+      <input class="input" id="ep_email" value="${esc(CU.email)}" disabled style="opacity:0.5;cursor:not-allowed">
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px;text-align:left">О себе</label>
-      <input class="input" id="ep_bio" value="${(CU.bio||'').replace(/"/g,'&quot;')}" placeholder="Расскажи о себе" maxlength="120">
+      <input class="input" id="ep_bio" value="${esc(CU.bio)}" placeholder="Расскажи о себе" maxlength="120">
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px;text-align:left">Любимые команды</label>
-      <input class="input" id="ep_teams" value="${(CU.favorite_teams||'').replace(/"/g,'&quot;')}" placeholder="Барселона, Ман Сити...">
+      <input class="input" id="ep_teams" value="${esc(CU.favorite_teams)}" placeholder="Барселона, Ман Сити...">
       <div style="display:flex;gap:10px;margin-top:8px">
         <button class="btn btn-g" style="flex:1" onclick="loadProfile(CU.id)">Отмена</button>
         <button class="btn btn-l" style="flex:1" id="epSaveBtn" onclick="saveEditProfile()">Сохранить</button>
@@ -866,12 +883,11 @@ async function saveRating(){
   if(!CU){openAuth();return;}
   const btn=document.getElementById('rSave');btn.disabled=true;btn.textContent='Сохраняем...';
   try{
-    const cmt=document.getElementById('rCmt').value||null;
+    const cmt=document.getElementById('rCmt').value.trim()||null;
+    if(cmt&&cmt.length>1000)throw new Error('Комментарий слишком длинный');
     const pub=document.getElementById('rPub').checked;
-    const{data:ex}=await sb.from('ratings').select('id').eq('user_id',CU.id).eq('match_id',rMID).maybeSingle();
     const{error}=await sb.from('ratings').upsert({user_id:CU.id,match_id:rMID,match_rating:rScore,comment:cmt,is_public:pub},{onConflict:'user_id,match_id'});
     if(error)throw error;
-    if(!ex){const nc=(CU.ratings_count||0)+1;await sb.from('users').update({ratings_count:nc}).eq('id',CU.id);CU.ratings_count=nc;}
     for(const[pid,rating]of Object.entries(rPS)){await sb.from('player_ratings').upsert({user_id:CU.id,match_id:rMID,player_id:parseInt(pid),rating,is_best_player:(pid==rBest)},{onConflict:'user_id,match_id,player_id'});}
     await updStreak();
     toast('✅ Оценка сохранена!','ok');closeRate();
@@ -881,19 +897,10 @@ async function saveRating(){
 }
 async function updStreak(){
   try{
-    const today=new Date().toISOString().split('T')[0];
-    const lastDate=CU.streak_date;
-    // Already rated today
-    if(lastDate===today)return;
-    const yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
-    let ns=1;
-    if(lastDate===yesterday){
-      // Consecutive day - increment
-      ns=(CU.streak||0)+1;
-    }
-    // If lastDate is older than yesterday, reset to 1
-    await sb.from('users').update({streak:ns,streak_date:today}).eq('id',CU.id);
-    CU.streak=ns;CU.streak_date=today;
+    const{error}=await sb.rpc('record_rating_streak');
+    if(error)throw error;
+    const{data}=await sb.from('users').select('streak,streak_date,ratings_count,avg_rating').eq('id',CU.id).maybeSingle();
+    if(data)Object.assign(CU,data);
   }catch(e){}
 }
 
@@ -908,15 +915,15 @@ async function loadChat(mid){
   let uMap={};
   if(uids.length){const{data:us}=await sb.from('users').select('id,username,display_name').in('id',uids);(us||[]).forEach(u=>uMap[u.id]=u);}
   body.innerHTML=msgs.map(m=>{const u=uMap[m.user_id];return`<div class="cmsg ${m.user_id===CU?.id?'own':''}">
-    ${m.user_id!==CU?.id?`<div class="cmsg-auth">@${u?.username||'user'}</div>`:''}
-    <div>${m.message}</div>
+    ${m.user_id!==CU?.id?`<div class="cmsg-auth">@${esc(u?.username||'user')}</div>`:''}
+    <div>${esc(m.message)}</div>
   </div>`;}).join('');
   body.scrollTop=body.scrollHeight;
 }
 async function sendChat(){
   if(!CU){openAuth();return;}
   const inp=document.getElementById('chatI');
-  const msg=inp.value.trim();if(!msg)return;
+  const msg=inp.value.trim();if(!msg)return;if(msg.length>1000){toast('Сообщение слишком длинное','err');return;}
   const{error}=await sb.from('chat_messages').insert({match_id:chatMID,user_id:CU.id,message:msg});
   if(error){toast('Ошибка отправки','err');console.error(error);return;}
   inp.value='';loadChat(chatMID);
@@ -1045,7 +1052,7 @@ async function saveProfile(){
   // Create profile
   const code=Math.random().toString(36).substring(2,8).toUpperCase();
   await sb.from('users').insert({
-    id:user.id,username:u,display_name:u,email:user.email,
+    id:user.id,username:u,display_name:u,
     bio:b||null,favorite_teams:t||null,invite_code:code,
     ratings_count:0,streak:0,last_seen:new Date().toISOString()
   });
@@ -1064,7 +1071,6 @@ async function ensureProfile(user){
       id:user.id,
       username:name.replace(/[^a-zA-Z0-9_]/g,'_').substring(0,20),
       display_name:name,
-      email:email,
       invite_code:code,
       ratings_count:0,
       avg_rating:0,

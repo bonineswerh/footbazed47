@@ -42,10 +42,9 @@ button{padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;curso
 <div class="warn">Не загружай на GitHub! Лимит: 10 запросов/мин. Панель делает паузы автоматически.</div>
 
 <div class="section">
-<div class="section-title">Ключ football-data.org</div>
-<label>API-ключ</label>
-<input type="password" id="apiKey" placeholder="Вставь ключ...">
-<button class="btn-ghost" onclick="testKey()">Проверить</button>
+<div class="section-title">Доступ администратора</div>
+<p style="color:#aab0c8;font-size:13px;line-height:1.5">Ключ football-data.org хранится только в настройках Vercel. Войди в аккаунт FOOTBAZED с ролью администратора, затем проверь подключение.</p>
+<button class="btn-ghost" onclick="testKey()">Проверить доступ и API</button>
 <div id="keyStatus" style="margin-top:8px;font-size:13px"></div>
 </div>
 
@@ -111,11 +110,18 @@ document.getElementById('dateFrom').value=today.toISOString().split('T')[0];
 document.getElementById('dateTo').value=fut.toISOString().split('T')[0];
 document.querySelectorAll('.league-check input').forEach(cb=>{cb.addEventListener('change',()=>cb.parentElement.classList.toggle('on',cb.checked));});
 
-function getKey(){const k=document.getElementById('apiKey').value.trim();if(!k){alert('Вставь ключ!');return null;}return k;}
 function getLeagues(){return[...document.querySelectorAll('.leagues-grid input:checked')].map(c=>({code:c.value,name:c.dataset.name}));}
-async function apiFetch(ep,key){
-  const r=await fetch(API+encodeURIComponent(ep)+'&key='+encodeURIComponent(key));
-  if(r.status===429){log('mLog','Лимит — жду 65 сек...','warn');log('sLog','Лимит — жду 65 сек...','warn');await sleep(65000);return apiFetch(ep,key);}
+async function requireAdmin(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session){throw new Error('Войдите в аккаунт администратора на основном сайте.');}
+  const{data:profile,error}=await sb.from('users').select('is_admin').eq('id',session.user.id).maybeSingle();
+  if(error||!profile?.is_admin){throw new Error('У этого аккаунта нет прав администратора.');}
+  return session.access_token;
+}
+async function apiFetch(ep){
+  const token=await requireAdmin();
+  const r=await fetch(API+encodeURIComponent(ep),{headers:{Authorization:`Bearer ${token}`}});
+  if(r.status===429){log('mLog','Лимит — жду 65 сек...','warn');log('sLog','Лимит — жду 65 сек...','warn');await sleep(65000);return apiFetch(ep);}
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(`${r.status}: ${e.message||r.statusText}`);}
   return r.json();
 }
@@ -124,17 +130,16 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 function prog(id,p){const b=document.getElementById(id);b.parentElement.classList.remove('hidden');b.style.width=p+'%';}
 
 async function testKey(){
-  const key=getKey();if(!key)return;
   const st=document.getElementById('keyStatus');
   st.innerHTML='<span style="color:#ffaa00">Проверяем...</span>';
   try{
-    const d=await apiFetch('/competitions/PL',key);
+    const d=await apiFetch('/competitions/PL');
     st.innerHTML=d.name?`<span style="color:#00e676">Работает! ${d.name} сезон ${d.currentSeason?.startDate?.slice(0,4)}</span>`:'<span style="color:#ff3a5c">Ошибка</span>';
   }catch(e){st.innerHTML=`<span style="color:#ff3a5c">${e.message}</span>`;}
 }
 
 async function loadMatches(){
-  const key=getKey();if(!key)return;
+  try{await requireAdmin();}catch(e){alert(e.message);return;}
   const lgs=getLeagues();if(!lgs.length){alert('Выбери лигу!');return;}
   const from=document.getElementById('dateFrom').value,to=document.getElementById('dateTo').value;
   if(!from||!to){alert('Выбери даты!');return;}
@@ -146,7 +151,7 @@ async function loadMatches(){
       const lg=lgs[i];prog('mBar',Math.round(i/lgs.length*100));
       log('mLog',`${lg.name}...`);
       if(i>0){log('mLog','Пауза 7 сек...','info');await sleep(7000);}
-      const d=await apiFetch(`/competitions/${lg.code}/matches?dateFrom=${from}&dateTo=${to}`,key);
+      const d=await apiFetch(`/competitions/${lg.code}/matches?dateFrom=${from}&dateTo=${to}`);
       const ms=d.matches||[];
       log('mLog',`  ${ms.length} матчей найдено`,'info');
       for(const m of ms){
@@ -167,7 +172,7 @@ async function loadMatches(){
 function mapSt(s){return{SCHEDULED:'scheduled',TIMED:'scheduled',POSTPONED:'scheduled',IN_PLAY:'live',PAUSED:'live',LIVE:'live',FINISHED:'finished',AWARDED:'finished',SUSPENDED:'scheduled',CANCELLED:'scheduled'}[s]||'scheduled';}
 
 async function loadSquads(){
-  const key=getKey();if(!key)return;
+  try{await requireAdmin();}catch(e){alert(e.message);return;}
   const lgs=getLeagues();if(!lgs.length){alert('Выбери лигу!');return;}
   const btn=document.getElementById('btnS');btn.disabled=true;btn.textContent='Загружаем...';
   document.getElementById('sLog').innerHTML='';
@@ -177,7 +182,7 @@ async function loadSquads(){
       const lg=lgs[i];prog('sBar',Math.round(i/lgs.length*100));
       log('sLog',`${lg.name}...`);
       if(i>0){log('sLog','Пауза 7 сек...','info');await sleep(7000);}
-      const d=await apiFetch(`/competitions/${lg.code}/teams`,key);
+      const d=await apiFetch(`/competitions/${lg.code}/teams`);
       const teams=d.teams||[];
       log('sLog',`  ${teams.length} команд`,'info');
       for(const t of teams){
