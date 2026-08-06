@@ -488,6 +488,35 @@ function renderLB(){
 function setLT(t,btn){LT=t;document.querySelectorAll('.lb-tab').forEach(b=>{b.className='btn btn-g btn-sm lb-tab';});btn.className='btn btn-l btn-sm lb-tab';renderLB();}
 
 // ─── PROFILE ───
+function renderProfileInsights(ratings,matchMap){
+  const list=ratings||[];
+  if(!list.length)return`<div class="pcard"><div class="pcard-title">${ico('sparkle',14)} Футбольный почерк</div><div class="empty-state" style="padding:18px 0">Появится после первых оценок</div></div>`;
+  const nums=list.map(r=>Number(r.match_rating)||0).filter(Boolean);
+  const avg=nums.length?nums.reduce((s,n)=>s+n,0)/nums.length:0;
+  const style=avg>=8.2?{t:'Щедрый эксперт',d:'чаще видит сильные стороны матча'}:avg<=5.8?{t:'Строгий критик',d:'требовательно относится к качеству игры'}:{t:'Сбалансированный судья',d:'оценивает без крайностей'};
+  const publicCount=list.filter(r=>r.is_public).length;
+  const publicPct=Math.round(publicCount/list.length*100);
+  const leagueMap={};
+  list.forEach(r=>{const lg=matchMap[r.match_id]?.league_name||'Другое';leagueMap[lg]=(leagueMap[lg]||0)+1;});
+  const leagues=Object.entries(leagueMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const high=nums.filter(n=>n>=8).length;
+  const low=nums.filter(n=>n<=5).length;
+  const best=list.reduce((acc,r)=>!acc||Number(r.match_rating)>Number(acc.match_rating)?r:acc,null);
+  const bestMatch=best&&matchMap[best.match_id];
+  return`<div class="pcard"><div class="pcard-title">${ico('sparkle',14)} Футбольный почерк</div>
+    <div class="p-insight-main">
+      <div><div class="p-insight-k">Стиль</div><div class="p-insight-v">${style.t}</div><div class="p-insight-d">${style.d}</div></div>
+      <div><div class="p-insight-k">Публичность</div><div class="p-insight-v">${publicPct}%</div><div class="p-insight-d">оценок открыты для ленты</div></div>
+    </div>
+    <div class="p-insight-grid">
+      <div class="p-mini"><span>${high}</span><small>высоких оценок</small></div>
+      <div class="p-mini"><span>${low}</span><small>строгих оценок</small></div>
+      <div class="p-mini"><span>${leagues[0]?.[1]||0}</span><small>${esc(leagues[0]?.[0]||'любимая лига')}</small></div>
+    </div>
+    ${leagues.length?`<div class="p-leagues">${leagues.map(([lg,c])=>`<div class="p-league"><span>${esc(lg)}</span><b>${c}</b></div>`).join('')}</div>`:''}
+    ${bestMatch?`<div class="p-best-match">Самая высокая оценка: <b>${best.match_rating}/10</b> · ${esc(bestMatch.home_team_name)} vs ${esc(bestMatch.away_team_name)}</div>`:''}
+  </div>`;
+}
 async function loadProfile(uid){
   const w=document.getElementById('profileW');
   if(!uid){w.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>Войдите чтобы увидеть профиль</div>';return;}
@@ -495,7 +524,7 @@ async function loadProfile(uid){
   try{
     const{data:u}=await sb.from('users').select('*').eq('id',uid).maybeSingle();
     if(!u){w.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>Профиль не найден<br><span style="font-size:13px;color:var(--fog);margin-top:8px;display:block">Попробуйте войти заново</span></div>';return;}
-    const{data:ratings}=await sb.from('ratings').select('*').eq('user_id',uid).order('created_at',{ascending:false}).limit(20);
+    const{data:ratings}=await sb.from('ratings').select('*').eq('user_id',uid).order('created_at',{ascending:false}).limit(50);
     let fs=[];
     try{const{data:f1}=await sb.from('friendships').select('id').eq('user_id',uid).eq('status','accepted');const{data:f2}=await sb.from('friendships').select('id').eq('friend_id',uid).eq('status','accepted');fs=[...(f1||[]),...(f2||[])];}catch(e){}
     // Get likes count
@@ -506,6 +535,7 @@ async function loadProfile(uid){
     const matchIds=[...new Set((ratings||[]).map(r=>r.match_id))];
     let matchMap={};
     if(matchIds.length){const{data:ms}=await sb.from('matches').select('id,home_team_name,away_team_name,league_name').in('id',matchIds);(ms||[]).forEach(m=>matchMap[m.id]=m);}
+    const profileInsights=renderProfileInsights(ratings,matchMap);
 
     const cnt=u.ratings_count||0;
     const lv=LEVELS.slice().reverse().find(l=>cnt>=l.m)||LEVELS[0];
@@ -558,7 +588,8 @@ async function loadProfile(uid){
     </div>
     <div class="pgrid">
       <div>
-        <div class="pcard"><div class="pcard-title">${ico('chart',14)} История оценок</div>${ratings?.length?ratings.map(r=>{const mt=matchMap[r.match_id];return`<div class="rh-row"><div><div class="rh-m">${mt?esc(mt.home_team_name)+' vs '+esc(mt.away_team_name):'Матч #'+r.match_id}</div><div class="rh-l">${esc(mt?.league_name)} · ${new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
+        ${profileInsights}
+        <div class="pcard"><div class="pcard-title">${ico('chart',14)} История оценок</div>${ratings?.length?ratings.slice(0,20).map(r=>{const mt=matchMap[r.match_id];return`<div class="rh-row" ${mt?`onclick="go('md',{mid:${r.match_id}})" style="cursor:pointer"`:''}><div><div class="rh-m">${mt?esc(mt.home_team_name)+' vs '+esc(mt.away_team_name):'Матч #'+r.match_id}</div><div class="rh-l">${esc(mt?.league_name)} · ${new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}${r.is_public?'':' · приватно'}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
       </div>
       <div>
         ${isMe&&u.invite_code?`<div class="pcard"><div class="pcard-title">${ico('link',14)} Пригласи друга</div><div style="background:var(--bg3);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:12px;word-break:break-all;font-size:11px;color:var(--accent2)">https://footbazed47.vercel.app/?invite=${u.invite_code}</div><button class="btn btn-l" style="width:100%" onclick="copyInv('${u.invite_code}')">${ico('copy',13)} Копировать ссылку</button></div>`:''}

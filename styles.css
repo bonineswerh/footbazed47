@@ -177,6 +177,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .rh-m{font-size:13px;font-weight:600}.rh-l{font-size:10px;color:var(--text3);margin-top:2px}.rh-r{display:flex;align-items:center;gap:8px}
 .rh-bar{width:80px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}.rh-fill{height:100%;background:var(--grad);border-radius:2px}
 .rh-v{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--accent2);min-width:40px;text-align:right}
+.p-insight-main{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.p-insight-main>div,.p-mini{background:var(--bg3);border:1px solid var(--b1);border-radius:10px;padding:12px}
+.p-insight-k{font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:700;letter-spacing:.7px;margin-bottom:4px}
+.p-insight-v{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent2);line-height:1.1}
+.p-insight-d{font-size:11px;color:var(--text2);line-height:1.35;margin-top:4px}
+.p-insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.p-mini span{display:block;font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--snow);line-height:1}
+.p-mini small{display:block;font-size:10px;color:var(--text3);line-height:1.3;margin-top:4px}
+.p-leagues{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.p-league{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--text2);background:var(--accent4);border:1px solid var(--b1);border-radius:8px;padding:8px 10px}
+.p-league span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.p-league b{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--accent2)}
+.p-best-match{font-size:12px;color:var(--text2);line-height:1.45;border-top:1px solid var(--b1);padding-top:12px}
 
 /* ═══ FRIENDS ═══ */
 .friend-card{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg2);border:1px solid var(--b2);border-radius:12px;margin-bottom:8px;transition:all .25s var(--ease);cursor:pointer}.friend-card:hover{border-color:var(--b3);background:var(--bg3)}
@@ -309,6 +321,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   .lb-row{grid-template-columns:36px 1fr auto;padding:10px 14px}
   .lb-rank{font-size:16px}.lb-sval{font-size:18px}
   .pgrid,.md-grid{grid-template-columns:1fr}
+  .p-insight-main,.p-insight-grid{grid-template-columns:1fr}
   .pstats{grid-template-columns:repeat(2,1fr)}
   .phero-av{width:72px;height:72px;font-size:32px;border-radius:18px}
   .phero-av-img{width:72px;height:72px;border-radius:18px}
