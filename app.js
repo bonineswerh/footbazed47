@@ -517,6 +517,23 @@ function renderProfileInsights(ratings,matchMap){
     ${bestMatch?`<div class="p-best-match">Самая высокая оценка: <b>${best.match_rating}/10</b> · ${esc(bestMatch.home_team_name)} vs ${esc(bestMatch.away_team_name)}</div>`:''}
   </div>`;
 }
+function renderRatingDistribution(ratings){
+  const list=(ratings||[]).filter(r=>Number(r.match_rating)>0);
+  if(!list.length)return`<div class="pcard"><div class="pcard-title">${ico('chart',14)} Распределение оценок</div><div class="empty-state" style="padding:18px 0">Нет данных</div></div>`;
+  const total=list.length;
+  const counts=Array.from({length:10},(_,i)=>10-i).map(n=>({n,c:list.filter(r=>Number(r.match_rating)===n).length}));
+  const max=Math.max(...counts.map(x=>x.c),1);
+  return`<div class="pcard"><div class="pcard-title">${ico('chart',14)} Распределение оценок</div>
+    <div class="prdist">${counts.map(x=>`
+      <div class="prdist-row">
+        <span>${x.n}</span>
+        <div class="prdist-bar"><i style="width:${Math.max((x.c/max)*100, x.c?8:0)}%"></i></div>
+        <b>${x.c}</b>
+      </div>`).join('')}
+    </div>
+    <div class="prdist-note">${total} последних оценок в профиле</div>
+  </div>`;
+}
 async function loadProfile(uid){
   const w=document.getElementById('profileW');
   if(!uid){w.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>Войдите чтобы увидеть профиль</div>';return;}
@@ -536,6 +553,7 @@ async function loadProfile(uid){
     let matchMap={};
     if(matchIds.length){const{data:ms}=await sb.from('matches').select('id,home_team_name,away_team_name,league_name').in('id',matchIds);(ms||[]).forEach(m=>matchMap[m.id]=m);}
     const profileInsights=renderProfileInsights(ratings,matchMap);
+    const ratingDistribution=renderRatingDistribution(ratings);
 
     const cnt=u.ratings_count||0;
     const lv=LEVELS.slice().reverse().find(l=>cnt>=l.m)||LEVELS[0];
@@ -592,6 +610,7 @@ async function loadProfile(uid){
         <div class="pcard"><div class="pcard-title">${ico('chart',14)} История оценок</div>${ratings?.length?ratings.slice(0,20).map(r=>{const mt=matchMap[r.match_id];return`<div class="rh-row" ${mt?`onclick="go('md',{mid:${r.match_id}})" style="cursor:pointer"`:''}><div><div class="rh-m">${mt?esc(mt.home_team_name)+' vs '+esc(mt.away_team_name):'Матч #'+r.match_id}</div><div class="rh-l">${esc(mt?.league_name)} · ${new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}${r.is_public?'':' · приватно'}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
       </div>
       <div>
+        ${ratingDistribution}
         ${isMe&&u.invite_code?`<div class="pcard"><div class="pcard-title">${ico('link',14)} Пригласи друга</div><div style="background:var(--bg3);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:12px;word-break:break-all;font-size:11px;color:var(--accent2)">https://footbazed47.vercel.app/?invite=${u.invite_code}</div><button class="btn btn-l" style="width:100%" onclick="copyInv('${u.invite_code}')">${ico('copy',13)} Копировать ссылку</button></div>`:''}
         <div class="pcard"><div class="pcard-title">${ico('share',14)} Поделиться</div>
           <button class="btn btn-l" style="width:100%;margin-bottom:8px" onclick="openShare('profile',{name:${jsStr(u.display_name||'')},username:${jsStr(u.username||'user')},ratings:${cnt},avg:${jsStr(avg)},likes:${tl},friends:${fs?.length||0},level:${jsStr(lv.n)}})">${ico('photo',13)} Создать карточку</button>
