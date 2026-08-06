@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css?v=34">
+  <link rel="stylesheet" href="styles.css?v=35">
 </head>
 <body>
 
@@ -209,6 +209,20 @@
     </div>
   </div>
 
+  <!-- ADMIN -->
+  <div class="page" id="page-admin">
+    <div class="matches-page admin-shell">
+      <div class="admin-hub-head">
+        <div>
+          <h1 class="page-title">Админ-панель</h1>
+          <div class="admin-hub-sub">Управление матчами, игроками и футбольными данными</div>
+        </div>
+        <button class="btn btn-g btn-sm" onclick="go('profile')">Назад в профиль</button>
+      </div>
+      <iframe class="admin-frame" src="admin.html" title="FOOTBAZED admin"></iframe>
+    </div>
+  </div>
+
   <!-- OVERLAYS -->
   
   <!-- AUTH -->
@@ -317,6 +331,59 @@
     </div>
   </div>
 
+  <!-- SETTINGS -->
+  <div class="overlay" id="settingsOv">
+    <div class="settings-box">
+      <div class="settings-head">
+        <div>
+          <h2>Настройки</h2>
+          <p>Внешний вид и технические данные профиля</p>
+        </div>
+        <button class="icon-btn" onclick="closeSettings()" aria-label="Закрыть">×</button>
+      </div>
+
+      <div class="settings-grid">
+        <label class="set-field">
+          <span>Тема</span>
+          <select id="setTheme" class="input">
+            <option value="dark">Темная</option>
+            <option value="light">Светлая</option>
+            <option value="system">Как в системе</option>
+          </select>
+        </label>
+        <label class="set-field">
+          <span>Акцент</span>
+          <select id="setAccent" class="input">
+            <option value="emerald">Поле</option>
+            <option value="ice">Лед</option>
+            <option value="gold">Золото</option>
+            <option value="mono">Минимализм</option>
+          </select>
+        </label>
+        <label class="set-field">
+          <span>Плотность</span>
+          <select id="setDensity" class="input">
+            <option value="comfortable">Обычная</option>
+            <option value="compact">Компактная</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="settings-tech">
+        <div class="settings-tech-title">Профиль</div>
+        <div class="tech-row"><span>ID аккаунта</span><button id="techUserId" onclick="copyTechValue('techUserId')">—</button></div>
+        <div class="tech-row"><span>Email</span><button id="techEmail" onclick="copyTechValue('techEmail')">—</button></div>
+        <div class="tech-row"><span>Ссылка</span><button id="techProfileUrl" onclick="copyTechValue('techProfileUrl')">—</button></div>
+        <div class="tech-row"><span>Роль</span><button id="techRole" onclick="copyTechValue('techRole')">—</button></div>
+      </div>
+
+      <div class="settings-actions">
+        <button class="btn btn-g" onclick="closeSettings()">Отмена</button>
+        <button class="btn btn-l" onclick="saveAppearanceSettings()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MOBILE NAV -->
   <nav class="mob-nav">
     <div class="mob-nav-item active" id="mn-home" onclick="go('home')">
@@ -345,6 +412,7 @@
   <div class="toast" id="toast"></div>
 
   <!-- APP JS -->
-  <script src="app.js?v=34"></script>
+  <script src="js/appearance.js?v=35"></script>
+  <script src="app.js?v=35"></script>
 </body>
 </html>

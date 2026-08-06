@@ -26,6 +26,7 @@ const I={
   save:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>`,
   link:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/></svg>`,
   edit:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg>`,
+  settings:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.661.84.076.034.151.07.225.108.33.167.722.143 1.03-.067l1.058-.72a1.125 1.125 0 0 1 1.45.12l1.833 1.833c.39.39.44 1.002.12 1.45l-.72 1.058c-.21.308-.234.7-.067 1.03.038.074.074.149.108.225.154.348.466.598.84.661l1.281.213c.542.09.94.56.94 1.11v2.593c0 .55-.398 1.02-.94 1.11l-1.281.213a1.125 1.125 0 0 0-.84.661 5.5 5.5 0 0 1-.108.225c-.167.33-.143.722.067 1.03l.72 1.058c.32.448.27 1.06-.12 1.45l-1.833 1.833a1.125 1.125 0 0 1-1.45.12l-1.058-.72c-.308-.21-.7-.234-1.03-.067a5.5 5.5 0 0 1-.225.108 1.125 1.125 0 0 0-.661.84l-.213 1.281c-.09.542-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281a1.125 1.125 0 0 0-.661-.84 5.5 5.5 0 0 1-.225-.108c-.33-.167-.722-.143-1.03.067l-1.058.72a1.125 1.125 0 0 1-1.45-.12l-1.833-1.833a1.125 1.125 0 0 1-.12-1.45l.72-1.058c.21-.308.234-.7.067-1.03a5.5 5.5 0 0 1-.108-.225 1.125 1.125 0 0 0-.84-.661l-1.281-.213a1.125 1.125 0 0 1-.94-1.11v-2.593c0-.55.398-1.02.94-1.11l1.281-.213c.374-.063.686-.313.84-.661.034-.076.07-.151.108-.225.167-.33.143-.722-.067-1.03l-.72-1.058a1.125 1.125 0 0 1 .12-1.45l1.833-1.833a1.125 1.125 0 0 1 1.45-.12l1.058.72c.308.21.7.234 1.03.067.074-.038.149-.074.225-.108.348-.154.598-.466.661-.84l.213-1.281Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>`,
   photo:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z"/></svg>`,
   chart:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125z"/></svg>`,
   target:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2.25V4.5m0 15v2.25M2.25 12H4.5m15 0h2.25"/></svg>`,
@@ -60,6 +61,7 @@ function setCache(key,data){try{localStorage.setItem('fb_'+key,JSON.stringify({d
 function getCache(key,ttl){try{const c=JSON.parse(localStorage.getItem('fb_'+key));if(!c)return null;if(Date.now()-c.ts>(ttl||CACHE_TTL[key]||300000)){localStorage.removeItem('fb_'+key);return null;}return c.data;}catch(e){return null;}}
 
 async function init(){
+  window.FBZAppearance?.init();
   try{
     const{data:{session}}=await sb.auth.getSession();
     if(session){
@@ -107,9 +109,12 @@ function renderNav(){
 }
 
 function go(p,d){
+  if(p==='admin'&&!CU?.is_admin){toast('Только для администратора','err');return;}
+  const page=document.getElementById(`page-${p}`);
+  if(!page)return;
   PP=CP;
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
-  document.getElementById(`page-${p}`).classList.add('on');
+  page.classList.add('on');
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
   const lk=document.querySelector(`.nav-link[onclick*="'${p}'"]`);
   if(lk)lk.classList.add('active');
@@ -135,7 +140,7 @@ function syncRoute(p,d){
   else if(p==='profile'&&d?.uid)next=`#profile/${encodeURIComponent(d.uid)}`;
   else if(p==='profile'&&CU?.id)next=`#profile/${encodeURIComponent(CU.id)}`;
   else if(p==='md'&&d?.mid)next=`#match/${encodeURIComponent(d.mid)}`;
-  else if(['matches','feed','leaderboard','friends'].includes(p))next=`#${p}`;
+  else if(['matches','feed','leaderboard','friends','admin'].includes(p))next=`#${p}`;
   if(next!==current)history.pushState(null,'',next||window.location.pathname+window.location.search);
 }
 
@@ -147,7 +152,7 @@ function applyRouteFromHash(){
   try{
     if(type==='profile'&&value)go('profile',{uid:decodeURIComponent(value)});
     else if(type==='match'&&value)go('md',{mid:decodeURIComponent(value)});
-    else if(['matches','feed','leaderboard','friends'].includes(type))go(type);
+    else if(['matches','feed','leaderboard','friends','admin'].includes(type))go(type);
   }finally{
     routeApplying=false;
   }
@@ -606,6 +611,7 @@ async function loadProfile(uid){
     }else if(!isMe){
       friendBtn=`<button class="btn btn-l btn-sm" onclick="openAuth()">Войти чтобы добавить</button>`;
     }
+    const ownerActions=isMe?`<button class="btn btn-g btn-sm" onclick="editProfile()">${ico('edit',13)} Редактировать</button><button class="btn btn-g btn-sm" onclick="openSettings()">${ico('settings',13)} Настройки</button>${u.is_admin?`<button class="btn btn-g btn-sm" onclick="go('admin')">${ico('settings',13)} Админ</button>`:''}<button class="btn btn-g btn-sm" onclick="doLogout()">Выйти</button>`:friendBtn;
 
     w.innerHTML=`
     <div class="phero">
@@ -629,7 +635,7 @@ async function loadProfile(uid){
         <div class="pst"><div class="pst-v">${fs?.length||0}</div><div class="pst-l">Друзей</div></div>
       </div>
       <div class="phero-acts">
-        ${isMe?`<button class="btn btn-g btn-sm" onclick="editProfile()">${ico('edit',13)} Редактировать</button><button class="btn btn-g btn-sm" onclick="doLogout()">Выйти</button>`:friendBtn}
+        ${ownerActions}
         <button class="btn btn-g btn-sm" onclick="copyAppLink('#profile/${uid}','Ссылка на профиль')">${ico('link',13)} Ссылка</button>
       </div>
     </div>
@@ -1255,14 +1261,17 @@ function openShare(type,data){
   const c=document.getElementById('shareCanvas');
   const ctx=c.getContext('2d');
   c.width=600;c.height=400;
+  const css=getComputedStyle(document.documentElement);
+  const accent=css.getPropertyValue('--accent').trim()||'#14b8a6';
+  const accent2=css.getPropertyValue('--accent2').trim()||'#a7f3d0';
 
   // Background
   const bg=ctx.createLinearGradient(0,0,600,400);
-  bg.addColorStop(0,'#04080d');bg.addColorStop(0.52,'#07121b');bg.addColorStop(1,'#0c1b27');
+  bg.addColorStop(0,'#040806');bg.addColorStop(0.52,'#0b1110');bg.addColorStop(1,'#101817');
   ctx.fillStyle=bg;ctx.fillRect(0,0,600,400);
 
   // Subtle pitch pattern
-  ctx.strokeStyle='rgba(163,230,53,0.08)';ctx.lineWidth=2;
+  ctx.strokeStyle='rgba(167,243,208,0.07)';ctx.lineWidth=2;
   ctx.strokeRect(42,70,516,260);
   ctx.beginPath();ctx.moveTo(300,70);ctx.lineTo(300,330);ctx.stroke();
   ctx.beginPath();ctx.arc(300,200,54,0,Math.PI*2);ctx.stroke();
@@ -1271,7 +1280,7 @@ function openShare(type,data){
 
   // Glow
   const glow=ctx.createRadialGradient(300,200,0,300,200,300);
-  glow.addColorStop(0,'rgba(34,197,94,0.12)');glow.addColorStop(1,'transparent');
+  glow.addColorStop(0,'rgba(20,184,166,0.1)');glow.addColorStop(1,'transparent');
   ctx.fillStyle=glow;ctx.fillRect(0,0,600,400);
 
   if(type==='profile'){
@@ -1280,7 +1289,7 @@ function openShare(type,data){
     ctx.letterSpacing='3px';ctx.fillText('FOOTBAZED',24,36);
 
     // Lime accent line
-    ctx.fillStyle='#22c55e';ctx.fillRect(24,56,80,3);
+    ctx.fillStyle=accent;ctx.fillRect(24,56,80,3);
 
     // Username
     ctx.font='bold 42px "Bebas Neue",sans-serif';ctx.fillStyle='#eef0ff';
@@ -1302,17 +1311,17 @@ function openShare(type,data){
       ctx.fillStyle='rgba(255,255,255,0.03)';
       ctx.beginPath();ctx.roundRect(x,startY,bw,bh,12);ctx.fill();
       ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.beginPath();ctx.roundRect(x,startY,bw,bh,12);ctx.stroke();
-      ctx.font='bold 32px "Bebas Neue",sans-serif';ctx.fillStyle='#a3e635';
+      ctx.font='bold 32px "Bebas Neue",sans-serif';ctx.fillStyle=accent2;
       ctx.fillText(s.v,x+16,startY+42);
       ctx.font='10px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#4a5070';
       ctx.fillText(s.l.toUpperCase(),x+16,startY+64);
     });
 
     // Level badge
-    ctx.fillStyle='rgba(198,255,0,0.08)';
+    ctx.fillStyle='rgba(167,243,208,0.08)';
     ctx.beginPath();ctx.roundRect(24,280,200,36,18);ctx.fill();
-    ctx.strokeStyle='rgba(198,255,0,0.2)';ctx.beginPath();ctx.roundRect(24,280,200,36,18);ctx.stroke();
-    ctx.font='bold 13px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#a3e635';
+    ctx.strokeStyle='rgba(167,243,208,0.2)';ctx.beginPath();ctx.roundRect(24,280,200,36,18);ctx.stroke();
+    ctx.font='bold 13px "Plus Jakarta Sans",sans-serif';ctx.fillStyle=accent2;
     ctx.fillText(data.level||'🌱 Новичок',40,303);
 
     // Footer
@@ -1323,12 +1332,12 @@ function openShare(type,data){
     // Match rating share card
     ctx.font='bold 16px "Bebas Neue",sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';
     ctx.fillText('FOOTBAZED',24,36);
-    ctx.fillStyle='#22c55e';ctx.fillRect(24,56,80,3);
+    ctx.fillStyle=accent;ctx.fillRect(24,56,80,3);
 
     ctx.font='bold 28px "Bebas Neue",sans-serif';ctx.fillStyle='#eef0ff';
     ctx.fillText(data.match||'',24,100);
 
-    ctx.font='bold 120px "Bebas Neue",sans-serif';ctx.fillStyle='#a3e635';
+    ctx.font='bold 120px "Bebas Neue",sans-serif';ctx.fillStyle=accent2;
     ctx.fillText(data.score+'/10',24,240);
 
     if(data.comment){
@@ -1364,6 +1373,37 @@ async function copyShare(){
   }catch(e){downloadShare();toast('Скачано (копирование не поддерживается)','ok');}
 }
 
+function openSettings(){
+  const ov=document.getElementById('settingsOv');
+  if(!ov)return;
+  window.FBZAppearance?.syncControls();
+  const profileUrl=CU?.id?`${window.location.origin}${window.location.pathname}#profile/${encodeURIComponent(CU.id)}`:'—';
+  const values={
+    techUserId:CU?.id||'—',
+    techEmail:CU?.email||'—',
+    techProfileUrl:profileUrl,
+    techRole:CU?.is_admin?'Администратор':'Пользователь'
+  };
+  Object.entries(values).forEach(([id,value])=>{
+    const el=document.getElementById(id);
+    if(el)el.textContent=value;
+  });
+  ov.classList.add('on');
+}
+function closeSettings(){document.getElementById('settingsOv')?.classList.remove('on');}
+function saveAppearanceSettings(){
+  const settings=window.FBZAppearance?.readControls();
+  if(settings)window.FBZAppearance.save(settings);
+  closeSettings();
+  toast('Настройки сохранены','ok');
+}
+function copyTechValue(id){
+  const value=document.getElementById(id)?.textContent?.trim();
+  if(!value||value==='—')return;
+  navigator.clipboard.writeText(value);
+  toast('Скопировано','ok');
+}
+
 // ─── REVEAL + MISC ───
 function injectIcons(){
   // Nav links
@@ -1374,7 +1414,7 @@ function injectIcons(){
   // Mobile nav
   document.querySelectorAll('.mob-nav-icon[data-i]').forEach(s=>{s.innerHTML=ico(s.dataset.i,20);});
   // Page titles
-  const pgIcons={'Матчи':'football','Лента оценок':'feed','Таблица лидеров':'trophy','Друзья и сообщество':'users'};
+  const pgIcons={'Матчи':'football','Лента оценок':'feed','Таблица лидеров':'trophy','Друзья и сообщество':'users','Админ-панель':'settings'};
   document.querySelectorAll('.page-title').forEach(h=>{
     const t=h.textContent.trim();if(pgIcons[t])h.innerHTML=ico(pgIcons[t],28)+' '+t;
   });
