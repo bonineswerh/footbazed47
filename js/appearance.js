@@ -1,10 +1,9 @@
 (function(){
   const KEY='fbz_appearance';
-  const defaults={theme:'dark',accent:'emerald',density:'comfortable'};
+  const defaults={theme:'dark',accent:'emerald'};
   const allowed={
     theme:['dark','light','system'],
-    accent:['emerald','ice','gold','mono'],
-    density:['comfortable','compact']
+    accent:['emerald','ice','gold','mono']
   };
   let listening=false;
 
@@ -31,7 +30,7 @@
     root.dataset.theme=resolvedTheme(next.theme);
     root.dataset.themeChoice=next.theme;
     root.dataset.accent=next.accent;
-    root.dataset.density=next.density;
+    delete root.dataset.density;
     const meta=document.querySelector('meta[name="theme-color"]');
     if(meta)meta.setAttribute('content',root.dataset.theme==='light'?'#f5f7f2':'#04080d');
     return next;
@@ -45,7 +44,7 @@
 
   function syncControls(){
     const settings=readStored();
-    ['Theme','Accent','Density'].forEach(name=>{
+    ['Theme','Accent'].forEach(name=>{
       const el=document.getElementById('set'+name);
       if(el)el.value=settings[name.toLowerCase()];
     });
@@ -55,8 +54,7 @@
   function readControls(){
     return normalize({
       theme:document.getElementById('setTheme')?.value,
-      accent:document.getElementById('setAccent')?.value,
-      density:document.getElementById('setDensity')?.value
+      accent:document.getElementById('setAccent')?.value
     });
   }
 

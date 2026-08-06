@@ -611,10 +611,12 @@ async function loadProfile(uid){
     }else if(!isMe){
       friendBtn=`<button class="btn btn-l btn-sm" onclick="openAuth()">Войти чтобы добавить</button>`;
     }
-    const ownerActions=isMe?`<button class="btn btn-g btn-sm" onclick="editProfile()">${ico('edit',13)} Редактировать</button><button class="btn btn-g btn-sm" onclick="openSettings()">${ico('settings',13)} Настройки</button>${u.is_admin?`<button class="btn btn-g btn-sm" onclick="go('admin')">${ico('settings',13)} Админ</button>`:''}<button class="btn btn-g btn-sm" onclick="doLogout()">Выйти</button>`:friendBtn;
+    const profileTools=isMe?`<div class="profile-tools"><button class="profile-tool-btn" onclick="openSettings()" title="Настройки" aria-label="Настройки">${ico('settings',16)}</button>${u.is_admin?`<button class="profile-tool-btn profile-tool-wide" onclick="go('admin')" title="Админ-панель">${ico('settings',15)} <span>Админ</span></button>`:''}</div>`:'';
+    const ownerActions=isMe?`<button class="btn btn-g btn-sm" onclick="editProfile()">${ico('edit',13)} Редактировать</button><button class="btn btn-g btn-sm" onclick="doLogout()">Выйти</button>`:friendBtn;
 
     w.innerHTML=`
     <div class="phero">
+      ${profileTools}
       ${avatarHtml}
       <div class="phero-name">${esc(u.username||'Аноним')}</div>
       ${u.bio?`<div class="phero-bio">${esc(u.bio)}</div>`:''}
