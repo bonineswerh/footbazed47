@@ -154,7 +154,7 @@ function applyRouteFromHash(){
 }
 
 function copyAppLink(hash,label='Ссылка'){
-  const url=`${window.location.origin}${window.location.pathname}${window.location.search}${hash}`;
+  const url=`${window.location.origin}${window.location.pathname}${hash}`;
   navigator.clipboard.writeText(url);
   toast(`${label} скопирована`,'ok');
 }
@@ -305,7 +305,7 @@ async function loadMD(id){
         <div class="md-ci"><div class="md-cv">${tp[0]?.name||'—'}</div><div class="md-cl">Лучший игрок</div></div>
       </div>
     </div>
-    <div style="margin-bottom:20px;display:flex;gap:10px">
+    <div class="md-actions">
       ${m.status==='finished'?`<button class="btn btn-l" onclick="openRate(${m.id})">${ico('star',14)} Оценить матч</button>`:''}
       <button class="btn btn-g" onclick="go('chat',{mid:${m.id},title:'Чат матча'})">${ico('chat',14)} Обсуждение</button>
       <button class="btn btn-g" onclick="copyAppLink('#match/${m.id}','Ссылка на матч')">${ico('link',14)} Ссылка</button>
@@ -534,6 +534,34 @@ function renderRatingDistribution(ratings){
     <div class="prdist-note">${total} последних оценок в профиле</div>
   </div>`;
 }
+function renderFootballPassport(u,ratings,matchMap,cnt,avg,likes,friends,level,avatar,cls){
+  const leagueMap={};
+  (ratings||[]).forEach(r=>{const lg=matchMap[r.match_id]?.league_name||'Другое';leagueMap[lg]=(leagueMap[lg]||0)+1;});
+  const topLeague=Object.entries(leagueMap).sort((a,b)=>b[1]-a[1])[0]?.[0]||'Пока без лиги';
+  const fbzScore=Math.min(99,Math.round((cnt||0)*1.4+(likes||0)*1.8+(friends?.length||0)*1.2+(u.streak||0)*3));
+  const role=cnt>=50?'Легенда трибун':cnt>=20?'Эксперт матча':cnt>=5?'Активный болельщик':'Новый голос';
+  const av=avatar?`<img src="${avatar}" class="fpass-av-img" alt="">`:`<div class="fpass-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
+  return`<div class="fpass">
+    <div class="fpass-bg"></div>
+    <div class="fpass-top"><span>FOOTBAZED CARD</span><b>${fbzScore}</b></div>
+    <div class="fpass-main">
+      ${av}
+      <div>
+        <div class="fpass-name">${esc(u.username||'Аноним')}</div>
+        <div class="fpass-role">${role}</div>
+      </div>
+    </div>
+    <div class="fpass-strip">
+      <div><span>${cnt||0}</span><small>Оценки</small></div>
+      <div><span>${avg}</span><small>Средняя</small></div>
+      <div><span>${likes||0}</span><small>Лайки</small></div>
+    </div>
+    <div class="fpass-meta">
+      <div><small>Уровень</small><b>${level.n}</b></div>
+      <div><small>Главная лига</small><b>${esc(topLeague)}</b></div>
+    </div>
+  </div>`;
+}
 async function loadProfile(uid){
   const w=document.getElementById('profileW');
   if(!uid){w.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>Войдите чтобы увидеть профиль</div>';return;}
@@ -564,8 +592,9 @@ async function loadProfile(uid){
     const j=new Date(u.created_at||Date.now());
     const ms2=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
     const cls=avColor(u.username||'x');
-    const avatar=safeImageUrl(u.avatar_url);
-    const avatarHtml=avatar?`<img src="${avatar}" class="phero-av-img" alt="">`:`<div class="phero-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
+        const avatar=safeImageUrl(u.avatar_url);
+        const avatarHtml=avatar?`<img src="${avatar}" class="phero-av-img" alt="">`:`<div class="phero-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
+    const footballPassport=renderFootballPassport(u,ratings,matchMap,cnt,avg,tl,fs,lv,avatar,cls);
 
     // Check friendship status for non-self profiles
     let friendBtn='';
@@ -610,6 +639,7 @@ async function loadProfile(uid){
         <div class="pcard"><div class="pcard-title">${ico('chart',14)} История оценок</div>${ratings?.length?ratings.slice(0,20).map(r=>{const mt=matchMap[r.match_id];return`<div class="rh-row" ${mt?`onclick="go('md',{mid:${r.match_id}})" style="cursor:pointer"`:''}><div><div class="rh-m">${mt?esc(mt.home_team_name)+' vs '+esc(mt.away_team_name):'Матч #'+r.match_id}</div><div class="rh-l">${esc(mt?.league_name)} · ${new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}${r.is_public?'':' · приватно'}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
       </div>
       <div>
+        ${footballPassport}
         ${ratingDistribution}
         ${isMe&&u.invite_code?`<div class="pcard"><div class="pcard-title">${ico('link',14)} Пригласи друга</div><div style="background:var(--bg3);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:12px;word-break:break-all;font-size:11px;color:var(--accent2)">https://footbazed47.vercel.app/?invite=${u.invite_code}</div><button class="btn btn-l" style="width:100%" onclick="copyInv('${u.invite_code}')">${ico('copy',13)} Копировать ссылку</button></div>`:''}
         <div class="pcard"><div class="pcard-title">${ico('share',14)} Поделиться</div>
@@ -1228,17 +1258,20 @@ function openShare(type,data){
 
   // Background
   const bg=ctx.createLinearGradient(0,0,600,400);
-  bg.addColorStop(0,'#050810');bg.addColorStop(0.5,'#0a0f1c');bg.addColorStop(1,'#0f1530');
+  bg.addColorStop(0,'#04080d');bg.addColorStop(0.52,'#07121b');bg.addColorStop(1,'#0c1b27');
   ctx.fillStyle=bg;ctx.fillRect(0,0,600,400);
 
-  // Grid pattern
-  ctx.strokeStyle='rgba(255,255,255,0.03)';ctx.lineWidth=1;
-  for(let i=0;i<600;i+=40){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,400);ctx.stroke();}
-  for(let i=0;i<400;i+=40){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(600,i);ctx.stroke();}
+  // Subtle pitch pattern
+  ctx.strokeStyle='rgba(163,230,53,0.08)';ctx.lineWidth=2;
+  ctx.strokeRect(42,70,516,260);
+  ctx.beginPath();ctx.moveTo(300,70);ctx.lineTo(300,330);ctx.stroke();
+  ctx.beginPath();ctx.arc(300,200,54,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='rgba(94,234,212,0.04)';ctx.lineWidth=1;
+  for(let i=0;i<600;i+=44){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,400);ctx.stroke();}
 
   // Glow
   const glow=ctx.createRadialGradient(300,200,0,300,200,300);
-  glow.addColorStop(0,'rgba(198,255,0,0.06)');glow.addColorStop(1,'transparent');
+  glow.addColorStop(0,'rgba(34,197,94,0.12)');glow.addColorStop(1,'transparent');
   ctx.fillStyle=glow;ctx.fillRect(0,0,600,400);
 
   if(type==='profile'){
@@ -1247,7 +1280,7 @@ function openShare(type,data){
     ctx.letterSpacing='3px';ctx.fillText('FOOTBAZED',24,36);
 
     // Lime accent line
-    ctx.fillStyle='#6c5ce7';ctx.fillRect(24,56,80,3);
+    ctx.fillStyle='#22c55e';ctx.fillRect(24,56,80,3);
 
     // Username
     ctx.font='bold 42px "Bebas Neue",sans-serif';ctx.fillStyle='#eef0ff';
@@ -1269,7 +1302,7 @@ function openShare(type,data){
       ctx.fillStyle='rgba(255,255,255,0.03)';
       ctx.beginPath();ctx.roundRect(x,startY,bw,bh,12);ctx.fill();
       ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.beginPath();ctx.roundRect(x,startY,bw,bh,12);ctx.stroke();
-      ctx.font='bold 32px "Bebas Neue",sans-serif';ctx.fillStyle='#6c5ce7';
+      ctx.font='bold 32px "Bebas Neue",sans-serif';ctx.fillStyle='#a3e635';
       ctx.fillText(s.v,x+16,startY+42);
       ctx.font='10px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#4a5070';
       ctx.fillText(s.l.toUpperCase(),x+16,startY+64);
@@ -1279,7 +1312,7 @@ function openShare(type,data){
     ctx.fillStyle='rgba(198,255,0,0.08)';
     ctx.beginPath();ctx.roundRect(24,280,200,36,18);ctx.fill();
     ctx.strokeStyle='rgba(198,255,0,0.2)';ctx.beginPath();ctx.roundRect(24,280,200,36,18);ctx.stroke();
-    ctx.font='bold 13px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#6c5ce7';
+    ctx.font='bold 13px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#a3e635';
     ctx.fillText(data.level||'🌱 Новичок',40,303);
 
     // Footer
@@ -1290,12 +1323,12 @@ function openShare(type,data){
     // Match rating share card
     ctx.font='bold 16px "Bebas Neue",sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';
     ctx.fillText('FOOTBAZED',24,36);
-    ctx.fillStyle='#6c5ce7';ctx.fillRect(24,56,80,3);
+    ctx.fillStyle='#22c55e';ctx.fillRect(24,56,80,3);
 
     ctx.font='bold 28px "Bebas Neue",sans-serif';ctx.fillStyle='#eef0ff';
     ctx.fillText(data.match||'',24,100);
 
-    ctx.font='bold 120px "Bebas Neue",sans-serif';ctx.fillStyle='#6c5ce7';
+    ctx.font='bold 120px "Bebas Neue",sans-serif';ctx.fillStyle='#a3e635';
     ctx.fillText(data.score+'/10',24,240);
 
     if(data.comment){
