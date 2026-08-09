@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://footbazed47.vercel.app/sitemap.xml

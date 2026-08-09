@@ -16,20 +16,7 @@ function fmtDate(value){
 }
 
 function sortMatches(items){
-  const now=Date.now();
-  return [...items].sort((a,b)=>{
-    const rank={live:0,scheduled:1,finished:2};
-    const statusDiff=(rank[a.status]??3)-(rank[b.status]??3);
-    if(statusDiff)return statusDiff;
-    const aTime=new Date(a.match_date).getTime()||0;
-    const bTime=new Date(b.match_date).getTime()||0;
-    if(a.status==='finished')return bTime-aTime;
-    if(a.status==='scheduled'){
-      const aPast=aTime<now?1:0,bPast=bTime<now?1:0;
-      return aPast-bPast||aTime-bTime;
-    }
-    return aTime-bTime;
-  });
+  return window.FBZDomain.sortMatches(items);
 }
 
 async function fetchMatchCatalog(force=false){
@@ -190,62 +177,61 @@ async function loadMD(id){
   const target=document.getElementById('mdC');
   target.innerHTML='<div class="loading"><div class="spin"></div><span>Загружаем матч</span></div>';
   try{
-    const[{data:match,error:matchError},{data:ratings,error:ratingsError},{data:playerRatings,error:playersError}]=await Promise.all([
+    const ownRatingRequest=CU
+      ?sb.from('ratings').select('match_rating,comment,is_public,updated_at').eq('user_id',CU.id).eq('match_id',id).maybeSingle()
+      :Promise.resolve({data:null,error:null});
+    const[{data:match,error:matchError},{data:ratings,error:ratingsError},{data:insights,error:insightsError},{data:ownRating,error:ownRatingError}]=await Promise.all([
       sb.from('matches').select(MATCH_FIELDS).eq('id',id).single(),
       sb.from('ratings').select(RATING_FIELDS).eq('match_id',id).eq('is_public',true).order('created_at',{ascending:false}).limit(200),
-      sb.from('player_ratings').select('player_id,rating').eq('match_id',id).order('rating',{ascending:false}).limit(1000)
+      sb.rpc('get_match_insights',{p_match_id:Number(id)}),
+      ownRatingRequest
     ]);
     if(matchError)throw matchError;
     if(ratingsError)throw ratingsError;
-    if(playersError)throw playersError;
+    if(insightsError)throw insightsError;
+    if(ownRatingError)throw ownRatingError;
     if(!match){target.innerHTML='<div class="empty-state"><strong>Матч не найден</strong></div>';return;}
 
     const userIds=[...new Set((ratings||[]).map(rating=>rating.user_id))];
-    const playerIds=[...new Set((playerRatings||[]).map(rating=>rating.player_id))];
-    const[{data:users},{data:players}]=await Promise.all([
-      userIds.length?sb.from('users').select('id,display_name,username,avatar_url').in('id',userIds):Promise.resolve({data:[]}),
-      playerIds.length?sb.from('players').select('id,name,team,position').in('id',playerIds):Promise.resolve({data:[]})
-    ]);
+    const{data:users}=userIds.length
+      ?await sb.from('users').select('id,display_name,username,avatar_url').in('id',userIds)
+      :{data:[]};
     const userMap={};(users||[]).forEach(user=>{userMap[user.id]=user;});
-    const playerMap={};(players||[]).forEach(player=>{playerMap[player.id]=player;});
-    const average=ratings?.length?(ratings.reduce((sum,rating)=>sum+(rating.match_rating||0),0)/ratings.length).toFixed(1):'—';
-    const distribution=Array.from({length:10},(_,index)=>10-index).map(score=>({score,count:ratings?.filter(rating=>rating.match_rating===score).length||0}));
+    const ratingCount=Number(insights?.rating_count||0);
+    const average=insights?.average===null||insights?.average===undefined?'—':Number(insights.average).toFixed(1);
+    const distribution=Array.isArray(insights?.distribution)?insights.distribution:Array.from({length:10},(_,index)=>({score:10-index,count:0}));
     const maxDistribution=Math.max(...distribution.map(item=>item.count),1);
-    const playerAggregate={};
-    (playerRatings||[]).forEach(item=>{
-      const player=playerMap[item.player_id];
-      if(!playerAggregate[item.player_id])playerAggregate[item.player_id]={name:player?.name||'Игрок',team:player?.team||'',total:0,count:0};
-      playerAggregate[item.player_id].total+=item.rating;
-      playerAggregate[item.player_id].count++;
-    });
-    const topPlayers=Object.values(playerAggregate).map(player=>({...player,average:(player.total/player.count).toFixed(1)})).sort((a,b)=>b.average-a.average).slice(0,10);
+    const topPlayers=Array.isArray(insights?.top_players)?insights.top_players:[];
     const statusLabel={live:'LIVE',finished:'Завершён',scheduled:'Предстоит'}[match.status]||match.status;
     const prediction=match.status==='scheduled'?`<section class="md-prediction"><div class="mdcard-title">${ico('target',15)} Прогноз на матч</div>${renderPredBlock(match)}</section>`:'';
+    const competitionMeta=[match.season?`Сезон ${match.season}`:'',match.matchday?`${match.matchday}-й тур`:''].filter(Boolean).join(' · ');
+    const ownRatingMarkup=ownRating?`<div class="md-own-rating"><span>Моя оценка${ownRating.is_public===false?' · приватная':''}</span><strong>${ownRating.match_rating}/10</strong></div>`:'';
 
     target.innerHTML=`
       <section class="md-hero">
-        <div class="md-lg">${esc(match.league_name)} · ${esc(statusLabel)}</div>
+        <div class="md-lg"><span>${esc(match.league_name)}</span><b class="md-status md-status-${esc(match.status)}">${esc(statusLabel)}</b></div>
         <div class="md-sl">
           <div class="md-team"><div class="md-tname">${esc(match.home_team_name)}</div><div class="md-score">${esc(match.home_score??'—')}</div></div>
           <div class="md-vs">VS</div>
           <div class="md-team"><div class="md-tname">${esc(match.away_team_name)}</div><div class="md-score">${esc(match.away_score??'—')}</div></div>
         </div>
-        <div class="md-meta">${ico('calendar',12)} ${new Date(match.match_date).toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="md-meta">${ico('calendar',12)} ${new Date(match.match_date).toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}${competitionMeta?`<span>·</span>${esc(competitionMeta)}`:''}</div>
         <div class="md-comm">
-          <div class="md-ci"><div class="md-cv">${average}</div><div class="md-cl">Средняя оценка</div></div>
-          <div class="md-ci"><div class="md-cv">${ratings?.length||0}</div><div class="md-cl">Оценок</div></div>
+          <div class="md-ci"><div class="md-cv">${average}</div><div class="md-cl">Средняя сообщества</div></div>
+          <div class="md-ci"><div class="md-cv">${ratingCount}</div><div class="md-cl">Публичных оценок</div></div>
           <div class="md-ci"><div class="md-cv md-cv-player">${esc(topPlayers[0]?.name||'—')}</div><div class="md-cl">Лучший игрок</div></div>
         </div>
       </section>
       ${prediction}
       <div class="md-actions">
-        ${match.status==='finished'?`<button class="btn btn-l" onclick="openRate(${match.id})">${ico('star',14)} Оценить матч</button>`:''}
+        ${ownRatingMarkup}
+        ${match.status==='finished'?`<button class="btn btn-l" onclick="openRate(${match.id})">${ico('star',14)} ${ownRating?'Изменить оценку':'Оценить матч'}</button>`:''}
         <button class="btn btn-g" onclick="go('chat',{mid:${match.id},title:'Чат матча'})">${ico('chat',14)} Обсуждение</button>
         <button class="btn btn-g" onclick="copyAppLink('#match/${match.id}','Ссылка на матч')">${ico('link',14)} Ссылка</button>
       </div>
       <div class="md-grid">
         <div>
-          <section class="mdcard"><div class="mdcard-title">Топ игроков</div>${topPlayers.length?topPlayers.map((player,index)=>`<div class="pr-row"><div class="pr-rank">${index+1}</div><div class="pr-info"><div class="pr-name">${esc(player.name)}</div><div class="pr-team">${esc(player.team)}</div></div><div class="pr-r"><div class="pr-bar"><div class="pr-fill" style="width:${Number(player.average)*10}%"></div></div><div class="pr-val">${player.average}</div></div></div>`).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong></div>'}</section>
+          <section class="mdcard"><div class="mdcard-title">Топ игроков</div>${topPlayers.length?topPlayers.map((player,index)=>`<div class="pr-row"><div class="pr-rank">${index+1}</div><div class="pr-info"><div class="pr-name">${esc(player.name)}</div><div class="pr-team">${esc(player.team)} · ${Number(player.rating_count)||0} оценок${Number(player.best_votes)?` · ${Number(player.best_votes)} выборов лучшим`:''}</div></div><div class="pr-r"><div class="pr-bar"><div class="pr-fill" style="width:${Number(player.average)*10}%"></div></div><div class="pr-val">${Number(player.average).toFixed(1)}</div></div></div>`).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong></div>'}</section>
           <section class="mdcard"><div class="mdcard-title">Оценки болельщиков</div>${ratings?.length?ratings.slice(0,8).map(rating=>{const user=userMap[rating.user_id]||{};return`<div class="rh-row"><div><button class="text-link rh-m" onclick="go('profile',{uid:'${rating.user_id}'})">${esc(user.username||'Аноним')}</button><div class="rh-l">@${esc(user.username||'user')}${rating.comment?' · '+esc(rating.comment.substring(0,50)):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(rating.match_rating||0)*10}%"></div></div><div class="rh-v">${rating.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state compact"><strong>Будь первым, кто оценит матч</strong></div>'}</section>
         </div>
         <section class="mdcard"><div class="mdcard-title">Распределение оценок</div><div class="rdist">${distribution.map(item=>`<div class="rd-row"><div class="rd-l">${item.score}</div><div class="rd-bar"><div class="rd-fill" style="width:${item.count?Math.round(item.count/maxDistribution*100):0}%"></div></div><div class="rd-c">${item.count}</div></div>`).join('')}</div></section>

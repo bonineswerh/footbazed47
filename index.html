@@ -4,15 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#04080d">
-  <title>FOOTBAZED ⚽ | Оценивай футбол</title>
-  <meta name="description" content="Социальная сеть для футбольных болельщиков. Оценивай матчи, игроков, общайся с друзьями!">
+  <meta name="color-scheme" content="dark light">
+  <title>FOOTBAZED — Оценивай футбол вместе</title>
+  <meta name="description" content="Футбольная платформа для оценок матчей и игроков, личной статистики и общения с болельщиками.">
+  <link rel="canonical" href="https://footbazed47.vercel.app/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FOOTBAZED">
+  <meta property="og:title" content="FOOTBAZED — Оценивай футбол вместе">
+  <meta property="og:description" content="Оценки матчей и игроков, личная футбольная статистика и сообщество болельщиков.">
+  <meta property="og:url" content="https://footbazed47.vercel.app/">
+  <meta property="og:image" content="https://footbazed47.vercel.app/assets/stadium-bg.webp">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css?v=38">
-  <link rel="stylesheet" href="admin.css?v=38">
+  <link rel="stylesheet" href="styles.css?v=40">
+  <link rel="stylesheet" href="admin.css?v=40">
 </head>
 <body>
 
@@ -26,16 +35,21 @@
       <button type="button" class="nav-link" onclick="go('leaderboard')">Лидеры</button>
       <button type="button" class="nav-link" onclick="go('friends')">Друзья</button>
     </nav>
-    <div class="nav-right" id="navRight">
-      <button class="nbtn nbtn-lime" onclick="openAuth()">Войти</button>
+    <div class="header-actions">
+      <button class="header-icon-button global-search-trigger" id="globalSearchBtn" type="button" onclick="FBZSearch.open()" aria-label="Поиск" title="Поиск">
+        <span data-i="search"></span>
+      </button>
+      <div class="nav-right" id="navRight">
+        <button class="nbtn nbtn-lime" onclick="openAuth()">Войти</button>
+      </div>
     </div>
   </header>
 
   <!-- NOTIFICATIONS PANEL -->
-  <div class="notif-panel" id="notifPanel">
+  <div class="notif-panel" id="notifPanel" role="region" aria-label="Уведомления">
     <div class="notif-header">
       <h3>Уведомления</h3><div class="notif-badge" id="notifBadge"></div>
-      <span class="notif-mark" onclick="markAllRead()">Всё прочитано</span>
+      <button class="notif-mark" type="button" onclick="markAllRead()">Всё прочитано</button>
     </div>
     <div class="notif-list" id="notifList">
       <div style="padding:20px;text-align:center;color:var(--text3)">Нет уведомлений</div>
@@ -342,9 +356,9 @@
         <input class="input" type="email" placeholder="Email" id="loginEmail" autocomplete="email" inputmode="email">
         <label class="sr-only" for="loginPass">Пароль</label>
         <input class="input" type="password" placeholder="Пароль" id="loginPass" autocomplete="current-password">
-        <div class="auth-e" id="loginErr"></div>
+        <div class="auth-e" id="loginErr" role="status" aria-live="polite"></div>
         <button class="btn btn-l" style="width:100%" onclick="doLogin()" id="loginBtn">Войти</button>
-        <p style="color:var(--text3);font-size:13px;text-align:center;margin-top:16px">Нет аккаунта? <span style="color:var(--accent2);cursor:pointer;font-weight:600" onclick="switchToRegister()">Зарегистрируйся</span></p>
+        <p class="auth-alt">Нет аккаунта? <button type="button" onclick="switchToRegister()">Зарегистрироваться</button></p>
       </div>
 
       <!-- REGISTER STEP 1: Email -->
@@ -353,10 +367,10 @@
         <p style="color:var(--text2);margin-bottom:16px;">Введи свой email</p>
         <label class="sr-only" for="authEmail">Email</label>
         <input class="input" type="email" placeholder="example@mail.ru" id="authEmail" autocomplete="email" inputmode="email">
-        <div class="auth-e" id="authE"></div>
+        <div class="auth-e" id="authE" role="status" aria-live="polite"></div>
         <button class="btn btn-l" style="width:100%" onclick="sendOTP()" id="authSendBtn">Отправить код →</button>
-        <p style="color:var(--text3);font-size:12px;margin-top:16px;">📬 На почту придёт 6-значный код</p>
-        <p style="color:var(--text3);font-size:13px;text-align:center;margin-top:12px">Уже есть аккаунт? <span style="color:var(--accent2);cursor:pointer;font-weight:600" onclick="switchToLogin()">Войти</span></p>
+        <p class="auth-note">На почту придёт 6-значный код</p>
+        <p class="auth-alt">Уже есть аккаунт? <button type="button" onclick="switchToLogin()">Войти</button></p>
       </div>
       
       <!-- REGISTER STEP 2: OTP Code -->
@@ -366,7 +380,7 @@
         <p style="color:var(--text3);font-size:12px;margin-bottom:16px;">Проверь папку «Спам» если письмо не пришло</p>
         <label class="sr-only" for="authCode">Код подтверждения</label>
         <input class="input" type="text" placeholder="6-значный код" id="authCode" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
-        <div class="auth-e" id="authE2"></div>
+        <div class="auth-e" id="authE2" role="status" aria-live="polite"></div>
         <button class="btn btn-l" style="width:100%" onclick="verifyOTP()" id="authVerifyBtn">Подтвердить</button>
         <button class="btn btn-g" style="width:100%;margin-top:8px;" onclick="showAuthStep(1)">Изменить email</button>
       </div>
@@ -377,16 +391,16 @@
         <label class="sr-only" for="rU">Никнейм</label>
         <input class="input" placeholder="Никнейм *" id="rU" maxlength="30" autocomplete="username">
         <label class="sr-only" for="rP">Новый пароль</label>
-        <input class="input" type="password" placeholder="Придумай пароль *" id="rP" minlength="6" autocomplete="new-password">
+        <input class="input" type="password" placeholder="Пароль, минимум 8 символов *" id="rP" minlength="8" autocomplete="new-password">
         <label class="sr-only" for="rB">О себе</label>
         <input class="input" placeholder="О себе" id="rB" maxlength="100">
         <label class="sr-only" for="rT">Любимые команды</label>
-        <input class="input" placeholder="Любимые команды" id="rT">
-        <div class="auth-e" id="authE3"></div>
-        <button class="btn btn-l" style="width:100%" onclick="saveProfile()">Создать аккаунт →</button>
+        <input class="input" placeholder="Любимые команды" id="rT" maxlength="120">
+        <div class="auth-e" id="authE3" role="status" aria-live="polite"></div>
+        <button class="btn btn-l" style="width:100%" onclick="saveProfile()" id="profileSaveBtn">Создать аккаунт →</button>
       </div>
       
-      <button class="btn btn-g" style="width:100%;margin-top:16px;" onclick="closeAuth()">✕ Закрыть</button>
+      <button class="btn btn-g" style="width:100%;margin-top:16px;" onclick="closeAuth()">Закрыть</button>
     </div>
   </div>
 
@@ -423,12 +437,40 @@
         <div id="rPlayers"></div>
         
         <label class="sr-only" for="rCmt">Комментарий к матчу</label>
-        <textarea class="input" placeholder="Комментарий к матчу..." id="rCmt" rows="3" style="resize:none;"></textarea>
+        <textarea class="input" placeholder="Комментарий к матчу" id="rCmt" rows="3" maxlength="1000" oninput="updateRatingCommentCount()"></textarea>
+        <div class="rating-comment-meta"><span>Ваше мнение о матче</span><span id="rCmtCount">0/1000</span></div>
         
-        <div style="display:flex;gap:12px;">
+        <button class="btn btn-danger-soft rating-delete" type="button" onclick="requestDeleteRating()" id="rDelete" hidden>Удалить мою оценку</button>
+        <div class="rating-actions">
           <button class="btn btn-g" style="flex:1" onclick="rBack()">← Назад</button>
           <button class="btn btn-l" style="flex:1" onclick="saveRating()" id="rSave">Сохранить</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLOBAL SEARCH -->
+  <div class="overlay" id="searchOv" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="globalSearchTitle" data-close-backdrop="true" tabindex="-1">
+    <div class="global-search-box">
+      <h2 class="sr-only" id="globalSearchTitle">Поиск по FOOTBAZED</h2>
+      <div class="global-search-input-wrap">
+        <span class="global-search-icon" data-i="search"></span>
+        <label class="sr-only" for="globalSearchInput">Матч, команда или пользователь</label>
+        <input id="globalSearchInput" type="search" placeholder="Матч, команда или пользователь" autocomplete="off" maxlength="80" aria-controls="globalSearchResults">
+        <button class="global-search-close" type="button" onclick="FBZSearch.close()" aria-label="Закрыть поиск">×</button>
+      </div>
+      <div class="global-search-results" id="globalSearchResults" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- CONFIRMATION -->
+  <div class="overlay" id="confirmOv" role="alertdialog" aria-modal="true" aria-hidden="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage" data-close-backdrop="true" tabindex="-1">
+    <div class="confirm-box">
+      <h2 id="confirmTitle">Подтвердите действие</h2>
+      <p id="confirmMessage"></p>
+      <div class="confirm-actions">
+        <button class="btn btn-g" type="button" onclick="FBZConfirm.close()">Отмена</button>
+        <button class="btn btn-danger" type="button" id="confirmAction" onclick="FBZConfirm.run()">Продолжить</button>
       </div>
     </div>
   </div>
@@ -439,9 +481,9 @@
       <h2 id="shareTitle">Карточка профиля</h2>
       <canvas id="shareCanvas"></canvas>
       <div style="display:flex;gap:12px;margin-top:24px;">
-        <button class="btn btn-l" style="flex:1" onclick="downloadShare()">📥 Скачать</button>
-        <button class="btn btn-g" style="flex:1" onclick="copyShare()">📋 Копировать</button>
-        <button class="btn btn-g" onclick="closeShare()">✕ Закрыть</button>
+        <button class="btn btn-l" style="flex:1" onclick="downloadShare()"><span data-i="download"></span>Скачать</button>
+        <button class="btn btn-g" style="flex:1" onclick="copyShare()"><span data-i="copy"></span>Копировать</button>
+        <button class="btn btn-g" onclick="closeShare()">Закрыть</button>
       </div>
     </div>
   </div>
@@ -535,15 +577,20 @@
   </nav>
 
   <!-- TOAST -->
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- APP JS -->
-  <script src="js/appearance.js?v=38"></script>
-  <script src="js/core.js?v=38"></script>
-  <script src="js/overlays.js?v=38"></script>
-  <script src="app.js?v=39"></script>
-  <script src="js/matches.js?v=38"></script>
-  <script src="js/account.js?v=38"></script>
-  <script src="js/admin.js?v=38"></script>
+  <script src="js/domain.js?v=40"></script>
+  <script src="js/appearance.js?v=40"></script>
+  <script src="js/core.js?v=40"></script>
+  <script src="js/overlays.js?v=40"></script>
+  <script src="js/confirm.js?v=40"></script>
+  <script src="app.js?v=40"></script>
+  <script src="js/auth.js?v=40"></script>
+  <script src="js/ratings.js?v=40"></script>
+  <script src="js/matches.js?v=40"></script>
+  <script src="js/search.js?v=40"></script>
+  <script src="js/account.js?v=40"></script>
+  <script src="js/admin.js?v=40"></script>
 </body>
 </html>

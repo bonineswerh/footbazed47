@@ -42,16 +42,15 @@ const LEVELS=[{n:'🌱 Новичок',m:0},{n:'🌿 Любитель',m:5},{n:'
 const AVCOLORS=['av-0','av-1','av-2','av-3','av-4','av-5','av-6','av-7'];
 let CU=null,CP='home',PP='home';
 let MF='all',ML='all',FS='all',LT='likes',FT='list';
-let rMID=null,rScore=null,rPS={},rBest=null;
 let chatMID=null,mdID=null,viewUID=null;
 let notifOpen=false;
 let routeApplying=false;
-let authSessionUserId=null;
 
 function avColor(str){let h=0;for(let c of(str||'x'))h=(h<<5)-h+c.charCodeAt(0);return AVCOLORS[Math.abs(h)%8];}
 
 async function init(){
   window.FBZAppearance?.init();
+  window.FBZSearch?.init();
   try{
     const{data:{session},error}=await sb.auth.getSession();
     if(error)throw error;
@@ -83,19 +82,6 @@ async function init(){
   if(inv)setTimeout(()=>handleInvite(inv),800);
   if(window.location.hash)setTimeout(applyRouteFromHash,100);
 }
-
-async function onLogin(u){
-  if(!u||authSessionUserId===u.id&&CU)return;
-  authSessionUserId=u.id;
-  await ensureProfile(u);
-  const{data:p,error}=await sb.rpc('get_my_profile').maybeSingle();
-  if(error){authSessionUserId=null;throw error;}
-  if(!p){authSessionUserId=null;throw new Error('Не удалось создать профиль пользователя.');}
-  // Email comes from Supabase Auth, not from the public users table.
-  CU={...p,email:u.email};
-  renderNav();loadNotifications();
-}
-function onLogout(){authSessionUserId=null;CU=null;window.FBZAccount?.close();renderNav();}
 
 function renderNav(){
   const nr=document.getElementById('navRight');
@@ -207,8 +193,8 @@ function copyAppLink(hash,label='Ссылка'){
 async function loadHeroStats(){
   const[{count:u},{count:r},{count:m}]=await Promise.all([
     sb.from('users').select('id',{count:'exact',head:true}),
-    sb.from('ratings').select('*',{count:'exact',head:true}),
-    sb.from('matches').select('*',{count:'exact',head:true})
+    sb.from('ratings').select('id',{count:'exact',head:true}),
+    sb.from('matches').select('id',{count:'exact',head:true})
   ]);
   anim('hU',u||0);anim('hR',r||0);anim('hM',m||0);
 }
@@ -730,7 +716,27 @@ async function acceptFriend(fid,card){
   loadNotifications();
 }
 async function rejectFriend(fid,card){await sb.from('friendships').delete().eq('user_id',fid).eq('friend_id',CU.id);card.remove();}
-async function removeFriend(fid,btn){if(!confirm('Удалить из друзей?'))return;await sb.from('friendships').delete().eq('user_id',CU.id).eq('friend_id',fid);await sb.from('friendships').delete().eq('user_id',fid).eq('friend_id',CU.id);btn.closest('.friend-card').remove();toast('Удалено','ok');}
+function removeFriend(fid,button){
+  window.FBZConfirm.open({
+    title:'Удалить из друзей?',
+    message:'Пользователь исчезнет из списка друзей. Новый запрос можно будет отправить позже.',
+    confirmText:'Удалить',
+    onConfirm:async()=>{
+      const[{error:firstError},{error:secondError}]=await Promise.all([
+        sb.from('friendships').delete().eq('user_id',CU.id).eq('friend_id',fid),
+        sb.from('friendships').delete().eq('user_id',fid).eq('friend_id',CU.id)
+      ]);
+      if(firstError||secondError){
+        console.error('Friend removal error:',firstError||secondError);
+        toast('Не удалось удалить пользователя','err');
+        return false;
+      }
+      button.closest('.friend-card')?.remove();
+      toast('Пользователь удалён из друзей','ok');
+      return true;
+    }
+  });
+}
 async function cancelFriend(fid,card){await sb.from('friendships').delete().eq('user_id',CU.id).eq('friend_id',fid);card.remove();}
 async function handleInvite(code){
   if(!CU){openAuth();return;}
@@ -758,207 +764,6 @@ async function markAllRead(){if(!CU)return;await sb.from('notifications').update
 function toggleNotif(){notifOpen=!notifOpen;const p=document.getElementById('notifPanel');if(notifOpen){p.style.display='flex';p.classList.add('on');}else{p.style.display='none';p.classList.remove('on');}}
 function closeNotif(){notifOpen=false;const p=document.getElementById('notifPanel');p.style.display='none';p.classList.remove('on');}
 
-// ─── RATING ───
-async function openRate(mid){
-  if(!CU){openAuth();return;}
-  rMID=mid;rScore=null;rPS={};rBest=null;
-  document.getElementById('rMI').textContent='Загружаем матч...';
-  const row=document.getElementById('starsR');row.innerHTML='';
-  const LABELS=['','Ужасно','Плохо','Слабо','Ниже среднего','Средне','Неплохо','Хорошо','Отлично','Великолепно','Шедевр'];
-  for(let i=1;i<=10;i++){const b=document.createElement('button');b.className='rate-star';b.type='button';b.setAttribute('aria-label',`${i} из 10 — ${LABELS[i]}`);b.innerHTML=`<span class="rate-star-num">${i}</span>`;b.onclick=()=>selScore(i,LABELS);row.appendChild(b);}
-  document.getElementById('rScoreDisp').textContent='—';
-  document.getElementById('rScoreDisp').classList.remove('active');
-  document.getElementById('rScoreLabel').textContent='Выберите оценку';
-  document.getElementById('rCmt').value='';
-  document.getElementById('rPub').checked=true;
-  rBack();
-  FBZOverlay.open('rateOv','.rate-star');
-  try{
-    const[{data:match,error:matchError},{data:existing,error:ratingError},{data:playerScores,error:playerError}]=await Promise.all([
-      sb.from('matches').select('home_team_name,away_team_name').eq('id',mid).single(),
-      sb.from('ratings').select('match_rating,comment,is_public').eq('user_id',CU.id).eq('match_id',mid).maybeSingle(),
-      sb.from('player_ratings').select('player_id,rating,is_best_player').eq('user_id',CU.id).eq('match_id',mid)
-    ]);
-    if(matchError)throw matchError;
-    if(ratingError)throw ratingError;
-    if(playerError)throw playerError;
-    document.getElementById('rMI').textContent=`${match.home_team_name} vs ${match.away_team_name}`;
-    if(existing){
-      selScore(existing.match_rating,LABELS);
-      document.getElementById('rCmt').value=existing.comment||'';
-      document.getElementById('rPub').checked=existing.is_public!==false;
-    }
-    await loadRateP(mid);
-    (playerScores||[]).forEach(item=>{
-      rPS[item.player_id]=item.rating;
-      const input=document.getElementById(`player-score-${item.player_id}`);
-      if(input){input.value=item.rating;input.style.borderColor='var(--accent2)';}
-      if(item.is_best_player){rBest=item.player_id;input?.closest('.pitem')?.querySelector('.pi-best')?.classList.add('on');}
-    });
-  }catch(error){
-    console.error('Rating form error:',error);
-    document.getElementById('rMI').textContent=`Матч #${mid}`;
-    await loadRateP(mid);
-  }
-}
-function selScore(v,labels){
-  rScore=v;
-  document.querySelectorAll('.rate-star').forEach((b,i)=>b.classList.toggle('on',i<v));
-  const disp=document.getElementById('rScoreDisp');
-  disp.textContent=v+'/10';disp.classList.add('active');
-  const lbl=document.getElementById('rScoreLabel');
-  if(labels&&labels[v])lbl.textContent=labels[v];
-}
-function rBack(){document.getElementById('rS1').style.display='block';document.getElementById('rS2').style.display='none';document.getElementById('ss1').classList.add('on');document.getElementById('ss2').classList.remove('on');}
-function rNext(){if(!rScore){toast('Выберите оценку','err');return;}document.getElementById('rS1').style.display='none';document.getElementById('rS2').style.display='block';document.getElementById('ss2').classList.add('on');}
-function closeRate(){FBZOverlay.close('rateOv');}
-// ─── PLAYER CACHE & EXACT TEAM MATCHING ───
-let allPlayersCache=null;
-async function getAllPlayers(){
-  if(allPlayersCache)return allPlayersCache;
-  const cached=getCache('players',CACHE_TTL.players);
-  if(cached){allPlayersCache=cached;return cached;}
-  try{
-    const{data}=await sb.from('players').select(PLAYER_FIELDS).limit(5000);
-    allPlayersCache=data||[];
-    if(data?.length)setCache('players',data);
-    return allPlayersCache;
-  }catch(e){console.warn('getAllPlayers:',e);return[];}
-}
-
-// EXACT mapping: match team name → players table team name
-const TEAM_MAP={
-  'man city':'Manchester City FC','man united':'Manchester United FC',
-  'arsenal':'Arsenal FC','chelsea':'Chelsea FC','liverpool':'Liverpool FC',
-  'tottenham':'Tottenham Hotspur FC','spurs':'Tottenham Hotspur FC',
-  'newcastle':'Newcastle United FC','aston villa':'Aston Villa FC',
-  'west ham':'West Ham United FC','brighton hove':'Brighton & Hove Albion FC',
-  'crystal palace':'Crystal Palace FC','bournemouth':'AFC Bournemouth',
-  'fulham':'Fulham FC','brentford':'Brentford FC','everton':'Everton FC',
-  'wolverhampton':'Wolverhampton Wanderers FC','wolves':'Wolverhampton Wanderers FC',
-  'nottingham':'Nottingham Forest FC','burnley':'Burnley FC',
-  'leeds united':'Leeds United FC','sunderland':'Sunderland AFC',
-  'barça':'FC Barcelona','barca':'FC Barcelona','barcelona':'FC Barcelona',
-  'real madrid':'Real Madrid CF','atleti':'Club Atlético de Madrid',
-  'atletico':'Club Atlético de Madrid','sevilla':'Sevilla FC',
-  'real betis':'Real Betis Balompié','betis':'Real Betis Balompié',
-  'real sociedad':'Real Sociedad de Fútbol','sociedad':'Real Sociedad de Fútbol',
-  'villarreal':'Villarreal CF','athletic':'Athletic Club','bilbao':'Athletic Club',
-  'valencia':'Valencia CF','getafe':'Getafe CF','girona':'Girona FC',
-  'alavés':'Deportivo Alavés','celta':'RC Celta de Vigo',
-  'mallorca':'RCD Mallorca','osasuna':'CA Osasuna',
-  'rayo vallecano':'Rayo Vallecano de Madrid','espanyol':'RCD Espanyol de Barcelona',
-  'elche':'Elche CF','levante':'Levante UD',
-  'bayern':'FC Bayern München','dortmund':'Borussia Dortmund',
-  'leverkusen':'Bayer 04 Leverkusen','leipzig':'RB Leipzig',
-  'frankfurt':'Eintracht Frankfurt','stuttgart':'VfB Stuttgart',
-  'freiburg':'SC Freiburg','wolfsburg':'VfL Wolfsburg',
-  "m'gladbach":'Borussia Mönchengladbach','gladbach':'Borussia Mönchengladbach',
-  'augsburg':'FC Augsburg','hoffenheim':'TSG 1899 Hoffenheim',
-  'mainz':'1. FSV Mainz 05','bremen':'SV Werder Bremen',
-  'union berlin':'1. FC Union Berlin','heidenheim':'1. FC Heidenheim 1846',
-  'st. pauli':'FC St. Pauli 1910','hsv':'Hamburger SV',
-  'inter':'FC Internazionale Milano','juventus':'Juventus FC','juve':'Juventus FC',
-  'milan':'AC Milan','napoli':'SSC Napoli','roma':'AS Roma','lazio':'SS Lazio',
-  'atalanta':'Atalanta BC','fiorentina':'ACF Fiorentina',
-  'bologna':'Bologna FC 1909','torino':'Torino FC',
-  'udinese':'Udinese Calcio','cagliari':'Cagliari Calcio',
-  'genoa':'Genoa CFC','lecce':'US Lecce','verona':'Hellas Verona FC',
-  'parma':'Parma Calcio 1913','como':'Como 1907',
-  'sassuolo':'US Sassuolo Calcio','cremonese':'US Cremonese',
-  'ac pisa':'AC Pisa 1909',
-  'psg':'Paris Saint-Germain FC','marseille':'Olympique de Marseille',
-  'olympique lyon':'Olympique Lyonnais','lyon':'Olympique Lyonnais',
-  'monaco':'AS Monaco FC','lille':'Lille OSC','nice':'OGC Nice',
-  'strasbourg':'RC Strasbourg Alsace','stade rennais':'Stade Rennais FC 1901',
-  'rennes':'Stade Rennais FC 1901','nantes':'FC Nantes',
-  'toulouse':'Toulouse FC','rc lens':'Racing Club de Lens','lens':'Racing Club de Lens',
-  'brest':'Stade Brestois 29','le havre':'Le Havre AC',
-  'auxerre':'AJ Auxerre','lorient':'FC Lorient',
-  'sporting cp':'Sporting Clube de Portugal','galatasaray':'Galatasaray SK',
-  'bodø/glimt':'FK Bodø/Glimt',
-};
-
-function findPlayersForTeam(allPlayers,matchTeamName){
-  const key=matchTeamName.toLowerCase().trim();
-  // 1. Direct map lookup
-  const mapped=TEAM_MAP[key];
-  if(mapped){const f=allPlayers.filter(p=>p.team===mapped);if(f.length)return f;}
-  // 2. Exact match in players table
-  const exact=allPlayers.filter(p=>p.team.toLowerCase()===key);
-  if(exact.length)return exact;
-  // 3. Full name in map values (e.g. match already has full name)
-  const asValue=allPlayers.filter(p=>p.team.toLowerCase()===key||p.team===matchTeamName);
-  if(asValue.length)return asValue;
-  // 4. Fallback: nothing found
-  return[];
-}
-
-async function loadRateP(mid){
-  const{data:m}=await sb.from('matches').select('home_team_name,away_team_name').eq('id',mid).single();
-  if(!m)return;
-  const el=document.getElementById('rPlayers');
-  el.innerHTML='<div style="color:var(--fog);font-size:12px">Загружаем игроков...</div>';
-  const allPlayers=await getAllPlayers();
-  const hp=findPlayersForTeam(allPlayers,m.home_team_name);
-  const ap=findPlayersForTeam(allPlayers,m.away_team_name);
-  if(!hp.length&&!ap.length){el.innerHTML='<div style="color:var(--fog);font-size:12px;margin-bottom:14px">Игроки не найдены для этого матча</div>';return;}
-  el.innerHTML=renderTeamSquad(m.home_team_name,hp)+renderTeamSquad(m.away_team_name,ap);
-}
-
-function renderTeamSquad(teamName,players){
-  if(!players.length)return`<div class="pg-hd">${esc(teamName)} (0)</div><div style="color:var(--fog);font-size:12px;padding:8px 0">Игроки не найдены</div>`;
-  const posGroup={'GK':'gk','Goalkeeper':'gk','CB':'def','Centre-Back':'def','LB':'def','Left-Back':'def','RB':'def','Right-Back':'def','Defence':'def','DM':'mid','Defensive Midfield':'mid','CM':'mid','Central Midfield':'mid','AM':'mid','Attacking Midfield':'mid','LM':'mid','Left Midfield':'mid','RM':'mid','Right Midfield':'mid','Midfield':'mid','LW':'att','Left Winger':'att','RW':'att','Right Winger':'att','ST':'att','Centre-Forward':'att','Offence':'att'};
-  const posOrder={'GK':1,'Goalkeeper':1,'CB':2,'Centre-Back':2,'LB':3,'Left-Back':3,'RB':4,'Right-Back':4,'Defence':5,'DM':6,'Defensive Midfield':6,'CM':7,'Central Midfield':7,'AM':8,'Attacking Midfield':8,'LM':9,'RM':10,'Midfield':11,'LW':12,'Left Winger':12,'RW':13,'Right Winger':13,'ST':14,'Centre-Forward':14,'Offence':15};
-  const sorted=[...players].sort((a,b)=>(posOrder[a.position]||99)-(posOrder[b.position]||99));
-  const groups={gk:[],def:[],mid:[],att:[],other:[]};
-  sorted.forEach(p=>{const g=posGroup[p.position]||'other';groups[g].push(p);});
-  const labels={gk:'🧤 Вратари',def:'🛡️ Защитники',mid:'⚡ Полузащитники',att:'⚽ Нападающие',other:'👤 Другие'};
-  let html=`<div class="pg-hd">${esc(teamName)} (${players.length})</div>`;
-  for(const[key,label]of Object.entries(labels)){
-    if(!groups[key]?.length)continue;
-    html+=`<div style="font-size:11px;color:var(--fog);font-weight:700;padding:6px 4px 4px;text-transform:uppercase;letter-spacing:0.5px">${label}</div>`;
-    html+=groups[key].map(rPI).join('');
-  }
-  return html;
-}
-function rPI(p){
-  return`<div class="pitem"><div class="pi-i"><div class="pi-n">${esc(p.name)}</div><div class="pi-p"><span>${esc(p.position||'—')}</span></div></div><div class="pi-r"><button class="pi-best" aria-label="Выбрать лучшим игроком" title="Лучший игрок" onclick="selBest(${p.id},this)">★</button><label class="sr-only" for="player-score-${p.id}">Оценка игрока ${esc(p.name)}</label><input class="pi-num" id="player-score-${p.id}" inputmode="numeric" type="number" min="1" max="10" placeholder="—" onchange="setPScore(${p.id},this.value,this)"></div></div>`;
-}
-function selBest(id,btn){rBest=id;document.querySelectorAll('.pi-best').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
-function setPScore(id,v,el){if(v>=1&&v<=10){rPS[id]=parseInt(v);el.style.borderColor='var(--accent2)';}else{delete rPS[id];el.style.borderColor='var(--b1)';}}
-async function saveRating(){
-  if(!rScore){toast('Выберите оценку','err');return;}
-  if(!CU){openAuth();return;}
-  const btn=document.getElementById('rSave');btn.disabled=true;btn.textContent='Сохраняем...';
-  try{
-    const cmt=document.getElementById('rCmt').value.trim()||null;
-    if(cmt&&cmt.length>1000)throw new Error('Комментарий слишком длинный');
-    const pub=document.getElementById('rPub').checked;
-    const{error}=await sb.from('ratings').upsert({user_id:CU.id,match_id:rMID,match_rating:rScore,comment:cmt,is_public:pub},{onConflict:'user_id,match_id'});
-    if(error)throw error;
-    const{error:resetBestError}=await sb.from('player_ratings').update({is_best_player:false}).eq('user_id',CU.id).eq('match_id',rMID);
-    if(resetBestError)throw resetBestError;
-    const playerRows=Object.entries(rPS).map(([pid,rating])=>({user_id:CU.id,match_id:rMID,player_id:Number.parseInt(pid,10),rating,is_best_player:Number(pid)===Number(rBest)}));
-    if(playerRows.length){
-      const{error:playersError}=await sb.from('player_ratings').upsert(playerRows,{onConflict:'user_id,match_id,player_id'});
-      if(playersError)throw playersError;
-    }
-    await updStreak();
-    toast('✅ Оценка сохранена!','ok');closeRate();
-    if(CP==='md')loadMD(rMID);else if(CP==='feed')loadFeed();
-  }catch(e){toast('Ошибка: '+e.message,'err');}
-  finally{btn.disabled=false;btn.innerHTML=ico('save',13)+' Сохранить';}
-}
-async function updStreak(){
-  try{
-    const{error}=await sb.rpc('record_rating_streak');
-    if(error)throw error;
-    const{data}=await sb.from('users').select('streak,streak_date,ratings_count,avg_rating').eq('id',CU.id).maybeSingle();
-    if(data)Object.assign(CU,data);
-  }catch(e){}
-}
-
 // ─── CHAT ───
 async function loadChat(mid){
   if(!mid)return;
@@ -983,159 +788,6 @@ async function sendChat(){
   if(error){toast('Ошибка отправки','err');console.error(error);return;}
   inp.value='';loadChat(chatMID);
 }
-
-// ─── AUTH ───
-let authEmailStored='';
-let authMode='login'; // 'login' or 'register'
-
-function hideAllAuth(){
-  document.getElementById('authLogin').style.display='none';
-  document.getElementById('authStep1').style.display='none';
-  document.getElementById('authStep2').style.display='none';
-  document.getElementById('authStep3').style.display='none';
-}
-
-function openAuth(){
-  switchToLogin();
-  FBZOverlay.open('authOv','#loginEmail');
-}
-function openRegister(){
-  switchToRegister();
-  FBZOverlay.open('authOv','#authEmail');
-}
-function closeAuth(){FBZOverlay.close('authOv');}
-
-function switchToLogin(){
-  authMode='login';hideAllAuth();
-  document.getElementById('authLogin').style.display='block';
-  document.getElementById('loginErr').textContent='';
-}
-function switchToRegister(){
-  authMode='register';hideAllAuth();
-  document.getElementById('authStep1').style.display='block';
-  document.getElementById('authE').textContent='';
-}
-function showAuthStep(n){
-  hideAllAuth();
-  if(n===1)document.getElementById('authStep1').style.display='block';
-  if(n===2)document.getElementById('authStep2').style.display='block';
-  if(n===3)document.getElementById('authStep3').style.display='block';
-}
-
-// ─── LOGIN (email + password) ───
-async function doLogin(){
-  const email=document.getElementById('loginEmail').value.trim();
-  const pass=document.getElementById('loginPass').value;
-  if(!email){document.getElementById('loginErr').textContent='Введи email';return;}
-  if(!pass){document.getElementById('loginErr').textContent='Введи пароль';return;}
-  const btn=document.getElementById('loginBtn');
-  btn.disabled=true;btn.textContent='Входим...';
-  document.getElementById('loginErr').textContent='';
-  try{
-    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error)throw error;
-    await onLogin(data.user);
-    closeAuth();toast('С возвращением!','ok');
-  }catch(e){
-    const msgs={'Invalid login credentials':'Неверный email или пароль','Email not confirmed':'Email не подтверждён'};
-    document.getElementById('loginErr').textContent=msgs[e.message]||e.message||'Ошибка входа';
-  }
-  btn.disabled=false;btn.textContent='Войти';
-}
-
-// ─── REGISTER (email → OTP → profile + password) ───
-async function sendOTP(){
-  const email=document.getElementById('authEmail').value.trim();
-  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-    document.getElementById('authE').textContent='Введи корректный email';return;
-  }
-  const btn=document.getElementById('authSendBtn');
-  btn.disabled=true;btn.textContent='Отправляем...';
-  document.getElementById('authE').textContent='';
-  try{
-    const{error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true}});
-    if(error)throw error;
-    authEmailStored=email;
-    document.getElementById('authEmailShow').textContent=email;
-    showAuthStep(2);
-    document.getElementById('authCode').focus();
-    toast('Код отправлен на почту!','ok');
-  }catch(e){
-    document.getElementById('authE').textContent=e.message||'Ошибка отправки';
-  }
-  btn.disabled=false;btn.textContent='Отправить код →';
-}
-
-async function verifyOTP(){
-  const code=document.getElementById('authCode').value.trim();
-  if(!code||code.length<6){document.getElementById('authE2').textContent='Введи 6-значный код';return;}
-  const btn=document.getElementById('authVerifyBtn');
-  btn.disabled=true;btn.textContent='Проверяем...';
-  try{
-    const{data,error}=await sb.auth.verifyOtp({email:authEmailStored,token:code,type:'email'});
-    if(error)throw error;
-    const{data:profile}=await sb.from('users').select('id').eq('id',data.user.id).maybeSingle();
-    if(!profile){
-      showAuthStep(3);
-      btn.disabled=false;btn.textContent='Подтвердить';
-      return;
-    }
-    await onLogin(data.user);
-    closeAuth();toast('Добро пожаловать!','ok');
-  }catch(e){
-    const msgs={'Token has expired or is invalid':'Неверный или просроченный код'};
-    document.getElementById('authE2').textContent=msgs[e.message]||e.message||'Ошибка';
-  }
-  btn.disabled=false;btn.textContent='Подтвердить';
-}
-
-async function saveProfile(){
-  const u=document.getElementById('rU').value.trim();
-  const p=document.getElementById('rP').value;
-  const b=document.getElementById('rB').value.trim();
-  const t=document.getElementById('rT').value.trim();
-  if(!u){document.getElementById('authE3').textContent='Введи никнейм';return;}
-  if(!/^[a-zA-Z0-9_а-яёА-ЯЁ]{3,30}$/.test(u)){document.getElementById('authE3').textContent='3–30 символов, без пробелов';return;}
-  if(!p||p.length<6){document.getElementById('authE3').textContent='Пароль минимум 6 символов';return;}
-  const{data:exU}=await sb.from('users').select('id').eq('username',u).maybeSingle();
-  if(exU){document.getElementById('authE3').textContent='Никнейм уже занят';return;}
-  const{data:{user}}=await sb.auth.getUser();
-  if(!user)return;
-  // Set password
-  const{error:pwErr}=await sb.auth.updateUser({password:p});
-  if(pwErr){document.getElementById('authE3').textContent='Ошибка: '+pwErr.message;return;}
-  // Create profile
-  const{error:profileError}=await sb.from('users').insert({
-    id:user.id,username:u,display_name:u,
-    bio:b||null,favorite_teams:t||null,is_public:true
-  });
-  if(profileError){
-    document.getElementById('authE3').textContent=profileError.code==='23505'?'Никнейм уже занят':'Не удалось создать профиль';
-    return;
-  }
-  await onLogin(user);
-  closeAuth();toast('Добро пожаловать в FOOTBAZED!','ok');
-}
-
-async function ensureProfile(user){
-  try{
-    const{data:exists}=await sb.from('users').select('id').eq('id',user.id).maybeSingle();
-    if(exists)return;
-    const email=user.email||'';
-    const name=email.split('@')[0]||'user';
-    const base=(name.replace(/[^a-zA-Z0-9_]/g,'_').replace(/^_+|_+$/g,'').substring(0,20)||'user').padEnd(3,'_');
-    let error=null;
-    for(let attempt=0;attempt<4;attempt++){
-      const suffix=attempt?`_${Math.random().toString(36).slice(2,6)}`:'';
-      const username=`${base.slice(0,30-suffix.length)}${suffix}`;
-      ({error}=await sb.from('users').insert({id:user.id,username,display_name:name,is_public:true}));
-      if(!error||error.code!=='23505')break;
-    }
-    if(error)throw error;
-  }catch(e){console.warn('ensureProfile error:',e);}
-}
-
-async function doLogout(){await sb.auth.signOut();onLogout();toast('Вы вышли','ok');go('home');}
 
 // ─── SHARE CARD ───
 function openShare(type,data){
