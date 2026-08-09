@@ -13,6 +13,7 @@ test('авторизованный пользователь управляет �
   await page.goto('/?__e2e=1#feed');
 
   await expect(page.getByRole('heading',{name:'Лента',exact:true})).toBeVisible();
+  await expect(page).toHaveTitle('Лента — FOOTBAZED');
   await expect(page.locator('#accountBtn')).toContainText('bazed');
 
   const entry=page.locator('.feed-entry[data-rating-id="501"]');

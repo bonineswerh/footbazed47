@@ -130,6 +130,8 @@ function go(p,d){
   // Update mobile nav
   document.querySelectorAll('.mob-nav-item').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current');});
   const mn=document.getElementById(`mn-${p}`);if(mn){mn.classList.add('active');mn.setAttribute('aria-current','page');}
+  const pageTitles={home:'FOOTBAZED — Оценивай футбол вместе',matches:'Матчи — FOOTBAZED',feed:'Лента — FOOTBAZED',leaderboard:'Лидеры — FOOTBAZED',friends:'Друзья — FOOTBAZED',profile:'Профиль — FOOTBAZED',md:'Матч — FOOTBAZED',chat:'Обсуждение матча — FOOTBAZED',admin:'Админ-панель — FOOTBAZED'};
+  if(pageTitles[p])document.title=pageTitles[p];
   if(!routeApplying)syncRoute(p,d);
   if(p==='matches')loadM();
   else if(p==='feed')window.FBZFeed?.load();
