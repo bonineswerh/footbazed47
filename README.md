@@ -8,6 +8,7 @@ FOOTBAZED is a football platform for match and player ratings, personal profiles
 - `app.js` owns routing and shared product screens.
 - `js/core.js` owns the Supabase client, shared field lists and cache helpers.
 - `js/auth.js`, `js/ratings.js`, `js/matches.js` and `js/search.js` own their domains.
+- `js/entities.js` owns club and player pages; `js/feed.js` owns the social feed and its interactions.
 - `api/admin.js` is the only server-side administrative API and keeps the service-role key off the client.
 - `supabase/migrations/` is the source of truth for database changes.
 
@@ -19,7 +20,20 @@ Node.js 20 or newer is required.
 npm run check
 ```
 
-The application is static. For browser testing, serve the repository through a local HTTP server rather than opening `index.html` directly.
+Install the Playwright browser once, then run the authenticated browser scenarios:
+
+```powershell
+npx playwright install chromium
+npm run test:e2e
+```
+
+Run every automated check before a release:
+
+```powershell
+npm run check:all
+```
+
+E2E tests use a deterministic local Supabase client and never write to production. The application is static; use `npm run serve` for manual local testing instead of opening `index.html` directly.
 
 ## Deployment
 

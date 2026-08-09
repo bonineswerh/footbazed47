@@ -201,6 +201,41 @@ function mapPosition(position) {
   }[position] || position || null;
 }
 
+function clubPayload(team) {
+  if (!team?.id || !team?.name) return null;
+  const founded = Number.isInteger(team.founded) && team.founded >= 1800 && team.founded <= 2100
+    ? team.founded
+    : undefined;
+  return Object.fromEntries(Object.entries({
+    external_id: team.id,
+    name: team.name,
+    short_name: team.shortName || undefined,
+    tla: team.tla || undefined,
+    crest_url: team.crest || undefined,
+    area_name: team.area?.name || undefined,
+    venue: team.venue || undefined,
+    founded,
+    club_colors: team.clubColors || undefined,
+    updated_at: new Date().toISOString()
+  }).filter(([, value]) => value !== undefined && value !== null && value !== ''));
+}
+
+async function upsertClubs(teams) {
+  const unique = new Map();
+  for (const team of teams || []) {
+    const row = clubPayload(team);
+    if (row) unique.set(row.external_id, row);
+  }
+  const rows = [...unique.values()];
+  if (!rows.length) return new Map();
+  const response = await supabase('/rest/v1/clubs?on_conflict=external_id&select=id,external_id', {
+    method: 'POST',
+    body: rows,
+    headers: { Prefer: 'resolution=merge-duplicates,missing=default,return=representation' }
+  });
+  return new Map(parseJson(response.raw, []).map(club => [Number(club.external_id), Number(club.id)]));
+}
+
 async function syncMatches(input) {
   const league = requireLeague(input.league);
   const dateFrom = requireDate(input.dateFrom, 'dateFrom');
@@ -214,12 +249,16 @@ async function syncMatches(input) {
   }
 
   const payload = await football(`/competitions/${league}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`);
-  const rows = (payload.matches || []).filter(match => match.id && match.homeTeam?.name && match.awayTeam?.name).map(match => ({
+  const matches = (payload.matches || []).filter(match => match.id && match.homeTeam?.name && match.awayTeam?.name);
+  const clubIds = await upsertClubs(matches.flatMap(match => [match.homeTeam, match.awayTeam]));
+  const rows = matches.map(match => ({
     external_id: match.id,
     league_code: league,
     league_name: LEAGUES[league],
     home_team_name: match.homeTeam.name,
     away_team_name: match.awayTeam.name,
+    home_club_id: clubIds.get(Number(match.homeTeam.id)) || null,
+    away_club_id: clubIds.get(Number(match.awayTeam.id)) || null,
     match_date: match.utcDate,
     status: mapStatus(match.status),
     home_score: match.score?.fullTime?.home ?? null,
@@ -243,6 +282,7 @@ async function syncMatches(input) {
 async function syncSquads(input) {
   const league = requireLeague(input.league);
   const payload = await football(`/competitions/${league}/teams`);
+  const clubIds = await upsertClubs(payload.teams || []);
   const rows = [];
   for (const team of payload.teams || []) {
     for (const player of team.squad || []) {
@@ -250,6 +290,7 @@ async function syncSquads(input) {
       rows.push({
         name: player.name,
         team: team.name,
+        club_id: clubIds.get(Number(team.id)) || null,
         position: mapPosition(player.position),
         shirt_number: Number.isInteger(player.shirtNumber) ? player.shirtNumber : null
       });

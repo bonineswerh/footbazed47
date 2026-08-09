@@ -41,7 +41,7 @@ const DERBY=[{h:'Зенит',a:'Спартак'},{h:'Реал',a:'Барсело
 const LEVELS=[{n:'🌱 Новичок',m:0},{n:'🌿 Любитель',m:5},{n:'⭐ Профи',m:20},{n:'🏆 Эксперт',m:50},{n:'👑 Легенда',m:100}];
 const AVCOLORS=['av-0','av-1','av-2','av-3','av-4','av-5','av-6','av-7'];
 let CU=null,CP='home',PP='home';
-let MF='all',ML='all',FS='all',LT='likes',FT='list';
+let MF='all',ML='all',LT='likes',FT='list';
 let chatMID=null,mdID=null,viewUID=null;
 let notifOpen=false;
 let routeApplying=false;
@@ -132,10 +132,12 @@ function go(p,d){
   const mn=document.getElementById(`mn-${p}`);if(mn){mn.classList.add('active');mn.setAttribute('aria-current','page');}
   if(!routeApplying)syncRoute(p,d);
   if(p==='matches')loadM();
-  else if(p==='feed')loadFeed();
+  else if(p==='feed')window.FBZFeed?.load();
   else if(p==='leaderboard')loadLB();
   else if(p==='profile'){viewUID=d?.uid||CU?.id;loadProfile(viewUID);}
   else if(p==='md'){mdID=d?.mid;loadMD(d?.mid);}
+  else if(p==='club')window.FBZEntities?.loadClub(d?.id);
+  else if(p==='player')window.FBZEntities?.loadPlayer(d?.id);
   else if(p==='chat'){chatMID=d?.mid;document.getElementById('chatTitle').textContent=d?.title||'Чат';loadChat(d?.mid);}
   else if(p==='friends')loadFriendsTab(FT);
   else if(p==='admin')window.FBZAdmin?.mount();
@@ -149,6 +151,8 @@ function syncRoute(p,d){
   else if(p==='profile'&&d?.uid)next=`#profile/${encodeURIComponent(d.uid)}`;
   else if(p==='profile'&&CU?.id)next=`#profile/${encodeURIComponent(CU.id)}`;
   else if(p==='md'&&d?.mid)next=`#match/${encodeURIComponent(d.mid)}`;
+  else if(p==='club'&&d?.id)next=`#club/${encodeURIComponent(d.id)}`;
+  else if(p==='player'&&d?.id)next=`#player/${encodeURIComponent(d.id)}`;
   else if(['matches','feed','leaderboard','friends','admin'].includes(p))next=`#${p}`;
   if(next!==current)history.pushState(null,'',next||window.location.pathname+window.location.search);
 }
@@ -167,6 +171,8 @@ function applyRouteFromHash(){
   try{
     if(type==='profile'&&value)go('profile',{uid:decodeURIComponent(value)});
     else if(type==='match'&&value)go('md',{mid:decodeURIComponent(value)});
+    else if(type==='club'&&value)go('club',{id:Number(decodeURIComponent(value))});
+    else if(type==='player'&&value)go('player',{id:Number(decodeURIComponent(value))});
     else if(['matches','feed','leaderboard','friends','admin'].includes(type))go(type);
   }finally{
     routeApplying=false;
@@ -203,118 +209,6 @@ function anim(id,t){
   if(!t){el.textContent='0';return;}
   let c=0;const s=Math.ceil(t/40);
   const iv=setInterval(()=>{c=Math.min(c+s,t);el.textContent=c.toLocaleString('ru-RU');if(c>=t)clearInterval(iv);},25);
-}
-
-// ─── FEED ───
-function renderFCard(r){
-  const likes=r.rating_likes?.length||0;
-  const n=r.users?.username||r.users?.display_name||'U';
-  const cls=avColor(n);
-  const avatar=safeImageUrl(r.users?.avatar_url);
-  const av=avatar?`<img src="${avatar}" class="fc-av-img" onclick="go('profile',{uid:'${r.user_id}'})" alt="">`:`<div class="fc-av ${cls}" onclick="go('profile',{uid:'${r.user_id}'})">${esc(n[0].toUpperCase())}</div>`;
-  const date=new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
-  const stars=Array.from({length:10},(_,i)=>`<div class="fstar ${i<(r.match_rating||0)?'on':'off'}"></div>`).join('');
-  return`<div class="fcard">
-    <div class="fc-hd">
-      ${av}
-      <div><div class="fc-uname" onclick="go('profile',{uid:'${r.user_id}'})">${esc(n)}</div><div class="fc-handle">@${esc(r.users?.username||'user')}</div></div>
-      <div class="fc-time">${date}</div>
-    </div>
-    <div class="fc-lg">${esc(r.matches?.league_name)}</div>
-    <div class="fc-match" onclick="go('md',{mid:${r.match_id}})">${esc(r.matches?.home_team_name)} vs ${esc(r.matches?.away_team_name)}</div>
-    <div class="fc-rating"><div class="fc-rnum">${r.match_rating||0}</div><div class="fc-rdenom">/10</div></div>
-    <div class="fc-stars">${stars}</div>
-    ${r.comment?`<div class="fc-cmt">${esc(r.comment)}</div>`:''}
-    <div class="fc-ft">
-      ${r.user_id!==CU?.id?`<button class="lbtn" onclick="tLike(${r.id},this)">${ico('heart',13)} ${likes}</button>`:`<span class="lbtn" style="opacity:0.4;cursor:default">${ico('heart',13)} ${likes}</span>`}
-      <button class="cbtn" onclick="loadCmnts(${r.id},this,false,'${r.user_id}')">${ico('chat',13)} Комментарии</button>
-    </div>
-    <div id="fc-${r.id}"></div>
-  </div>`;
-}
-async function loadHomeF(){
-  try{
-    const{data}=await sb.from('ratings').select(RATING_FIELDS).eq('is_public',true).order('created_at',{ascending:false}).limit(6);
-    if(!data?.length){document.getElementById('homeF').innerHTML=`<div class="empty-state"><div class="empty-icon">⚽</div>Оценки появятся здесь</div>`;return;}
-    const enriched=await enrichRatings(data);
-    document.getElementById('homeF').innerHTML=enriched.map(renderFCard).join('');
-  }catch(e){document.getElementById('homeF').innerHTML=`<div class="empty-state"><div class="empty-icon">⚽</div>Оценки появятся здесь</div>`;}
-}
-async function loadFeed(){
-  document.getElementById('feedG').innerHTML='<div class="loading"><div class="spin"></div></div>';
-  try{
-    let uids=null;
-    if(FS==='friends'){
-      if(!CU){document.getElementById('feedG').innerHTML='<div class="empty-state">Войди чтобы видеть оценки друзей</div>';return;}
-      const{data:fs}=await sb.from('friendships').select('friend_id').eq('user_id',CU.id).eq('status','accepted');
-      uids=fs?.map(f=>f.friend_id)||[];
-      if(!uids.length){document.getElementById('feedG').innerHTML='<div class="empty-state"><div class="empty-icon">👥</div>Добавь друзей чтобы видеть их оценки</div>';return;}
-    }
-    let q=sb.from('ratings').select(RATING_FIELDS).eq('is_public',true);
-    if(uids)q=q.in('user_id',uids);
-    const{data:rt}=await q.order('created_at',{ascending:false}).limit(50);
-    if(!rt?.length){document.getElementById('feedG').innerHTML=`<div class="empty-state"><div class="empty-icon">⚽</div>Пока нет оценок<br><button class="btn btn-l btn-sm" style="margin-top:16px" onclick="go('matches')">Перейти к матчам →</button></div>`;return;}
-    const enriched=await enrichRatings(rt);
-    let res=enriched;
-    if(FS==='popular')res.sort((a,b)=>(b._likes||0)-(a._likes||0));
-    document.getElementById('feedG').innerHTML=res.map(renderFCard).join('');
-  }catch(e){
-    document.getElementById('feedG').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div>Ошибка загрузки ленты</div>`;
-  }
-}
-async function enrichRatings(ratings){
-  if(!ratings?.length)return[];
-  const userIds=[...new Set(ratings.map(r=>r.user_id))];
-  const matchIds=[...new Set(ratings.map(r=>r.match_id))];
-  const ratingIds=ratings.map(r=>r.id);
-  const[{data:users},{data:matches},{data:likes}]=await Promise.all([
-    sb.from('users').select('id,display_name,username,avatar_url').in('id',userIds),
-    sb.from('matches').select('id,home_team_name,away_team_name,league_name').in('id',matchIds),
-    sb.from('rating_likes').select('rating_id').in('rating_id',ratingIds)
-  ]);
-  const uMap={};(users||[]).forEach(u=>uMap[u.id]=u);
-  const mMap={};(matches||[]).forEach(m=>mMap[m.id]=m);
-  const lMap={};(likes||[]).forEach(l=>lMap[l.rating_id]=(lMap[l.rating_id]||0)+1);
-  return ratings.map(r=>({...r,users:uMap[r.user_id]||{display_name:'Аноним',username:'user'},matches:mMap[r.match_id]||{home_team_name:'?',away_team_name:'?',league_name:''},_likes:lMap[r.id]||0,rating_likes:Array(lMap[r.id]||0).fill({id:0})}));
-}
-function setFS(s,btn){FS=s;document.querySelectorAll('#feedT .btn').forEach(b=>b.className='btn btn-g btn-sm');btn.className='btn btn-l btn-sm';loadFeed();}
-
-async function tLike(id,btn){
-  if(!CU){openAuth();return;}
-  const{data:ex}=await sb.from('rating_likes').select('id').eq('user_id',CU.id).eq('rating_id',id).maybeSingle();
-  if(ex){
-    const{error}=await sb.from('rating_likes').delete().eq('id',ex.id);
-    if(error){console.error('Unlike error:',error);return;}
-    btn.classList.remove('on');btn.innerHTML=btn.innerHTML.replace(/\d+/,n=>Math.max(0,parseInt(n)-1));
-  }else{
-    const{error}=await sb.from('rating_likes').insert({user_id:CU.id,rating_id:id});
-    if(error){console.error('Like error:',error);toast('Ошибка','err');return;}
-    btn.classList.add('on');btn.innerHTML=btn.innerHTML.replace(/\d+/,n=>parseInt(n)+1);
-  }
-}
-async function loadCmnts(rid,btn,force,ownerId){
-  const w=document.getElementById(`fc-${rid}`);
-  if(!force&&w.innerHTML){w.innerHTML='';return;}
-  const{data:cs}=await sb.from('rating_comments').select('id,rating_id,user_id,comment,created_at').eq('rating_id',rid).order('created_at',{ascending:true});
-  const uids=[...new Set((cs||[]).map(c=>c.user_id))];
-  let uMap={};
-  if(uids.length){const{data:us}=await sb.from('users').select('id,display_name,username,avatar_url').in('id',uids);(us||[]).forEach(u=>uMap[u.id]=u);}
-  const isOwn=ownerId&&CU?.id===ownerId;
-  w.innerHTML=`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--b1)">
-    ${(cs||[]).map(c=>{const u=uMap[c.user_id];return`<div style="padding:8px 10px;background:var(--bg3);border-radius:8px;margin-bottom:5px"><div style="font-size:10px;font-weight:700;color:var(--accent2);margin-bottom:2px">@${esc(u?.username||'user')}</div><div style="font-size:13px;color:var(--text2)">${esc(c.comment)}</div></div>`;}).join('')}
-    ${!isOwn&&CU?`<div style="display:flex;gap:7px;margin-top:8px">
-      <input id="ci-${rid}" maxlength="1000" style="flex:1;padding:8px 12px;background:var(--bg3);border:1px solid var(--b1);border-radius:8px;color:var(--snow);font-size:12px;font-family:inherit" placeholder="Комментарий...">
-      <button onclick="addCmnt(${rid})" class="btn btn-l btn-sm">→</button>
-    </div>`:''}
-  </div>`;
-}
-async function addCmnt(rid){
-  if(!CU){openAuth();return;}
-  const inp=document.getElementById(`ci-${rid}`);
-  const t=inp?.value?.trim();if(!t)return;if(t.length>1000){toast('Комментарий слишком длинный','err');return;}
-  const{error}=await sb.from('rating_comments').insert({rating_id:rid,user_id:CU.id,comment:t});
-  if(error){toast('Ошибка','err');console.error(error);return;}
-  inp.value='';loadCmnts(rid,null,true);
 }
 
 // ─── LEADERBOARD ───
@@ -546,8 +440,8 @@ async function addFriend(fid){
   if(!CU){openAuth();return;}
   const{data:ex}=await sb.from('friendships').select('id,status').eq('user_id',CU.id).eq('friend_id',fid).maybeSingle();
   if(ex){toast(ex.status==='pending'?'⏳ Заявка уже отправлена':'✓ Уже в друзьях','err');return;}
-  await sb.from('friendships').insert({user_id:CU.id,friend_id:fid,status:'pending'});
-  try{await sb.from('notifications').insert({user_id:fid,from_user_id:CU.id,type:'friend_request',message:`${CU.username||'Кто-то'} хочет дружить`});}catch(e){}
+  const{error}=await sb.from('friendships').insert({user_id:CU.id,friend_id:fid,status:'pending'});
+  if(error){console.error('Friend request error:',error);toast('Не удалось отправить заявку','err');return;}
   toast('Заявка отправлена!','ok');
 }
 async function addFriendFromProfile(fid){
@@ -747,7 +641,7 @@ async function handleInvite(code){
 // ─── NOTIFICATIONS ───
 async function loadNotifications(){
   if(!CU)return;
-  const{data:notifs}=await sb.from('notifications').select('id,user_id,from_user_id,type,message,read,created_at').eq('user_id',CU.id).order('created_at',{ascending:false}).limit(20);
+  const{data:notifs}=await sb.from('notifications').select('id,user_id,from_user_id,type,message,read,created_at,rating_id,comment_id').eq('user_id',CU.id).order('created_at',{ascending:false}).limit(20);
   const unread=(notifs||[]).filter(n=>!n.read).length;
   const badge=document.getElementById('notifBadge');
   if(badge){badge.textContent=unread;badge.classList.toggle('on',unread>0);}
@@ -757,9 +651,15 @@ async function loadNotifications(){
   const list=document.getElementById('notifList');
   if(!notifs?.length){list.innerHTML='<div class="notif-item"><div class="notif-ico">🔔</div><div class="notif-text">Нет уведомлений</div></div>';return;}
   
-  list.innerHTML=notifs.map(n=>`<div class="notif-item${!n.read?' unread':''}" onclick="clickNotif('${n.id}')"><div class="notif-ico">${ico({friend_request:'users',like:'heart',comment:'chat',system:'bell'}[n.type]||'bell',16)}</div><div><div class="notif-text">${esc(n.message||'Уведомление')}</div><div class="notif-time">${new Date(n.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div></div>`).join('');
+  list.innerHTML=notifs.map(n=>`<div class="notif-item${!n.read?' unread':''}" onclick="clickNotif(${Number(n.id)},${jsStr(n.type)},${n.rating_id?Number(n.rating_id):'null'})"><div class="notif-ico">${ico({friend_request:'users',like:'heart',comment:'chat',system:'bell'}[n.type]||'bell',16)}</div><div><div class="notif-text">${esc(n.message||'Уведомление')}</div><div class="notif-time">${new Date(n.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div></div>`).join('');
 }
-async function clickNotif(id){await sb.from('notifications').update({read:true}).eq('id',id);loadNotifications();}
+async function clickNotif(id,type,ratingId){
+  await sb.from('notifications').update({read:true}).eq('id',id);
+  closeNotif();
+  if(type==='friend_request'){FT='incoming';go('friends');return;}
+  if((type==='like'||type==='comment')&&ratingId){go('feed');setTimeout(()=>window.FBZFeed?.focusRating(ratingId),250);return;}
+  loadNotifications();
+}
 async function markAllRead(){if(!CU)return;await sb.from('notifications').update({read:true}).eq('user_id',CU.id);loadNotifications();closeNotif();}
 function toggleNotif(){notifOpen=!notifOpen;const p=document.getElementById('notifPanel');if(notifOpen){p.style.display='flex';p.classList.add('on');}else{p.style.display='none';p.classList.remove('on');}}
 function closeNotif(){notifOpen=false;const p=document.getElementById('notifPanel');p.style.display='none';p.classList.remove('on');}

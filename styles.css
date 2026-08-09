@@ -304,6 +304,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .md-sl{display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:14px}
 .md-team{text-align:center}
 .md-tname{font-family:'Bebas Neue',sans-serif;font-size:24px;margin-bottom:4px}
+.md-club-link{padding:0;border:0;background:transparent;color:inherit;cursor:pointer;letter-spacing:0}.md-club-link:hover{color:var(--accent2)}
 .md-score{font-family:'Bebas Neue',sans-serif;font-size:56px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;filter:drop-shadow(0 0 10px rgba(20,184,166,0.16))}
 .md-vs{font-size:16px;color:var(--text3);font-weight:700}
 .md-meta{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--text2);margin-bottom:14px}
@@ -318,6 +319,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .rd-row{display:flex;align-items:center;gap:8px}.rd-l{width:20px;font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--text3);text-align:right}
 .rd-bar{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}.rd-fill{height:100%;background:var(--grad);border-radius:3px}.rd-c{width:20px;font-size:11px;color:var(--text3)}
 .pr-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--b1)}.pr-row:last-child{border:none}
+.pr-row-link{width:100%;background:transparent;color:var(--snow);text-align:left;cursor:pointer}.pr-row-link:hover{background:var(--accent4)}
+.pr-row-link .pr-info,.pr-row-link .pr-r,.pr-row-link .pr-bar,.pr-row-link .pr-fill,.pr-row-link .pr-name,.pr-row-link .pr-team,.pr-row-link .pr-val{display:block}.pr-row-link .pr-r{display:flex}
 .pr-rank{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--text3);width:28px}
 .pr-info{flex:1}.pr-name{font-weight:600;font-size:13px}.pr-team{font-size:10px;color:var(--text3)}
 .pr-r{display:flex;align-items:center;gap:8px}.pr-bar{width:60px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}.pr-fill{height:100%;background:var(--grad);border-radius:2px}

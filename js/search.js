@@ -88,7 +88,7 @@
     }
     const featured=typeof featuredMatches==='function'&&Array.isArray(matchCatalog)?featuredMatches(matchCatalog).slice(0,4):[];
     currentResults=featured.map(match=>({entity_type:'match',entity_id:String(match.id),title:`${match.home_team_name} — ${match.away_team_name}`,subtitle:match.league_name,meta:match.status}));
-    target.innerHTML=currentResults.length?`<div class="search-section-title"><span>Ближайшие матчи</span></div>${currentResults.map(searchResultMarkup).join('')}`:'<div class="search-state search-state-brand"><span>FOOTBAZED</span><strong>Матчи, команды и футбольные профили</strong></div>';
+    target.innerHTML=currentResults.length?`<div class="search-section-title"><span>Ближайшие матчи</span></div>${currentResults.map(searchResultMarkup).join('')}`:'<div class="search-state search-state-brand"><span>FOOTBAZED</span><strong>Клубы, игроки, матчи и болельщики</strong></div>';
   }
 
   function clearRecent(){
@@ -104,19 +104,24 @@
   }
 
   function resultLabel(type){
-    return{match:'Матч',team:'Команда',user:'Профиль'}[type]||'Результат';
+    return{club:'Клуб',player:'Игрок',match:'Матч',user:'Профиль'}[type]||'Результат';
   }
 
   function resultIcon(type){
-    return{match:'football',team:'trophy',user:'users'}[type]||'search';
+    return{club:'trophy',player:'star',match:'football',user:'users'}[type]||'search';
   }
 
   function statusLabel(status){
     return{live:'LIVE',finished:'Завершён',scheduled:'Предстоит'}[status]||'';
   }
 
+  function positionLabel(position){
+    return{GK:'Вратарь',LB:'Левый защитник',LWB:'Левый латераль',CB:'Центральный защитник',RB:'Правый защитник',RWB:'Правый латераль',DM:'Опорный полузащитник',CDM:'Опорный полузащитник',CM:'Центральный полузащитник',AM:'Атакующий полузащитник',CAM:'Атакующий полузащитник',LM:'Левый полузащитник',RM:'Правый полузащитник',LW:'Левый вингер',RW:'Правый вингер',CF:'Нападающий',ST:'Нападающий'}[position]||position||'';
+  }
+
   function searchResultMarkup(item,index){
-    const meta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='user'?'Профиль':'');
+    const rawMeta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='player'?positionLabel(item.meta):(item.meta||resultLabel(item.entity_type)));
+    const meta=rawMeta&&rawMeta!==item.subtitle?rawMeta:'';
     return`<button class="search-result" type="button" role="option" aria-selected="false" data-index="${index}" onclick="FBZSearch.select(${index})"><span class="search-result-icon">${ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(item.title)}</strong><small>${esc(item.subtitle||'')}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
   }
 
@@ -165,6 +170,14 @@
     }
     if(item.entity_type==='user'){
       go('profile',{uid:item.entity_id});
+      return;
+    }
+    if(item.entity_type==='club'){
+      go('club',{id:Number(item.entity_id)});
+      return;
+    }
+    if(item.entity_type==='player'){
+      go('player',{id:Number(item.entity_id)});
       return;
     }
     if(item.entity_type==='team')openTeamMatches(item.title);

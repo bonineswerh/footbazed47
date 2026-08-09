@@ -20,7 +20,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css?v=40">
+  <link rel="stylesheet" href="styles.css?v=41">
+  <link rel="stylesheet" href="css/entities.css?v=41">
+  <link rel="stylesheet" href="css/feed.css?v=41">
   <link rel="stylesheet" href="admin.css?v=40">
 </head>
 <body>
@@ -148,16 +150,22 @@
 
   <!-- FEED -->
   <div class="page" id="page-feed">
-    <div class="matches-page">
-      <h1 class="page-title">Лента оценок</h1>
-      
-      <div class="filters" id="feedT">
-        <button class="btn btn-l btn-sm" onclick="setFS('all',this)">Все</button>
-        <button class="btn btn-g btn-sm" onclick="setFS('friends',this)">Друзья</button>
-        <button class="btn btn-g btn-sm" onclick="setFS('popular',this)">Популярные</button>
+    <div class="feed-page">
+      <header class="feed-page-head">
+        <div>
+          <span class="section-kicker">Сообщество</span>
+          <h1 class="page-title">Лента</h1>
+        </div>
+        <div class="feed-context" id="feedMeta" aria-live="polite"></div>
+      </header>
+      <div class="feed-filters" id="feedT" role="group" aria-label="Фильтр ленты">
+        <button class="feed-filter on" type="button" aria-pressed="true" onclick="FBZFeed.setScope('all',this)">Все</button>
+        <button class="feed-filter" type="button" aria-pressed="false" onclick="FBZFeed.setScope('friends',this)">Друзья</button>
+        <button class="feed-filter" type="button" aria-pressed="false" onclick="FBZFeed.setScope('popular',this)">Популярное</button>
+        <button class="feed-filter" type="button" aria-pressed="false" onclick="FBZFeed.setScope('mine',this)">Мои</button>
       </div>
-      
-      <div class="grid3" id="feedG"></div>
+      <div class="feed-stream" id="feedG"></div>
+      <div class="feed-more" id="feedMore"></div>
     </div>
   </div>
 
@@ -208,6 +216,22 @@
     <div class="matches-page">
       <button class="btn btn-g btn-sm" onclick="goBack()" style="margin-bottom:16px;">← Назад</button>
       <div id="mdC"></div>
+    </div>
+  </div>
+
+  <!-- CLUB -->
+  <div class="page" id="page-club">
+    <div class="entity-page">
+      <button class="entity-back" type="button" onclick="goBack()" aria-label="Назад">← <span>Назад</span></button>
+      <div id="clubC"></div>
+    </div>
+  </div>
+
+  <!-- PLAYER -->
+  <div class="page" id="page-player">
+    <div class="entity-page">
+      <button class="entity-back" type="button" onclick="goBack()" aria-label="Назад">← <span>Назад</span></button>
+      <div id="playerC"></div>
     </div>
   </div>
 
@@ -456,7 +480,7 @@
       <div class="global-search-input-wrap">
         <span class="global-search-icon" data-i="search"></span>
         <label class="sr-only" for="globalSearchInput">Матч, команда или пользователь</label>
-        <input id="globalSearchInput" type="search" placeholder="Матч, команда или пользователь" autocomplete="off" maxlength="80" aria-controls="globalSearchResults">
+        <input id="globalSearchInput" type="search" placeholder="Клуб, игрок, матч или пользователь" autocomplete="off" maxlength="80" aria-controls="globalSearchResults">
         <button class="global-search-close" type="button" onclick="FBZSearch.close()" aria-label="Закрыть поиск">×</button>
       </div>
       <div class="global-search-results" id="globalSearchResults" aria-live="polite"></div>
@@ -582,14 +606,16 @@
   <!-- APP JS -->
   <script src="js/domain.js?v=40"></script>
   <script src="js/appearance.js?v=40"></script>
-  <script src="js/core.js?v=40"></script>
+  <script src="js/core.js?v=41"></script>
   <script src="js/overlays.js?v=40"></script>
   <script src="js/confirm.js?v=40"></script>
-  <script src="app.js?v=40"></script>
+  <script src="app.js?v=41"></script>
   <script src="js/auth.js?v=40"></script>
   <script src="js/ratings.js?v=40"></script>
-  <script src="js/matches.js?v=40"></script>
-  <script src="js/search.js?v=40"></script>
+  <script src="js/matches.js?v=41"></script>
+  <script src="js/entities.js?v=41"></script>
+  <script src="js/feed.js?v=41"></script>
+  <script src="js/search.js?v=41"></script>
   <script src="js/account.js?v=40"></script>
   <script src="js/admin.js?v=40"></script>
 </body>

@@ -7,11 +7,15 @@
   });
 
   window.FBZ_CONFIG=config;
-  window.sb=window.supabase.createClient(config.supabaseUrl,config.supabaseKey);
+  const isLocalTest=['localhost','127.0.0.1'].includes(window.location.hostname)
+    &&new URLSearchParams(window.location.search).has('__e2e');
+  const testClient=isLocalTest?window.__FOOTBAZED_TEST_CLIENT__:null;
+  if(!testClient&&!window.supabase?.createClient)throw new Error('Supabase client is unavailable');
+  window.sb=testClient||window.supabase.createClient(config.supabaseUrl,config.supabaseKey);
   window.PUBLIC_USER_FIELDS='id,username,display_name,avatar_url,bio,favorite_teams,ratings_count,avg_rating,streak,streak_date,is_public,created_at';
-  window.MATCH_FIELDS='id,league_name,home_team_name,away_team_name,match_date,status,home_score,away_score,external_id,league_code,matchday,season';
+  window.MATCH_FIELDS='id,league_name,home_team_name,away_team_name,home_club_id,away_club_id,match_date,status,home_score,away_score,external_id,league_code,matchday,season';
   window.RATING_FIELDS='id,user_id,match_id,match_rating,comment,is_public,created_at';
-  window.PLAYER_FIELDS='id,name,team,position,photo_url,shirt_number';
+  window.PLAYER_FIELDS='id,name,team,club_id,position,photo_url,shirt_number';
 
   window.CACHE_TTL=Object.freeze({
     matches:5*60*1000,
@@ -38,6 +42,7 @@
 
   window.safeImageUrl=function(value){
     const url=String(value||'').trim();
+    if(!url)return'';
     if(/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(url))return window.esc(url);
     try{
       const parsed=new URL(url,window.location.origin);
