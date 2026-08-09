@@ -9,7 +9,6 @@
   window.FBZ_CONFIG=config;
   window.sb=window.supabase.createClient(config.supabaseUrl,config.supabaseKey);
   window.PUBLIC_USER_FIELDS='id,username,display_name,avatar_url,bio,favorite_teams,ratings_count,avg_rating,streak,streak_date,is_public,created_at';
-  window.SELF_USER_FIELDS=`${window.PUBLIC_USER_FIELDS},invite_code,is_admin,last_seen`;
   window.MATCH_FIELDS='id,league_name,home_team_name,away_team_name,match_date,status,home_score,away_score,external_id,league_code,matchday,season';
   window.RATING_FIELDS='id,user_id,match_id,match_rating,comment,is_public,created_at';
   window.PLAYER_FIELDS='id,name,team,position,photo_url,shirt_number';

@@ -11,7 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css?v=37">
+  <link rel="stylesheet" href="styles.css?v=38">
+  <link rel="stylesheet" href="admin.css?v=38">
 </head>
 <body>
 
@@ -214,15 +215,117 @@
 
   <!-- ADMIN -->
   <div class="page" id="page-admin">
-    <div class="matches-page admin-shell">
-      <div class="admin-hub-head">
+    <div class="admin-console" id="adminConsole">
+      <header class="admin-console-head">
         <div>
-          <h1 class="page-title">Админ-панель</h1>
-          <div class="admin-hub-sub">Управление матчами, игроками и футбольными данными</div>
+          <span class="admin-eyebrow">FOOTBAZED CONTROL</span>
+          <h1>Управление платформой</h1>
+          <p>Данные матчей, составы и состояние продукта</p>
         </div>
-        <button class="btn btn-g btn-sm" onclick="go('profile')">Назад в профиль</button>
+        <div class="admin-head-actions">
+          <span class="admin-health" id="adminHealth"><i></i><span>Проверяем систему</span></span>
+          <button class="admin-icon-button" type="button" onclick="FBZAdmin.refresh()" aria-label="Обновить данные" title="Обновить">
+            <span data-i="refresh"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="admin-metrics" id="adminMetrics" aria-label="Основные показатели">
+        <div class="admin-metric is-loading"></div>
+        <div class="admin-metric is-loading"></div>
+        <div class="admin-metric is-loading"></div>
+        <div class="admin-metric is-loading"></div>
+        <div class="admin-metric is-loading"></div>
       </div>
-      <iframe class="admin-frame" src="admin.html" title="FOOTBAZED admin"></iframe>
+
+      <div class="admin-layout">
+        <nav class="admin-nav" aria-label="Разделы админ-панели">
+          <button class="admin-nav-item on" type="button" data-admin-view="overview" onclick="FBZAdmin.showView('overview',this)"><span data-i="dashboard"></span><span>Обзор</span></button>
+          <button class="admin-nav-item" type="button" data-admin-view="sync" onclick="FBZAdmin.showView('sync',this)"><span data-i="sync"></span><span>Синхронизация</span></button>
+          <button class="admin-nav-item" type="button" data-admin-view="matches" onclick="FBZAdmin.showView('matches',this)"><span data-i="calendar"></span><span>Матчи</span></button>
+        </nav>
+
+        <main class="admin-workspace">
+          <section class="admin-view on" id="admin-view-overview">
+            <div class="admin-section-head">
+              <div><h2>Состояние продукта</h2><p>Ключевые данные и последние изменения в каталоге</p></div>
+              <button class="admin-text-button" type="button" onclick="FBZAdmin.showView('sync')">Обновить данные <span>→</span></button>
+            </div>
+            <div class="admin-panel admin-table-panel">
+              <div class="admin-panel-head"><h3>Последние матчи</h3><span id="adminUpdatedAt">—</span></div>
+              <div class="admin-match-list" id="adminRecentMatches">
+                <div class="admin-loading"><span></span>Загружаем данные</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-view" id="admin-view-sync">
+            <div class="admin-section-head">
+              <div><h2>Синхронизация</h2><p>Один контролируемый запрос на лигу с понятным результатом</p></div>
+            </div>
+            <div class="admin-sync-grid">
+              <section class="admin-panel admin-sync-panel">
+                <div class="admin-panel-head"><h3>Параметры загрузки</h3><span class="admin-api-state" id="adminApiState">API</span></div>
+                <fieldset class="admin-fieldset">
+                  <legend>Лиги</legend>
+                  <div class="admin-league-grid" id="adminLeagueGrid">
+                    <label><input type="checkbox" value="PL" checked><span>Premier League<small>PL</small></span></label>
+                    <label><input type="checkbox" value="PD" checked><span>La Liga<small>PD</small></span></label>
+                    <label><input type="checkbox" value="BL1"><span>Bundesliga<small>BL1</small></span></label>
+                    <label><input type="checkbox" value="SA"><span>Serie A<small>SA</small></span></label>
+                    <label><input type="checkbox" value="FL1"><span>Ligue 1<small>FL1</small></span></label>
+                    <label><input type="checkbox" value="CL"><span>Champions League<small>CL</small></span></label>
+                  </div>
+                </fieldset>
+                <div class="admin-date-grid">
+                  <label><span>Начало периода</span><input type="date" id="adminDateFrom"></label>
+                  <label><span>Конец периода</span><input type="date" id="adminDateTo"></label>
+                </div>
+                <div class="admin-sync-actions">
+                  <button class="btn btn-l" type="button" id="adminSyncMatches" onclick="FBZAdmin.sync('matches')"><span data-i="download"></span> Матчи</button>
+                  <button class="btn btn-g" type="button" id="adminSyncSquads" onclick="FBZAdmin.sync('squads')"><span data-i="users"></span> Составы</button>
+                  <button class="admin-icon-button" type="button" onclick="FBZAdmin.testConnection()" aria-label="Проверить API" title="Проверить API"><span data-i="pulse"></span></button>
+                </div>
+              </section>
+
+              <section class="admin-panel admin-progress-panel" aria-live="polite">
+                <div class="admin-panel-head"><h3>Ход операции</h3><span id="adminProgressTotal">Готово к запуску</span></div>
+                <div class="admin-progress-track"><span id="adminProgressBar"></span></div>
+                <div class="admin-task-list" id="adminTaskList">
+                  <div class="admin-empty-compact">Выберите лиги и запустите загрузку.</div>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="admin-view" id="admin-view-matches">
+            <div class="admin-section-head">
+              <div><h2>Матчи</h2><p>Проверка дат, статусов и итогового счета</p></div>
+              <label class="admin-search"><span data-i="search"></span><input type="search" id="adminMatchSearch" placeholder="Команда или лига" oninput="FBZAdmin.filterMatches()"></label>
+            </div>
+            <div class="admin-panel admin-table-panel">
+              <div class="admin-match-list" id="adminMatchesList"></div>
+            </div>
+          </section>
+        </main>
+
+        <aside class="admin-rail">
+          <section class="admin-rail-section">
+            <span class="admin-rail-label">Система</span>
+            <div class="admin-status-row"><span>База данных</span><b class="ok">Доступна</b></div>
+            <div class="admin-status-row"><span>football-data.org</span><b id="adminFootballStatus">Проверяем</b></div>
+            <div class="admin-status-row"><span>Права</span><b class="ok">Администратор</b></div>
+          </section>
+          <section class="admin-rail-section">
+            <span class="admin-rail-label">Последняя активность</span>
+            <div class="admin-activity" id="adminActivity"><p>Событий пока нет.</p></div>
+          </section>
+          <section class="admin-rail-note">
+            <span data-i="shield"></span>
+            <p>Изменения выполняются только защищенным сервером. Секретные ключи не передаются в браузер.</p>
+          </section>
+        </aside>
+      </div>
     </div>
   </div>
 
@@ -354,25 +457,24 @@
         <button class="icon-btn" onclick="closeSettings()" aria-label="Закрыть">×</button>
       </div>
 
-      <div class="settings-grid">
-        <label class="set-field">
-          <span>Тема</span>
-          <select id="setTheme" class="input">
-            <option value="dark">Темная</option>
-            <option value="light">Светлая</option>
-            <option value="system">Как в системе</option>
-          </select>
-        </label>
-        <label class="set-field">
-          <span>Акцент</span>
-          <select id="setAccent" class="input">
-            <option value="emerald">Зеленый</option>
-            <option value="ice">Голубой</option>
-            <option value="gold">Золотой</option>
-            <option value="mono">Серый</option>
-          </select>
-        </label>
-      </div>
+      <fieldset class="settings-group">
+        <legend>Тема интерфейса</legend>
+        <div class="theme-choice-grid">
+          <label class="theme-choice"><input type="radio" name="setTheme" value="dark"><span><i class="theme-preview dark"></i><b>Темная</b><small>Меньше света</small></span></label>
+          <label class="theme-choice"><input type="radio" name="setTheme" value="light"><span><i class="theme-preview light"></i><b>Светлая</b><small>Высокий контраст</small></span></label>
+          <label class="theme-choice"><input type="radio" name="setTheme" value="system"><span><i class="theme-preview system"></i><b>Системная</b><small>Как на устройстве</small></span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="settings-group">
+        <legend>Цвет акцента</legend>
+        <div class="accent-choice-grid">
+          <label class="accent-choice"><input type="radio" name="setAccent" value="emerald"><span><i class="accent-swatch emerald"></i><b>Зеленый</b></span></label>
+          <label class="accent-choice"><input type="radio" name="setAccent" value="ice"><span><i class="accent-swatch ice"></i><b>Голубой</b></span></label>
+          <label class="accent-choice"><input type="radio" name="setAccent" value="gold"><span><i class="accent-swatch gold"></i><b>Золотой</b></span></label>
+          <label class="accent-choice"><input type="radio" name="setAccent" value="mono"><span><i class="accent-swatch mono"></i><b>Серый</b></span></label>
+        </div>
+      </fieldset>
 
       <div class="settings-tech">
         <div class="settings-tech-title">Профиль</div>
@@ -387,6 +489,25 @@
         <button class="btn btn-l" onclick="saveAppearanceSettings()">Сохранить</button>
       </div>
     </div>
+  </div>
+
+  <!-- ADMIN MATCH EDITOR -->
+  <div class="overlay" id="adminMatchOv" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="adminMatchTitle" data-close-backdrop="true" tabindex="-1">
+    <form class="admin-match-editor" onsubmit="FBZAdmin.saveMatch(event)">
+      <div class="settings-head">
+        <div><span class="admin-eyebrow">РУЧНАЯ ПРОВЕРКА</span><h2 id="adminMatchTitle">Матч</h2><p id="adminMatchLeague">—</p></div>
+        <button class="icon-btn" type="button" onclick="FBZAdmin.closeEditor()" aria-label="Закрыть">×</button>
+      </div>
+      <input type="hidden" id="adminEditMatchId">
+      <label class="admin-edit-field"><span>Дата и время</span><input type="datetime-local" id="adminEditMatchDate" required></label>
+      <label class="admin-edit-field"><span>Статус</span><select id="adminEditMatchStatus" required><option value="scheduled">Запланирован</option><option value="live">Идет сейчас</option><option value="finished">Завершен</option><option value="postponed">Перенесен</option><option value="cancelled">Отменен</option></select></label>
+      <div class="admin-score-edit">
+        <label><span id="adminEditHomeName">Хозяева</span><input type="number" id="adminEditHomeScore" min="0" max="99" inputmode="numeric"></label>
+        <b>:</b>
+        <label><span id="adminEditAwayName">Гости</span><input type="number" id="adminEditAwayScore" min="0" max="99" inputmode="numeric"></label>
+      </div>
+      <div class="settings-actions"><button class="btn btn-g" type="button" onclick="FBZAdmin.closeEditor()">Отмена</button><button class="btn btn-l" type="submit" id="adminMatchSave">Сохранить</button></div>
+    </form>
   </div>
 
   <!-- MOBILE NAV -->
@@ -417,10 +538,12 @@
   <div class="toast" id="toast"></div>
 
   <!-- APP JS -->
-  <script src="js/appearance.js?v=37"></script>
-  <script src="js/core.js?v=37"></script>
-  <script src="js/overlays.js?v=37"></script>
-  <script src="app.js?v=37"></script>
-  <script src="js/matches.js?v=37"></script>
+  <script src="js/appearance.js?v=38"></script>
+  <script src="js/core.js?v=38"></script>
+  <script src="js/overlays.js?v=38"></script>
+  <script src="app.js?v=38"></script>
+  <script src="js/matches.js?v=38"></script>
+  <script src="js/account.js?v=38"></script>
+  <script src="js/admin.js?v=38"></script>
 </body>
 </html>

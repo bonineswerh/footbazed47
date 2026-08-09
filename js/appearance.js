@@ -44,17 +44,17 @@
 
   function syncControls(){
     const settings=readStored();
-    ['Theme','Accent'].forEach(name=>{
-      const el=document.getElementById('set'+name);
-      if(el)el.value=settings[name.toLowerCase()];
+    ['theme','accent'].forEach(name=>{
+      const control=document.querySelector(`input[name="set${name[0].toUpperCase()+name.slice(1)}"][value="${settings[name]}"]`);
+      if(control)control.checked=true;
     });
     return settings;
   }
 
   function readControls(){
     return normalize({
-      theme:document.getElementById('setTheme')?.value,
-      accent:document.getElementById('setAccent')?.value
+      theme:document.querySelector('input[name="setTheme"]:checked')?.value,
+      accent:document.querySelector('input[name="setAccent"]:checked')?.value
     });
   }
 

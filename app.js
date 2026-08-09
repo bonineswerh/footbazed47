@@ -26,6 +26,14 @@ const I={
   photo:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0z"/></svg>`,
   chart:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125z"/></svg>`,
   target:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2.25V4.5m0 15v2.25M2.25 12H4.5m15 0h2.25"/></svg>`,
+  dashboard:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75h6.5v6.5h-6.5v-6.5Zm10 0h6.5v6.5h-6.5v-6.5Zm-10 10h6.5v6.5h-6.5v-6.5Zm10 0h6.5v6.5h-6.5v-6.5Z"/></svg>`,
+  sync:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992V4.356m-.97 4.096A9 9 0 1 0 21 12m-13.023 2.652H2.985v4.992m.97-4.096A9 9 0 0 0 3 12"/></svg>`,
+  refresh:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992V4.356m-.97 4.096A9 9 0 1 0 21 12"/></svg>`,
+  download:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M4.5 19.5h15"/></svg>`,
+  pulse:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l2.5-6 5 12 2.5-6h4"/></svg>`,
+  shield:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3 4.5 6v5.25c0 4.5 3 7.875 7.5 9.75 4.5-1.875 7.5-5.25 7.5-9.75V6L12 3Z"/><path stroke-linecap="round" stroke-linejoin="round" d="m9 12 2 2 4-4"/></svg>`,
+  logout:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5.75A1.75 1.75 0 0 0 4 7.75v8.5C4 17.216 4.784 18 5.75 18H10m4-3 3-3m0 0-3-3m3 3H9"/></svg>`,
+  chevron:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m7.5 9.75 4.5 4.5 4.5-4.5"/></svg>`,
 };
 function ico(name,size){return(I[name]||'').replace('class="ico"',`class="ico" style="width:${size||16}px;height:${size||16}px"`);}
 
@@ -80,13 +88,14 @@ async function onLogin(u){
   if(!u||authSessionUserId===u.id&&CU)return;
   authSessionUserId=u.id;
   await ensureProfile(u);
-  const{data:p,error}=await sb.from('users').select(SELF_USER_FIELDS).eq('id',u.id).maybeSingle();
+  const{data:p,error}=await sb.rpc('get_my_profile').maybeSingle();
   if(error){authSessionUserId=null;throw error;}
+  if(!p){authSessionUserId=null;throw new Error('Не удалось создать профиль пользователя.');}
   // Email comes from Supabase Auth, not from the public users table.
-  CU=p?{...p,email:u.email}:u;
+  CU={...p,email:u.email};
   renderNav();loadNotifications();
 }
-function onLogout(){authSessionUserId=null;CU=null;renderNav();}
+function onLogout(){authSessionUserId=null;CU=null;window.FBZAccount?.close();renderNav();}
 
 function renderNav(){
   const nr=document.getElementById('navRight');
@@ -98,7 +107,22 @@ function renderNav(){
     const cls=avColor(n);
     const safeAvatar=safeImageUrl(CU.avatar_url);
     const navAv=safeAvatar?`<img src="${safeAvatar}" style="width:32px;height:32px;border-radius:8px;object-fit:cover" alt="">`:`<div class="nav-av ${cls}">${esc(n[0].toUpperCase())}</div>`;
-    nr.innerHTML=`<button class="notif-btn" id="notifBtn" onclick="toggleNotif()" aria-label="Уведомления">${ico('bell',18)}<span class="notif-badge" id="notifBadge"></span></button><button class="nav-user" onclick="go('profile')">${navAv}<span class="nav-uname">${safeName}</span></button><button class="nbtn nbtn-ghost" onclick="doLogout()">Выйти</button>`;
+    const adminItem=CU.is_admin?`<button type="button" role="menuitem" onclick="FBZAccount.close();go('admin')">${ico('dashboard',17)}<span><b>Админ-панель</b><small>Управление платформой</small></span></button>`:'';
+    nr.innerHTML=`
+      <button class="notif-btn header-icon-button" id="notifBtn" type="button" onclick="toggleNotif()" aria-label="Уведомления">${ico('bell',18)}<span class="notif-badge" id="notifBadge"></span></button>
+      <button class="header-icon-button header-settings" type="button" onclick="openSettings()" aria-label="Настройки" title="Настройки">${ico('settings',18)}</button>
+      <div class="account-shell">
+        <button class="account-trigger" id="accountBtn" type="button" onclick="toggleAccountMenu()" aria-haspopup="menu" aria-expanded="false" aria-controls="accountMenu">${navAv}<span class="nav-uname">${safeName}</span>${ico('chevron',14)}</button>
+        <div class="account-menu" id="accountMenu" role="menu" aria-hidden="true">
+          <div class="account-menu-head">${navAv}<div><b>${safeName}</b><small>${esc(CU.email||'')}</small></div></div>
+          <div class="account-menu-items">
+            <button type="button" role="menuitem" onclick="FBZAccount.close();go('profile')">${ico('users',17)}<span><b>Мой профиль</b><small>Оценки и статистика</small></span></button>
+            ${adminItem}
+            <button type="button" role="menuitem" onclick="FBZAccount.close();openSettings()">${ico('settings',17)}<span><b>Настройки</b><small>Тема и данные аккаунта</small></span></button>
+          </div>
+          <button class="account-logout" type="button" role="menuitem" onclick="FBZAccount.close();doLogout()">${ico('logout',17)}<span>Выйти</span></button>
+        </div>
+      </div>`;
     if(hb)hb.innerHTML=`<button class="btn btn-l" onclick="go('matches')">Смотреть матчи →</button>`;
   }else{
     nr.innerHTML=`<button class="nbtn nbtn-lime" onclick="openAuth()">Войти</button>`;
@@ -116,7 +140,7 @@ function go(p,d){
   document.querySelectorAll('.nav-link').forEach(l=>{l.classList.remove('active');l.removeAttribute('aria-current');});
   const lk=document.querySelector(`.nav-link[onclick*="'${p}'"]`);
   if(lk){lk.classList.add('active');lk.setAttribute('aria-current','page');}
-  CP=p;window.scrollTo(0,0);closeNotif();
+  CP=p;window.scrollTo(0,0);closeNotif();window.FBZAccount?.close();
   // Update mobile nav
   document.querySelectorAll('.mob-nav-item').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current');});
   const mn=document.getElementById(`mn-${p}`);if(mn){mn.classList.add('active');mn.setAttribute('aria-current','page');}
@@ -128,6 +152,7 @@ function go(p,d){
   else if(p==='md'){mdID=d?.mid;loadMD(d?.mid);}
   else if(p==='chat'){chatMID=d?.mid;document.getElementById('chatTitle').textContent=d?.title||'Чат';loadChat(d?.mid);}
   else if(p==='friends')loadFriendsTab(FT);
+  else if(p==='admin')window.FBZAdmin?.mount();
 }
 function goBack(){go(PP);}
 
@@ -437,7 +462,14 @@ async function loadProfile(uid){
   w.innerHTML='<div class="loading"><div class="spin"></div></div>';
   try{
     const ownsProfile=CU?.id===uid;
-    const{data:u}=await sb.from('users').select(ownsProfile?SELF_USER_FIELDS:PUBLIC_USER_FIELDS).eq('id',uid).maybeSingle();
+    let u,error;
+    if(ownsProfile){
+      ({data:u,error}=await sb.rpc('get_my_profile').maybeSingle());
+      if(u){u={...u,email:CU?.email};CU={...CU,...u};}
+    }else{
+      ({data:u,error}=await sb.from('users').select(PUBLIC_USER_FIELDS).eq('id',uid).maybeSingle());
+    }
+    if(error)throw error;
     if(!u){w.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>Профиль не найден<br><span style="font-size:13px;color:var(--fog);margin-top:8px;display:block">Попробуйте войти заново</span></div>';return;}
     const{data:ratings}=await sb.from('ratings').select(RATING_FIELDS).eq('user_id',uid).order('created_at',{ascending:false}).limit(50);
     let fs=[];
@@ -476,12 +508,10 @@ async function loadProfile(uid){
     }else if(!isMe){
       friendBtn=`<button class="btn btn-l btn-sm" onclick="openAuth()">Войти чтобы добавить</button>`;
     }
-    const profileTools=isMe?`<div class="profile-tools"><button class="profile-tool-btn" onclick="openSettings()" title="Настройки" aria-label="Настройки">${ico('settings',16)}</button>${u.is_admin?`<button class="profile-tool-btn profile-tool-wide" onclick="go('admin')" title="Админ-панель">${ico('settings',15)} <span>Админ</span></button>`:''}</div>`:'';
-    const ownerActions=isMe?`<button class="btn btn-g btn-sm" onclick="editProfile()">${ico('edit',13)} Редактировать</button><button class="btn btn-g btn-sm" onclick="doLogout()">Выйти</button>`:friendBtn;
+    const ownerActions=isMe?`<button class="btn btn-g btn-sm" onclick="editProfile()">${ico('edit',13)} Редактировать</button>`:friendBtn;
 
     w.innerHTML=`
     <div class="phero">
-      ${profileTools}
       ${avatarHtml}
       <div class="phero-name">${esc(u.username||'Аноним')}</div>
       ${u.bio?`<div class="phero-bio">${esc(u.bio)}</div>`:''}
@@ -704,7 +734,7 @@ async function removeFriend(fid,btn){if(!confirm('Удалить из друзе
 async function cancelFriend(fid,card){await sb.from('friendships').delete().eq('user_id',CU.id).eq('friend_id',fid);card.remove();}
 async function handleInvite(code){
   if(!CU){openAuth();return;}
-  const{data:invUser}=await sb.from('users').select('id').eq('invite_code',code).maybeSingle();
+  const{data:invUser}=await sb.rpc('resolve_invite_code',{lookup_code:code}).maybeSingle();
   if(invUser&&invUser.id!==CU.id){await addFriend(invUser.id);}
 }
 
@@ -1075,12 +1105,14 @@ async function saveProfile(){
   const{error:pwErr}=await sb.auth.updateUser({password:p});
   if(pwErr){document.getElementById('authE3').textContent='Ошибка: '+pwErr.message;return;}
   // Create profile
-  const code=Math.random().toString(36).substring(2,8).toUpperCase();
-  await sb.from('users').insert({
+  const{error:profileError}=await sb.from('users').insert({
     id:user.id,username:u,display_name:u,
-    bio:b||null,favorite_teams:t||null,invite_code:code,
-    ratings_count:0,streak:0,last_seen:new Date().toISOString()
+    bio:b||null,favorite_teams:t||null,is_public:true
   });
+  if(profileError){
+    document.getElementById('authE3').textContent=profileError.code==='23505'?'Никнейм уже занят':'Не удалось создать профиль';
+    return;
+  }
   await onLogin(user);
   closeAuth();toast('Добро пожаловать в FOOTBAZED!','ok');
 }
@@ -1091,18 +1123,15 @@ async function ensureProfile(user){
     if(exists)return;
     const email=user.email||'';
     const name=email.split('@')[0]||'user';
-    const code=Math.random().toString(36).substring(2,8).toUpperCase();
-    const{error}=await sb.from('users').insert({
-      id:user.id,
-      username:name.replace(/[^a-zA-Z0-9_]/g,'_').substring(0,20),
-      display_name:name,
-      invite_code:code,
-      ratings_count:0,
-      avg_rating:0,
-      streak:0,
-      is_public:true
-    });
-    if(error)console.warn('Profile create error:',error);
+    const base=(name.replace(/[^a-zA-Z0-9_]/g,'_').replace(/^_+|_+$/g,'').substring(0,20)||'user').padEnd(3,'_');
+    let error=null;
+    for(let attempt=0;attempt<4;attempt++){
+      const suffix=attempt?`_${Math.random().toString(36).slice(2,6)}`:'';
+      const username=`${base.slice(0,30-suffix.length)}${suffix}`;
+      ({error}=await sb.from('users').insert({id:user.id,username,display_name:name,is_public:true}));
+      if(!error||error.code!=='23505')break;
+    }
+    if(error)throw error;
   }catch(e){console.warn('ensureProfile error:',e);}
 }
 
@@ -1240,7 +1269,7 @@ function openSettings(){
     const el=document.getElementById(id);
     if(el)el.textContent=value;
   });
-  FBZOverlay.open('settingsOv','#setTheme');
+  FBZOverlay.open('settingsOv','input[name="setTheme"]');
 }
 function closeSettings(){FBZOverlay.close('settingsOv');}
 function saveAppearanceSettings(){
