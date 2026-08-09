@@ -1,0 +1,6 @@
+# Internal engineering files must never become public static assets.
+supabase/
+tests/
+scripts/
+README.md
+.env.example

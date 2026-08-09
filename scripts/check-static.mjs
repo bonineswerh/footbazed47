@@ -34,6 +34,19 @@ for(const script of requiredScripts){
   if(!html.includes(`src="${script}?`))errors.push(`Required script is not versioned in index.html: ${script}`);
 }
 
+const vercelIgnorePath=path.join(root,'.vercelignore');
+if(!fs.existsSync(vercelIgnorePath)){
+  errors.push('Missing .vercelignore: internal files could be served publicly');
+}else{
+  const ignoredPaths=fs.readFileSync(vercelIgnorePath,'utf8')
+    .split(/\r?\n/)
+    .map(line=>line.trim())
+    .filter(line=>line&&!line.startsWith('#'));
+  for(const requiredPath of ['supabase/','tests/','scripts/','.env.example']){
+    if(!ignoredPaths.includes(requiredPath))errors.push(`.vercelignore must exclude ${requiredPath}`);
+  }
+}
+
 if(errors.length){
   errors.forEach(error=>console.error(`ERROR: ${error}`));
   process.exit(1);
