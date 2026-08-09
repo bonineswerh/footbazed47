@@ -206,7 +206,7 @@ function copyAppLink(hash,label='Ссылка'){
 
 async function loadHeroStats(){
   const[{count:u},{count:r},{count:m}]=await Promise.all([
-    sb.from('users').select('*',{count:'exact',head:true}),
+    sb.from('users').select('id',{count:'exact',head:true}),
     sb.from('ratings').select('*',{count:'exact',head:true}),
     sb.from('matches').select('*',{count:'exact',head:true})
   ]);
