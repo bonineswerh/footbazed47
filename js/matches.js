@@ -1,7 +1,11 @@
 const MATCH_PAGE_SIZE=24;
 let matchCatalog=[];
-let filteredMatches=[];
-let visibleMatchCount=matchPageSize();
+let matchLeagues=[];
+let matchTotal=0;
+let matchHasMore=false;
+let matchNextOffset=0;
+let matchLoading=false;
+let matchRequestId=0;
 
 function matchPageSize(){
   return window.matchMedia('(max-width: 900px)').matches?12:MATCH_PAGE_SIZE;
@@ -19,15 +23,15 @@ function sortMatches(items){
   return window.FBZDomain.sortMatches(items);
 }
 
-async function fetchMatchCatalog(force=false){
-  if(matchCatalog.length&&!force)return matchCatalog;
-  const cached=!force&&getCache('matches',CACHE_TTL.matches);
-  if(cached?.length){matchCatalog=sortMatches(cached);return matchCatalog;}
-  const{data,error}=await sb.from('matches').select(MATCH_FIELDS).order('match_date',{ascending:false}).limit(1000);
-  if(error)throw error;
-  matchCatalog=sortMatches(data||[]);
-  setCache('matches',matchCatalog);
-  return matchCatalog;
+async function fetchMatchPage({offset=0,limit=matchPageSize(),force=false}={}){
+  return window.FBZData.getMatchesPage({
+    status:MF,
+    league:ML,
+    query:document.getElementById('msearch')?.value||'',
+    limit,
+    offset,
+    force
+  });
 }
 
 function renderMCard(match){
@@ -67,7 +71,8 @@ async function loadHomeM(){
   const target=document.getElementById('homeM');
   if(!target)return;
   try{
-    const items=featuredMatches(await fetchMatchCatalog());
+    const page=await window.FBZData.getMatchesPage({limit:6});
+    const items=featuredMatches(page?.items||[]);
     target.innerHTML=items.length?items.map(renderMCard).join(''):'<div class="empty-state"><div class="empty-icon">🏟️</div><strong>Матчей пока нет</strong><span>Новые встречи появятся после обновления календаря.</span></div>';
   }catch(error){
     console.warn('loadHomeM:',error);
@@ -75,22 +80,11 @@ async function loadHomeM(){
   }
 }
 
-function applyMatchFilters(){
-  const query=document.getElementById('msearch')?.value?.trim().toLocaleLowerCase('ru-RU')||'';
-  filteredMatches=matchCatalog.filter(match=>{
-    const matchesSearch=!query||String(match.home_team_name||'').toLocaleLowerCase('ru-RU').includes(query)||String(match.away_team_name||'').toLocaleLowerCase('ru-RU').includes(query);
-    const matchesStatus=MF==='all'||match.status===MF;
-    const matchesLeague=ML==='all'||match.league_name===ML;
-    return matchesSearch&&matchesStatus&&matchesLeague;
-  });
-}
-
 function renderLeagueTabs(){
-  const leagues=[...new Set(matchCatalog.map(match=>match.league_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ru'));
   const target=document.getElementById('leagueTabs');
   if(!target)return;
-  target.innerHTML=`<button class="league-tab${ML==='all'?' on':''}" onclick="setLeague('all',this)">Все лиги</button>`+
-    leagues.map(league=>`<button class="league-tab${ML===league?' on':''}" onclick="setLeague(${jsStr(league)},this)">${esc(league)}</button>`).join('');
+  target.innerHTML=`<button type="button" class="league-tab${ML==='all'?' on':''}" aria-pressed="${ML==='all'}" onclick="setLeague('all',this)">Все лиги</button>`+
+    matchLeagues.map(league=>`<button type="button" class="league-tab${ML===league?' on':''}" aria-pressed="${ML===league}" onclick="setLeague(${jsStr(league)},this)">${esc(league)}</button>`).join('');
 }
 
 function matchCountLabel(count){
@@ -101,15 +95,14 @@ function matchCountLabel(count){
 }
 
 function renderMatchResults(){
-  applyMatchFilters();
   const target=document.getElementById('matchG');
   if(!target)return;
-  if(!filteredMatches.length){
+  if(!matchCatalog.length){
     target.innerHTML='<div class="empty-state"><div class="empty-icon">⌕</div><strong>Ничего не найдено</strong><span>Измени команду, лигу или статус матча.</span></div>';
     return;
   }
 
-  const visible=filteredMatches.slice(0,visibleMatchCount);
+  const visible=matchCatalog;
   let content='';
   if(ML==='all'){
     const grouped=new Map();
@@ -126,50 +119,79 @@ function renderMatchResults(){
     content=`<div class="grid3">${visible.map(renderMCard).join('')}</div>`;
   }
 
-  const shown=visible.length,total=filteredMatches.length;
-  target.innerHTML=`<div class="match-results-summary"><span>Показано ${shown} из ${total}</span><span>${ML==='all'?'Все лиги':esc(ML)}</span></div>${content}${shown<total?`<div class="load-more-wrap"><button class="btn btn-g load-more" onclick="loadMoreMatches()">Показать ещё <span>${Math.min(matchPageSize(),total-shown)}</span></button></div>`:''}`;
+  const shown=visible.length,total=matchTotal;
+  target.innerHTML=`<div class="match-results-summary"><span>Показано ${shown} из ${total}</span><span>${ML==='all'?'Все лиги':esc(ML)}</span></div>${content}${matchHasMore?`<div class="load-more-wrap"><button class="btn btn-g load-more" type="button" onclick="loadMoreMatches()">Показать ещё <span>${Math.min(matchPageSize(),Math.max(total-shown,0))}</span></button></div>`:''}`;
 }
 
 async function loadM(reset=true){
   const target=document.getElementById('matchG');
   if(!target)return;
-  if(reset)visibleMatchCount=matchPageSize();
+  const requestId=++matchRequestId;
+  matchLoading=true;
   target.innerHTML='<div class="loading"><div class="spin"></div><span>Загружаем календарь</span></div>';
   try{
-    await fetchMatchCatalog();
+    const page=await fetchMatchPage({offset:0,force:reset});
+    if(requestId!==matchRequestId)return;
+    matchCatalog=Array.isArray(page?.items)?page.items:[];
+    matchLeagues=Array.isArray(page?.leagues)?page.leagues:[];
+    matchTotal=Number(page?.total)||0;
+    matchHasMore=Boolean(page?.has_more);
+    matchNextOffset=Number(page?.next_offset)||matchCatalog.length;
     renderLeagueTabs();
     renderMatchResults();
   }catch(error){
+    if(requestId!==matchRequestId)return;
     console.error('Matches error:',error);
     target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Календарь временно недоступен</strong><span>Проверь соединение и попробуй ещё раз.</span><button class="btn btn-g btn-sm" onclick="loadM(true)">Повторить</button></div>';
+  }finally{
+    if(requestId===matchRequestId)matchLoading=false;
   }
 }
 
-function loadMoreMatches(){
-  visibleMatchCount+=matchPageSize();
-  renderMatchResults();
+async function loadMoreMatches(){
+  if(matchLoading||!matchHasMore)return;
+  const requestId=matchRequestId;
+  matchLoading=true;
+  const button=document.querySelector('.load-more');
+  if(button){button.disabled=true;button.textContent='Загружаем...';}
+  try{
+    const page=await fetchMatchPage({offset:matchNextOffset});
+    if(requestId!==matchRequestId)return;
+    const knownIds=new Set(matchCatalog.map(match=>String(match.id)));
+    for(const match of page?.items||[])if(!knownIds.has(String(match.id)))matchCatalog.push(match);
+    matchTotal=Number(page?.total)||matchTotal;
+    matchHasMore=Boolean(page?.has_more);
+    matchNextOffset=Number(page?.next_offset)||matchCatalog.length;
+    renderMatchResults();
+  }catch(error){
+    if(requestId!==matchRequestId)return;
+    console.error('More matches error:',error);
+    toast('Не удалось загрузить ещё матчи','err');
+    if(button){button.disabled=false;button.textContent='Повторить';}
+  }finally{
+    if(requestId===matchRequestId)matchLoading=false;
+  }
 }
 
 function setLeague(league,button){
   ML=league;
-  visibleMatchCount=matchPageSize();
-  document.querySelectorAll('.league-tab').forEach(item=>item.classList.remove('on'));
+  document.querySelectorAll('.league-tab').forEach(item=>{item.classList.remove('on');item.setAttribute('aria-pressed','false');});
   button?.classList.add('on');
-  renderMatchResults();
+  button?.setAttribute('aria-pressed','true');
+  loadM(true);
 }
 
 function filterM(){
   clearTimeout(window._ft);
-  window._ft=setTimeout(()=>{visibleMatchCount=matchPageSize();renderMatchResults();},220);
+  window._ft=setTimeout(()=>loadM(true),280);
 }
 
 function setMF(filter,button){
   MF=filter;
-  visibleMatchCount=matchPageSize();
   document.querySelectorAll('#mf .btn').forEach(item=>{item.className='btn btn-g btn-sm';item.setAttribute('aria-pressed','false');});
   button.className='btn btn-l btn-sm';
   button.setAttribute('aria-pressed','true');
-  renderMatchResults();
+  loadM(true);
 }
 
 async function loadMD(id){
@@ -191,6 +213,7 @@ async function loadMD(id){
     if(insightsError)throw insightsError;
     if(ownRatingError)throw ownRatingError;
     if(!match){target.innerHTML='<div class="empty-state"><strong>Матч не найден</strong></div>';return;}
+    window.FBZSEO?.match(match);
 
     const userIds=[...new Set((ratings||[]).map(rating=>rating.user_id))];
     const{data:users}=userIds.length
@@ -227,7 +250,7 @@ async function loadMD(id){
         ${ownRatingMarkup}
         ${match.status==='finished'?`<button class="btn btn-l" onclick="openRate(${match.id})">${ico('star',14)} ${ownRating?'Изменить оценку':'Оценить матч'}</button>`:''}
         <button class="btn btn-g" onclick="go('chat',{mid:${match.id},title:'Чат матча'})">${ico('chat',14)} Обсуждение</button>
-        <button class="btn btn-g" onclick="copyAppLink('#match/${match.id}','Ссылка на матч')">${ico('link',14)} Ссылка</button>
+        <button class="btn btn-g" onclick="copyAppLink('/match/${match.id}','Ссылка на матч')">${ico('link',14)} Ссылка</button>
       </div>
       <div class="md-grid">
         <div>

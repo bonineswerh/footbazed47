@@ -5,6 +5,7 @@ const I={
   feed:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg>`,
   trophy:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.996.078-1.927.228-2.25.346v2.168A2.75 2.75 0 0 0 5.25 9.5m0-5.264V4.5h13.5v-.264m0 0c.996.078 1.927.228 2.25.346v2.168A2.75 2.75 0 0 1 18.75 9.5m0-5.264V4.5"/></svg>`,
   users:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0z"/></svg>`,
+  profile:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.118a7.5 7.5 0 0 1 15 0A17.93 17.93 0 0 1 12 21.75c-2.676 0-5.216-.584-7.5-1.632Z"/></svg>`,
   bell:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg>`,
   star:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5z"/></svg>`,
   heart:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>`,
@@ -45,12 +46,96 @@ let MF='all',ML='all',LT='likes',FT='list';
 let chatMID=null,mdID=null,viewUID=null;
 let notifOpen=false;
 let routeApplying=false;
+const featureModulePromises=new Map();
+
+function ensureFeatureModule({key,styleId,style,script,ready}){
+  if(ready())return Promise.resolve(ready());
+  if(featureModulePromises.has(key))return featureModulePromises.get(key);
+
+  const stylesheet=new Promise((resolve,reject)=>{
+    const existing=document.getElementById(styleId);
+    if(existing){
+      if(existing.dataset.loaded==='true')resolve();
+      else{
+        existing.addEventListener('load',resolve,{once:true});
+        existing.addEventListener('error',()=>reject(new Error(`${key}_styles_failed`)),{once:true});
+      }
+      return;
+    }
+    const link=document.createElement('link');
+    link.id=styleId;
+    link.rel='stylesheet';
+    link.href=style;
+    link.addEventListener('load',()=>{link.dataset.loaded='true';resolve();},{once:true});
+    link.addEventListener('error',()=>reject(new Error(`${key}_styles_failed`)),{once:true});
+    document.head.append(link);
+  });
+
+  const module=new Promise((resolve,reject)=>{
+    const element=document.createElement('script');
+    element.src=script;
+    element.async=true;
+    element.addEventListener('load',()=>{
+      if(ready())resolve(ready());
+      else reject(new Error(`${key}_module_missing`));
+    },{once:true});
+    element.addEventListener('error',()=>reject(new Error(`${key}_module_failed`)),{once:true});
+    document.body.append(element);
+  });
+
+  const promise=Promise.all([stylesheet,module])
+    .then(([,feature])=>feature)
+    .catch(error=>{
+      featureModulePromises.delete(key);
+      console.warn(`${key} module load error:`,error);
+      toast('Не удалось загрузить раздел','err');
+      throw error;
+    });
+  featureModulePromises.set(key,promise);
+  return promise;
+}
+
+function ensureAdminModule(){
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=42',script:'js/admin.js?v=42',ready:()=>window.FBZAdmin});
+}
+function ensureEntitiesModule(){
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=43',script:'js/entities.js?v=43',ready:()=>window.FBZEntities});
+}
+function ensureFeedModule(){
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=43',script:'js/feed.js?v=45',ready:()=>window.FBZFeed});
+}
+
+function scheduleHomeFeed(){
+  const target=document.getElementById('homeF');
+  if(!target)return;
+  const load=()=>ensureFeedModule().then(feed=>feed.loadHome()).catch(()=>{});
+  if(!('IntersectionObserver'in window)){load();return;}
+  const observer=new IntersectionObserver(entries=>{
+    if(!entries.some(entry=>entry.isIntersecting))return;
+    observer.disconnect();
+    load();
+  },{rootMargin:'320px 0px'});
+  observer.observe(target);
+}
 
 function avColor(str){let h=0;for(let c of(str||'x'))h=(h<<5)-h+c.charCodeAt(0);return AVCOLORS[Math.abs(h)%8];}
 
 async function init(){
   window.FBZAppearance?.init();
   window.FBZSearch?.init();
+  if(!window.sb){
+    const local=['localhost','127.0.0.1'].includes(window.location.hostname);
+    const message=local
+      ?'Локальная среда не подключена к отдельной базе разработки.'
+      :'Сервис данных временно недоступен. Обновите страницу немного позже.';
+    const heroText=document.querySelector('.hero p');
+    const heroButtons=document.getElementById('heroBtns');
+    if(heroText)heroText.textContent=message;
+    if(heroButtons)heroButtons.innerHTML='<div class="boot-error" role="alert">FOOTBAZED запущен в безопасном режиме без подключения к данным.</div>';
+    console.error('Application bootstrap blocked:',window.FBZ_BOOT_ERROR||'unknown_configuration_error');
+    setupReveal();injectIcons();
+    return;
+  }
   try{
     const{data:{session},error}=await sb.auth.getSession();
     if(error)throw error;
@@ -59,7 +144,10 @@ async function init(){
       if(event==='INITIAL_SESSION')return;
       setTimeout(async()=>{
         try{
-          if(nextSession?.user)await onLogin(nextSession.user);
+          if(nextSession?.user){
+            await onLogin(nextSession.user);
+            if(event==='PASSWORD_RECOVERY')openPasswordUpdate();
+          }
           else onLogout();
         }catch(error){
           console.warn('Auth state error:',error);
@@ -68,19 +156,21 @@ async function init(){
       },0);
     });
   }catch(e){console.warn('Auth init error:',e);}
-  Promise.allSettled([loadHeroStats(),loadHomeM(),loadHomeF()]).then(results=>{
+  Promise.allSettled([loadHeroStats(),loadHomeM()]).then(results=>{
     results.filter(result=>result.status==='rejected').forEach(result=>console.warn('Initial load error:',result.reason));
   });
+  scheduleHomeFeed();
   setupReveal();injectIcons();
   const chatS=document.getElementById('chatS');
   const chatI=document.getElementById('chatI');
   if(chatS)chatS.onclick=sendChat;
   if(chatI)chatI.onkeypress=e=>{if(e.key==='Enter')sendChat();};
   document.addEventListener('click',e=>{if(notifOpen&&!e.target.closest('#notifPanel')&&!e.target.closest('#notifBtn'))closeNotif();});
-  window.addEventListener('hashchange',applyRouteFromHash);
+  window.addEventListener('hashchange',applyRouteFromLocation);
+  window.addEventListener('popstate',applyRouteFromLocation);
   const inv=new URLSearchParams(window.location.search).get('invite');
   if(inv)setTimeout(()=>handleInvite(inv),800);
-  if(window.location.hash)setTimeout(applyRouteFromHash,100);
+  if(window.location.hash||!['/','/index.html'].includes(window.location.pathname))setTimeout(applyRouteFromLocation,100);
 }
 
 function renderNav(){
@@ -130,48 +220,50 @@ function go(p,d){
   // Update mobile nav
   document.querySelectorAll('.mob-nav-item').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current');});
   const mn=document.getElementById(`mn-${p}`);if(mn){mn.classList.add('active');mn.setAttribute('aria-current','page');}
-  const pageTitles={home:'FOOTBAZED — Оценивай футбол вместе',matches:'Матчи — FOOTBAZED',feed:'Лента — FOOTBAZED',leaderboard:'Лидеры — FOOTBAZED',friends:'Друзья — FOOTBAZED',profile:'Профиль — FOOTBAZED',md:'Матч — FOOTBAZED',chat:'Обсуждение матча — FOOTBAZED',admin:'Админ-панель — FOOTBAZED'};
-  if(pageTitles[p])document.title=pageTitles[p];
+  window.FBZSEO?.setStatic(p);
   if(!routeApplying)syncRoute(p,d);
   if(p==='matches')loadM();
-  else if(p==='feed')window.FBZFeed?.load();
+  else if(p==='feed')ensureFeedModule().then(feed=>{if(CP==='feed')feed.open(d?.ratingId);}).catch(()=>{});
   else if(p==='leaderboard')loadLB();
   else if(p==='profile'){viewUID=d?.uid||CU?.id;loadProfile(viewUID);}
   else if(p==='md'){mdID=d?.mid;loadMD(d?.mid);}
-  else if(p==='club')window.FBZEntities?.loadClub(d?.id);
-  else if(p==='player')window.FBZEntities?.loadPlayer(d?.id);
+  else if(p==='club')ensureEntitiesModule().then(entities=>{if(CP==='club')entities.loadClub(d?.id);}).catch(()=>{});
+  else if(p==='player')ensureEntitiesModule().then(entities=>{if(CP==='player')entities.loadPlayer(d?.id);}).catch(()=>{});
   else if(p==='chat'){chatMID=d?.mid;document.getElementById('chatTitle').textContent=d?.title||'Чат';loadChat(d?.mid);}
   else if(p==='friends')loadFriendsTab(FT);
-  else if(p==='admin')window.FBZAdmin?.mount();
+  else if(p==='admin')ensureAdminModule().then(admin=>{if(CP==='admin')admin.mount();}).catch(()=>{});
 }
 function goBack(){go(PP);}
 
 function syncRoute(p,d){
-  const current=window.location.hash;
-  let next='';
-  if(p==='home')next='';
-  else if(p==='profile'&&d?.uid)next=`#profile/${encodeURIComponent(d.uid)}`;
-  else if(p==='profile'&&CU?.id)next=`#profile/${encodeURIComponent(CU.id)}`;
-  else if(p==='md'&&d?.mid)next=`#match/${encodeURIComponent(d.mid)}`;
-  else if(p==='club'&&d?.id)next=`#club/${encodeURIComponent(d.id)}`;
-  else if(p==='player'&&d?.id)next=`#player/${encodeURIComponent(d.id)}`;
-  else if(['matches','feed','leaderboard','friends','admin'].includes(p))next=`#${p}`;
-  if(next!==current)history.pushState(null,'',next||window.location.pathname+window.location.search);
+  let path='/';
+  if(p==='profile'&&(d?.uid||CU?.id))path=`/profile/${encodeURIComponent(d?.uid||CU.id)}`;
+  else if(p==='md'&&d?.mid)path=`/match/${encodeURIComponent(d.mid)}`;
+  else if(p==='club'&&d?.id)path=`/club/${encodeURIComponent(d.id)}`;
+  else if(p==='player'&&d?.id)path=`/player/${encodeURIComponent(d.id)}`;
+  else if(p==='chat'&&d?.mid)path=`/match/${encodeURIComponent(d.mid)}/chat`;
+  else if(['matches','feed','leaderboard','friends','admin'].includes(p))path=`/${p}`;
+  const next=`${path}${window.location.search}`;
+  const current=`${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if(next!==current)history.pushState(null,'',next);
 }
 
-function applyRouteFromHash(){
-  const raw=window.location.hash.replace(/^#/,'');
-  if(!raw){
+function applyRouteFromLocation(){
+  const hashRoute=window.location.hash.replace(/^#/,'');
+  const pathRoute=window.location.pathname.replace(/^\/+|\/+$/gu,'');
+  const raw=hashRoute||pathRoute;
+  if(!raw||raw==='index.html'){
     if(CP!=='home'){
       routeApplying=true;
       try{go('home');}finally{routeApplying=false;}
     }
     return;
   }
-  const [type,value]=raw.split('/');
+  const [type,value,section]=raw.split('/');
   routeApplying=true;
   try{
     if(type==='profile'&&value)go('profile',{uid:decodeURIComponent(value)});
+    else if(type==='match'&&value&&section==='chat')go('chat',{mid:decodeURIComponent(value),title:'Чат матча'});
     else if(type==='match'&&value)go('md',{mid:decodeURIComponent(value)});
     else if(type==='club'&&value)go('club',{id:Number(decodeURIComponent(value))});
     else if(type==='player'&&value)go('player',{id:Number(decodeURIComponent(value))});
@@ -193,8 +285,8 @@ async function copyText(value,successLabel='Скопировано'){
   }
 }
 
-function copyAppLink(hash,label='Ссылка'){
-  const url=`${window.location.origin}${window.location.pathname}${hash}`;
+function copyAppLink(route,label='Ссылка'){
+  const url=new URL(String(route||'/'),window.location.origin).href;
   copyText(url,`${label} скопирована`);
 }
 
@@ -218,16 +310,14 @@ let lbU=[];
 async function loadLB(){
   document.getElementById('lbT').innerHTML='<div class="loading"><div class="spin"></div></div>';
   document.getElementById('lbPod').innerHTML='';
-  const{data:users}=await sb.from('users').select(PUBLIC_USER_FIELDS).limit(30);
-  if(!users?.length){document.getElementById('lbT').innerHTML='<div class="empty-state">Нет данных</div>';return;}
-  const ids=users.map(u=>u.id);
-  const{data:allR}=await sb.from('ratings').select('id,user_id').in('user_id',ids);
-  const rIds=(allR||[]).map(r=>r.id);
-  let lm={};
-  if(rIds.length){const{data:lk}=await sb.from('rating_likes').select('rating_id').in('rating_id',rIds);(lk||[]).forEach(l=>{const r=allR.find(x=>x.id===l.rating_id);if(r)lm[r.user_id]=(lm[r.user_id]||0)+1;});}
-  const rcm={};(allR||[]).forEach(r=>{rcm[r.user_id]=(rcm[r.user_id]||0)+1;});
-  lbU=users.map(u=>({...u,tl:lm[u.id]||0,rc:rcm[u.id]||u.ratings_count||0}));
-  renderLB();
+  try{
+    lbU=await window.FBZData.getLeaderboard(LT)||[];
+    if(!lbU.length){document.getElementById('lbT').innerHTML='<div class="empty-state">Нет данных</div>';return;}
+    renderLB();
+  }catch(error){
+    console.error('Leaderboard error:',error);
+    document.getElementById('lbT').innerHTML='<div class="empty-state"><strong>Не удалось загрузить рейтинг</strong><button class="btn btn-g btn-sm" onclick="loadLB()">Повторить</button></div>';
+  }
 }
 function renderLB(){
   const sorted=[...lbU].sort((a,b)=>LT==='likes'?b.tl-a.tl:b.rc-a.rc);
@@ -240,28 +330,35 @@ function renderLB(){
     const cls=avColor(u.username||'x');
     const avatar=safeImageUrl(u.avatar_url);
     const av=avatar?`<img src="${avatar}" style="width:52px;height:52px;border-radius:13px;object-fit:cover" alt="">`:`<div class="lb-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
-    return`<div class="lb-pod ${pc[i]}" onclick="go('profile',{uid:'${u.id}'})">
+    const position=top3.indexOf(u)+1;
+    return`<button type="button" class="lb-pod ${pc[i]}" aria-label="${position} место: ${esc(u.username||'Аноним')}, ${val} ${lbl}" onclick="go('profile',{uid:'${u.id}'})">
       <div class="lb-crown">${i===1&&top3.length>=3?'👑':'⠀'}</div>
       ${av}
       <div class="lb-pname">${esc(u.username||'Аноним')}</div>
       <div class="lb-phand">@${esc(u.username||'user')}</div>
       <div class="lb-pval">${val}</div>
       <div class="lb-plbl">${lbl}</div>
-    </div>`;
+    </button>`;
   }).join('');
   document.getElementById('lbT').innerHTML=sorted.slice(3).map((u,i)=>{
     const val=LT==='likes'?u.tl:u.rc;const lbl=LT==='likes'?'лайков':'оценок';
     const cls=avColor(u.username||'x');
     const avatar=safeImageUrl(u.avatar_url);
     const av=avatar?`<img src="${avatar}" style="width:34px;height:34px;border-radius:9px;object-fit:cover" alt="">`:`<div class="lb-uav ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
-    return`<div class="lb-row" onclick="go('profile',{uid:'${u.id}'})">
+    return`<button type="button" class="lb-row" aria-label="${i+4} место: ${esc(u.username||'Аноним')}, ${val} ${lbl}" onclick="go('profile',{uid:'${u.id}'})">
       <div class="lb-rank">${i+4}</div>
       <div class="lb-user">${av}<div><div class="lb-uname">${esc(u.username||'Аноним')}</div><div class="lb-uhand">@${esc(u.username||'user')}</div></div></div>
       <div class="lb-score"><div class="lb-sval">${val}</div><div class="lb-slbl">${lbl}</div></div>
-    </div>`;
+    </button>`;
   }).join('');
 }
-function setLT(t,btn){LT=t;document.querySelectorAll('.lb-tab').forEach(b=>{b.className='btn btn-g btn-sm lb-tab';});btn.className='btn btn-l btn-sm lb-tab';renderLB();}
+function setLT(t,btn){
+  LT=t;
+  document.querySelectorAll('.lb-tab').forEach(b=>{b.className='btn btn-g btn-sm lb-tab';b.setAttribute('aria-pressed','false');});
+  btn.className='btn btn-l btn-sm lb-tab';
+  btn.setAttribute('aria-pressed','true');
+  loadLB();
+}
 
 // ─── PROFILE ───
 function renderProfileInsights(ratings,matchMap){
@@ -344,26 +441,16 @@ async function loadProfile(uid){
   w.innerHTML='<div class="loading"><div class="spin"></div></div>';
   try{
     const ownsProfile=CU?.id===uid;
-    let u,error;
-    if(ownsProfile){
-      ({data:u,error}=await sb.rpc('get_my_profile').maybeSingle());
-      if(u){u={...u,email:CU?.email};CU={...CU,...u};}
-    }else{
-      ({data:u,error}=await sb.from('users').select(PUBLIC_USER_FIELDS).eq('id',uid).maybeSingle());
-    }
-    if(error)throw error;
+    const payload=await window.FBZData.getProfilePage(uid);
+    let u=payload?.profile;
+    if(ownsProfile&&u){u={...u,email:CU?.email};CU={...CU,...u};}
     if(!u){w.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>Профиль не найден<br><span style="font-size:13px;color:var(--fog);margin-top:8px;display:block">Попробуйте войти заново</span></div>';return;}
-    const{data:ratings}=await sb.from('ratings').select(RATING_FIELDS).eq('user_id',uid).order('created_at',{ascending:false}).limit(50);
-    let fs=[];
-    try{const{data:f1}=await sb.from('friendships').select('id').eq('user_id',uid).eq('status','accepted');const{data:f2}=await sb.from('friendships').select('id').eq('friend_id',uid).eq('status','accepted');fs=[...(f1||[]),...(f2||[])];}catch(e){}
-    // Get likes count
-    const rIds=(ratings||[]).map(r=>r.id);
-    let tl=0;
-    if(rIds.length){const{data:lk}=await sb.from('rating_likes').select('id').in('rating_id',rIds);tl=lk?.length||0;}
-    // Get match info for ratings
-    const matchIds=[...new Set((ratings||[]).map(r=>r.match_id))];
-    let matchMap={};
-    if(matchIds.length){const{data:ms}=await sb.from('matches').select('id,home_team_name,away_team_name,league_name').in('id',matchIds);(ms||[]).forEach(m=>matchMap[m.id]=m);}
+    window.FBZSEO?.profile(u);
+    const ratings=payload.ratings||[];
+    const friendCount=payload.stats?.friend_count||0;
+    const tl=payload.stats?.like_count||0;
+    const matchMap={};
+    ratings.forEach(r=>{if(r.match)matchMap[r.match_id]=r.match;});
     const profileInsights=renderProfileInsights(ratings,matchMap);
     const ratingDistribution=renderRatingDistribution(ratings);
 
@@ -371,21 +458,22 @@ async function loadProfile(uid){
     const lv=LEVELS.slice().reverse().find(l=>cnt>=l.m)||LEVELS[0];
     const nx=LEVELS[LEVELS.indexOf(lv)+1];
     const pct=nx?Math.min(((cnt-lv.m)/(nx.m-lv.m))*100,100):100;
-    const avg=ratings?.length?(ratings.reduce((s,r)=>s+(r.match_rating||0),0)/ratings.length).toFixed(1):'—';
+    const avg=cnt?Number(u.avg_rating||0).toFixed(1):'—';
     const isMe=ownsProfile;
     const j=new Date(u.created_at||Date.now());
     const ms2=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
     const cls=avColor(u.username||'x');
         const avatar=safeImageUrl(u.avatar_url);
         const avatarHtml=avatar?`<img src="${avatar}" class="phero-av-img" alt="">`:`<div class="phero-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
-    const footballPassport=renderFootballPassport(u,ratings,matchMap,cnt,avg,tl,fs,lv,avatar,cls);
+    const footballPassport=renderFootballPassport(u,ratings,matchMap,cnt,avg,tl,{length:friendCount},lv,avatar,cls);
 
     // Check friendship status for non-self profiles
     let friendBtn='';
     if(!isMe&&CU){
-      const{data:fr}=await sb.from('friendships').select('status').eq('user_id',CU.id).eq('friend_id',uid).maybeSingle();
+      const fr=payload.friendship;
       if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.6;cursor:default">${ico('users',13)} В друзьях</button>`;
-      else if(fr?.status==='pending')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.6;cursor:default">⏳ Заявка отправлена</button>`;
+      else if(fr?.status==='pending'&&fr.direction==='outgoing')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.6;cursor:default">⏳ Заявка отправлена</button>`;
+      else if(fr?.status==='pending')friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" onclick="acceptFriendFromProfile('${uid}')">${ico('users',13)} Принять заявку</button>`;
       else friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" onclick="addFriendFromProfile('${uid}')">${ico('users',13)} Добавить в друзья</button>`;
     }else if(!isMe){
       friendBtn=`<button class="btn btn-l btn-sm" onclick="openAuth()">Войти чтобы добавить</button>`;
@@ -395,7 +483,7 @@ async function loadProfile(uid){
     w.innerHTML=`
     <div class="phero">
       ${avatarHtml}
-      <div class="phero-name">${esc(u.username||'Аноним')}</div>
+      <h1 class="phero-name">${esc(u.username||'Аноним')}</h1>
       ${u.bio?`<div class="phero-bio">${esc(u.bio)}</div>`:''}
       ${u.favorite_teams?`<div style="font-size:12px;color:var(--accent2);margin-bottom:12px">❤️ ${esc(u.favorite_teams)}</div>`:''}
       <div class="phero-badges">
@@ -411,11 +499,11 @@ async function loadProfile(uid){
         <div class="pst"><div class="pst-v">${cnt}</div><div class="pst-l">Оценок</div></div>
         <div class="pst"><div class="pst-v">${avg}</div><div class="pst-l">Средняя</div></div>
         <div class="pst"><div class="pst-v">${tl}</div><div class="pst-l">Лайков</div></div>
-        <div class="pst"><div class="pst-v">${fs?.length||0}</div><div class="pst-l">Друзей</div></div>
+        <div class="pst"><div class="pst-v">${friendCount}</div><div class="pst-l">Друзей</div></div>
       </div>
       <div class="phero-acts">
         ${ownerActions}
-        <button class="btn btn-g btn-sm" onclick="copyAppLink('#profile/${uid}','Ссылка на профиль')">${ico('link',13)} Ссылка</button>
+        <button class="btn btn-g btn-sm" onclick="copyAppLink('/profile/${uid}','Ссылка на профиль')">${ico('link',13)} Ссылка</button>
       </div>
     </div>
     <div class="pgrid">
@@ -428,7 +516,7 @@ async function loadProfile(uid){
         ${ratingDistribution}
         ${isMe&&u.invite_code?`<div class="pcard"><div class="pcard-title">${ico('link',14)} Пригласи друга</div><div style="background:var(--bg3);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:12px;word-break:break-all;font-size:11px;color:var(--accent2)">https://footbazed47.vercel.app/?invite=${u.invite_code}</div><button class="btn btn-l" style="width:100%" onclick="copyInv('${u.invite_code}')">${ico('copy',13)} Копировать ссылку</button></div>`:''}
         <div class="pcard"><div class="pcard-title">${ico('share',14)} Поделиться</div>
-          <button class="btn btn-l" style="width:100%;margin-bottom:8px" onclick="openShare('profile',{name:${jsStr(u.display_name||'')},username:${jsStr(u.username||'user')},ratings:${cnt},avg:${jsStr(avg)},likes:${tl},friends:${fs?.length||0},level:${jsStr(lv.n)}})">${ico('photo',13)} Создать карточку</button>
+          <button class="btn btn-l" style="width:100%;margin-bottom:8px" onclick="openShare('profile',{name:${jsStr(u.display_name||'')},username:${jsStr(u.username||'user')},ratings:${cnt},avg:${jsStr(avg)},likes:${tl},friends:${friendCount},level:${jsStr(lv.n)}})">${ico('photo',13)} Создать карточку</button>
           <button class="btn btn-g" style="width:100%" onclick="expStats(${cnt},${jsStr(avg)},${jsStr(u.username||'user')})">${ico('copy',13)} Копировать текст</button>
         </div>
       </div>
@@ -439,17 +527,34 @@ async function loadProfile(uid){
   }
 }
 async function addFriend(fid){
-  if(!CU){openAuth();return;}
-  const{data:ex}=await sb.from('friendships').select('id,status').eq('user_id',CU.id).eq('friend_id',fid).maybeSingle();
-  if(ex){toast(ex.status==='pending'?'⏳ Заявка уже отправлена':'✓ Уже в друзьях','err');return;}
-  const{error}=await sb.from('friendships').insert({user_id:CU.id,friend_id:fid,status:'pending'});
-  if(error){console.error('Friend request error:',error);toast('Не удалось отправить заявку','err');return;}
-  toast('Заявка отправлена!','ok');
+  if(!CU){openAuth();return false;}
+  const{data,error}=await sb.rpc('request_friendship',{p_friend_id:fid});
+  if(error){console.error('Friend request error:',error);toast('Не удалось отправить заявку','err');return false;}
+  if(data?.status==='accepted')toast(data.changed?'Заявка принята — вы теперь друзья':'Вы уже друзья','ok');
+  else toast(data?.changed?'Заявка отправлена':'Заявка уже отправлена','ok');
+  return true;
 }
 async function addFriendFromProfile(fid){
-  await addFriend(fid);
+  const success=await addFriend(fid);
+  if(!success)return;
+  window.FBZData?.invalidate('profile:');
   const btn=document.getElementById('profAddBtn');
   if(btn){btn.disabled=true;btn.style.opacity='0.6';btn.style.cursor='default';btn.innerHTML='⏳ Заявка отправлена';btn.onclick=null;}
+}
+async function acceptFriendFromProfile(fid){
+  const button=document.getElementById('profAddBtn');
+  if(button)button.disabled=true;
+  const{error}=await sb.rpc('respond_friendship',{p_requester_id:fid,p_action:'accept'});
+  if(error){
+    console.error('Friend response error:',error);
+    if(button)button.disabled=false;
+    toast('Не удалось принять заявку','err');
+    return;
+  }
+  window.FBZData?.invalidate('profile:');
+  await loadProfile(fid);
+  toast('Заявка принята','ok');
+  loadNotifications();
 }
 function copyInv(c){copyText(`${window.location.origin}${window.location.pathname}?invite=${encodeURIComponent(c)}`,'Ссылка скопирована');}
 async function expStats(c,a,u){
@@ -460,6 +565,9 @@ async function expStats(c,a,u){
   copyText(text);
 }
 function editProfile(){
+  pendingAvatar=null;
+  if(pendingAvatarObjectUrl)URL.revokeObjectURL(pendingAvatarObjectUrl);
+  pendingAvatarObjectUrl='';
   const w=document.getElementById('profileW');
   const cls=avColor(CU.username||'x');
   const avatar=safeImageUrl(CU.avatar_url);
@@ -489,10 +597,12 @@ function editProfile(){
   </div>`;
 }
 let pendingAvatar=null;
+let pendingAvatarObjectUrl='';
 function previewAvatar(input){
   if(!input.files||!input.files[0])return;
   const file=input.files[0];
   if(file.size>5*1024*1024){toast('Максимум 5MB','err');return;}
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('Поддерживаются JPG, PNG и WebP','err');return;}
   const reader=new FileReader();
   reader.onload=e=>{
     // Resize to 200x200
@@ -504,10 +614,15 @@ function previewAvatar(input){
       const s=Math.min(img.width,img.height);
       const sx=(img.width-s)/2,sy=(img.height-s)/2;
       ctx.drawImage(img,sx,sy,s,s,0,0,size,size);
-      pendingAvatar=c.toDataURL('image/jpeg',0.8);
-      const preview=document.getElementById('avPreview');
-      if(preview.tagName==='IMG'){preview.src=pendingAvatar;}
-      else{preview.outerHTML=`<img src="${pendingAvatar}" class="phero-av-img" id="avPreview">`;}
+      c.toBlob(blob=>{
+        if(!blob){toast('Не удалось обработать изображение','err');return;}
+        pendingAvatar=blob;
+        if(pendingAvatarObjectUrl)URL.revokeObjectURL(pendingAvatarObjectUrl);
+        pendingAvatarObjectUrl=URL.createObjectURL(blob);
+        const preview=document.getElementById('avPreview');
+        if(preview.tagName==='IMG'){preview.src=pendingAvatarObjectUrl;}
+        else{preview.outerHTML=`<img src="${pendingAvatarObjectUrl}" class="phero-av-img" id="avPreview" alt="Предпросмотр аватара">`;}
+      },'image/jpeg',0.86);
     };
     img.src=e.target.result;
   };
@@ -527,13 +642,24 @@ async function saveEditProfile(){
   const btn=document.getElementById('epSaveBtn');
   btn.disabled=true;btn.textContent='Сохраняем...';
   const upd={username:user,display_name:user,bio:bio||null,favorite_teams:teams||null};
-  if(pendingAvatar)upd.avatar_url=pendingAvatar;
+  if(pendingAvatar){
+    const objectPath=`${CU.id}/avatar.jpg`;
+    const{error:uploadError}=await sb.storage.from('avatars').upload(objectPath,pendingAvatar,{upsert:true,contentType:'image/jpeg',cacheControl:'31536000'});
+    if(uploadError){console.error('Avatar upload error:',uploadError);toast('Не удалось загрузить аватар','err');btn.disabled=false;btn.textContent='Сохранить';return;}
+    const{data:publicAvatar}=sb.storage.from('avatars').getPublicUrl(objectPath);
+    if(!publicAvatar?.publicUrl){toast('Не удалось получить адрес аватара','err');btn.disabled=false;btn.textContent='Сохранить';return;}
+    upd.avatar_url=`${publicAvatar.publicUrl}?v=${Date.now()}`;
+  }
   const{error}=await sb.from('users').update(upd).eq('id',CU.id);
   if(error){toast('Ошибка: '+error.message,'err');btn.disabled=false;btn.textContent='Сохранить';return;}
   CU.username=user;CU.display_name=user;CU.bio=bio;CU.favorite_teams=teams;
-  if(pendingAvatar){CU.avatar_url=pendingAvatar;pendingAvatar=null;}
+  if(upd.avatar_url){
+    CU.avatar_url=upd.avatar_url;pendingAvatar=null;
+    if(pendingAvatarObjectUrl)URL.revokeObjectURL(pendingAvatarObjectUrl);
+    pendingAvatarObjectUrl='';
+  }
   // Clear cached data so feeds reflect updated profile
-  clearAppCache();
+  clearAppCache();window.FBZData?.invalidate('profile:');
   renderNav();loadProfile(CU.id);toast('Профиль обновлён!','ok');
 }
 
@@ -602,38 +728,47 @@ async function searchFriends(){
     return`<div class="friend-card" onclick="go('profile',{uid:'${u.id}'})">${friendAvatar(u,36)}<div class="fcard-info"><div class="fcard-name">${esc(u.username||'Аноним')}</div><div class="fcard-sub">@${esc(u.username||'user')}</div></div>${!isSelf?`<button class="fbtn add btn-sm" onclick="event.stopPropagation();addFriendQ('${u.id}',this)">+</button>`:''}</div>`;
   }).join('');
 }
-async function addFriendQ(fid,btn){await addFriend(fid);btn.textContent='✓';btn.classList.remove('add');btn.disabled=true;}
+async function addFriendQ(fid,btn){
+  btn.disabled=true;
+  const success=await addFriend(fid);
+  if(!success){btn.disabled=false;return;}
+  btn.textContent='✓';btn.classList.remove('add');
+}
 async function acceptFriend(fid,card){
-  await sb.from('friendships').update({status:'accepted'}).eq('user_id',fid).eq('friend_id',CU.id);
-  await sb.from('friendships').insert({user_id:CU.id,friend_id:fid,status:'accepted'});
-  // Mark friend_request notification as read
-  await sb.from('notifications').update({read:true}).eq('user_id',CU.id).eq('from_user_id',fid).eq('type','friend_request');
-  card.remove();toast('✅ Заявка принята!','ok');
+  const{error}=await sb.rpc('respond_friendship',{p_requester_id:fid,p_action:'accept'});
+  if(error){console.error('Friend response error:',error);toast('Не удалось принять заявку','err');return;}
+  window.FBZData?.invalidate('profile:');card.remove();toast('Заявка принята','ok');
   loadNotifications();
 }
-async function rejectFriend(fid,card){await sb.from('friendships').delete().eq('user_id',fid).eq('friend_id',CU.id);card.remove();}
+async function rejectFriend(fid,card){
+  const{error}=await sb.rpc('respond_friendship',{p_requester_id:fid,p_action:'reject'});
+  if(error){console.error('Friend response error:',error);toast('Не удалось отклонить заявку','err');return;}
+  window.FBZData?.invalidate('profile:');card.remove();loadNotifications();
+}
 function removeFriend(fid,button){
   window.FBZConfirm.open({
     title:'Удалить из друзей?',
     message:'Пользователь исчезнет из списка друзей. Новый запрос можно будет отправить позже.',
     confirmText:'Удалить',
     onConfirm:async()=>{
-      const[{error:firstError},{error:secondError}]=await Promise.all([
-        sb.from('friendships').delete().eq('user_id',CU.id).eq('friend_id',fid),
-        sb.from('friendships').delete().eq('user_id',fid).eq('friend_id',CU.id)
-      ]);
-      if(firstError||secondError){
-        console.error('Friend removal error:',firstError||secondError);
+      const{error}=await sb.rpc('remove_friendship',{p_other_id:fid});
+      if(error){
+        console.error('Friend removal error:',error);
         toast('Не удалось удалить пользователя','err');
         return false;
       }
       button.closest('.friend-card')?.remove();
+      window.FBZData?.invalidate('profile:');
       toast('Пользователь удалён из друзей','ok');
       return true;
     }
   });
 }
-async function cancelFriend(fid,card){await sb.from('friendships').delete().eq('user_id',CU.id).eq('friend_id',fid);card.remove();}
+async function cancelFriend(fid,card){
+  const{error}=await sb.rpc('remove_friendship',{p_other_id:fid});
+  if(error){console.error('Friend cancellation error:',error);toast('Не удалось отменить заявку','err');return;}
+  window.FBZData?.invalidate('profile:');card.remove();
+}
 async function handleInvite(code){
   if(!CU){openAuth();return;}
   const{data:invUser}=await sb.rpc('resolve_invite_code',{lookup_code:code}).maybeSingle();
@@ -659,7 +794,7 @@ async function clickNotif(id,type,ratingId){
   await sb.from('notifications').update({read:true}).eq('id',id);
   closeNotif();
   if(type==='friend_request'){FT='incoming';go('friends');return;}
-  if((type==='like'||type==='comment')&&ratingId){go('feed');setTimeout(()=>window.FBZFeed?.focusRating(ratingId),250);return;}
+  if((type==='like'||type==='comment')&&ratingId){go('feed',{ratingId});return;}
   loadNotifications();
 }
 async function markAllRead(){if(!CU)return;await sb.from('notifications').update({read:true}).eq('user_id',CU.id);loadNotifications();closeNotif();}

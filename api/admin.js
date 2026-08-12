@@ -14,6 +14,9 @@ const LEAGUES = Object.freeze({
 });
 const MATCH_STATUSES = new Set(['scheduled', 'live', 'finished', 'postponed', 'cancelled']);
 const MAX_BODY_BYTES = 32 * 1024;
+const MAX_UPSTREAM_BYTES = 4 * 1024 * 1024;
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+const LEGACY_AVATAR_BATCH = 10;
 
 function sendJson(res, status, body) {
   res.status(status);
@@ -28,7 +31,12 @@ function request(url, options = {}, body) {
     const req = https.request(url, options, response => {
       let raw = '';
       response.setEncoding('utf8');
-      response.on('data', chunk => { raw += chunk; });
+      response.on('data', chunk => {
+        raw += chunk;
+        if (Buffer.byteLength(raw) > MAX_UPSTREAM_BYTES) {
+          req.destroy(new Error('Upstream response is too large'));
+        }
+      });
       response.on('end', () => resolve({
         status: response.statusCode || 500,
         headers: response.headers,
@@ -125,18 +133,19 @@ async function tableCount(table, filter = '') {
 
 async function getOverview() {
   const now = new Date().toISOString();
-  const [matches, players, ratings, users, predictions, upcoming, recentResponse] = await Promise.all([
+  const [matches, players, ratings, users, predictions, upcoming, legacyAvatars, recentResponse] = await Promise.all([
     tableCount('matches'),
     tableCount('players'),
     tableCount('ratings'),
     tableCount('users'),
     tableCount('predictions'),
     tableCount('matches', `&match_date=gte.${encodeURIComponent(now)}&status=in.(scheduled,live)`),
+    tableCount('users', '&avatar_url=like.data:image/*'),
     supabase('/rest/v1/matches?select=id,league_name,league_code,home_team_name,away_team_name,match_date,status,home_score,away_score,external_id&order=match_date.desc&limit=120')
   ]);
 
   return {
-    counts: { matches, players, ratings, users, predictions, upcoming },
+    counts: { matches, players, ratings, users, predictions, upcoming, legacyAvatars },
     recentMatches: parseJson(recentResponse.raw, []),
     footballApiConfigured: Boolean(process.env.FOOTBALL_DATA_API_KEY || process.env.FOOTBALL_API_KEY),
     checkedAt: new Date().toISOString()
@@ -199,6 +208,87 @@ function mapPosition(position) {
     'Left Midfield': 'LM', 'Right Midfield': 'RM', Midfield: 'CM',
     'Left Winger': 'LW', 'Right Winger': 'RW', 'Centre-Forward': 'ST', Offence: 'ST'
   }[position] || position || null;
+}
+
+async function recordAdminAction(actorId, action, {targetType = null, targetId = null, metadata = {}} = {}) {
+  try {
+    await supabase('/rest/v1/admin_audit_logs', {
+      method: 'POST',
+      body: {
+        actor_id: actorId,
+        action,
+        target_type: targetType,
+        target_id: targetId == null ? null : String(targetId).slice(0, 160),
+        metadata
+      },
+      headers: { Prefer: 'return=minimal' }
+    });
+  } catch (error) {
+    console.error('Admin audit write failed:', error.message);
+  }
+}
+
+function avatarData(value) {
+  const match = String(value || '').match(/^data:image\/(png|jpe?g|webp);base64,([a-z0-9+/=]+)$/iu);
+  if (!match) return null;
+  const extension = match[1].toLowerCase().replace('jpeg', 'jpg');
+  const buffer = Buffer.from(match[2], 'base64');
+  if (!buffer.length || buffer.length > MAX_AVATAR_BYTES) return null;
+  return {
+    buffer,
+    extension,
+    contentType: extension === 'jpg' ? 'image/jpeg' : `image/${extension}`
+  };
+}
+
+async function migrateLegacyAvatars() {
+  const params = new URLSearchParams({
+    select: 'id,avatar_url',
+    avatar_url: 'like.data:image/*',
+    limit: String(LEGACY_AVATAR_BATCH)
+  });
+  const response = await supabase(`/rest/v1/users?${params.toString()}`);
+  const profiles = parseJson(response.raw, []);
+  let migrated = 0;
+  let skipped = 0;
+
+  for (const profile of profiles) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(String(profile.id || ''))) {
+      skipped += 1;
+      continue;
+    }
+    const image = avatarData(profile.avatar_url);
+    if (!image) {
+      skipped += 1;
+      continue;
+    }
+
+    const objectName = `${profile.id}/legacy-avatar.${image.extension}`;
+    const upload = await request(`${process.env.SUPABASE_URL}/storage/v1/object/avatars/${objectName}`, {
+      method: 'POST',
+      headers: serviceHeaders({
+        'Content-Type': image.contentType,
+        'Content-Length': image.buffer.length,
+        'x-upsert': 'true'
+      })
+    }, image.buffer);
+    if (upload.status < 200 || upload.status >= 300) {
+      const error = new Error('Avatar storage migration failed');
+      error.status = 502;
+      throw error;
+    }
+
+    const publicUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/avatars/${objectName}`;
+    await supabase(`/rest/v1/users?id=eq.${encodeURIComponent(profile.id)}`, {
+      method: 'PATCH',
+      body: {avatar_url: publicUrl},
+      headers: {Prefer: 'return=minimal'}
+    });
+    migrated += 1;
+  }
+
+  const remaining = await tableCount('users', '&avatar_url=like.data:image/*');
+  return {migrated, skipped, remaining};
 }
 
 function clubPayload(team) {
@@ -373,12 +463,30 @@ module.exports = async function handler(req, res) {
 
     const body = await readBody(req);
     const action = String(body.action || '');
-    if (action === 'sync_matches') return sendJson(res, 200, await syncMatches(body));
-    if (action === 'sync_squads') return sendJson(res, 200, await syncSquads(body));
-    if (action === 'update_match') return sendJson(res, 200, { match: await updateMatch(body) });
+    if (action === 'sync_matches') {
+      const result = await syncMatches(body);
+      await recordAdminAction(administrator.id, action, {targetType:'league', targetId:result.league, metadata:{processed:result.processed}});
+      return sendJson(res, 200, result);
+    }
+    if (action === 'sync_squads') {
+      const result = await syncSquads(body);
+      await recordAdminAction(administrator.id, action, {targetType:'league', targetId:result.league, metadata:{processed:result.processed,teams:result.teams}});
+      return sendJson(res, 200, result);
+    }
+    if (action === 'update_match') {
+      const match = await updateMatch(body);
+      await recordAdminAction(administrator.id, action, {targetType:'match', targetId:match.id, metadata:{status:match.status}});
+      return sendJson(res, 200, {match});
+    }
+    if (action === 'migrate_legacy_avatars') {
+      const result = await migrateLegacyAvatars();
+      await recordAdminAction(administrator.id, action, {targetType:'user_avatar', metadata:result});
+      return sendJson(res, 200, result);
+    }
     if (action === 'test_connection') {
       const league = requireLeague(body.league || 'PL');
       const result = await football(`/competitions/${league}`);
+      await recordAdminAction(administrator.id, action, {targetType:'league', targetId:league});
       return sendJson(res, 200, { ok: true, competition: result.name || LEAGUES[league] });
     }
     return sendJson(res, 400, { error: 'Unsupported action' });

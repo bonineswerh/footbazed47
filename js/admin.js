@@ -5,6 +5,7 @@
     loaded: false,
     loading: false,
     syncing: false,
+    legacyAvatars: 0,
     matches: [],
     activities: []
   };
@@ -139,6 +140,16 @@
     }
   }
 
+  function setLegacyAvatarState(value){
+    state.legacyAvatars = Math.max(Number(value) || 0, 0);
+    const label = document.getElementById('adminLegacyAvatarCount');
+    const button = document.getElementById('adminMigrateAvatars');
+    if (label) label.textContent = state.legacyAvatars
+      ? `${state.legacyAvatars} профиля ожидают переноса`
+      : 'Все аватары находятся в Storage';
+    if (button) button.disabled = state.syncing || state.legacyAvatars === 0;
+  }
+
   async function refresh(force = false){
     if (state.loading || (!force && state.loaded)) return;
     state.loading = true;
@@ -150,6 +161,7 @@
       renderMetrics(data.counts);
       renderMatches();
       setApiState(Boolean(data.footballApiConfigured));
+      setLegacyAvatarState(data.counts?.legacyAvatars);
       const updated = document.getElementById('adminUpdatedAt');
       if (updated) updated.textContent = `Обновлено ${formatDate(data.checkedAt)}`;
       setHealth('Все системы доступны', 'ok');
@@ -196,6 +208,8 @@
       const button = document.getElementById(id);
       if (button) button.disabled = next;
     });
+    const avatarButton = document.getElementById('adminMigrateAvatars');
+    if (avatarButton) avatarButton.disabled = next || state.legacyAvatars === 0;
   }
 
   function renderTasks(leagues, mode){
@@ -275,6 +289,35 @@
     }
   }
 
+  function migrateLegacyAvatars(){
+    if (state.syncing || state.legacyAvatars === 0) return;
+    window.FBZConfirm.open({
+      title:'Перенести аватары в Storage',
+      message:`Будут безопасно перенесены ${state.legacyAvatars} legacy-аватара. Профили и изображения сохранятся.`,
+      confirmText:'Начать перенос',
+      tone:'neutral',
+      onConfirm:async()=>{
+        setSyncing(true);
+        setHealth('Переносим аватары', 'loading');
+        try{
+          const result = await request('migrate_legacy_avatars', {});
+          addActivity(`Аватары: перенесено ${result.migrated}, осталось ${result.remaining}`);
+          toast(`Перенесено аватаров: ${result.migrated}`, 'ok');
+          state.loaded = false;
+          await refresh(true);
+          return true;
+        }catch(error){
+          setHealth('Требуется внимание', 'bad');
+          addActivity(error.message, 'bad');
+          toast(error.message, 'err');
+          return false;
+        }finally{
+          setSyncing(false);
+        }
+      }
+    });
+  }
+
   function openEditor(id){
     const match = state.matches.find(item => Number(item.id) === Number(id));
     if (!match) return;
@@ -322,5 +365,5 @@
     }
   }
 
-  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, openEditor, closeEditor, saveMatch};
+  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch};
 })();

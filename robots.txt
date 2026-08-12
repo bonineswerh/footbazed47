@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
-
+Disallow: /admin
+Disallow: /friends
 Sitemap: https://footbazed47.vercel.app/sitemap.xml

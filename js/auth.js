@@ -35,6 +35,8 @@ async function loadSessionProfile(user,version){
 
   profileCompletionUser=null;
   CU={...profile,email:user.email};
+  try{localStorage.setItem('fbz_session_hint','1');}catch{}
+  document.documentElement.classList.add('session-hint-authenticated');
   renderNav();
   loadNotifications();
   return true;
@@ -46,12 +48,14 @@ function onLogout(){
   profileLoadPromise=null;
   profileCompletionUser=null;
   CU=null;
+  try{localStorage.removeItem('fbz_session_hint');}catch{}
+  document.documentElement.classList.remove('session-hint-authenticated');
   window.FBZAccount?.close();
   renderNav();
 }
 
 function hideAllAuth(){
-  ['authLogin','authStep1','authStep2','authStep3'].forEach(id=>{
+  ['authLogin','authRecovery','authNewPassword','authStep1','authStep2','authStep3'].forEach(id=>{
     const element=document.getElementById(id);
     if(element)element.style.display='none';
   });
@@ -81,6 +85,25 @@ function switchToRegister(){
   hideAllAuth();
   document.getElementById('authStep1').style.display='block';
   clearAuthError('authE');
+}
+
+function switchToRecovery(){
+  authMode='recovery';
+  hideAllAuth();
+  document.getElementById('authRecovery').style.display='block';
+  const recoveryEmail=document.getElementById('recoveryEmail');
+  if(recoveryEmail&&!recoveryEmail.value)recoveryEmail.value=document.getElementById('loginEmail')?.value.trim()||'';
+  clearAuthError('recoveryErr');
+  document.getElementById('recoveryNote').textContent='Письмо придёт, если аккаунт с таким email существует';
+  queueMicrotask(()=>recoveryEmail?.focus());
+}
+
+function openPasswordUpdate(){
+  authMode='password-update';
+  hideAllAuth();
+  document.getElementById('authNewPassword').style.display='block';
+  clearAuthError('newPasswordErr');
+  window.FBZOverlay?.open('authOv','#newPassword');
 }
 
 function showAuthStep(step){
@@ -131,6 +154,54 @@ async function doLogin(){
   }finally{
     button.disabled=false;
     button.textContent='Войти';
+  }
+}
+
+async function sendPasswordRecovery(){
+  const email=document.getElementById('recoveryEmail').value.trim();
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    setAuthError('recoveryErr','Введите корректный email');
+    return;
+  }
+  const button=document.getElementById('recoveryBtn');
+  button.disabled=true;
+  button.textContent='Отправляем...';
+  clearAuthError('recoveryErr');
+  try{
+    const redirectTo=new URL(window.location.pathname,window.location.origin).href;
+    const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
+    if(error)throw error;
+    document.getElementById('recoveryNote').textContent='Проверьте почту и папку «Спам». Ссылка действует ограниченное время.';
+    toast('Инструкция отправлена на почту','ok');
+  }catch(error){
+    setAuthError('recoveryErr',safeAuthError(error,'Не удалось отправить письмо. Попробуйте позже'));
+  }finally{
+    button.disabled=false;
+    button.textContent='Отправить ссылку';
+  }
+}
+
+async function updateRecoveredPassword(){
+  const password=document.getElementById('newPassword').value;
+  const confirmation=document.getElementById('newPasswordConfirm').value;
+  if(password.length<8){setAuthError('newPasswordErr','Пароль должен содержать минимум 8 символов');return;}
+  if(password!==confirmation){setAuthError('newPasswordErr','Пароли не совпадают');return;}
+
+  const button=document.getElementById('newPasswordBtn');
+  button.disabled=true;
+  button.textContent='Сохраняем...';
+  clearAuthError('newPasswordErr');
+  try{
+    const{error}=await sb.auth.updateUser({password});
+    if(error)throw error;
+    history.replaceState(null,'',`${window.location.pathname}${window.location.search}#home`);
+    closeAuth();
+    toast('Пароль обновлён','ok');
+  }catch(error){
+    setAuthError('newPasswordErr',safeAuthError(error,'Ссылка устарела. Запросите восстановление ещё раз'));
+  }finally{
+    button.disabled=false;
+    button.textContent='Сохранить пароль';
   }
 }
 
@@ -265,6 +336,12 @@ async function doLogout(){
 function initAuthInteractions(){
   document.getElementById('loginPass')?.addEventListener('keydown',event=>{
     if(event.key==='Enter')doLogin();
+  });
+  document.getElementById('recoveryEmail')?.addEventListener('keydown',event=>{
+    if(event.key==='Enter')sendPasswordRecovery();
+  });
+  document.getElementById('newPasswordConfirm')?.addEventListener('keydown',event=>{
+    if(event.key==='Enter')updateRecoveredPassword();
   });
   document.getElementById('authEmail')?.addEventListener('keydown',event=>{
     if(event.key==='Enter')sendOTP();

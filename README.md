@@ -14,26 +14,26 @@ FOOTBAZED is a football platform for match and player ratings, personal profiles
 
 ## Local checks
 
-Node.js 20 or newer is required.
+Node.js 22 or newer and pnpm 11.16.0 are required.
 
 ```powershell
-npm run check
+pnpm run check
 ```
 
 Install the Playwright browser once, then run the authenticated browser scenarios:
 
 ```powershell
-npx playwright install chromium
-npm run test:e2e
+pnpm exec playwright install chromium
+pnpm run test:e2e
 ```
 
 Run every automated check before a release:
 
 ```powershell
-npm run check:all
+pnpm run check:all
 ```
 
-E2E tests use a deterministic local Supabase client and never write to production. The application is static; use `npm run serve` for manual local testing instead of opening `index.html` directly.
+E2E tests use a deterministic local Supabase client and never write to production. The application is static; use `pnpm run serve` for manual local testing instead of opening `index.html` directly.
 
 ## Deployment
 

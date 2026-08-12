@@ -2,6 +2,7 @@ import {defineConfig} from '@playwright/test';
 
 export default defineConfig({
   testDir:'./tests/e2e',
+  snapshotPathTemplate:'{testDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}',
   timeout:30_000,
   expect:{timeout:7_000},
   fullyParallel:false,

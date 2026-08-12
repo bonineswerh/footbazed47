@@ -1,17 +1,43 @@
 (function(){
   'use strict';
 
-  const config=Object.freeze({
-    supabaseUrl:'https://uukacnyvjvgmmhbkmfzf.supabase.co',
-    supabaseKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2Fjbnl2anZnbW1oYmttZnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDM3MzcsImV4cCI6MjA4NzA3OTczN30.hZIYkrWFqRwu0IciG2iF3TyP8WnVQcV1sFyjfeVUpRc'
-  });
-
-  window.FBZ_CONFIG=config;
   const isLocalTest=['localhost','127.0.0.1'].includes(window.location.hostname)
     &&new URLSearchParams(window.location.search).has('__e2e');
   const testClient=isLocalTest?window.__FOOTBAZED_TEST_CLIENT__:null;
-  if(!testClient&&!window.supabase?.createClient)throw new Error('Supabase client is unavailable');
-  window.sb=testClient||window.supabase.createClient(config.supabaseUrl,config.supabaseKey);
+  const runtime=window.__FOOTBAZED_RUNTIME_CONFIG__||{};
+  const config=Object.freeze({
+    environment:String(runtime.environment||'unknown'),
+    supabaseUrl:String(runtime.supabaseUrl||''),
+    supabaseKey:String(runtime.supabaseKey||'')
+  });
+
+  function jwtRole(key){
+    try{
+      const payload=key.split('.')[1];
+      if(!payload)return'';
+      return JSON.parse(atob(payload.replace(/-/g,'+').replace(/_/g,'/'))).role||'';
+    }catch{return'';}
+  }
+
+  window.FBZ_CONFIG=config;
+  window.FBZ_BOOT_ERROR='';
+  if(testClient){
+    window.sb=testClient;
+  }else if(runtime.error){
+    window.sb=null;
+    window.FBZ_BOOT_ERROR=String(runtime.error);
+  }else if(!config.supabaseUrl||!config.supabaseKey){
+    window.sb=null;
+    window.FBZ_BOOT_ERROR='runtime_config_missing';
+  }else if(jwtRole(config.supabaseKey)==='service_role'){
+    window.sb=null;
+    window.FBZ_BOOT_ERROR='unsafe_runtime_key';
+  }else if(!window.supabase?.createClient){
+    window.sb=null;
+    window.FBZ_BOOT_ERROR='supabase_client_unavailable';
+  }else{
+    window.sb=window.supabase.createClient(config.supabaseUrl,config.supabaseKey);
+  }
   window.PUBLIC_USER_FIELDS='id,username,display_name,avatar_url,bio,favorite_teams,ratings_count,avg_rating,streak,streak_date,is_public,created_at';
   window.MATCH_FIELDS='id,league_name,home_team_name,away_team_name,home_club_id,away_club_id,match_date,status,home_score,away_score,external_id,league_code,matchday,season';
   window.RATING_FIELDS='id,user_id,match_id,match_rating,comment,is_public,created_at';

@@ -2,5 +2,9 @@
 supabase/
 tests/
 scripts/
+docs/
+types/
 README.md
+AGENTS.md
 .env.example
+tsconfig.json

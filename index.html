@@ -2,11 +2,13 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#04080d">
   <meta name="color-scheme" content="dark light">
   <title>FOOTBAZED — Оценивай футбол вместе</title>
   <meta name="description" content="Футбольная платформа для оценок матчей и игроков, личной статистики и общения с болельщиками.">
+  <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://footbazed47.vercel.app/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="FOOTBAZED">
@@ -16,14 +18,13 @@
   <meta property="og:image" content="https://footbazed47.vercel.app/assets/stadium-bg.webp">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css?v=41">
-  <link rel="stylesheet" href="css/entities.css?v=41">
-  <link rel="stylesheet" href="css/feed.css?v=41">
-  <link rel="stylesheet" href="admin.css?v=40">
+  <link rel="preload" href="assets/fonts/onest-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/onest-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="js/session-hint.js?v=1"></script>
+  <link rel="stylesheet" href="css/fonts.css?v=1">
+  <script src="/api/config.js"></script>
+  <script src="assets/vendor/supabase-2.112.2.js"></script>
+  <link rel="stylesheet" href="styles.css?v=46">
 </head>
 <body>
 
@@ -175,8 +176,8 @@
       <h1 class="page-title">Таблица лидеров</h1>
       
       <div class="filters">
-        <button class="btn btn-l btn-sm lb-tab" onclick="setLT('likes',this)">По лайкам</button>
-        <button class="btn btn-g btn-sm lb-tab" onclick="setLT('ratings',this)">По оценкам</button>
+        <button class="btn btn-l btn-sm lb-tab" type="button" aria-pressed="true" onclick="setLT('likes',this)">По лайкам</button>
+        <button class="btn btn-g btn-sm lb-tab" type="button" aria-pressed="false" onclick="setLT('ratings',this)">По оценкам</button>
       </div>
       
       <div id="lbPod" class="lb-podium"></div>
@@ -334,6 +335,13 @@
                 </div>
               </section>
             </div>
+            <section class="admin-panel admin-maintenance-panel">
+              <div class="admin-panel-head"><h3>Хранилище профилей</h3><span>Без доступа к ключам в браузере</span></div>
+              <div class="admin-maintenance-row">
+                <div><b>Legacy-аватары</b><span id="adminLegacyAvatarCount">Проверяем...</span></div>
+                <button class="btn btn-g" type="button" id="adminMigrateAvatars" onclick="FBZAdmin.migrateLegacyAvatars()" disabled><span data-i="save"></span> Перенести в Storage</button>
+              </div>
+            </section>
           </section>
 
           <section class="admin-view" id="admin-view-matches">
@@ -382,7 +390,30 @@
         <input class="input" type="password" placeholder="Пароль" id="loginPass" autocomplete="current-password">
         <div class="auth-e" id="loginErr" role="status" aria-live="polite"></div>
         <button class="btn btn-l" style="width:100%" onclick="doLogin()" id="loginBtn">Войти</button>
+        <p class="auth-alt"><button type="button" onclick="switchToRecovery()">Забыли пароль?</button></p>
         <p class="auth-alt">Нет аккаунта? <button type="button" onclick="switchToRegister()">Зарегистрироваться</button></p>
+      </div>
+
+      <div class="auth-step" id="authRecovery">
+        <h2>Восстановление доступа</h2>
+        <p style="color:var(--text2);margin-bottom:16px;">Отправим защищённую ссылку для смены пароля</p>
+        <label class="sr-only" for="recoveryEmail">Email</label>
+        <input class="input" type="email" placeholder="Email" id="recoveryEmail" autocomplete="email" inputmode="email">
+        <div class="auth-e" id="recoveryErr" role="status" aria-live="polite"></div>
+        <button class="btn btn-l" style="width:100%" onclick="sendPasswordRecovery()" id="recoveryBtn">Отправить ссылку</button>
+        <p class="auth-note" id="recoveryNote">Письмо придёт, если аккаунт с таким email существует</p>
+        <p class="auth-alt"><button type="button" onclick="switchToLogin()">Вернуться ко входу</button></p>
+      </div>
+
+      <div class="auth-step" id="authNewPassword">
+        <h2>Новый пароль</h2>
+        <p style="color:var(--text2);margin-bottom:16px;">Придумайте новый пароль для аккаунта</p>
+        <label class="sr-only" for="newPassword">Новый пароль</label>
+        <input class="input" type="password" placeholder="Минимум 8 символов" id="newPassword" minlength="8" autocomplete="new-password">
+        <label class="sr-only" for="newPasswordConfirm">Повторите пароль</label>
+        <input class="input" type="password" placeholder="Повторите пароль" id="newPasswordConfirm" minlength="8" autocomplete="new-password">
+        <div class="auth-e" id="newPasswordErr" role="status" aria-live="polite"></div>
+        <button class="btn btn-l" style="width:100%" onclick="updateRecoveredPassword()" id="newPasswordBtn">Сохранить пароль</button>
       </div>
 
       <!-- REGISTER STEP 1: Email -->
@@ -606,17 +637,17 @@
   <!-- APP JS -->
   <script src="js/domain.js?v=40"></script>
   <script src="js/appearance.js?v=40"></script>
-  <script src="js/core.js?v=41"></script>
+  <script src="js/performance.js?v=1"></script>
+  <script src="js/core.js?v=42"></script>
+  <script src="js/seo.js?v=1"></script>
+  <script src="js/data.js?v=43"></script>
   <script src="js/overlays.js?v=40"></script>
   <script src="js/confirm.js?v=40"></script>
-  <script src="app.js?v=41"></script>
-  <script src="js/auth.js?v=40"></script>
+  <script src="app.js?v=47"></script>
+  <script src="js/auth.js?v=42"></script>
   <script src="js/ratings.js?v=40"></script>
-  <script src="js/matches.js?v=41"></script>
-  <script src="js/entities.js?v=41"></script>
-  <script src="js/feed.js?v=41"></script>
+  <script src="js/matches.js?v=43"></script>
   <script src="js/search.js?v=41"></script>
   <script src="js/account.js?v=40"></script>
-  <script src="js/admin.js?v=40"></script>
 </body>
 </html>

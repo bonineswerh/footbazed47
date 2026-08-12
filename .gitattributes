@@ -1,0 +1,2 @@
+assets/vendor/** -whitespace
+types/database.ts -whitespace

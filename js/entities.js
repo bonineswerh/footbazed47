@@ -160,7 +160,7 @@
           <div class="entity-meta">${[club.area_name,club.venue,club.founded?`Основан в ${club.founded}`:''].filter(Boolean).map(item=>`<span>${esc(item)}</span>`).join('')}</div>
           ${competitions.length?`<div class="entity-chips">${competitions.map(item=>`<span>${esc(item)}</span>`).join('')}</div>`:''}
         </div>
-        <button class="entity-share" type="button" onclick="copyAppLink('#club/${Number(club.id)}','Ссылка на клуб')" aria-label="Поделиться клубом" title="Поделиться">${ico('share',18)}</button>
+        <button class="entity-share" type="button" onclick="copyAppLink('/club/${Number(club.id)}','Ссылка на клуб')" aria-label="Поделиться клубом" title="Поделиться">${ico('share',18)}</button>
       </header>
       <div class="entity-stat-strip">
         <div><strong>${Number(stats.squad_count)||0}</strong><span>Игроков</span></div>
@@ -192,7 +192,7 @@
       clubTab='overview';
       target.innerHTML=renderClub(clubPayload);
       renderClubBody();
-      document.title=`${data.club.name} — FOOTBAZED`;
+      window.FBZSEO?.club(data.club);
     }catch(error){
       console.error('Club page error:',error);
       if(request===clubRequest)target.innerHTML=entityError('club',numericId);
@@ -229,7 +229,7 @@
           <div class="entity-meta"><span>${esc(positionLabel(player.position))}</span>${club?`<span>${clubRoute(club.id,club.name)}</span>`:player.team?`<span>${esc(player.team)}</span>`:''}</div>
         </div>
         ${club?identityVisual({name:club.name,image:club.crest_url,className:'entity-corner-mark'}):''}
-        <button class="entity-share" type="button" onclick="copyAppLink('#player/${Number(player.id)}','Ссылка на игрока')" aria-label="Поделиться игроком" title="Поделиться">${ico('share',18)}</button>
+        <button class="entity-share" type="button" onclick="copyAppLink('/player/${Number(player.id)}','Ссылка на игрока')" aria-label="Поделиться игроком" title="Поделиться">${ico('share',18)}</button>
       </header>
       <div class="entity-stat-strip player-stats">
         <div><strong>${ratingValue(stats.average)}</strong><span>Средняя оценка</span></div>
@@ -262,7 +262,7 @@
       if(request!==playerRequest)return;
       if(!data?.player){target.innerHTML=entityError('player',numericId);return;}
       target.innerHTML=renderPlayer(data);
-      document.title=`${data.player.name} — FOOTBAZED`;
+      window.FBZSEO?.player(data.player);
     }catch(error){
       console.error('Player page error:',error);
       if(request===playerRequest)target.innerHTML=entityError('player',numericId);

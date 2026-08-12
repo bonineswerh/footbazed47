@@ -3,9 +3,12 @@
 
   const PAGE_SIZE=12;
   let scope='all';
-  let offset=0;
+  let cursor=null;
+  let loadedCount=0;
   let hasMore=false;
+  let loadingMore=false;
   let requestVersion=0;
+  const seenRatings=new Set();
   const openComments=new Set();
   const commentCache=new Map();
 
@@ -76,7 +79,7 @@
       <footer class="feed-actions">
         <button class="feed-action like-action${item.liked_by_me?' on':''}" type="button" ${own?'disabled title="Свою запись нельзя оценить"':`onclick="FBZFeed.toggleLike(${Number(item.rating_id)},this)"`} aria-pressed="${item.liked_by_me?'true':'false'}">${ico('heart',16)}<span>${Number(item.like_count)||0}</span><small>Нравится</small></button>
         <button class="feed-action" type="button" onclick="FBZFeed.toggleComments(${Number(item.rating_id)},this)">${ico('chat',16)}<span data-comment-count>${Number(item.comment_count)||0}</span><small>Обсудить</small></button>
-        ${own?`<button class="feed-action feed-edit" type="button" onclick="openRate(${Number(item.match_id)})">${ico('edit',15)}<small>Изменить</small></button>`:''}
+        ${own?`<button class="feed-action feed-edit" type="button" onclick="openRate(${Number(item.match_id)})" aria-label="Изменить оценку" title="Изменить оценку">${ico('edit',15)}<small>Изменить</small></button>`:''}
       </footer>
       <div class="feed-comments" id="feed-comments-${Number(item.rating_id)}" aria-live="polite"></div>
     </article>`;
@@ -106,19 +109,34 @@
     const target=document.getElementById('feedG');
     const meta=document.getElementById('feedMeta');
     if(!target)return;
-    if(!append){offset=0;openComments.clear();commentCache.clear();target.innerHTML=feedSkeleton();}
+    if(append&&loadingMore)return;
+    if(!append){cursor=null;loadedCount=0;seenRatings.clear();openComments.clear();commentCache.clear();target.innerHTML=feedSkeleton();}
+    loadingMore=append;
     const version=++requestVersion;
     document.getElementById('feedMore').innerHTML=append?'<span class="feed-loading-more"><span class="spin"></span>Загружаем</span>':'';
     try{
-      const{data,error}=await sb.rpc('get_social_feed',{p_scope:scope,p_limit:PAGE_SIZE,p_offset:offset});
+      const{data,error}=await sb.rpc('get_social_feed_page',{
+        p_scope:scope,
+        p_limit:PAGE_SIZE,
+        p_cursor_created_at:cursor?.created_at||null,
+        p_cursor_rating_id:cursor?.rating_id||null,
+        p_cursor_score:cursor?.score??null
+      });
       if(error)throw error;
       if(version!==requestVersion)return;
-      const items=Array.isArray(data?.items)?data.items:[];
-      hasMore=Boolean(data?.has_more);
-      offset=Number(data?.next_offset)||offset+items.length;
+      const pageItems=Array.isArray(data?.items)?data.items:[];
+      const items=pageItems.filter(item=>{
+        const id=Number(item.rating_id);
+        if(!Number.isFinite(id)||seenRatings.has(id))return false;
+        seenRatings.add(id);
+        return true;
+      });
+      cursor=data?.next_cursor&&typeof data.next_cursor==='object'?data.next_cursor:null;
+      hasMore=Boolean(data?.has_more&&cursor);
+      loadedCount+=items.length;
       if(append&&items.length)target.insertAdjacentHTML('beforeend',items.map(renderFeedItem).join(''));
       else target.innerHTML=items.length?items.map(renderFeedItem).join(''):emptyState();
-      if(meta)meta.textContent=items.length?`${scopeLabel()} · ${offset}`:scopeLabel();
+      if(meta)meta.textContent=loadedCount?`${scopeLabel()} · ${loadedCount}`:scopeLabel();
       renderMore();
       injectIcons();
     }catch(error){
@@ -126,10 +144,14 @@
       if(version!==requestVersion)return;
       if(!append)target.innerHTML='<div class="feed-empty"><strong>Не удалось обновить ленту</strong><span>Проверь соединение и повтори попытку.</span><button class="btn btn-g" type="button" onclick="FBZFeed.load()">Повторить</button></div>';
       renderMore();
-    }
+    }finally{loadingMore=false;}
   }
 
   function loadMore(){if(hasMore)load({append:true});}
+
+  function open(ratingId){
+    return ratingId?focusRating(ratingId):load();
+  }
 
   async function focusRating(ratingId){
     const id=Number(ratingId);
@@ -225,6 +247,11 @@
     if(count)count.textContent=Math.max(0,Number(value)||0);
   }
 
+  function adjustCommentCount(ratingId,delta){
+    const count=document.querySelector(`[data-rating-id="${Number(ratingId)}"] [data-comment-count]`);
+    if(count)updateCommentCount(ratingId,(Number(count.textContent)||0)+delta);
+  }
+
   async function addComment(event,ratingId){
     event.preventDefault();
     if(!CU){openAuth();return;}
@@ -240,7 +267,7 @@
       const comments=[...(commentCache.get(Number(ratingId))||[]),data];
       commentCache.set(Number(ratingId),comments);
       renderComments(ratingId,comments);
-      updateCommentCount(ratingId,comments.length);
+      adjustCommentCount(ratingId,1);
       document.getElementById(`comment-${Number(ratingId)}`)?.focus();
     }catch(error){
       console.error('Add comment error:',error);
@@ -258,7 +285,7 @@
       const comments=(commentCache.get(Number(ratingId))||[]).filter(comment=>Number(comment.id)!==Number(commentId));
       commentCache.set(Number(ratingId),comments);
       renderComments(ratingId,comments);
-      updateCommentCount(ratingId,comments.length);
+      adjustCommentCount(ratingId,-1);
     }catch(error){
       console.error('Delete comment error:',error);
       toast('Не удалось удалить комментарий','err');
@@ -280,7 +307,9 @@
     const target=document.getElementById('homeF');
     if(!target)return;
     try{
-      const{data,error}=await sb.rpc('get_social_feed',{p_scope:'all',p_limit:3,p_offset:0});
+      const{data,error}=await sb.rpc('get_social_feed_page',{
+        p_scope:'all',p_limit:3,p_cursor_created_at:null,p_cursor_rating_id:null,p_cursor_score:null
+      });
       if(error)throw error;
       const items=Array.isArray(data?.items)?data.items:[];
       target.innerHTML=items.length?items.map(renderHomeItem).join(''):'<div class="empty-state"><strong>Оценки появятся здесь</strong></div>';
@@ -293,5 +322,5 @@
   window.loadHomeF=loadHome;
   window.loadFeed=load;
   window.setFS=setScope;
-  window.FBZFeed={addComment,deleteComment,focusRating,load,loadHome,loadMore,setScope,toggleComments,toggleLike};
+  window.FBZFeed={addComment,deleteComment,focusRating,load,loadHome,loadMore,open,setScope,toggleComments,toggleLike};
 })();

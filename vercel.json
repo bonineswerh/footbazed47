@@ -1,13 +1,27 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/admin.js": { "maxDuration": 60 }
+    "api/admin.js": { "maxDuration": 60 },
+    "api/sitemap.js": { "maxDuration": 10 }
   },
+  "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/club/:id", "destination": "/index.html" },
+    { "source": "/player/:id", "destination": "/index.html" },
+    { "source": "/profile/:id", "destination": "/index.html" },
+    { "source": "/match/:id", "destination": "/index.html" },
+    { "source": "/match/:id/chat", "destination": "/index.html" },
+    { "source": "/matches", "destination": "/index.html" },
+    { "source": "/feed", "destination": "/index.html" },
+    { "source": "/leaderboard", "destination": "/index.html" },
+    { "source": "/friends", "destination": "/index.html" },
+    { "source": "/admin", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://uukacnyvjvgmmhbkmfzf.supabase.co wss://uukacnyvjvgmmhbkmfzf.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },

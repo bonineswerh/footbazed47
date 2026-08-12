@@ -7,14 +7,22 @@ const fixture={
   },
   users:[
     {id:'3615141a-7700-46b8-9ba5-e4f4450537fc',username:'bazed',display_name:'Bazed',avatar_url:null,is_public:true,ratings_count:11,avg_rating:7.8},
-    {id:'cd291181-2db6-42cb-9f3d-ef84ab3a9660',username:'gamlet',display_name:'Gamlet',avatar_url:null,is_public:true,ratings_count:8,avg_rating:8.1}
+    {id:'cd291181-2db6-42cb-9f3d-ef84ab3a9660',username:'gamlet',display_name:'Gamlet',avatar_url:null,is_public:true,ratings_count:8,avg_rating:8.1},
+    {id:'2b854020-9701-4f49-9c36-2b65c9dcd449',username:'natasha',display_name:'Natasha',avatar_url:null,is_public:true,ratings_count:5,avg_rating:7.4}
+  ],
+  friendships:[
+    {id:801,user_id:'2b854020-9701-4f49-9c36-2b65c9dcd449',friend_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',status:'pending',created_at:'2026-08-09T13:00:00Z'}
+  ],
+  notifications:[
+    {id:901,user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',from_user_id:'2b854020-9701-4f49-9c36-2b65c9dcd449',type:'friend_request',message:'Natasha хочет добавить вас в друзья',read:false,created_at:'2026-08-09T13:00:00Z',rating_id:null,comment_id:null},
+    {id:902,user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',from_user_id:'cd291181-2db6-42cb-9f3d-ef84ab3a9660',type:'like',message:'Gamlet оценил вашу публикацию',read:false,created_at:'2026-08-09T13:05:00Z',rating_id:501,comment_id:null}
   ],
   matches:[
     {id:101,league_name:'Champions League',home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',home_club_id:24,away_club_id:31,match_date:'2026-08-08T19:00:00Z',status:'finished',home_score:2,away_score:1,external_id:9101,league_code:'CL',matchday:1,season:'2026'},
     {id:102,league_name:'La Liga',home_team_name:'Real Madrid CF',away_team_name:'FC Barcelona',home_club_id:24,away_club_id:25,match_date:'2026-08-20T19:00:00Z',status:'scheduled',home_score:null,away_score:null,external_id:9102,league_code:'PD',matchday:2,season:'2026'}
   ],
   feed:[
-    {rating_id:501,user_id:'cd291181-2db6-42cb-9f3d-ef84ab3a9660',match_id:101,match_rating:9,comment:'Сильный второй тайм и отличный контроль центра поля.',created_at:'2026-08-09T12:00:00Z',updated_at:'2026-08-09T12:00:00Z',user:{username:'gamlet',display_name:'Gamlet',avatar_url:null},match:{league_name:'Champions League',home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',home_club_id:24,away_club_id:31,match_date:'2026-08-08T19:00:00Z',home_score:2,away_score:1},like_count:3,comment_count:1,liked_by_me:false,player_highlights:[{player_id:5290,name:'Thibaut Courtois',club_id:24,team:'Real Madrid CF',rating:8.7,is_best_player:true}]},
+    {rating_id:501,user_id:'cd291181-2db6-42cb-9f3d-ef84ab3a9660',match_id:101,match_rating:9,comment:'Сильный второй тайм и отличный контроль центра поля.',created_at:'2026-08-09T12:00:00Z',updated_at:'2026-08-09T12:00:00Z',user:{username:'gamlet',display_name:'Gamlet',avatar_url:null},match:{league_name:'Champions League',home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',home_club_id:24,away_club_id:31,match_date:'2026-08-08T19:00:00Z',home_score:2,away_score:1},like_count:3,comment_count:61,liked_by_me:false,player_highlights:[{player_id:5290,name:'Thibaut Courtois',club_id:24,team:'Real Madrid CF',rating:8.7,is_best_player:true}]},
     {rating_id:502,user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',match_id:101,match_rating:8,comment:'Матч решил темп после перерыва.',created_at:'2026-08-09T11:00:00Z',updated_at:'2026-08-09T11:00:00Z',user:{username:'bazed',display_name:'Bazed',avatar_url:null},match:{league_name:'Champions League',home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',home_club_id:24,away_club_id:31,match_date:'2026-08-08T19:00:00Z',home_score:2,away_score:1},like_count:1,comment_count:0,liked_by_me:false,player_highlights:[]}
   ],
   comments:{
@@ -41,9 +49,12 @@ const fixture={
 
 export async function installSupabaseMock(page){
   await page.addInitScript(data=>{
+    localStorage.setItem('fbz_session_hint','1');
     const state=structuredClone(data);
     state.club.matches=structuredClone(state.matches);
     let nextCommentId=900;
+    let nextFriendshipId=900;
+    let authListener=null;
 
     function promiseResult(data,error=null,count=null){
       const result=Promise.resolve({data,error,count});
@@ -54,15 +65,113 @@ export async function installSupabaseMock(page){
 
     function rpc(name,args={}){
       if(name==='get_my_profile')return promiseResult(structuredClone(state.profile));
-      if(name==='get_social_feed'){
+      if(name==='get_profile_page'){
+        const userId=String(args.p_user_id||'');
+        const profile=state.users.find(user=>user.id===userId);
+        if(!profile)return promiseResult(null);
+        const ratings=state.feed.filter(item=>item.user_id===userId).map(item=>({
+          id:item.rating_id,user_id:item.user_id,match_id:item.match_id,match_rating:item.match_rating,
+          comment:item.comment,is_public:true,created_at:item.created_at,match:{id:item.match_id,...item.match}
+        }));
+        const friendship=state.friendships
+          .filter(item=>(item.user_id===state.sessionUser.id&&item.friend_id===userId)||(item.friend_id===state.sessionUser.id&&item.user_id===userId))
+          .sort((a,b)=>(a.status==='accepted'?-1:0)-(b.status==='accepted'?-1:0))[0];
+        const friendIds=new Set(state.friendships.filter(item=>item.status==='accepted'&&(item.user_id===userId||item.friend_id===userId)).map(item=>item.user_id===userId?item.friend_id:item.user_id));
+        return promiseResult({
+          profile:{...structuredClone(profile),bio:userId===state.profile.id?state.profile.bio:null,favorite_teams:userId===state.profile.id?state.profile.favorite_teams:null,streak:userId===state.profile.id?state.profile.streak:0,created_at:state.profile.created_at,invite_code:userId===state.profile.id?'TESTCODE':null},
+          stats:{friend_count:friendIds.size,like_count:state.feed.filter(item=>item.user_id===userId).reduce((sum,item)=>sum+item.like_count,0)},
+          friendship:friendship?{status:friendship.status,direction:friendship.user_id===state.sessionUser.id?'outgoing':'incoming'}:null,
+          ratings
+        });
+      }
+      if(name==='get_leaderboard'){
+        const users=state.users.map(user=>({
+          ...structuredClone(user),
+          tl:state.feed.filter(item=>item.user_id===user.id).reduce((sum,item)=>sum+item.like_count,0),
+          rc:user.ratings_count||0
+        }));
+        users.sort((a,b)=>args.p_metric==='ratings'?b.rc-a.rc:b.tl-a.tl||b.rc-a.rc);
+        return promiseResult(users.slice(0,Number(args.p_limit)||50));
+      }
+      if(name==='get_matches_page'){
+        const status=String(args.p_status||'all');
+        const league=String(args.p_league||'all');
+        const query=String(args.p_query||'').toLocaleLowerCase();
+        const offset=Math.max(Number(args.p_offset)||0,0);
+        const limit=Math.min(Math.max(Number(args.p_limit)||24,1),48);
+        const leagues=[...new Set(state.matches.map(match=>match.league_name))].sort();
+        const items=state.matches.filter(match=>(status==='all'||match.status===status)
+          &&(league==='all'||match.league_name===league)
+          &&(!query||`${match.home_team_name} ${match.away_team_name} ${match.league_name}`.toLocaleLowerCase().includes(query)));
+        const pageItems=items.slice(offset,offset+limit);
+        return promiseResult({
+          items:structuredClone(pageItems),
+          total:items.length,
+          has_more:offset+pageItems.length<items.length,
+          next_offset:offset+pageItems.length,
+          leagues
+        });
+      }
+      if(name==='request_friendship'){
+        const otherId=String(args.p_friend_id||'');
+        const currentId=state.sessionUser.id;
+        const accepted=state.friendships.some(item=>item.status==='accepted'&&((item.user_id===currentId&&item.friend_id===otherId)||(item.user_id===otherId&&item.friend_id===currentId)));
+        if(accepted)return promiseResult({status:'accepted',changed:false});
+        const ownPending=state.friendships.some(item=>item.user_id===currentId&&item.friend_id===otherId&&item.status==='pending');
+        if(ownPending)return promiseResult({status:'pending',changed:false});
+        const incoming=state.friendships.find(item=>item.user_id===otherId&&item.friend_id===currentId&&item.status==='pending');
+        if(incoming){
+          incoming.status='accepted';
+          state.friendships.push({id:nextFriendshipId++,user_id:currentId,friend_id:otherId,status:'accepted',created_at:new Date().toISOString()});
+          return promiseResult({status:'accepted',changed:true});
+        }
+        state.friendships.push({id:nextFriendshipId++,user_id:currentId,friend_id:otherId,status:'pending',created_at:new Date().toISOString()});
+        return promiseResult({status:'pending',changed:true});
+      }
+      if(name==='respond_friendship'){
+        const requesterId=String(args.p_requester_id||'');
+        const request=state.friendships.find(item=>item.user_id===requesterId&&item.friend_id===state.sessionUser.id&&item.status==='pending');
+        if(!request)return promiseResult(null,{message:'friendship_request_not_found',code:'P0002'});
+        if(args.p_action==='accept'){
+          request.status='accepted';
+          state.friendships.push({id:nextFriendshipId++,user_id:state.sessionUser.id,friend_id:requesterId,status:'accepted',created_at:new Date().toISOString()});
+          return promiseResult({status:'accepted',changed:true});
+        }
+        state.friendships=state.friendships.filter(item=>item!==request);
+        return promiseResult({status:'rejected',changed:true});
+      }
+      if(name==='remove_friendship'){
+        const otherId=String(args.p_other_id||'');
+        const before=state.friendships.length;
+        state.friendships=state.friendships.filter(item=>!((item.user_id===state.sessionUser.id&&item.friend_id===otherId)||(item.user_id===otherId&&item.friend_id===state.sessionUser.id)));
+        return promiseResult({status:'removed',changed:before!==state.friendships.length});
+      }
+      if(name==='get_social_feed_page'||name==='get_social_feed'){
         let items=structuredClone(state.feed);
         if(args.p_scope==='mine')items=items.filter(item=>item.user_id===state.sessionUser.id);
         if(args.p_scope==='friends')items=items.filter(item=>item.user_id!==state.sessionUser.id);
-        if(args.p_scope==='popular')items.sort((a,b)=>b.like_count-a.like_count);
-        const offset=Number(args.p_offset)||0;
+        const score=item=>Number(item.like_count||0)*3+Number(item.comment_count||0)*2+(item.comment?1:0);
+        items.sort((a,b)=>args.p_scope==='popular'
+          ?score(b)-score(a)||String(b.created_at).localeCompare(String(a.created_at))||Number(b.rating_id)-Number(a.rating_id)
+          :String(b.created_at).localeCompare(String(a.created_at))||Number(b.rating_id)-Number(a.rating_id));
+        if(name==='get_social_feed_page'&&args.p_cursor_created_at){
+          items=items.filter(item=>args.p_scope==='popular'
+            ?score(item)<Number(args.p_cursor_score)
+              ||(score(item)===Number(args.p_cursor_score)&&String(item.created_at)<String(args.p_cursor_created_at))
+              ||(score(item)===Number(args.p_cursor_score)&&String(item.created_at)===String(args.p_cursor_created_at)&&Number(item.rating_id)<Number(args.p_cursor_rating_id))
+            :String(item.created_at)<String(args.p_cursor_created_at)
+              ||(String(item.created_at)===String(args.p_cursor_created_at)&&Number(item.rating_id)<Number(args.p_cursor_rating_id)));
+        }
+        const offset=name==='get_social_feed'?Number(args.p_offset)||0:0;
         const limit=Number(args.p_limit)||12;
         const pageItems=items.slice(offset,offset+limit);
-        return promiseResult({items:pageItems,has_more:offset+limit<items.length,next_offset:offset+pageItems.length});
+        const last=pageItems.at(-1);
+        return promiseResult({
+          items:pageItems,
+          has_more:offset+limit<items.length,
+          next_offset:offset+pageItems.length,
+          next_cursor:last&&offset+limit<items.length?{created_at:last.created_at,rating_id:last.rating_id,score:score(last)}:null
+        });
       }
       if(name==='get_rating_comments')return promiseResult(structuredClone(state.comments[args.p_rating_id]||[]));
       if(name==='toggle_rating_like'){
@@ -97,7 +206,9 @@ export async function installSupabaseMock(page){
       if(table==='users')return structuredClone(state.users);
       if(table==='matches')return structuredClone(state.matches);
       if(table==='ratings')return state.feed.map(item=>({id:item.rating_id,user_id:item.user_id,match_id:item.match_id,match_rating:item.match_rating,comment:item.comment,is_public:true,created_at:item.created_at}));
-      if(table==='notifications'||table==='friendships'||table==='rating_likes'||table==='rating_comments'||table==='predictions'||table==='chat_messages'||table==='players')return[];
+      if(table==='friendships')return structuredClone(state.friendships);
+      if(table==='notifications')return structuredClone(state.notifications);
+      if(table==='rating_likes'||table==='rating_comments'||table==='predictions'||table==='chat_messages'||table==='players')return[];
       return[];
     }
 
@@ -124,6 +235,11 @@ export async function installSupabaseMock(page){
         if(query.orderBy)rows.sort((a,b)=>String(a[query.orderBy.column]||'').localeCompare(String(b[query.orderBy.column]||''))*(query.orderBy.ascending?1:-1));
         if(query.limitValue!==null)rows=rows.slice(0,query.limitValue);
         const count=table==='users'?6:table==='matches'?202:table==='ratings'?16:rows.length;
+        if(query.operation==='update'&&table==='users'){
+          const matchingIds=new Set(rows.map(row=>String(row.id)));
+          state.users=state.users.map(row=>matchingIds.has(String(row.id))?{...row,...structuredClone(query.writeData)}:row);
+          if(matchingIds.has(String(state.profile.id)))state.profile={...state.profile,...structuredClone(query.writeData)};
+        }
         if(query.operation!=='select')return Promise.resolve({data:query.writeData,error:null,count:null});
         return Promise.resolve({data:query.head?null:(single?(rows[0]||null):rows),error:null,count:query.countMode?count:null});
       }
@@ -133,14 +249,31 @@ export async function installSupabaseMock(page){
     window.__FOOTBAZED_TEST_CLIENT__={
       auth:{
         getSession:()=>promiseResult({session:{user:structuredClone(state.sessionUser)}}),
-        onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
-        signOut:()=>promiseResult(null)
+        getUser:()=>promiseResult({user:structuredClone(state.sessionUser)}),
+        onAuthStateChange:callback=>{authListener=callback;return{data:{subscription:{unsubscribe(){authListener=null;}}}};},
+        resetPasswordForEmail:(email,options)=>{state.passwordRecovery={email,options};return promiseResult({});},
+        updateUser:attributes=>{state.updatedUser=attributes;return promiseResult({user:structuredClone(state.sessionUser)});},
+        signOut:()=>{queueMicrotask(()=>authListener?.('SIGNED_OUT',null));return promiseResult(null);}
       },
       from,
       rpc,
       channel:()=>({on(){return this;},subscribe(){return this;}}),
       removeChannel:()=>promiseResult(null),
-      storage:{from:()=>({upload:()=>promiseResult(null),getPublicUrl:()=>({data:{publicUrl:''}})})}
+      storage:{from:bucket=>({
+        upload:(path,file,options={})=>{
+          state.storageUpload={bucket,path,size:file?.size||0,type:file?.type||'',options:structuredClone(options)};
+          return promiseResult({path});
+        },
+        getPublicUrl:path=>({data:{publicUrl:`https://storage.example.test/${encodeURIComponent(bucket)}/${String(path).split('/').map(encodeURIComponent).join('/')}`}})
+      })}
+    };
+    window.__FOOTBAZED_TEST_AUTH__={
+      emit:(event,session)=>authListener?.(event,session),
+      session:()=>({user:structuredClone(state.sessionUser)}),
+      recovery:()=>structuredClone(state.passwordRecovery||null),
+      updatedUser:()=>structuredClone(state.updatedUser||null),
+      storage:()=>structuredClone(state.storageUpload||null),
+      profile:()=>structuredClone(state.profile)
     };
   },fixture);
 }
