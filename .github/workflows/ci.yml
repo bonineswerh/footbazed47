@@ -41,7 +41,7 @@ jobs:
       - name: Verify generated database types
         run: |
           cp types/database.ts /tmp/database.ts
-          supabase gen types typescript --local > types/database.ts
+          supabase gen types typescript --local --schema public > types/database.ts
           diff -u /tmp/database.ts types/database.ts
       - run: supabase test db
       - run: supabase db lint --local --level error

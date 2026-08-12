@@ -1,7 +1,7 @@
 'use strict';
 
 const PRODUCTION_SUPABASE_URL='https://uukacnyvjvgmmhbkmfzf.supabase.co';
-const LEGACY_PRODUCTION_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2Fjbnl2anZnbW1oYmttZnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MDM3MzcsImV4cCI6MjA4NzA3OTczN30.hZIYkrWFqRwu0IciG2iF3TyP8WnVQcV1sFyjfeVUpRc';
+const PRODUCTION_PUBLISHABLE_KEY='sb_publishable_rLano6D68MF7Q25nzpY3hw_Qu5pLgNs';
 
 function sendScript(res,status,payload,head=false){
   res.statusCode=status;
@@ -21,7 +21,7 @@ module.exports=function handler(req,res){
     ||(isProduction?(process.env.SUPABASE_URL||PRODUCTION_SUPABASE_URL):'');
   const supabaseKey=process.env.SUPABASE_PUBLISHABLE_KEY
     ||process.env.SUPABASE_ANON_KEY
-    ||(isProduction?LEGACY_PRODUCTION_ANON_KEY:'');
+    ||(isProduction?PRODUCTION_PUBLISHABLE_KEY:'');
 
   if(!supabaseUrl||!supabaseKey){
     return sendScript(res,503,{environment,error:'runtime_config_missing'},head);

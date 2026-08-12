@@ -1,2 +1,4 @@
-assets/vendor/** -whitespace
+assets/vendor/** binary -whitespace
+.github/workflows/*.yml text eol=lf
+api/*.js text eol=lf
 types/database.ts -whitespace
