@@ -1,3 +1,4 @@
 # Public legacy anon key committed before migration to Supabase publishable keys.
 # This fingerprint is immutable and does not allow future JWT findings.
 5aee738302fd70851440d3d0109a80dd10907da9:api/config.js:jwt:4
+c36692a9b28f100e6bb079602a161a9fb2692d67:api/config.js:generic-api-key:4
