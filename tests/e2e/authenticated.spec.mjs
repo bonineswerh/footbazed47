@@ -227,8 +227,11 @@ test('отозванная сессия немедленно возвращае�
 
 test('уведомление открывает публикацию без таймера и гонки рендера',async({page})=>{
   await page.goto('/?__e2e=1#matches');
-  await page.evaluate(()=>toggleNotif());
-  await page.locator('.notif-item').filter({hasText:'Gamlet оценил вашу публикацию'}).click();
+  const notification=page.locator('.notif-item').filter({hasText:'Gamlet оценил вашу публикацию'});
+  await expect(notification).toBeAttached();
+  await page.getByRole('button',{name:'Уведомления'}).click();
+  await expect(page.locator('#notifPanel')).toBeVisible();
+  await notification.click();
   await expect(page).toHaveURL(/\/feed\?__e2e=1$/u);
   await expect(page.locator('.feed-entry[data-rating-id="501"]')).toHaveClass(/focused/u);
 });
