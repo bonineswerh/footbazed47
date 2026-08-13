@@ -29,6 +29,22 @@ test('environment policy permits a separate development project',async()=>{
   }),[]);
 });
 
+test('environment policy permits the production project only in Vercel production',async()=>{
+  const {validateEnvironment}=await import('../scripts/check-environment.mjs');
+  assert.deepEqual(validateEnvironment({
+    environment:{CI:'true',VERCEL:'1',VERCEL_ENV:'production',SUPABASE_URL:'https://uukacnyvjvgmmhbkmfzf.supabase.co'},
+    files:[]
+  }),[]);
+});
+
+test('environment policy still rejects the production project in Vercel preview',async()=>{
+  const {validateEnvironment}=await import('../scripts/check-environment.mjs');
+  assert.deepEqual(validateEnvironment({
+    environment:{CI:'true',VERCEL:'1',VERCEL_ENV:'preview',SUPABASE_URL:'https://uukacnyvjvgmmhbkmfzf.supabase.co'},
+    files:[]
+  }),['SUPABASE_URL points to the production Supabase project']);
+});
+
 test('CI cannot enable the production escape hatch',async()=>{
   const {validateEnvironment}=await import('../scripts/check-environment.mjs');
   assert.deepEqual(validateEnvironment({

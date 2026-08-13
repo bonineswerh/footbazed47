@@ -13,10 +13,11 @@ const checkedVariables=[
 
 export function validateEnvironment({environment=process.env,files=[]}={}){
   const violations=[];
+  const isVercelProduction=environment.VERCEL==='1'&&environment.VERCEL_ENV==='production';
   const allowLocalOverride=environment.CI!=='true'&&environment.FOOTBAZED_ALLOW_PRODUCTION==='1';
 
   for(const name of checkedVariables){
-    if(String(environment[name]||'').includes(productionRef)&&!allowLocalOverride){
+    if(String(environment[name]||'').includes(productionRef)&&!allowLocalOverride&&!isVercelProduction){
       violations.push(`${name} points to the production Supabase project`);
     }
   }
@@ -25,7 +26,7 @@ export function validateEnvironment({environment=process.env,files=[]}={}){
     if(file.contents.includes(productionRef))violations.push(`${file.name} contains the production Supabase project ref`);
   }
 
-  if(environment.CI==='true'&&environment.FOOTBAZED_ALLOW_PRODUCTION==='1'){
+  if(environment.CI==='true'&&environment.FOOTBAZED_ALLOW_PRODUCTION==='1'&&!isVercelProduction){
     violations.push('FOOTBAZED_ALLOW_PRODUCTION cannot be enabled in CI');
   }
   return violations;
@@ -44,6 +45,6 @@ if(invokedPath===fileURLToPath(import.meta.url)){
     violations.forEach(message=>console.error(`ERROR: ${message}`));
     process.exitCode=1;
   }else{
-    console.log('Environment policy passed: production Supabase is blocked outside production deployment.');
+    console.log('Environment policy passed: production Supabase is blocked outside Vercel production deployment.');
   }
 }
