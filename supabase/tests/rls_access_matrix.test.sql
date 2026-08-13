@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(57);
+select plan(59);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -103,6 +103,7 @@ select is((select count(*)::integer from public.players where id = 960001), 1, '
 select is((select count(*)::integer from public.competitions where id = 945001), 1, 'anon reads a competition without a logo');
 select is((select count(*)::integer from public.media_assets where id = 946001), 1, 'anon reads a verified media asset');
 select is((select count(*)::integer from public.media_assets where id = 946002), 0, 'anon cannot read an unknown media asset');
+select is(public.get_club_page(940001)->>'is_favorite', 'false', 'anon opens a club page without favorite table access');
 
 -- 17-21: anonymous roles cannot reach privileged data or write RPCs.
 select ok(not has_table_privilege('anon', 'public.admin_audit_logs', 'SELECT'), 'anon has no audit log privilege');
@@ -125,6 +126,7 @@ select is((select count(*)::integer from public.friendships where id in (973001,
 select ok(has_function_privilege('authenticated', 'public.set_favorite_club(bigint,boolean)', 'EXECUTE'), 'authenticated can mutate favorites through RPC');
 select is(public.set_favorite_club(940001, true)->>'is_favorite', 'true', 'owner adds a favorite club');
 select is(public.set_favorite_club(940001, true)->>'changed', 'false', 'duplicate favorite add is idempotent');
+select is(public.get_club_page(940001)->>'is_favorite', 'true', 'club page resolves the current owner favorite');
 
 -- 32-33: authenticated RPC grants exist for the transaction-safe write path.
 select ok(has_function_privilege('authenticated', 'public.request_friendship(uuid)', 'EXECUTE'), 'authenticated can request friendships through RPC');
