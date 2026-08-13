@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(10);
+select plan(13);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -44,6 +44,14 @@ select throws_ok(
   'player_not_in_match',
   'a player outside the match roster is rejected'
 );
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+select is(public.set_favorite_club(910001, true)->>'changed', 'true', 'favorite club is added atomically');
+select is(public.set_favorite_club(910001, true)->>'changed', 'false', 'duplicate favorite add is idempotent');
+select is(public.set_favorite_club(910001, false)->>'is_favorite', 'false', 'favorite club is removed atomically');
+
+reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}', true);

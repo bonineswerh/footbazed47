@@ -19,13 +19,14 @@ function entry(path,{lastmod='',changefreq='',priority=''}={}){
   return `<url><loc>${escapeXml(`${ORIGIN}${path}`)}</loc>${lastmod?`<lastmod>${escapeXml(lastmod)}</lastmod>`:''}${changefreq?`<changefreq>${changefreq}</changefreq>`:''}${priority?`<priority>${priority}</priority>`:''}</url>`;
 }
 
-function buildSitemap({clubs=[],players=[],matches=[]}={}){
+function buildSitemap({clubs=[],players=[],competitions=[],matches=[]}={}){
   const urls=[
     entry('/',{changefreq:'daily',priority:'1.0'}),
     entry('/matches',{changefreq:'hourly',priority:'0.9'}),
     entry('/leaderboard',{changefreq:'daily',priority:'0.6'}),
     ...clubs.filter(item=>Number.isFinite(Number(item.id))).map(item=>entry(`/club/${Number(item.id)}`,{lastmod:validDate(item.updated_at),changefreq:'daily',priority:'0.8'})),
     ...players.filter(item=>Number.isFinite(Number(item.id))).map(item=>entry(`/player/${Number(item.id)}`,{lastmod:validDate(item.created_at),changefreq:'weekly',priority:'0.7'})),
+    ...competitions.filter(item=>Number.isFinite(Number(item.id))).map(item=>entry(`/competition/${Number(item.id)}`,{lastmod:validDate(item.updated_at),changefreq:'daily',priority:'0.7'})),
     ...matches.filter(item=>Number.isFinite(Number(item.id))).map(item=>entry(`/match/${Number(item.id)}`,{changefreq:'daily',priority:'0.7'}))
   ];
   return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join('')}</urlset>`;
@@ -68,12 +69,13 @@ module.exports=async function handler(req,res){
   let degraded=false;
   if(baseUrl&&key){
     try{
-      const [clubs,players,matches]=await Promise.all([
+      const [clubs,players,competitions,matches]=await Promise.all([
         readAll(baseUrl,key,'clubs','id,updated_at','id'),
         readAll(baseUrl,key,'players','id,created_at','id'),
+        readAll(baseUrl,key,'competitions','id,updated_at','id'),
         readAll(baseUrl,key,'matches','id','id')
       ]);
-      data={clubs,players,matches};
+      data={clubs,players,competitions,matches};
     }catch(error){
       degraded=true;
       console.error('Sitemap data error:',error instanceof Error?error.message:'unknown');

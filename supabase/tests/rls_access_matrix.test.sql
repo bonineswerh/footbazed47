@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(45);
+select plan(57);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -33,6 +33,16 @@ values
 
 insert into public.players (id, name, team, club_id) overriding system value
 values (960001, 'RLS Player', 'RLS Home FC', 940001);
+
+insert into public.competitions (id, code, name) overriding system value
+values (945001, 'RL', 'RLS League');
+
+insert into public.media_assets (
+  id, asset_type, source_provider, source_url, usage_status, verified_at
+) overriding system value
+values
+  (946001, 'club_logo', 'rls-test', 'https://media.example/verified.png', 'verified', now()),
+  (946002, 'club_logo', 'rls-test', 'https://media.example/unknown.png', 'unknown', null);
 
 insert into public.ratings (id, user_id, match_id, match_rating, comment, is_public)
 values
@@ -87,15 +97,24 @@ select is((select count(*)::integer from public.rating_likes where id = 974001),
 select is((select count(*)::integer from public.rating_likes where id = 974002), 0, 'anon cannot read likes on a private rating');
 select is((select count(*)::integer from public.chat_messages where id = 977001), 1, 'anon reads public match chat');
 
--- 12-14: anonymous roles cannot reach privileged data or write RPCs.
+-- 12-16: public catalog remains media-optional and exposes VERIFIED assets only.
+select is((select count(*)::integer from public.clubs where id = 940001), 1, 'anon reads a club without a logo');
+select is((select count(*)::integer from public.players where id = 960001), 1, 'anon reads a player without a photo');
+select is((select count(*)::integer from public.competitions where id = 945001), 1, 'anon reads a competition without a logo');
+select is((select count(*)::integer from public.media_assets where id = 946001), 1, 'anon reads a verified media asset');
+select is((select count(*)::integer from public.media_assets where id = 946002), 0, 'anon cannot read an unknown media asset');
+
+-- 17-21: anonymous roles cannot reach privileged data or write RPCs.
 select ok(not has_table_privilege('anon', 'public.admin_audit_logs', 'SELECT'), 'anon has no audit log privilege');
 select ok(not has_function_privilege('anon', 'public.request_friendship(uuid)', 'EXECUTE'), 'anon cannot request friendships');
 select ok(not has_function_privilege('anon', 'public.save_match_rating(bigint,smallint,text,boolean,jsonb)', 'EXECUTE'), 'anon cannot save ratings');
+select ok(not has_function_privilege('anon', 'public.set_favorite_club(bigint,boolean)', 'EXECUTE'), 'anon cannot mutate favorite clubs');
+select ok(not has_table_privilege('anon', 'public.favorite_clubs', 'SELECT'), 'anon cannot read favorite clubs');
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
 
--- 15-21: the owner can read and update only owner-scoped state.
+-- 22-31: the owner can read and update only owner-scoped state.
 select is((select count(*)::integer from public.users where id = '11000000-0000-0000-0000-000000000002'), 1, 'owner reads the private profile');
 select is((select count(*)::integer from public.ratings where id = 970002), 1, 'owner reads the private rating');
 select is((select count(*)::integer from public.player_ratings where id = 971002), 1, 'owner reads the private player rating');
@@ -103,26 +122,31 @@ select is((select count(*)::integer from public.predictions where id = 972001), 
 select is((select count(*)::integer from public.notifications where id = 976001), 1, 'owner reads the notification');
 select lives_ok($$update public.notifications set read = true where id = 976001$$, 'owner marks a notification as read');
 select is((select count(*)::integer from public.friendships where id in (973001, 973002)), 2, 'either friendship party reads both symmetric rows');
+select ok(has_function_privilege('authenticated', 'public.set_favorite_club(bigint,boolean)', 'EXECUTE'), 'authenticated can mutate favorites through RPC');
+select is(public.set_favorite_club(940001, true)->>'is_favorite', 'true', 'owner adds a favorite club');
+select is(public.set_favorite_club(940001, true)->>'changed', 'false', 'duplicate favorite add is idempotent');
 
--- 22-23: authenticated RPC grants exist for the transaction-safe write path.
+-- 32-33: authenticated RPC grants exist for the transaction-safe write path.
 select ok(has_function_privilege('authenticated', 'public.request_friendship(uuid)', 'EXECUTE'), 'authenticated can request friendships through RPC');
 select ok(has_function_privilege('authenticated', 'public.respond_friendship(uuid,text)', 'EXECUTE'), 'authenticated can respond to friendships through RPC');
 
 select set_config('request.jwt.claims', '{"sub":"11000000-0000-0000-0000-000000000003","role":"authenticated"}', true);
 
--- 24-28: an unrelated user cannot observe another user's private state.
+-- 34-39: an unrelated user cannot observe another user's private state.
 select is((select count(*)::integer from public.users where id = '11000000-0000-0000-0000-000000000002'), 0, 'unrelated user cannot read a private profile');
 select is((select count(*)::integer from public.ratings where id = 970002), 0, 'unrelated user cannot read a private rating');
 select is((select count(*)::integer from public.predictions where id = 972001), 0, 'unrelated user cannot read another prediction');
 select is((select count(*)::integer from public.notifications where id = 976001), 0, 'unrelated user cannot read another notification');
 select is((select count(*)::integer from public.friendships where id in (973001, 973002)), 0, 'unrelated user cannot read another friendship');
+select is((select count(*)::integer from public.favorite_clubs where club_id = 940001), 0, 'unrelated user cannot read another favorite club');
 
--- 29-37: direct writes cannot bypass domain RPCs or append-only contracts.
+-- 40-49: direct writes cannot bypass domain RPCs or append-only contracts.
 select ok(not has_table_privilege('authenticated', 'public.friendships', 'INSERT'), 'friendships cannot be inserted directly');
 select ok(not has_table_privilege('authenticated', 'public.friendships', 'UPDATE'), 'friendships cannot be updated directly');
 select ok(not has_table_privilege('authenticated', 'public.friendships', 'DELETE'), 'friendships cannot be deleted directly');
 select ok(not has_table_privilege('authenticated', 'public.ratings', 'INSERT'), 'match ratings cannot be inserted directly');
 select ok(not has_table_privilege('authenticated', 'public.player_ratings', 'INSERT'), 'player ratings cannot be inserted directly');
+select ok(not has_table_privilege('authenticated', 'public.favorite_clubs', 'INSERT'), 'favorite clubs cannot be inserted directly');
 select ok(not has_table_privilege('authenticated', 'public.chat_messages', 'UPDATE'), 'chat messages are not client-editable');
 select ok(not has_table_privilege('authenticated', 'public.chat_messages', 'DELETE'), 'chat messages are not client-deletable');
 select lives_ok(
@@ -135,7 +159,7 @@ select throws_like(
   'authenticated user cannot spoof a chat author'
 );
 
--- 38-39: prediction RLS permits owner writes and rejects identity spoofing.
+-- 50-51: prediction RLS permits owner writes and rejects identity spoofing.
 select lives_ok(
   $$insert into public.predictions (user_id, match_id, home_pred, away_pred) values ('11000000-0000-0000-0000-000000000003', 950002, 1, 1)$$,
   'authenticated user creates an own prediction'
@@ -146,7 +170,7 @@ select throws_like(
   'authenticated user cannot spoof a prediction owner'
 );
 
--- 40-43: administrative and retired tables stay outside the client API.
+-- 52-55: administrative and retired tables stay outside the client API.
 select ok(not has_table_privilege('authenticated', 'public.admin_audit_logs', 'SELECT'), 'authenticated cannot read audit logs directly');
 select ok(not has_table_privilege('authenticated', 'public.support_tickets', 'SELECT'), 'authenticated cannot access retired support tickets');
 select ok(not has_table_privilege('authenticated', 'public.live_chat_messages', 'SELECT'), 'authenticated cannot access retired live chat');

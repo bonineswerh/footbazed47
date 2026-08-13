@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=46">
+  <link rel="stylesheet" href="styles.css?v=48">
 </head>
 <body>
 
@@ -35,7 +35,7 @@
       <button type="button" class="nav-link active" aria-current="page" onclick="go('home')">Главная</button>
       <button type="button" class="nav-link" onclick="go('matches')">Матчи</button>
       <button type="button" class="nav-link" onclick="go('feed')">Лента</button>
-      <button type="button" class="nav-link" onclick="go('leaderboard')">Лидеры</button>
+      <button type="button" class="nav-link" onclick="go('leaderboard')">Рейтинги</button>
       <button type="button" class="nav-link" onclick="go('friends')">Друзья</button>
     </nav>
     <div class="header-actions">
@@ -63,47 +63,82 @@
   
   <!-- HOME -->
   <div class="page on" id="page-home">
-    <section class="hero">
-      <span class="hero-tag">РЕЙТИНГИ · АНАЛИТИКА · СООБЩЕСТВО</span>
-      <h1>ОЦЕНИВАЙ<br>ФУТБОЛ</h1>
-      <p>Ставь оценки матчам, оценивай игроков, сравнивай мнения с друзьями. FOOTBAZED — платформа, где футбол оценивают болельщики.</p>
-      <div class="hero-btns" id="heroBtns">
-        <button class="btn btn-l" onclick="openRegister()">Зарегистрироваться →</button>
-      </div>
-      <div class="hero-stats">
-        <div class="hstat">
-          <div class="hstat-v" id="hU">0</div>
-          <div class="hstat-l">Пользователей</div>
+    <div class="guest-home-intro">
+      <section class="hero">
+        <span class="hero-tag">РЕЙТИНГИ · АНАЛИТИКА · СООБЩЕСТВО</span>
+        <h1>ОЦЕНИВАЙ<br>ФУТБОЛ</h1>
+        <p>Ставь оценки матчам, оценивай игроков, сравнивай мнения с друзьями. FOOTBAZED — платформа, где футбол оценивают болельщики.</p>
+        <div class="hero-btns" id="heroBtns">
+          <button class="btn btn-l" onclick="openRegister()">Зарегистрироваться →</button>
         </div>
-        <div class="hstat">
-          <div class="hstat-v" id="hR">0</div>
-          <div class="hstat-l">Оценок</div>
+        <div class="hero-stats">
+          <div class="hstat">
+            <div class="hstat-v" id="hU">0</div>
+            <div class="hstat-l">Пользователей</div>
+          </div>
+          <div class="hstat">
+            <div class="hstat-v" id="hR">0</div>
+            <div class="hstat-l">Оценок</div>
+          </div>
+          <div class="hstat">
+            <div class="hstat-v" id="hM">0</div>
+            <div class="hstat-l">Матчей</div>
+          </div>
         </div>
-        <div class="hstat">
-          <div class="hstat-v" id="hM">0</div>
-          <div class="hstat-l">Матчей</div>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <div class="marquee-wrap">
-      <div class="marquee">
-        <span class="marquee-item">PREMIER LEAGUE <span class="mq-dot"></span></span>
-        <span class="marquee-item">LA LIGA <span class="mq-dot"></span></span>
-        <span class="marquee-item">SERIE A <span class="mq-dot"></span></span>
-        <span class="marquee-item">BUNDESLIGA <span class="mq-dot"></span></span>
-        <span class="marquee-item">LIGUE 1 <span class="mq-dot"></span></span>
-        <span class="marquee-item">CHAMPIONS LEAGUE <span class="mq-dot"></span></span>
-        <span class="marquee-item">EUROPA LEAGUE <span class="mq-dot"></span></span>
-        <span class="marquee-item">PREMIER LEAGUE <span class="mq-dot"></span></span>
-        <span class="marquee-item">LA LIGA <span class="mq-dot"></span></span>
-        <span class="marquee-item">SERIE A <span class="mq-dot"></span></span>
-        <span class="marquee-item">BUNDESLIGA <span class="mq-dot"></span></span>
-        <span class="marquee-item">LIGUE 1 <span class="mq-dot"></span></span>
-        <span class="marquee-item">CHAMPIONS LEAGUE <span class="mq-dot"></span></span>
-        <span class="marquee-item">EUROPA LEAGUE <span class="mq-dot"></span></span>
+      <div class="marquee-wrap">
+        <div class="marquee">
+          <span class="marquee-item">PREMIER LEAGUE <span class="mq-dot"></span></span>
+          <span class="marquee-item">LA LIGA <span class="mq-dot"></span></span>
+          <span class="marquee-item">SERIE A <span class="mq-dot"></span></span>
+          <span class="marquee-item">BUNDESLIGA <span class="mq-dot"></span></span>
+          <span class="marquee-item">LIGUE 1 <span class="mq-dot"></span></span>
+          <span class="marquee-item">CHAMPIONS LEAGUE <span class="mq-dot"></span></span>
+          <span class="marquee-item">EUROPA LEAGUE <span class="mq-dot"></span></span>
+          <span class="marquee-item">PREMIER LEAGUE <span class="mq-dot"></span></span>
+          <span class="marquee-item">LA LIGA <span class="mq-dot"></span></span>
+          <span class="marquee-item">SERIE A <span class="mq-dot"></span></span>
+          <span class="marquee-item">BUNDESLIGA <span class="mq-dot"></span></span>
+          <span class="marquee-item">LIGUE 1 <span class="mq-dot"></span></span>
+          <span class="marquee-item">CHAMPIONS LEAGUE <span class="mq-dot"></span></span>
+          <span class="marquee-item">EUROPA LEAGUE <span class="mq-dot"></span></span>
+        </div>
       </div>
     </div>
+
+    <section class="home-dashboard" id="homeDashboard" aria-labelledby="homeDashboardTitle">
+      <div class="home-dashboard-head">
+        <div>
+          <span class="section-kicker">Мой FOOTBAZED</span>
+          <h1 id="homeDashboardTitle">Футбольный день</h1>
+          <p id="homeDashboardLead">Собираем ваши матчи и оценки.</p>
+        </div>
+        <div class="home-dashboard-actions">
+          <button class="btn btn-l" type="button" onclick="go('matches')"><span data-i="football"></span> Матчи</button>
+          <button class="btn btn-g" type="button" onclick="goOwnProfile()"><span data-i="users"></span> Профиль</button>
+        </div>
+      </div>
+      <div class="home-overview" id="homeOverview" aria-live="polite">
+        <div class="home-overview-skeleton"></div>
+        <div class="home-overview-skeleton"></div>
+        <div class="home-overview-skeleton"></div>
+      </div>
+      <div class="home-dashboard-grid">
+        <section class="home-priority-panel" aria-labelledby="homePriorityTitle">
+          <div class="home-panel-head">
+            <div><span class="section-kicker">Следующий шаг</span><h2 id="homePriorityTitle">Нужно оценить</h2></div>
+            <button class="home-sec-link" type="button" onclick="go('matches')">Все матчи →</button>
+          </div>
+          <div id="homePendingRatings" aria-live="polite"><div class="loading compact"><div class="spin"></div></div></div>
+        </section>
+        <aside class="home-club-panel" aria-labelledby="homeClubTitle">
+          <span class="section-kicker">Моя команда</span>
+          <h2 id="homeClubTitle">Футбольные интересы</h2>
+          <div id="homeFavoriteTeams"></div>
+        </aside>
+      </div>
+    </section>
     
     <div class="home-divider"></div>
     
@@ -170,14 +205,15 @@
     </div>
   </div>
 
-  <!-- LEADERBOARD -->
+  <!-- COMMUNITY RATINGS -->
   <div class="page" id="page-leaderboard">
     <div class="matches-page">
-      <h1 class="page-title">Таблица лидеров</h1>
+      <span class="section-kicker">Сообщество</span>
+      <h1 class="page-title">Рейтинги болельщиков</h1>
       
       <div class="filters">
-        <button class="btn btn-l btn-sm lb-tab" type="button" aria-pressed="true" onclick="setLT('likes',this)">По лайкам</button>
-        <button class="btn btn-g btn-sm lb-tab" type="button" aria-pressed="false" onclick="setLT('ratings',this)">По оценкам</button>
+        <button class="btn btn-l btn-sm lb-tab" type="button" aria-pressed="true" onclick="setLT('likes',this)">По отклику</button>
+        <button class="btn btn-g btn-sm lb-tab" type="button" aria-pressed="false" onclick="setLT('ratings',this)">По активности</button>
       </div>
       
       <div id="lbPod" class="lb-podium"></div>
@@ -233,6 +269,14 @@
     <div class="entity-page">
       <button class="entity-back" type="button" onclick="goBack()" aria-label="Назад">← <span>Назад</span></button>
       <div id="playerC"></div>
+    </div>
+  </div>
+
+  <!-- COMPETITION -->
+  <div class="page" id="page-competition">
+    <div class="entity-page">
+      <button class="entity-back" type="button" onclick="goBack()" aria-label="Назад">← <span>Назад</span></button>
+      <div id="competitionC"></div>
     </div>
   </div>
 
@@ -449,8 +493,7 @@
         <input class="input" type="password" placeholder="Пароль, минимум 8 символов *" id="rP" minlength="8" autocomplete="new-password">
         <label class="sr-only" for="rB">О себе</label>
         <input class="input" placeholder="О себе" id="rB" maxlength="100">
-        <label class="sr-only" for="rT">Любимые команды</label>
-        <input class="input" placeholder="Любимые команды" id="rT" maxlength="120">
+        <p class="auth-step-note">Любимые клубы можно выбрать после регистрации через поиск или страницу клуба.</p>
         <div class="auth-e" id="authE3" role="status" aria-live="polite"></div>
         <button class="btn btn-l" style="width:100%" onclick="saveProfile()" id="profileSaveBtn">Создать аккаунт →</button>
       </div>
@@ -623,11 +666,11 @@
     </button>
     <button type="button" class="mob-nav-item" id="mn-leaderboard" onclick="go('leaderboard')">
       <span class="mob-nav-icon" data-i="trophy"></span>
-      Лидеры
+      Рейтинги
     </button>
-    <button type="button" class="mob-nav-item" id="mn-friends" onclick="go('friends')">
+    <button type="button" class="mob-nav-item" id="mn-profile" onclick="goOwnProfile()">
       <span class="mob-nav-icon" data-i="users"></span>
-      Друзья
+      Профиль
     </button>
   </nav>
 
@@ -638,16 +681,18 @@
   <script src="js/domain.js?v=40"></script>
   <script src="js/appearance.js?v=40"></script>
   <script src="js/performance.js?v=1"></script>
-  <script src="js/core.js?v=42"></script>
-  <script src="js/seo.js?v=1"></script>
+  <script src="js/core.js?v=43"></script>
+  <script src="js/media.js?v=2"></script>
+  <script src="js/seo.js?v=2"></script>
   <script src="js/data.js?v=43"></script>
   <script src="js/overlays.js?v=40"></script>
   <script src="js/confirm.js?v=40"></script>
-  <script src="app.js?v=47"></script>
-  <script src="js/auth.js?v=42"></script>
-  <script src="js/ratings.js?v=40"></script>
-  <script src="js/matches.js?v=43"></script>
-  <script src="js/search.js?v=41"></script>
+  <script src="js/home.js?v=2"></script>
+  <script src="app.js?v=49"></script>
+  <script src="js/auth.js?v=43"></script>
+  <script src="js/ratings.js?v=41"></script>
+  <script src="js/matches.js?v=44"></script>
+  <script src="js/search.js?v=42"></script>
   <script src="js/account.js?v=40"></script>
 </body>
 </html>

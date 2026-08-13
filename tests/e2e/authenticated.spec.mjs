@@ -7,6 +7,18 @@ test.beforeEach(async({page})=>{
   await page.route(/https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/,route=>route.abort());
 });
 
+test('авторизованная главная показывает личный футбольный экран',async({page})=>{
+  await page.goto('/?__e2e=1#home');
+
+  await expect(page.locator('#homeDashboard')).toBeVisible();
+  await expect(page.locator('.guest-home-intro')).toBeHidden();
+  await expect(page.locator('#homeDashboardTitle')).toContainText('Bazed');
+  await expect(page.locator('#homeOverview .home-overview-item')).toHaveCount(3);
+  await expect(page.locator('#homePendingRatings')).toContainText('Всё оценено');
+  await expect(page.locator('#homeFavoriteTeams')).toContainText('Real Madrid');
+  await expect(page.getByRole('button',{name:'Рейтинги',exact:true}).first()).toBeVisible();
+});
+
 test('admin assets load only after an authorized admin opens the panel',async({page})=>{
   const adminAssets=[];
   page.on('request',request=>{
@@ -19,7 +31,7 @@ test('admin assets load only after an authorized admin opens the panel',async({p
   }));
 
   await page.goto('/?__e2e=1#home');
-  await expect(page.locator('.hero h1')).toBeVisible();
+  await expect(page.locator('#homeDashboardTitle')).toBeVisible();
   expect(adminAssets).toEqual([]);
 
   await page.evaluate(()=>go('admin'));
@@ -81,6 +93,68 @@ test('публичный URL матча получает canonical и SportsEven
   await expect(page.locator('.md-hero')).toContainText('Real Madrid CF');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href','https://footbazed47.vercel.app/match/101');
   expect(await page.locator('#fbzStructuredData').textContent()).toContain('SportsEvent');
+});
+
+test('клуб, игрок и турнир работают без production media',async({page})=>{
+  const pageErrors=[];
+  page.on('pageerror',error=>pageErrors.push(error.message));
+
+  await page.goto('/club/24?__e2e=1');
+  await expect(page.locator('.entity-mark.is-fallback')).toContainText('RM');
+  await expect(page.locator('.entity-mark img')).toHaveCount(0);
+
+  await page.goto('/player/5290?__e2e=1');
+  await expect(page.locator('.player-mark.is-fallback')).toContainText('TC');
+  await expect(page.locator('.player-mark img')).toHaveCount(0);
+
+  await page.goto('/competition/7?__e2e=1');
+  await expect(page.getByRole('heading',{name:'Champions League',exact:true})).toBeVisible();
+  await expect(page.locator('.entity-mark.is-fallback')).toContainText('CL');
+  await expect(page.locator('.competition-club-grid>button')).toHaveCount(2);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href','https://footbazed47.vercel.app/competition/7');
+  expect(pageErrors).toEqual([]);
+});
+
+test('избранный клуб добавляется, повторно не дублируется и удаляется через RPC',async({page})=>{
+  await page.goto('/club/24?__e2e=1');
+  const favorite=page.locator('#clubFavoriteButton');
+  await expect(favorite).toHaveAttribute('aria-pressed','true');
+  await favorite.click();
+  await expect(page.locator('#clubFavoriteButton')).toHaveAttribute('aria-pressed','false');
+  await page.locator('#clubFavoriteButton').click();
+  await expect(page.locator('#clubFavoriteButton')).toHaveAttribute('aria-pressed','true');
+  await page.reload();
+  await expect(page.locator('#clubFavoriteButton')).toHaveAttribute('aria-pressed','true');
+
+  await page.evaluate(async()=>{
+    await sb.rpc('set_favorite_club',{p_club_id:24,p_favorite:true});
+    await sb.rpc('set_favorite_club',{p_club_id:24,p_favorite:true});
+  });
+  const favorites=await page.evaluate(async()=>(await sb.rpc('get_my_favorite_clubs')).data);
+  expect(favorites.filter(club=>club.id===24)).toHaveLength(1);
+});
+
+test('глобальный поиск открывает страницу турнира без зависимости от логотипа',async({page})=>{
+  await page.goto('/?__e2e=1#home');
+  await page.evaluate(()=>window.FBZSearch.open());
+  await page.locator('#globalSearchInput').fill('Champions');
+  const result=page.getByRole('option',{name:/Champions League/});
+  await expect(result).toBeVisible();
+  await result.click();
+  await expect(page).toHaveURL(/\/competition\/7\?__e2e=1$/u);
+  await expect(page.getByRole('heading',{name:'Champions League',exact:true})).toBeVisible();
+});
+
+test('страница матча сравнивает личную оценку с сообществом',async({page})=>{
+  await page.goto('/match/101?__e2e=1');
+
+  const comparison=page.locator('.md-rating-comparison');
+  await expect(comparison).toBeVisible();
+  await expect(comparison).toContainText('Вы оценили матч ниже сообщества');
+  await expect(comparison).toContainText('8');
+  await expect(comparison).toContainText('8.5');
+  await expect(comparison).toContainText('-0.5');
+  await expect(page.getByRole('button',{name:/Изменить оценку/})).toBeVisible();
 });
 
 test('дружба меняется только после успешного атомарного RPC',async({page})=>{
@@ -190,5 +264,12 @@ test.describe('мобильный авторизованный сценарий'
     await expect(page.locator('.feed-edit')).toBeVisible();
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(1);
+  });
+
+  test('нижняя навигация открывает собственный профиль',async({page})=>{
+    await page.goto('/?__e2e=1#home');
+    await page.locator('#mn-profile').click();
+    await expect(page).toHaveURL(/\/profile\/3615141a-7700-46b8-9ba5-e4f4450537fc\?__e2e=1$/u);
+    await expect(page.getByRole('heading',{name:/bazed/i,exact:true})).toBeVisible();
   });
 });

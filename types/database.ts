@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
+  }
   public: {
     Tables: {
       admin_audit_logs: {
@@ -100,6 +105,39 @@ export type Database = {
           },
         ]
       }
+      club_competitions: {
+        Row: {
+          club_id: number
+          competition_id: number
+          created_at: string
+        }
+        Insert: {
+          club_id: number
+          competition_id: number
+          created_at?: string
+        }
+        Update: {
+          club_id?: number
+          competition_id?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_competitions_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_competitions_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clubs: {
         Row: {
           area_name: string | null
@@ -109,7 +147,11 @@ export type Database = {
           external_id: number | null
           founded: number | null
           id: number
+          logo_asset_id: number | null
+          metadata: Json
           name: string
+          primary_color: string | null
+          secondary_color: string | null
           short_name: string | null
           tla: string | null
           updated_at: string
@@ -123,7 +165,11 @@ export type Database = {
           external_id?: number | null
           founded?: number | null
           id?: never
+          logo_asset_id?: number | null
+          metadata?: Json
           name: string
+          primary_color?: string | null
+          secondary_color?: string | null
           short_name?: string | null
           tla?: string | null
           updated_at?: string
@@ -137,13 +183,108 @@ export type Database = {
           external_id?: number | null
           founded?: number | null
           id?: never
+          logo_asset_id?: number | null
+          metadata?: Json
           name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
           short_name?: string | null
           tla?: string | null
           updated_at?: string
           venue?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clubs_logo_asset_id_fkey"
+            columns: ["logo_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitions: {
+        Row: {
+          area_name: string | null
+          code: string | null
+          competition_type: string | null
+          created_at: string
+          external_id: number | null
+          id: number
+          logo_asset_id: number | null
+          metadata: Json
+          name: string
+          short_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_name?: string | null
+          code?: string | null
+          competition_type?: string | null
+          created_at?: string
+          external_id?: number | null
+          id?: never
+          logo_asset_id?: number | null
+          metadata?: Json
+          name: string
+          short_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_name?: string | null
+          code?: string | null
+          competition_type?: string | null
+          created_at?: string
+          external_id?: number | null
+          id?: never
+          logo_asset_id?: number | null
+          metadata?: Json
+          name?: string
+          short_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitions_logo_asset_id_fkey"
+            columns: ["logo_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorite_clubs: {
+        Row: {
+          club_id: number
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          club_id: number
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          club_id?: number
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorite_clubs_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorite_clubs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       friendships: {
         Row: {
@@ -210,6 +351,7 @@ export type Database = {
           away_club_id: number | null
           away_score: number | null
           away_team_name: string
+          competition_id: number | null
           external_id: number | null
           home_club_id: number | null
           home_score: number | null
@@ -227,6 +369,7 @@ export type Database = {
           away_club_id?: number | null
           away_score?: number | null
           away_team_name: string
+          competition_id?: number | null
           external_id?: number | null
           home_club_id?: number | null
           home_score?: number | null
@@ -244,6 +387,7 @@ export type Database = {
           away_club_id?: number | null
           away_score?: number | null
           away_team_name?: string
+          competition_id?: number | null
           external_id?: number | null
           home_club_id?: number | null
           home_score?: number | null
@@ -265,6 +409,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "matches_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "matches_home_club_id_fkey"
             columns: ["home_club_id"]
             isOneToOne: false
@@ -272,6 +423,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      media_assets: {
+        Row: {
+          asset_type: string
+          attribution: string | null
+          created_at: string
+          id: number
+          license_name: string | null
+          license_url: string | null
+          metadata: Json
+          source_provider: string
+          source_url: string | null
+          storage_key: string | null
+          storage_url: string | null
+          updated_at: string
+          usage_status: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          asset_type: string
+          attribution?: string | null
+          created_at?: string
+          id?: never
+          license_name?: string | null
+          license_url?: string | null
+          metadata?: Json
+          source_provider: string
+          source_url?: string | null
+          storage_key?: string | null
+          storage_url?: string | null
+          updated_at?: string
+          usage_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          asset_type?: string
+          attribution?: string | null
+          created_at?: string
+          id?: never
+          license_name?: string | null
+          license_url?: string | null
+          metadata?: Json
+          source_provider?: string
+          source_url?: string | null
+          storage_key?: string | null
+          storage_url?: string | null
+          updated_at?: string
+          usage_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -378,31 +583,40 @@ export type Database = {
           club_id: number | null
           created_at: string | null
           id: number
+          metadata: Json
           name: string
+          photo_asset_id: number | null
           photo_url: string | null
           position: string | null
           shirt_number: number | null
           team: string
+          updated_at: string
         }
         Insert: {
           club_id?: number | null
           created_at?: string | null
           id?: never
+          metadata?: Json
           name: string
+          photo_asset_id?: number | null
           photo_url?: string | null
           position?: string | null
           shirt_number?: number | null
           team: string
+          updated_at?: string
         }
         Update: {
           club_id?: number | null
           created_at?: string | null
           id?: never
+          metadata?: Json
           name?: string
+          photo_asset_id?: number | null
           photo_url?: string | null
           position?: string | null
           shirt_number?: number | null
           team?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -410,6 +624,13 @@ export type Database = {
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_photo_asset_id_fkey"
+            columns: ["photo_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
             referencedColumns: ["id"]
           },
         ]
@@ -691,6 +912,10 @@ export type Database = {
         Returns: boolean
       }
       get_club_page: { Args: { p_club_id: number }; Returns: Json }
+      get_competition_page: {
+        Args: { p_competition_id: number }
+        Returns: Json
+      }
       get_leaderboard: {
         Args: { p_limit?: number; p_metric?: string }
         Returns: Json
@@ -706,6 +931,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_my_favorite_clubs: { Args: never; Returns: Json }
       get_my_profile: {
         Args: never
         Returns: {
@@ -810,6 +1036,10 @@ export type Database = {
           subtitle: string
           title: string
         }[]
+      }
+      set_favorite_club: {
+        Args: { p_club_id: number; p_favorite?: boolean }
+        Returns: Json
       }
       toggle_rating_like: { Args: { p_rating_id: number }; Returns: Json }
     }

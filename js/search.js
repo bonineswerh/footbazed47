@@ -104,11 +104,11 @@
   }
 
   function resultLabel(type){
-    return{club:'Клуб',player:'Игрок',match:'Матч',user:'Профиль'}[type]||'Результат';
+    return{club:'Клуб',competition:'Турнир',player:'Игрок',match:'Матч',user:'Профиль'}[type]||'Результат';
   }
 
   function resultIcon(type){
-    return{club:'trophy',player:'star',match:'football',user:'users'}[type]||'search';
+    return{club:'trophy',competition:'globe',player:'star',match:'football',user:'users'}[type]||'search';
   }
 
   function statusLabel(status){
@@ -178,6 +178,10 @@
     }
     if(item.entity_type==='player'){
       go('player',{id:Number(item.entity_id)});
+      return;
+    }
+    if(item.entity_type==='competition'){
+      go('competition',{id:Number(item.entity_id)});
       return;
     }
     if(item.entity_type==='team')openTeamMatches(item.title);

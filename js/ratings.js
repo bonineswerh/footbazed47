@@ -353,7 +353,7 @@ async function deleteRating(){
 }
 
 function refreshAfterRatingChange(){
-  loadHeroStats();
+  refreshHomeDashboard();
   if(CP==='md')loadMD(rMID);
   else if(CP==='feed')loadFeed();
 }

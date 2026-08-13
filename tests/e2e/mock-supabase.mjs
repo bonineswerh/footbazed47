@@ -2,7 +2,7 @@ const fixture={
   sessionUser:{id:'3615141a-7700-46b8-9ba5-e4f4450537fc',email:'bazed@example.test'},
   profile:{
     id:'3615141a-7700-46b8-9ba5-e4f4450537fc',username:'bazed',display_name:'Bazed',avatar_url:null,
-    bio:'Смотрю футбол внимательно.',favorite_teams:['Real Madrid'],ratings_count:11,avg_rating:7.8,
+    bio:'Смотрю футбол внимательно.',favorite_teams:null,ratings_count:11,avg_rating:7.8,
     streak:1,streak_date:'2026-08-09',is_public:true,created_at:'2026-04-02T10:00:00Z',is_admin:true
   },
   users:[
@@ -18,8 +18,8 @@ const fixture={
     {id:902,user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',from_user_id:'cd291181-2db6-42cb-9f3d-ef84ab3a9660',type:'like',message:'Gamlet оценил вашу публикацию',read:false,created_at:'2026-08-09T13:05:00Z',rating_id:501,comment_id:null}
   ],
   matches:[
-    {id:101,league_name:'Champions League',home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',home_club_id:24,away_club_id:31,match_date:'2026-08-08T19:00:00Z',status:'finished',home_score:2,away_score:1,external_id:9101,league_code:'CL',matchday:1,season:'2026'},
-    {id:102,league_name:'La Liga',home_team_name:'Real Madrid CF',away_team_name:'FC Barcelona',home_club_id:24,away_club_id:25,match_date:'2026-08-20T19:00:00Z',status:'scheduled',home_score:null,away_score:null,external_id:9102,league_code:'PD',matchday:2,season:'2026'}
+    {id:101,competition_id:7,league_name:'Champions League',home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',home_club_id:24,away_club_id:31,match_date:'2026-08-08T19:00:00Z',status:'finished',home_score:2,away_score:1,external_id:9101,league_code:'CL',matchday:1,season:'2026'},
+    {id:102,competition_id:8,league_name:'La Liga',home_team_name:'Real Madrid CF',away_team_name:'FC Barcelona',home_club_id:24,away_club_id:25,match_date:'2026-08-20T19:00:00Z',status:'scheduled',home_score:null,away_score:null,external_id:9102,league_code:'PD',matchday:2,season:'2026'}
   ],
   feed:[
     {rating_id:501,user_id:'cd291181-2db6-42cb-9f3d-ef84ab3a9660',match_id:101,match_rating:9,comment:'Сильный второй тайм и отличный контроль центра поля.',created_at:'2026-08-09T12:00:00Z',updated_at:'2026-08-09T12:00:00Z',user:{username:'gamlet',display_name:'Gamlet',avatar_url:null},match:{league_name:'Champions League',home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',home_club_id:24,away_club_id:31,match_date:'2026-08-08T19:00:00Z',home_score:2,away_score:1},like_count:3,comment_count:61,liked_by_me:false,player_highlights:[{player_id:5290,name:'Thibaut Courtois',club_id:24,team:'Real Madrid CF',rating:8.7,is_best_player:true}]},
@@ -29,22 +29,33 @@ const fixture={
     501:[{id:701,user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',comment:'Согласен насчёт второго тайма.',created_at:'2026-08-09T12:10:00Z',can_delete:true,user:{username:'bazed',display_name:'Bazed',avatar_url:null}}]
   },
   club:{
-    club:{id:24,name:'Real Madrid CF',short_name:'Real Madrid',tla:'RMA',crest_url:null,area_name:'Spain',venue:'Santiago Bernabéu',founded:1902,club_colors:'White / Purple'},
-    competitions:['Champions League','La Liga'],
+    club:{id:24,name:'Real Madrid CF',short_name:'Real Madrid',tla:'RMA',media:null,primary_color:'#274C77',secondary_color:'#E7ECEF',area_name:'Spain',venue:'Santiago Bernabéu',founded:1902,club_colors:'White / Purple'},
+    is_favorite:true,favorite_count:1,
+    competitions:[{id:7,name:'Champions League',code:'CL'},{id:8,name:'La Liga',code:'PD'}],
     stats:{squad_count:3,match_count:2,upcoming_count:1,player_rating:8.4,player_rating_count:6},
     squad:[
-      {id:5290,name:'Thibaut Courtois',position:'GK',shirt_number:1,photo_url:null,average:8.7,rating_count:3,best_votes:2},
-      {id:5291,name:'Antonio Rüdiger',position:'CB',shirt_number:22,photo_url:null,average:8.2,rating_count:2,best_votes:0},
-      {id:5292,name:'Jude Bellingham',position:'AM',shirt_number:5,photo_url:null,average:8.4,rating_count:1,best_votes:1}
+      {id:5290,name:'Thibaut Courtois',position:'GK',shirt_number:1,media:null,average:8.7,rating_count:3,best_votes:2},
+      {id:5291,name:'Antonio Rüdiger',position:'CB',shirt_number:22,media:null,average:8.2,rating_count:2,best_votes:0},
+      {id:5292,name:'Jude Bellingham',position:'AM',shirt_number:5,media:null,average:8.4,rating_count:1,best_votes:1}
     ],
     matches:[]
   },
   player:{
-    player:{id:5290,name:'Thibaut Courtois',position:'GK',shirt_number:1,photo_url:null,team:'Real Madrid CF',club:{id:24,name:'Real Madrid CF',short_name:'Real Madrid',tla:'RMA',crest_url:null}},
+    player:{id:5290,name:'Thibaut Courtois',position:'GK',shirt_number:1,media:null,team:'Real Madrid CF',club:{id:24,name:'Real Madrid CF',short_name:'Real Madrid',tla:'RMA',media:null,primary_color:'#274C77',secondary_color:'#E7ECEF'}},
     stats:{average:8.7,rating_count:3,best_votes:2,matches_rated:1},
     performances:[{match_id:101,average:8.7,rating_count:3,best_votes:2,league_name:'Champions League',home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',match_date:'2026-08-08T19:00:00Z',home_score:2,away_score:1}],
-    teammates:[{id:5291,name:'Antonio Rüdiger',position:'CB',shirt_number:22,photo_url:null},{id:5292,name:'Jude Bellingham',position:'AM',shirt_number:5,photo_url:null}]
-  }
+    teammates:[{id:5291,name:'Antonio Rüdiger',position:'CB',shirt_number:22,media:null},{id:5292,name:'Jude Bellingham',position:'AM',shirt_number:5,media:null}]
+  },
+  competition:{
+    competition:{id:7,name:'Champions League',short_name:'Champions League',code:'CL',area_name:'Europe',competition_type:'CUP',media:null},
+    stats:{club_count:2,match_count:1,finished_count:1,upcoming_count:0},
+    clubs:[
+      {id:24,name:'Real Madrid CF',short_name:'Real Madrid',tla:'RMA',media:null,primary_color:'#274C77',secondary_color:'#E7ECEF'},
+      {id:31,name:'Manchester City FC',short_name:'Man City',tla:'MCI',media:null,primary_color:'#6CABDD',secondary_color:'#1C2C5B'}
+    ],
+    matches:[]
+  },
+  favoriteClubs:[{id:24,name:'Real Madrid CF',short_name:'Real Madrid',tla:'RMA',media:null,primary_color:'#274C77',secondary_color:'#E7ECEF',favorited_at:'2026-08-01T10:00:00Z'}]
 };
 
 export async function installSupabaseMock(page){
@@ -52,6 +63,7 @@ export async function installSupabaseMock(page){
     localStorage.setItem('fbz_session_hint','1');
     const state=structuredClone(data);
     state.club.matches=structuredClone(state.matches);
+    state.competition.matches=structuredClone(state.matches.filter(match=>match.competition_id===7));
     let nextCommentId=900;
     let nextFriendshipId=900;
     let authListener=null;
@@ -65,6 +77,17 @@ export async function installSupabaseMock(page){
 
     function rpc(name,args={}){
       if(name==='get_my_profile')return promiseResult(structuredClone(state.profile));
+      if(name==='get_my_favorite_clubs')return promiseResult(structuredClone(state.favoriteClubs));
+      if(name==='set_favorite_club'){
+        const clubId=Number(args.p_club_id);
+        const favorite=Boolean(args.p_favorite);
+        const existing=state.favoriteClubs.some(club=>Number(club.id)===clubId);
+        if(favorite&&!existing)state.favoriteClubs.push({...structuredClone(state.club.club),favorited_at:new Date().toISOString()});
+        if(!favorite&&existing)state.favoriteClubs=state.favoriteClubs.filter(club=>Number(club.id)!==clubId);
+        state.club.is_favorite=favorite;
+        state.club.favorite_count=state.favoriteClubs.some(club=>Number(club.id)===clubId)?1:0;
+        return promiseResult({club_id:clubId,is_favorite:favorite,changed:favorite!==existing,favorite_count:state.club.favorite_count});
+      }
       if(name==='get_profile_page'){
         const userId=String(args.p_user_id||'');
         const profile=state.users.find(user=>user.id===userId);
@@ -78,7 +101,8 @@ export async function installSupabaseMock(page){
           .sort((a,b)=>(a.status==='accepted'?-1:0)-(b.status==='accepted'?-1:0))[0];
         const friendIds=new Set(state.friendships.filter(item=>item.status==='accepted'&&(item.user_id===userId||item.friend_id===userId)).map(item=>item.user_id===userId?item.friend_id:item.user_id));
         return promiseResult({
-          profile:{...structuredClone(profile),bio:userId===state.profile.id?state.profile.bio:null,favorite_teams:userId===state.profile.id?state.profile.favorite_teams:null,streak:userId===state.profile.id?state.profile.streak:0,created_at:state.profile.created_at,invite_code:userId===state.profile.id?'TESTCODE':null},
+          profile:{...structuredClone(profile),bio:userId===state.profile.id?state.profile.bio:null,favorite_teams:null,streak:userId===state.profile.id?state.profile.streak:0,created_at:state.profile.created_at,invite_code:userId===state.profile.id?'TESTCODE':null},
+          favorite_clubs:userId===state.profile.id?structuredClone(state.favoriteClubs):[],
           stats:{friend_count:friendIds.size,like_count:state.feed.filter(item=>item.user_id===userId).reduce((sum,item)=>sum+item.like_count,0)},
           friendship:friendship?{status:friendship.status,direction:friendship.user_id===state.sessionUser.id?'outgoing':'incoming'}:null,
           ratings
@@ -197,8 +221,15 @@ export async function installSupabaseMock(page){
       }
       if(name==='get_club_page')return promiseResult(Number(args.p_club_id)===24?structuredClone(state.club):null);
       if(name==='get_player_page')return promiseResult(Number(args.p_player_id)===5290?structuredClone(state.player):null);
+      if(name==='get_competition_page')return promiseResult(Number(args.p_competition_id)===7?structuredClone(state.competition):null);
       if(name==='get_match_insights')return promiseResult({rating_count:2,average:8.5,distribution:Array.from({length:10},(_,index)=>({score:10-index,count:index===1?1:index===2?1:0})),top_players:[{player_id:5290,name:'Thibaut Courtois',team:'Real Madrid CF',average:8.7,rating_count:3,best_votes:2}]});
-      if(name==='search_footbazed')return promiseResult([]);
+      if(name==='search_footbazed'){
+        const query=String(args.p_query||'').toLocaleLowerCase();
+        const results=[];
+        if('champions league'.includes(query)||query.includes('champions'))results.push({entity_type:'competition',entity_id:'7',title:'Champions League',subtitle:'Europe',meta:'CL',relevance:0.99});
+        if('real madrid cf'.includes(query)||query.includes('madrid'))results.push({entity_type:'club',entity_id:'24',title:'Real Madrid CF',subtitle:'Spain',meta:'RMA',relevance:0.98});
+        return promiseResult(results.slice(0,Number(args.p_limit)||14));
+      }
       return promiseResult(null);
     }
 

@@ -32,7 +32,7 @@ for(const viewport of VIEWPORTS){
     await prepare(page);
     await page.goto('/?__e2e=1#home');
     await page.evaluate(()=>document.fonts.ready);
-    await expect(page.locator('.hero h1')).toBeVisible();
+    await expect(page.locator('#homeDashboardTitle')).toBeVisible();
 
     const layout=await page.evaluate(()=>({
       overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,
@@ -41,6 +41,22 @@ for(const viewport of VIEWPORTS){
     expect(layout.overflow).toBeLessThanOrEqual(1);
     expect(layout.font).toBe(true);
     await expect(page).toHaveScreenshot(`home-${viewport.width}x${viewport.height}.png`,{
+      animations:'disabled',
+      caret:'hide',
+      maxDiffPixelRatio:0.05
+    });
+  });
+}
+
+for(const viewport of [{width:390,height:844},{width:1280,height:720}]){
+  test(`матч сохраняет композицию ${viewport.width}px`,async({page})=>{
+    await page.setViewportSize(viewport);
+    await prepare(page);
+    await page.goto('/match/101?__e2e=1');
+    await page.evaluate(()=>document.fonts.ready);
+    await expect(page.locator('.md-rating-comparison')).toBeVisible();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    await expect(page).toHaveScreenshot(`match-${viewport.width}x${viewport.height}.png`,{
       animations:'disabled',
       caret:'hide',
       maxDiffPixelRatio:0.05
@@ -72,7 +88,7 @@ for(const viewport of [{width:390,height:844},{width:1280,height:720}]){
     await prepare(page);
     await page.goto('/?__e2e=1#home');
     await page.evaluate(()=>document.fonts.ready);
-    await expect(page.locator('.hero h1')).toBeVisible();
+    await expect(page.locator('#homeDashboardTitle')).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     await expect(page).toHaveScreenshot(`home-light-${viewport.width}x${viewport.height}.png`,{
       animations:'disabled',

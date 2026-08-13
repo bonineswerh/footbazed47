@@ -34,11 +34,21 @@ async function loadSessionProfile(user,version){
   }
 
   profileCompletionUser=null;
-  CU={...profile,email:user.email};
+  CU={...profile,email:user.email,favorite_clubs:[]};
   try{localStorage.setItem('fbz_session_hint','1');}catch{}
   document.documentElement.classList.add('session-hint-authenticated');
   renderNav();
   loadNotifications();
+
+  try{
+    const{data:favorites,error:favoritesError}=await sb.rpc('get_my_favorite_clubs');
+    if(favoritesError)throw favoritesError;
+    if(version!==authStateVersion||CU?.id!==user.id)return false;
+    CU.favorite_clubs=Array.isArray(favorites)?favorites:[];
+    window.FBZHome?.sync(CU);
+  }catch(error){
+    console.warn('Favorite clubs load error:',error);
+  }
   return true;
 }
 
@@ -260,7 +270,6 @@ async function saveProfile(){
   const username=document.getElementById('rU').value.trim();
   const password=document.getElementById('rP').value;
   const bio=document.getElementById('rB').value.trim();
-  const teams=document.getElementById('rT').value.trim();
   if(!username){setAuthError('authE3','Введите никнейм');return;}
   if(!/^[a-zA-Z0-9_а-яёА-ЯЁ]{3,30}$/.test(username)){
     setAuthError('authE3','Никнейм: 3–30 символов без пробелов');
@@ -297,7 +306,6 @@ async function saveProfile(){
       username,
       display_name:username,
       bio:bio||null,
-      favorite_teams:teams||null,
       is_public:true
     });
     if(insertError){

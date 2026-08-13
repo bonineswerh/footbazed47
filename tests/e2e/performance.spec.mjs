@@ -22,7 +22,7 @@ test('home stays inside the frontend performance budget',async({page})=>{
   });
   await installSupabaseMock(page);
   await page.goto('/?__e2e=1#home');
-  await expect(page.locator('.hero h1')).toBeVisible();
+  await expect(page.locator('#homeDashboardTitle')).toBeVisible();
   await page.waitForTimeout(800);
 
   const result=await page.evaluate(()=>{

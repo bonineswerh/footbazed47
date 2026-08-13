@@ -301,7 +301,6 @@ function clubPayload(team) {
     name: team.name,
     short_name: team.shortName || undefined,
     tla: team.tla || undefined,
-    crest_url: team.crest || undefined,
     area_name: team.area?.name || undefined,
     venue: team.venue || undefined,
     founded,

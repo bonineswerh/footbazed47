@@ -19,6 +19,16 @@ function fmtDate(value){
   return new Date(value).toLocaleDateString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 }
 
+function teamMonogram(name){
+  const ignored=new Set(['fc','cf','afc','rc','fk','club']);
+  const words=String(name||'').match(/[\p{L}\p{N}]+/gu)||[];
+  const meaningful=words.filter(word=>!ignored.has(word.toLocaleLowerCase('en-US')));
+  const source=meaningful.length?meaningful:words;
+  if(!source.length)return'FB';
+  if(source.length===1)return source[0].slice(0,2).toLocaleUpperCase('ru-RU');
+  return`${source[0][0]}${source[1][0]}`.toLocaleUpperCase('ru-RU');
+}
+
 function sortMatches(items){
   return window.FBZDomain.sortMatches(items);
 }
@@ -221,43 +231,59 @@ async function loadMD(id){
       :{data:[]};
     const userMap={};(users||[]).forEach(user=>{userMap[user.id]=user;});
     const ratingCount=Number(insights?.rating_count||0);
-    const average=insights?.average===null||insights?.average===undefined?'—':Number(insights.average).toFixed(1);
+    const averageValue=Number(insights?.average);
+    const hasAverage=ratingCount>0&&Number.isFinite(averageValue);
+    const average=hasAverage?averageValue.toFixed(1):'—';
     const distribution=Array.isArray(insights?.distribution)?insights.distribution:Array.from({length:10},(_,index)=>({score:10-index,count:0}));
     const maxDistribution=Math.max(...distribution.map(item=>item.count),1);
     const topPlayers=Array.isArray(insights?.top_players)?insights.top_players:[];
     const statusLabel={live:'LIVE',finished:'Завершён',scheduled:'Предстоит'}[match.status]||match.status;
     const prediction=match.status==='scheduled'?`<section class="md-prediction"><div class="mdcard-title">${ico('target',15)} Прогноз на матч</div>${renderPredBlock(match)}</section>`:'';
     const competitionMeta=[match.season?`Сезон ${match.season}`:'',match.matchday?`${match.matchday}-й тур`:''].filter(Boolean).join(' · ');
-    const ownRatingMarkup=ownRating?`<div class="md-own-rating"><span>Моя оценка${ownRating.is_public===false?' · приватная':''}</span><strong>${ownRating.match_rating}/10</strong></div>`:'';
+    const communityMarkup=ratingCount?`<div class="md-comm">
+      <div class="md-ci"><div class="md-cv">${average}</div><div class="md-cl">Средняя сообщества</div></div>
+      <div class="md-ci"><div class="md-cv">${ratingCount}</div><div class="md-cl">Публичных оценок</div></div>
+      <div class="md-ci"><div class="md-cv md-cv-player">${esc(topPlayers[0]?.name||'—')}</div><div class="md-cl">Лучший игрок</div></div>
+    </div>`:`<div class="md-community-empty"><strong>${match.status==='scheduled'?'Оценки откроются после матча':'Мнение сообщества ещё не сформировано'}</strong><span>${match.status==='scheduled'?'После финального свистка здесь появятся оценки болельщиков.':'Поставьте первую оценку и начните обсуждение матча.'}</span></div>`;
+    const difference=ownRating&&hasAverage?Number(ownRating.match_rating)-averageValue:null;
+    const differenceLabel=difference===null?'Сравнение появится после публичных оценок':Math.abs(difference)<0.05?'Вы совпали с мнением сообщества':difference>0?'Вы оценили матч выше сообщества':'Вы оценили матч ниже сообщества';
+    const differenceValue=difference===null?'—':`${difference>0?'+':''}${difference.toFixed(1)}`;
+    const ownRatingMarkup=ownRating?`<section class="md-rating-comparison" aria-label="Сравнение оценок">
+      <div class="md-comparison-copy"><span class="section-kicker">Ваш вердикт${ownRating.is_public===false?' · приватный':''}</span><strong>${esc(differenceLabel)}</strong></div>
+      <div class="md-comparison-values">
+        <div><span>Ваша оценка</span><b>${ownRating.match_rating}</b></div>
+        <div><span>Сообщество</span><b>${average}</b></div>
+        <div><span>Разница</span><b class="${difference===null||Math.abs(difference)<0.05?'neutral':difference>0?'positive':'negative'}">${differenceValue}</b></div>
+      </div>
+    </section>`:'';
+    const distributionMarkup=ratingCount
+      ?`<div class="rdist">${distribution.map(item=>`<div class="rd-row"><div class="rd-l">${item.score}</div><div class="rd-bar"><div class="rd-fill" style="width:${item.count?Math.round(item.count/maxDistribution*100):0}%"></div></div><div class="rd-c">${item.count}</div></div>`).join('')}</div>`
+      :'<div class="empty-state compact"><strong>Недостаточно данных</strong><span>Распределение появится после первой публичной оценки.</span></div>';
 
     target.innerHTML=`
       <section class="md-hero">
         <div class="md-lg"><span>${esc(match.league_name)}</span><b class="md-status md-status-${esc(match.status)}">${esc(statusLabel)}</b></div>
         <div class="md-sl">
-          <div class="md-team">${match.home_club_id?`<button class="md-tname md-club-link" type="button" onclick="go('club',{id:${Number(match.home_club_id)}})">${esc(match.home_team_name)}</button>`:`<div class="md-tname">${esc(match.home_team_name)}</div>`}<div class="md-score">${esc(match.home_score??'—')}</div></div>
+          <div class="md-team"><span class="md-team-mark" aria-hidden="true">${esc(teamMonogram(match.home_team_name))}</span>${match.home_club_id?`<button class="md-tname md-club-link" type="button" onclick="go('club',{id:${Number(match.home_club_id)}})">${esc(match.home_team_name)}</button>`:`<div class="md-tname">${esc(match.home_team_name)}</div>`}<div class="md-score">${esc(match.home_score??'—')}</div></div>
           <div class="md-vs">VS</div>
-          <div class="md-team">${match.away_club_id?`<button class="md-tname md-club-link" type="button" onclick="go('club',{id:${Number(match.away_club_id)}})">${esc(match.away_team_name)}</button>`:`<div class="md-tname">${esc(match.away_team_name)}</div>`}<div class="md-score">${esc(match.away_score??'—')}</div></div>
+          <div class="md-team"><span class="md-team-mark" aria-hidden="true">${esc(teamMonogram(match.away_team_name))}</span>${match.away_club_id?`<button class="md-tname md-club-link" type="button" onclick="go('club',{id:${Number(match.away_club_id)}})">${esc(match.away_team_name)}</button>`:`<div class="md-tname">${esc(match.away_team_name)}</div>`}<div class="md-score">${esc(match.away_score??'—')}</div></div>
         </div>
         <div class="md-meta">${ico('calendar',12)} ${new Date(match.match_date).toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}${competitionMeta?`<span>·</span>${esc(competitionMeta)}`:''}</div>
-        <div class="md-comm">
-          <div class="md-ci"><div class="md-cv">${average}</div><div class="md-cl">Средняя сообщества</div></div>
-          <div class="md-ci"><div class="md-cv">${ratingCount}</div><div class="md-cl">Публичных оценок</div></div>
-          <div class="md-ci"><div class="md-cv md-cv-player">${esc(topPlayers[0]?.name||'—')}</div><div class="md-cl">Лучший игрок</div></div>
-        </div>
+        ${communityMarkup}
       </section>
       ${prediction}
       <div class="md-actions">
-        ${ownRatingMarkup}
-        ${match.status==='finished'?`<button class="btn btn-l" onclick="openRate(${match.id})">${ico('star',14)} ${ownRating?'Изменить оценку':'Оценить матч'}</button>`:''}
-        <button class="btn btn-g" onclick="go('chat',{mid:${match.id},title:'Чат матча'})">${ico('chat',14)} Обсуждение</button>
+        ${match.status==='finished'?`<button class="btn btn-l md-primary-action" onclick="openRate(${match.id})">${ico('star',16)} ${ownRating?'Изменить оценку':'Оценить матч'}</button>`:''}
+        <button class="btn btn-g" onclick="go('chat',{mid:${match.id},title:'Чат матча'})">${ico('chat',14)} Чат матча</button>
         <button class="btn btn-g" onclick="copyAppLink('/match/${match.id}','Ссылка на матч')">${ico('link',14)} Ссылка</button>
       </div>
+      ${ownRatingMarkup}
       <div class="md-grid">
         <div>
-          <section class="mdcard"><div class="mdcard-title">Топ игроков</div>${topPlayers.length?topPlayers.map((player,index)=>`<button class="pr-row pr-row-link" type="button" onclick="go('player',{id:${Number(player.player_id)}})"><span class="pr-rank">${index+1}</span><span class="pr-info"><span class="pr-name">${esc(player.name)}</span><span class="pr-team">${esc(player.team)} · ${Number(player.rating_count)||0} оценок${Number(player.best_votes)?` · ${Number(player.best_votes)} выборов лучшим`:''}</span></span><span class="pr-r"><span class="pr-bar"><span class="pr-fill" style="width:${Number(player.average)*10}%"></span></span><span class="pr-val">${Number(player.average).toFixed(1)}</span></span></button>`).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong></div>'}</section>
-          <section class="mdcard"><div class="mdcard-title">Оценки болельщиков</div>${ratings?.length?ratings.slice(0,8).map(rating=>{const user=userMap[rating.user_id]||{};return`<div class="rh-row"><div><button class="text-link rh-m" onclick="go('profile',{uid:'${rating.user_id}'})">${esc(user.username||'Аноним')}</button><div class="rh-l">@${esc(user.username||'user')}${rating.comment?' · '+esc(rating.comment.substring(0,50)):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(rating.match_rating||0)*10}%"></div></div><div class="rh-v">${rating.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state compact"><strong>Будь первым, кто оценит матч</strong></div>'}</section>
+          <section class="mdcard"><div class="mdcard-title">Топ игроков</div>${topPlayers.length?topPlayers.map((player,index)=>`<button class="pr-row pr-row-link" type="button" onclick="go('player',{id:${Number(player.player_id)}})"><span class="pr-rank">${index+1}</span><span class="pr-info"><span class="pr-name">${esc(player.name)}</span><span class="pr-team">${esc(player.team)} · ${Number(player.rating_count)||0} оценок${Number(player.best_votes)?` · ${Number(player.best_votes)} выборов лучшим`:''}</span></span><span class="pr-r"><span class="pr-bar"><span class="pr-fill" style="width:${Number(player.average)*10}%"></span></span><span class="pr-val">${Number(player.average).toFixed(1)}</span></span></button>`).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong><span>Они появятся, когда болельщики оценят составы.</span></div>'}</section>
+          <section class="mdcard"><div class="mdcard-title">Оценки болельщиков</div>${ratings?.length?ratings.slice(0,8).map(rating=>{const user=userMap[rating.user_id]||{};return`<div class="rh-row"><div><button class="text-link rh-m" onclick="go('profile',{uid:'${rating.user_id}'})">${esc(user.username||'Аноним')}</button><div class="rh-l">@${esc(user.username||'user')}${rating.comment?' · '+esc(rating.comment.substring(0,50)):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(rating.match_rating||0)*10}%"></div></div><div class="rh-v">${rating.match_rating}/10</div></div></div>`;}).join(''):`<div class="empty-state compact"><strong>${match.status==='finished'?'Оценок пока нет':'Обсуждение начнётся после матча'}</strong><span>${match.status==='finished'?'Сформируйте первое мнение о матче.':'Здесь появятся оценки болельщиков.'}</span>${match.status==='finished'?`<button class="btn btn-g btn-sm" type="button" onclick="openRate(${match.id})">Оценить первым</button>`:''}</div>`}</section>
         </div>
-        <section class="mdcard"><div class="mdcard-title">Распределение оценок</div><div class="rdist">${distribution.map(item=>`<div class="rd-row"><div class="rd-l">${item.score}</div><div class="rd-bar"><div class="rd-fill" style="width:${item.count?Math.round(item.count/maxDistribution*100):0}%"></div></div><div class="rd-c">${item.count}</div></div>`).join('')}</div></section>
+        <section class="mdcard"><div class="mdcard-title">Распределение оценок</div>${distributionMarkup}</section>
       </div>`;
 
     if(match.status==='scheduled'&&CU)loadPrediction(match.id,document.getElementById(`pred-${match.id}`));

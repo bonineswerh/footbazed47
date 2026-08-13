@@ -35,12 +35,13 @@ async function expectNoSeriousWcagViolations(page){
 }
 
 for(const scenario of [
-  {name:'home desktop',url:'/?__e2e=1#home',ready:'.hero h1',viewport:{width:1280,height:720}},
+  {name:'home desktop',url:'/?__e2e=1#home',ready:'#homeDashboardTitle',viewport:{width:1280,height:720}},
   {name:'feed mobile',url:'/?__e2e=1#feed',ready:'.feed-entry',viewport:{width:390,height:844}},
   {name:'club desktop',url:'/club/24?__e2e=1',ready:'.entity-hero h1',viewport:{width:1280,height:720}},
+  {name:'competition mobile',url:'/competition/7?__e2e=1',ready:'.competition-shell h1',viewport:{width:390,height:844}},
   {name:'match desktop',url:'/match/101?__e2e=1',ready:'.md-hero',viewport:{width:1280,height:720}},
   {name:'admin mobile',url:'/?__e2e=1#admin',ready:'#adminMetrics .admin-metric',viewport:{width:390,height:844}},
-  {name:'home light desktop',url:'/?__e2e=1#home',ready:'.hero h1',viewport:{width:1280,height:720},theme:'light'},
+  {name:'home light desktop',url:'/?__e2e=1#home',ready:'#homeDashboardTitle',viewport:{width:1280,height:720},theme:'light'},
   {name:'feed light mobile',url:'/?__e2e=1#feed',ready:'.feed-entry',viewport:{width:390,height:844},theme:'light'}
 ]){
   test(`${scenario.name} has no serious WCAG AA violations`,async({page})=>{

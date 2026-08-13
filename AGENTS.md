@@ -128,7 +128,7 @@
 - Соблюдай принцип минимального раскрытия: публичному клиенту выдаются только данные, необходимые конкретному экрану.
 - Email, auth identity, access token, административный признак и внутренние поля не должны попадать в публичную ленту, поиск, карточки, логи браузера или share-card.
 - Всегда учитывай `users.is_public`, видимость родительской оценки и отношения дружбы.
-- Пользователь может менять только собственные разрешённые поля профиля: `username`, `display_name`, `avatar_url`, `bio`, `favorite_teams`, `is_public`.
+- Пользователь может менять только собственные разрешённые поля профиля: `username`, `display_name`, `avatar_url`, `bio`, `is_public`. Избранные клубы изменяются отдельно через `set_favorite_club`; legacy `favorite_teams` не используется новыми интерфейсами.
 - `ratings_count`, `avg_rating`, `streak`, `streak_date`, `invite_code` и `is_admin` являются серверно управляемыми данными; не вычисляй и не записывай их из формы профиля.
 - Аватар перед выводом проходит URL-проверку. Editor нормализует изображение в JPEG, а файл хранится в owner-scoped bucket `avatars` с лимитом 2 MB и допустимыми MIME JPEG/PNG/WebP; в `users.avatar_url` хранится только HTTP(S)-URL.
 - CSV-экспорты базы, лежащие вне репозитория, считай чувствительными production-like данными. Не копируй их в public assets, тестовые fixtures, Git или ответы пользователю.
@@ -231,6 +231,8 @@
 - Не выполняй прямые client writes в `ratings`, `player_ratings`, `rating_likes` или `rating_comments`.
 - Не разрешай клиенту создавать/удалять notifications или менять в них что-либо кроме `read`.
 - Не раскрывай `users.email`, `users.is_admin` или `users.invite_code` через общий public select; служебные счётчики выдавай только в уже разрешённом read-only наборе полей и никогда не разрешай клиенту их изменять.
+- Футбольные изображения всегда optional. Используй только `FBZMedia` и связанные `media_assets` со статусом `verified`; не выводи deprecated `crest_url`/`photo_url`, `unknown`, `restricted` или `disabled` assets.
+- Наличие URL у provider не подтверждает право использования. Новая интеграция media сначала документируется в `docs/sources/`, сохраняет provenance и остаётся выключенной до проверки конкретных прав.
 - Не используй `live_chat_messages`, `support_tickets` и `referee_ratings` для новых функций: они не участвуют в текущих пользовательских сценариях и требуют отдельного решения по типам identity, grants и RLS.
 - Не считай локальные миграции полным bootstrap, пока не восстановлены три отсутствующие baseline-миграции.
 - Не обходи `api/admin.js` прямыми service-role запросами из браузера.

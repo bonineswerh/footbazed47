@@ -72,4 +72,21 @@ for(const contract of ['revoke all','grant select, insert','service_role']){
 assert(!auditLockSql.includes('grant update'), 'Admin audit log must remain append-only');
 assert(!auditLockSql.includes('grant delete'), 'Admin audit log must remain append-only');
 
+const mediaMigration=files.find(file=>file.endsWith('_media_assets_favorite_clubs_and_competitions.sql'));
+assert(mediaMigration,'Missing media and favorite clubs migration');
+const mediaSql=(await readFile(resolve(migrationsDir,mediaMigration),'utf8')).toLocaleLowerCase('en-US');
+for(const contract of [
+  'create table if not exists public.media_assets',
+  'usage_status in (\'verified\', \'unknown\', \'restricted\', \'disabled\')',
+  'public reads verified media assets',
+  'create table if not exists public.favorite_clubs',
+  'primary key (user_id, club_id)',
+  'set_favorite_club',
+  'get_my_favorite_clubs',
+  'create table if not exists public.competitions',
+  'get_competition_page',
+  'revoke all on table public.media_assets'
+])assert(mediaSql.includes(contract),`Missing media/favorites contract: ${contract}`);
+assert(!/insert\s+into\s+public\.media_assets[\s\S]*https?:\/\//u.test(mediaSql),'Migration must not import unverified production artwork');
+
 console.log(`Migration checks passed: ${files.length} files`);

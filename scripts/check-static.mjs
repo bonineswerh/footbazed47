@@ -86,7 +86,7 @@ for(const pattern of forbiddenWrites){
   if(pattern.test(frontend))errors.push(`Direct rating write found: ${pattern}`);
 }
 
-const requiredScripts=['js/session-hint.js','js/domain.js','js/data.js','js/seo.js','js/performance.js','app.js','js/auth.js','js/ratings.js','js/matches.js','js/search.js'];
+const requiredScripts=['js/session-hint.js','js/domain.js','js/media.js','js/data.js','js/seo.js','js/performance.js','app.js','js/auth.js','js/ratings.js','js/matches.js','js/search.js'];
 for(const script of requiredScripts){
   if(!html.includes(`src="${script}?`))errors.push(`Required script is not versioned in index.html: ${script}`);
 }
@@ -106,7 +106,7 @@ if(!fs.existsSync(vercelIgnorePath)){
 
 const vercelConfig=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8'));
 const rewriteSources=new Set((vercelConfig.rewrites||[]).map(item=>item.source));
-for(const route of ['/club/:id','/player/:id','/profile/:id','/match/:id']){
+for(const route of ['/club/:id','/player/:id','/competition/:id','/profile/:id','/match/:id']){
   if(!rewriteSources.has(route))errors.push(`Missing SPA rewrite for ${route}`);
 }
 if(!rewriteSources.has('/sitemap.xml'))errors.push('Missing dynamic sitemap rewrite');
