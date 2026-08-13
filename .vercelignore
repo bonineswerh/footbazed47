@@ -1,10 +1,9 @@
 # Internal engineering files must never become public static assets.
 supabase/
 tests/
-scripts/
 docs/
-types/
 README.md
 AGENTS.md
 .env.example
-tsconfig.json
+playwright-report/
+test-results/

@@ -99,12 +99,16 @@ if(!fs.existsSync(vercelIgnorePath)){
     .split(/\r?\n/)
     .map(line=>line.trim())
     .filter(line=>line&&!line.startsWith('#'));
-  for(const requiredPath of ['supabase/','tests/','scripts/','docs/','types/','README.md','AGENTS.md','.env.example','tsconfig.json']){
+  for(const requiredPath of ['supabase/','tests/','docs/','README.md','AGENTS.md','.env.example']){
     if(!ignoredPaths.includes(requiredPath))errors.push(`.vercelignore must exclude ${requiredPath}`);
+  }
+  for(const buildPath of ['scripts/','types/','tsconfig.json']){
+    if(ignoredPaths.includes(buildPath))errors.push(`.vercelignore must retain build input ${buildPath}`);
   }
 }
 
 const vercelConfig=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8'));
+if(vercelConfig.outputDirectory!=='dist')errors.push('Vercel must publish only the isolated dist directory');
 const rewriteSources=new Set((vercelConfig.rewrites||[]).map(item=>item.source));
 for(const route of ['/club/:id','/player/:id','/competition/:id','/profile/:id','/match/:id']){
   if(!rewriteSources.has(route))errors.push(`Missing SPA rewrite for ${route}`);
