@@ -46,6 +46,15 @@ for(const contract of [
 ])assert(messagingSql.includes(contract),`Missing supporter/messaging contract: ${contract}`);
 assert(messagingSql.includes('revoke insert, update, delete on table public.direct_conversations, public.direct_messages'), 'Direct messaging must remain RPC-only');
 
+const messagingHardeningMigration=files.find(file=>file.endsWith('_harden_messaging_advisor_findings.sql'));
+assert(messagingHardeningMigration,'Missing messaging advisor hardening migration');
+const messagingHardeningSql=(await readFile(resolve(migrationsDir,messagingHardeningMigration),'utf8')).toLocaleLowerCase('en-US');
+for(const contract of [
+  'direct_messages_rating_id_idx',
+  'no direct rating activity access',
+  'revoke select on table public.chat_messages'
+])assert(messagingHardeningSql.includes(contract),`Missing messaging hardening contract: ${contract}`);
+
 const matchesPage=files.find(file=>file.endsWith('_server_match_pagination.sql'));
 assert(matchesPage,'Missing server match pagination migration');
 const matchesSql=await readFile(resolve(migrationsDir,matchesPage),'utf8');
