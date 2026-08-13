@@ -34,7 +34,7 @@
 - `js/seo.js` — canonical, metadata и structured data для маршрутов.
 - `js/session-hint.js` и `js/performance.js` — безопасная ранняя стабилизация layout и сбор LCP/CLS/INP без пользовательских данных и сетевой отправки.
 - `js/domain.js` — чистая доменная логика, доступная и браузеру, и `node:test`.
-- `js/auth.js`, `js/ratings.js`, `js/matches.js`, `js/entities.js`, `js/feed.js`, `js/search.js`, `js/admin.js` — владельцы своих доменов.
+- `js/auth.js`, `js/ratings.js`, `js/matches.js`, `js/entities.js`, `js/feed.js`, `js/search.js`, `js/admin.js` — владельцы своих доменов. `js/rating-loader.js` сохраняет глобальный `openRate()` и лениво подключает `js/ratings.js`; не возвращай полный rating-модуль в критический путь главной страницы.
 - `js/appearance.js`, `js/overlays.js`, `js/confirm.js`, `js/account.js` — общие UI-механизмы.
 - `api/admin.js` и `api/sitemap.js` — доверенные серверные границы с `service_role`; ключ никогда не передаётся клиенту.
 - `supabase/migrations/` — полная последовательная история production-схемы, воспроизводимая на пустой локальной БД.

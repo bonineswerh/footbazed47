@@ -64,6 +64,53 @@ for(const viewport of [{width:390,height:844},{width:1280,height:720}]){
   });
 }
 
+for(const viewport of [{width:320,height:700},{width:390,height:844},{width:1280,height:720}]){
+  test(`оценка матча сохраняет композицию ${viewport.width}px`,async({page})=>{
+    await page.setViewportSize(viewport);
+    await prepare(page);
+    await page.goto('/match/101?__e2e=1');
+    await page.locator('.md-primary-action').click();
+    await page.evaluate(()=>document.fonts.ready);
+    await expect(page.locator('#rScoreDisp')).toHaveText('8/10');
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    await expect(page).toHaveScreenshot(`rating-score-${viewport.width}x${viewport.height}.png`,{
+      animations:'disabled',
+      caret:'hide',
+      maxDiffPixelRatio:0.05
+    });
+
+    await page.getByRole('button',{name:/Продолжить/}).click();
+    await page.locator('#rating-player-5292').click();
+    await expect(page.locator('#playerRatingEditor')).toBeVisible();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    await expect(page).toHaveScreenshot(`rating-player-${viewport.width}x${viewport.height}.png`,{
+      animations:'disabled',
+      caret:'hide',
+      maxDiffPixelRatio:0.05
+    });
+  });
+}
+
+for(const viewport of [{width:390,height:844},{width:1280,height:720}]){
+  test(`light theme сохраняет поле оценки ${viewport.width}px`,async({page})=>{
+    await page.setViewportSize(viewport);
+    await page.addInitScript(()=>localStorage.setItem('fbz_appearance',JSON.stringify({theme:'light',accent:'emerald'})));
+    await prepare(page);
+    await page.goto('/match/101?__e2e=1');
+    await page.locator('.md-primary-action').click();
+    await page.getByRole('button',{name:/Продолжить/}).click();
+    await page.locator('#rating-player-5292').click();
+    await page.evaluate(()=>document.fonts.ready);
+    await expect(page.locator('#playerRatingEditor')).toBeVisible();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    await expect(page).toHaveScreenshot(`rating-player-light-${viewport.width}x${viewport.height}.png`,{
+      animations:'disabled',
+      caret:'hide',
+      maxDiffPixelRatio:0.05
+    });
+  });
+}
+
 for(const viewport of [{width:390,height:844},{width:1280,height:720}]){
   test(`админ-панель сохраняет композицию ${viewport.width}px`,async({page})=>{
     await page.setViewportSize(viewport);

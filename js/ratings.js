@@ -5,7 +5,9 @@ let rScore=null;
 let rPS={};
 let rBest=null;
 let rExisting=false;
+let rActivePlayer=null;
 const squadCache=new Map();
+const ratingPlayers=new Map();
 
 const TEAM_MAP={
   'man city':'Manchester City FC','man united':'Manchester United FC',
@@ -98,14 +100,11 @@ async function openRate(mid){
     }
     await loadRatePlayers(match);
     (playerScores||[]).forEach(item=>{
-      rPS[item.player_id]=item.rating;
-      const input=document.getElementById(`player-score-${item.player_id}`);
-      if(input){input.value=item.rating;input.classList.add('has-value');}
-      if(item.is_best_player){
-        rBest=item.player_id;
-        input?.closest('.pitem')?.querySelector('.pi-best')?.classList.add('on');
-      }
+      rPS[item.player_id]=Number(item.rating);
+      updatePlayerRatingVisual(item.player_id);
+      if(item.is_best_player)rBest=item.player_id;
     });
+    syncBestPlayerVisuals();
   }catch(error){
     console.error('Rating form error:',error);
     closeRate();
@@ -128,10 +127,13 @@ function resetRatingForm(){
   }
   document.getElementById('rScoreDisp').textContent='—';
   document.getElementById('rScoreDisp').classList.remove('active');
+  document.getElementById('rScoreDisp').dataset.tone='neutral';
   document.getElementById('rScoreLabel').textContent='Выберите оценку';
   document.getElementById('rCmt').value='';
   document.getElementById('rPub').checked=true;
   document.getElementById('rPlayers').innerHTML='<div class="rating-loading"><div class="spin"></div><span>Загружаем составы</span></div>';
+  ratingPlayers.clear();
+  closePlayerRatingEditor(false);
   updateRatingCommentCount();
   setRatingMode(false);
   rBack();
@@ -147,17 +149,22 @@ function setRatingMode(existing){
 function selScore(value,labels=RATING_LABELS){
   rScore=value;
   document.querySelectorAll('.rate-star').forEach((button,index)=>{
-    const selected=index<value;
-    button.classList.toggle('on',selected);
+    const filled=index<value;
+    const selected=index===value-1;
+    button.classList.toggle('on',filled);
+    button.classList.toggle('selected',selected);
     button.setAttribute('aria-pressed',String(selected));
   });
   const display=document.getElementById('rScoreDisp');
   display.textContent=value+'/10';
   display.classList.add('active');
+  display.dataset.tone=window.FBZDomain.ratingTone(value);
+  document.getElementById('starsR').dataset.tone=window.FBZDomain.ratingTone(value);
   document.getElementById('rScoreLabel').textContent=labels[value]||'';
 }
 
 function rBack(){
+  closePlayerRatingEditor(false);
   document.getElementById('rS1').style.display='block';
   document.getElementById('rS2').style.display='none';
   document.getElementById('ss1').classList.add('on');
@@ -169,7 +176,7 @@ function rNext(){
   document.getElementById('rS1').style.display='none';
   document.getElementById('rS2').style.display='block';
   document.getElementById('ss2').classList.add('on');
-  document.querySelector('#rS2 input, #rS2 textarea')?.focus({preventScroll:true});
+  document.querySelector('#rS2 .rating-player, #rS2 textarea')?.focus({preventScroll:true});
 }
 
 function closeRate(){window.FBZOverlay?.close('rateOv');}
@@ -193,12 +200,17 @@ async function loadRatePlayers(match){
   }
   const homePlayers=findPlayersForTeam(players,match.home_team_name);
   const awayPlayers=findPlayersForTeam(players,match.away_team_name);
+  ratingPlayers.clear();
+  [...homePlayers,...awayPlayers].forEach(player=>ratingPlayers.set(Number(player.id),player));
   const container=document.getElementById('rPlayers');
   if(!homePlayers.length&&!awayPlayers.length){
     container.innerHTML='<div class="empty-state compact"><strong>Составы пока недоступны</strong><span>Оценку матча и комментарий всё равно можно сохранить.</span></div>';
     return;
   }
-  container.innerHTML=renderTeamSquad(match.home_team_name,homePlayers)+renderTeamSquad(match.away_team_name,awayPlayers);
+  container.innerHTML=`<div class="rating-team-tabs" role="tablist" aria-label="Выберите команду">
+    <button class="on" type="button" role="tab" aria-selected="true" onclick="showRatingTeam('home',this)">${esc(match.home_team_name)}</button>
+    <button type="button" role="tab" aria-selected="false" onclick="showRatingTeam('away',this)">${esc(match.away_team_name)}</button>
+  </div><div class="rating-squad-grid">${renderTeamSquad(match.home_team_name,homePlayers,'home')}${renderTeamSquad(match.away_team_name,awayPlayers,'away')}</div>`;
 }
 
 function findPlayersForTeam(players,matchTeamName){
@@ -211,55 +223,154 @@ function findPlayersForTeam(players,matchTeamName){
   });
 }
 
-function renderTeamSquad(teamName,players){
+function renderTeamSquad(teamName,players,side){
   if(!players.length)return'';
   const groups={gk:[],def:[],mid:[],att:[],other:[]};
   [...players]
     .sort((a,b)=>(POSITION_ORDER[a.position]||99)-(POSITION_ORDER[b.position]||99)||String(a.name).localeCompare(String(b.name),'ru'))
     .forEach(player=>groups[POSITION_GROUP[player.position]||'other'].push(player));
-  let html=`<section class="rating-squad"><div class="pg-hd"><span>${esc(teamName)}</span><small>${players.length}</small></div>`;
-  Object.entries(POSITION_LABEL).forEach(([group,label])=>{
+  let html=`<section class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(teamName)}"><header class="rating-team-head"><div><span>${side==='home'?'Хозяева':'Гости'}</span><h3>${esc(teamName)}</h3></div><small>${players.length} игроков</small></header><div class="rating-pitch">`;
+  ['att','mid','def','gk','other'].forEach(group=>{
     if(!groups[group].length)return;
-    html+=`<div class="rating-position">${label}</div>${groups[group].map(renderPlayerRating).join('')}`;
+    const label=POSITION_LABEL[group];
+    html+=`<div class="rating-pitch-line rating-line-${group}" aria-label="${label}"><span class="rating-position">${label}</span><div class="rating-player-row" style="--player-count:${Math.min(groups[group].length,5)}">${groups[group].map(renderPlayerRating).join('')}</div></div>`;
   });
-  return html+'</section>';
+  return html+'</div></section>';
+}
+
+function showRatingTeam(side,button){
+  document.querySelectorAll('.rating-squad').forEach(squad=>squad.classList.toggle('is-active',squad.dataset.side===side));
+  document.querySelectorAll('.rating-team-tabs button').forEach(tab=>{
+    const selected=tab===button;
+    tab.classList.toggle('on',selected);
+    tab.setAttribute('aria-selected',String(selected));
+  });
+  closePlayerRatingEditor(false);
 }
 
 function renderPlayerRating(player){
-  return`<div class="pitem"><div class="pi-i"><div class="pi-n">${esc(player.name)}</div><div class="pi-p">${esc(player.position||'Позиция не указана')}</div></div><div class="pi-r"><button class="pi-best" type="button" aria-label="Выбрать ${esc(player.name)} лучшим игроком" aria-pressed="false" title="Лучший игрок" onclick="selBest(${player.id},this)">${ico('star',14)}</button><label class="sr-only" for="player-score-${player.id}">Оценка игрока ${esc(player.name)}</label><input class="pi-num" id="player-score-${player.id}" inputmode="numeric" type="number" min="1" max="10" placeholder="—" onchange="setPScore(${player.id},this.value,this)"></div></div>`;
+  const number=player.shirt_number?`<small>${Number(player.shirt_number)}</small>`:'';
+  return`<button class="rating-player" id="rating-player-${Number(player.id)}" data-player-id="${Number(player.id)}" data-tone="neutral" type="button" onclick="openPlayerRating(${Number(player.id)})" aria-label="Оценить игрока ${esc(player.name)}">
+    <span class="rating-player-score" aria-hidden="true">—</span>
+    <span class="rating-player-best" aria-hidden="true">${ico('star',10)}</span>
+    <span class="rating-player-avatar" aria-hidden="true">${esc(playerInitials(player.name))}${number}</span>
+    <span class="rating-player-name">${esc(player.name)}</span>
+    <span class="rating-player-position">${esc(player.position||'—')}</span>
+  </button>`;
+}
+
+function playerInitials(name){
+  return String(name||'?').trim().split(/\s+/u).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toLocaleUpperCase('ru-RU')||'?';
+}
+
+function openPlayerRating(id){
+  const player=ratingPlayers.get(Number(id));
+  if(!player)return;
+  rActivePlayer=Number(id);
+  const editor=document.getElementById('playerRatingEditor');
+  editor.hidden=false;
+  document.getElementById('playerRatingInitials').textContent=playerInitials(player.name);
+  document.getElementById('playerRatingName').textContent=player.name;
+  document.getElementById('playerRatingMeta').textContent=`${player.team||''}${player.position?' · '+player.position:''}`;
+  const score=rPS[rActivePlayer]||null;
+  document.getElementById('playerRatingRange').value=score||5;
+  updatePlayerRatingEditor(score);
+  editor.scrollIntoView({block:'nearest',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  document.getElementById('playerRatingRange').focus({preventScroll:true});
+}
+
+function closePlayerRatingEditor(returnFocus=true){
+  const activeId=rActivePlayer;
+  const editor=document.getElementById('playerRatingEditor');
+  if(editor)editor.hidden=true;
+  rActivePlayer=null;
+  if(returnFocus&&activeId)document.getElementById(`rating-player-${activeId}`)?.focus({preventScroll:true});
+}
+
+function updatePlayerRatingEditor(score){
+  const value=document.getElementById('playerRatingValue');
+  const label=document.getElementById('playerRatingLabel');
+  const range=document.getElementById('playerRatingRange');
+  const best=document.getElementById('playerBestButton');
+  if(!value||!range)return;
+  const tone=window.FBZDomain.ratingTone(score);
+  const hasScore=Number.isInteger(Number(score));
+  value.textContent=hasScore?`${score}/10`:'—';
+  value.dataset.tone=tone;
+  label.textContent=hasScore?RATING_LABELS[score]:'Передвиньте ползунок';
+  range.style.setProperty('--rating-progress',hasScore?`${((score-1)/9)*100}%`:'0%');
+  range.dataset.tone=tone;
+  best.disabled=!hasScore;
+  best.classList.toggle('on',Number(rBest)===Number(rActivePlayer));
+  best.setAttribute('aria-pressed',String(Number(rBest)===Number(rActivePlayer)));
+}
+
+function setActivePlayerScore(value){
+  if(!rActivePlayer)return;
+  setPScore(rActivePlayer,value);
+  updatePlayerRatingEditor(rPS[rActivePlayer]||null);
+}
+
+function clearActivePlayerRating(){
+  if(!rActivePlayer)return;
+  setPScore(rActivePlayer,'');
+  document.getElementById('playerRatingRange').value=5;
+  updatePlayerRatingEditor(null);
+}
+
+function toggleActiveBest(){
+  if(!rActivePlayer)return;
+  selBest(rActivePlayer,document.getElementById('playerBestButton'));
+  updatePlayerRatingEditor(rPS[rActivePlayer]||null);
 }
 
 function selBest(id,button){
   if(!rPS[id]){
     toast('Сначала поставьте игроку оценку','err');
-    document.getElementById(`player-score-${id}`)?.focus();
+    openPlayerRating(id);
     return;
   }
   const deselect=Number(rBest)===Number(id);
   rBest=deselect?null:id;
-  document.querySelectorAll('.pi-best').forEach(item=>{
-    item.classList.remove('on');
-    item.setAttribute('aria-pressed','false');
-  });
-  if(!deselect){
-    button.classList.add('on');
-    button.setAttribute('aria-pressed','true');
-  }
+  syncBestPlayerVisuals();
+  button?.classList.toggle('on',!deselect);
+  button?.setAttribute('aria-pressed',String(!deselect));
 }
 
-function setPScore(id,value,input){
+function setPScore(id,value){
   const score=Number(value);
   if(Number.isInteger(score)&&score>=1&&score<=10){
     rPS[id]=score;
-    input.classList.add('has-value');
+    updatePlayerRatingVisual(id);
     return;
   }
   delete rPS[id];
-  input.value='';
-  input.classList.remove('has-value');
   if(Number(rBest)===Number(id)){
     rBest=null;
-    input.closest('.pitem')?.querySelector('.pi-best')?.classList.remove('on');
+    syncBestPlayerVisuals();
+  }
+  updatePlayerRatingVisual(id);
+}
+
+function updatePlayerRatingVisual(id){
+  const button=document.getElementById(`rating-player-${Number(id)}`);
+  if(!button)return;
+  const player=ratingPlayers.get(Number(id));
+  const score=rPS[id];
+  const hasScore=Number.isInteger(Number(score));
+  button.classList.toggle('has-rating',hasScore);
+  button.dataset.tone=window.FBZDomain.ratingTone(score);
+  button.querySelector('.rating-player-score').textContent=hasScore?score:'—';
+  button.setAttribute('aria-label',`${hasScore?'Изменить оценку':'Оценить игрока'} ${player?.name||''}${hasScore?`, сейчас ${score} из 10`:''}`);
+}
+
+function syncBestPlayerVisuals(){
+  document.querySelectorAll('.rating-player').forEach(button=>button.classList.toggle('is-best',Number(button.dataset.playerId)===Number(rBest)));
+  const best=document.getElementById('playerBestButton');
+  if(best&&rActivePlayer){
+    const selected=Number(rBest)===Number(rActivePlayer);
+    best.classList.toggle('on',selected);
+    best.setAttribute('aria-pressed',String(selected));
   }
 }
 
@@ -357,3 +468,6 @@ function refreshAfterRatingChange(){
   if(CP==='md')loadMD(rMID);
   else if(CP==='feed')loadFeed();
 }
+
+window.__FOOTBAZED_RATINGS_READY__=true;
+window.openRate=openRate;

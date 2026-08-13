@@ -86,10 +86,11 @@ for(const pattern of forbiddenWrites){
   if(pattern.test(frontend))errors.push(`Direct rating write found: ${pattern}`);
 }
 
-const requiredScripts=['js/session-hint.js','js/domain.js','js/media.js','js/data.js','js/seo.js','js/performance.js','app.js','js/auth.js','js/ratings.js','js/matches.js','js/search.js'];
+const requiredScripts=['js/session-hint.js','js/domain.js','js/media.js','js/data.js','js/seo.js','js/performance.js','app.js','js/auth.js','js/rating-loader.js','js/matches.js','js/search.js'];
 for(const script of requiredScripts){
   if(!html.includes(`src="${script}?`))errors.push(`Required script is not versioned in index.html: ${script}`);
 }
+if(!frontend.includes("script.src='js/ratings.js?v="))errors.push('Rating loader must reference a versioned ratings module');
 
 const vercelIgnorePath=path.join(root,'.vercelignore');
 if(!fs.existsSync(vercelIgnorePath)){

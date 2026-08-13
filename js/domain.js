@@ -46,6 +46,14 @@
     return{valid:true,error:''};
   }
 
+  function ratingTone(value){
+    const score=Number(value);
+    if(!Number.isFinite(score)||score<1||score>10)return'neutral';
+    if(score<=3)return'low';
+    if(score<=6)return'mid';
+    return'high';
+  }
+
   function normalizeSearchQuery(value){
     return String(value||'').replace(/\s+/g,' ').trim().slice(0,80);
   }
@@ -67,5 +75,5 @@
     });
   }
 
-  return Object.freeze({authErrorMessage,normalizeSearchQuery,sortMatches,validateRatingDraft});
+  return Object.freeze({authErrorMessage,normalizeSearchQuery,ratingTone,sortMatches,validateRatingDraft});
 });

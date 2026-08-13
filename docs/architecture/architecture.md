@@ -16,7 +16,7 @@ FOOTBAZED остаётся статическим History API SPA на HTML, CSS
 - `js/search.js`: глобальный поиск и переходы.
 - `js/data.js`: общие пагинированные RPC.
 
-`entities`, `feed` и `admin` загружаются лениво. MediaResolver загружается до доменных экранов, но не выполняет сеть и не блокирует core.
+`entities`, `feed`, `ratings` и `admin` загружаются лениво. `js/rating-loader.js` сохраняет публичный вызов `openRate()`, но не загружает полный модуль до явного действия пользователя. MediaResolver загружается до доменных экранов, но не выполняет сеть и не блокирует core.
 
 ## MediaProvider
 

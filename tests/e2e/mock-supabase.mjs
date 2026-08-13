@@ -17,6 +17,24 @@ const fixture={
     {id:901,user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',from_user_id:'2b854020-9701-4f49-9c36-2b65c9dcd449',type:'friend_request',message:'Natasha хочет добавить вас в друзья',read:false,created_at:'2026-08-09T13:00:00Z',rating_id:null,comment_id:null},
     {id:902,user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',from_user_id:'cd291181-2db6-42cb-9f3d-ef84ab3a9660',type:'like',message:'Gamlet оценил вашу публикацию',read:false,created_at:'2026-08-09T13:05:00Z',rating_id:501,comment_id:null}
   ],
+  players:[
+    {id:5290,name:'Thibaut Courtois',team:'Real Madrid CF',club_id:24,position:'GK',shirt_number:1},
+    {id:5291,name:'Antonio Rüdiger',team:'Real Madrid CF',club_id:24,position:'CB',shirt_number:22},
+    {id:5292,name:'Jude Bellingham',team:'Real Madrid CF',club_id:24,position:'AM',shirt_number:5},
+    {id:5293,name:'Dani Carvajal',team:'Real Madrid CF',club_id:24,position:'RB',shirt_number:2},
+    {id:5294,name:'Aurélien Tchouaméni',team:'Real Madrid CF',club_id:24,position:'DM',shirt_number:14},
+    {id:5295,name:'Vinícius Júnior',team:'Real Madrid CF',club_id:24,position:'LW',shirt_number:7},
+    {id:6201,name:'Ederson',team:'Manchester City FC',club_id:31,position:'GK',shirt_number:31},
+    {id:6202,name:'Rúben Dias',team:'Manchester City FC',club_id:31,position:'CB',shirt_number:3},
+    {id:6203,name:'Joško Gvardiol',team:'Manchester City FC',club_id:31,position:'LB',shirt_number:24},
+    {id:6204,name:'Rodri',team:'Manchester City FC',club_id:31,position:'DM',shirt_number:16},
+    {id:6205,name:'Phil Foden',team:'Manchester City FC',club_id:31,position:'AM',shirt_number:47},
+    {id:6206,name:'Erling Haaland',team:'Manchester City FC',club_id:31,position:'ST',shirt_number:9}
+  ],
+  playerRatings:[
+    {user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',match_id:101,player_id:5290,rating:9,is_best_player:true},
+    {user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',match_id:101,player_id:5292,rating:8,is_best_player:false}
+  ],
   matches:[
     {id:101,competition_id:7,league_name:'Champions League',home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',home_club_id:24,away_club_id:31,match_date:'2026-08-08T19:00:00Z',status:'finished',home_score:2,away_score:1,external_id:9101,league_code:'CL',matchday:1,season:'2026'},
     {id:102,competition_id:8,league_name:'La Liga',home_team_name:'Real Madrid CF',away_team_name:'FC Barcelona',home_club_id:24,away_club_id:25,match_date:'2026-08-20T19:00:00Z',status:'scheduled',home_score:null,away_score:null,external_id:9102,league_code:'PD',matchday:2,season:'2026'}
@@ -77,6 +95,12 @@ export async function installSupabaseMock(page){
 
     function rpc(name,args={}){
       if(name==='get_my_profile')return promiseResult(structuredClone(state.profile));
+      if(name==='save_match_rating'){
+        state.lastRatingPayload=structuredClone(args);
+        state.playerRatings=(args.p_player_ratings||[]).map(item=>({user_id:state.sessionUser.id,match_id:Number(args.p_match_id),...structuredClone(item)}));
+        return promiseResult({ratings_count:state.profile.ratings_count,avg_rating:state.profile.avg_rating,streak:state.profile.streak,streak_date:state.profile.streak_date});
+      }
+      if(name==='delete_match_rating')return promiseResult({ratings_count:Math.max(0,state.profile.ratings_count-1),avg_rating:state.profile.avg_rating,streak:state.profile.streak,streak_date:state.profile.streak_date});
       if(name==='get_my_favorite_clubs')return promiseResult(structuredClone(state.favoriteClubs));
       if(name==='set_favorite_club'){
         const clubId=Number(args.p_club_id);
@@ -239,7 +263,9 @@ export async function installSupabaseMock(page){
       if(table==='ratings')return state.feed.map(item=>({id:item.rating_id,user_id:item.user_id,match_id:item.match_id,match_rating:item.match_rating,comment:item.comment,is_public:true,created_at:item.created_at}));
       if(table==='friendships')return structuredClone(state.friendships);
       if(table==='notifications')return structuredClone(state.notifications);
-      if(table==='rating_likes'||table==='rating_comments'||table==='predictions'||table==='chat_messages'||table==='players')return[];
+      if(table==='players')return structuredClone(state.players);
+      if(table==='player_ratings')return structuredClone(state.playerRatings);
+      if(table==='rating_likes'||table==='rating_comments'||table==='predictions'||table==='chat_messages')return[];
       return[];
     }
 
@@ -304,7 +330,8 @@ export async function installSupabaseMock(page){
       recovery:()=>structuredClone(state.passwordRecovery||null),
       updatedUser:()=>structuredClone(state.updatedUser||null),
       storage:()=>structuredClone(state.storageUpload||null),
-      profile:()=>structuredClone(state.profile)
+      profile:()=>structuredClone(state.profile),
+      lastRating:()=>structuredClone(state.lastRatingPayload||null)
     };
   },fixture);
 }

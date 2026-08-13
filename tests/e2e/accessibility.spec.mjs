@@ -16,10 +16,11 @@ async function prepare(page){
   }));
 }
 
-async function expectNoSeriousWcagViolations(page){
+async function expectNoSeriousWcagViolations(page,contextSelector=null){
   await page.addScriptTag({content:axe.source});
-  const violations=await page.evaluate(async()=>{
-    const result=await window.axe.run(document,{
+  const violations=await page.evaluate(async selector=>{
+    const context=selector?document.querySelector(selector):document;
+    const result=await window.axe.run(context,{
       runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}
     });
     return result.violations
@@ -30,7 +31,7 @@ async function expectNoSeriousWcagViolations(page){
         help:item.help,
         targets:item.nodes.slice(0,5).map(node=>node.target.join(' '))
       }));
-  });
+  },contextSelector);
   expect(violations).toEqual([]);
 }
 
@@ -53,5 +54,24 @@ for(const scenario of [
     await page.goto(scenario.url);
     await expect(page.locator(scenario.ready).first()).toBeVisible();
     await expectNoSeriousWcagViolations(page);
+  });
+}
+
+for(const scenario of [
+  {name:'rating field mobile',viewport:{width:390,height:844}},
+  {name:'rating field light desktop',viewport:{width:1280,height:720},theme:'light'}
+]){
+  test(`${scenario.name} has no serious WCAG AA violations`,async({page})=>{
+    await page.setViewportSize(scenario.viewport);
+    if(scenario.theme){
+      await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),scenario.theme);
+    }
+    await prepare(page);
+    await page.goto('/match/101?__e2e=1');
+    await page.locator('.md-primary-action').click();
+    await page.getByRole('button',{name:/Продолжить/}).click();
+    await page.locator('#rating-player-5292').click();
+    await expect(page.locator('#playerRatingEditor')).toBeVisible();
+    await expectNoSeriousWcagViolations(page,'#rateOv');
   });
 }

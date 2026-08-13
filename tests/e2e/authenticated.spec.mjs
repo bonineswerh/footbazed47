@@ -157,6 +157,36 @@ test('страница матча сравнивает личную оценку
   await expect(page.getByRole('button',{name:/Изменить оценку/})).toBeVisible();
 });
 
+test('оценка матча использует поле игроков и сохраняет единым RPC',async({page})=>{
+  await page.goto('/match/101?__e2e=1');
+  await page.locator('.md-primary-action').click();
+
+  await expect(page.locator('#rateOv')).toBeVisible();
+  await expect(page.locator('#rScoreDisp')).toHaveText('8/10');
+  await page.locator('.rate-star').nth(8).click();
+  await expect(page.locator('#rScoreDisp')).toHaveText('9/10');
+  await page.getByRole('button',{name:/Продолжить/}).click();
+
+  await expect(page.locator('.rating-squad')).toHaveCount(2);
+  await expect(page.locator('.rating-player')).toHaveCount(12);
+  await page.locator('#rating-player-5292').click();
+  await expect(page.locator('#playerRatingName')).toHaveText('Jude Bellingham');
+  await expect(page.locator('#playerRatingRange')).toHaveValue('8');
+  await page.locator('#playerRatingRange').fill('9');
+  await page.locator('#playerBestButton').click();
+  await expect(page.locator('#rating-player-5292')).toHaveClass(/is-best/u);
+  await page.getByRole('button',{name:'Готово'}).click();
+  await page.locator('#rSave').click();
+
+  await expect(page.locator('#rateOv')).toBeHidden();
+  const payload=await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastRating());
+  expect(payload.p_match_rating).toBe(9);
+  expect(payload.p_player_ratings).toEqual(expect.arrayContaining([
+    {player_id:5290,rating:9,is_best_player:false},
+    {player_id:5292,rating:9,is_best_player:true}
+  ]));
+});
+
 test('дружба меняется только после успешного атомарного RPC',async({page})=>{
   await page.goto('/?__e2e=1#profile/cd291181-2db6-42cb-9f3d-ef84ab3a9660');
   const addButton=page.locator('#profAddBtn');

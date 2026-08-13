@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=48">
+  <link rel="stylesheet" href="styles.css?v=49">
 </head>
 <body>
 
@@ -505,43 +505,80 @@
   <!-- RATING -->
   <div class="overlay" id="rateOv" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="rateTitle" data-close-backdrop="true" tabindex="-1">
     <div class="rate-box">
-      <h2 id="rateTitle">Оценить матч</h2>
+      <div class="rate-box-head">
+        <div>
+          <span class="rate-eyebrow">Ваше мнение</span>
+          <h2 id="rateTitle">Оценить матч</h2>
+        </div>
+        <button class="rate-close" type="button" onclick="closeRate()" aria-label="Закрыть окно оценки">×</button>
+      </div>
       
-      <div class="rate-steps">
-        <div class="rate-step on" id="ss1"></div>
-        <div class="rate-step" id="ss2"></div>
+      <div class="rate-steps" aria-label="Прогресс оценки">
+        <div class="rate-step on" id="ss1"><span>1</span><b>Матч</b></div>
+        <div class="rate-step" id="ss2"><span>2</span><b>Игроки и отзыв</b></div>
       </div>
       
       <div id="rS1">
-        <p style="color:var(--text2);text-align:center;margin-bottom:8px;" id="rMI">Матч</p>
+        <div class="rate-match-context" id="rMI">Матч</div>
+        <section class="rate-score-panel" aria-labelledby="rateScorePrompt">
+          <span class="rate-score-prompt" id="rateScorePrompt">Насколько вам понравился матч?</span>
+          <div class="rate-score" id="rScoreDisp" data-tone="neutral">—</div>
+          <div class="rate-label" id="rScoreLabel" aria-live="polite">Выберите оценку</div>
+          <div class="rate-stars" id="starsR" data-tone="neutral" role="group" aria-label="Оценка матча от 1 до 10"></div>
+          <div class="rate-scale-labels" aria-hidden="true"><span>Не понравился</span><span>Отличный матч</span></div>
+        </section>
         
-        <div class="rate-stars" id="starsR"></div>
-        
-        <div class="rate-score" id="rScoreDisp">—</div>
-        <div class="rate-label" id="rScoreLabel">Выберите оценку</div>
-        
-        <label style="display:flex;align-items:center;gap:8px;color:var(--text2);margin-bottom:24px;">
-          <input type="checkbox" id="rPub" checked> Публичная оценка
+        <label class="rating-public-toggle">
+          <span><b>Показывать в профиле и ленте</b><small>Оценку и отзыв смогут увидеть другие пользователи</small></span>
+          <input type="checkbox" id="rPub" checked>
+          <i aria-hidden="true"></i>
         </label>
         
-        <div style="display:flex;gap:12px;">
-          <button class="btn btn-g" style="flex:1" onclick="closeRate()">Отмена</button>
-          <button class="btn btn-l" style="flex:1" onclick="rNext()">Далее: Игроки →</button>
+        <div class="rating-actions rating-actions-primary">
+          <button class="btn btn-g" type="button" onclick="closeRate()">Отмена</button>
+          <button class="btn btn-l" type="button" onclick="rNext()">Продолжить <span aria-hidden="true">→</span></button>
         </div>
       </div>
       
       <div id="rS2" style="display:none;">
-        <p style="color:var(--text2);margin-bottom:16px;">Оцените игроков (необязательно)</p>
+        <div class="rating-section-intro">
+          <div><span>Необязательно</span><h3>Оцените игроков</h3></div>
+          <p>Выберите игрока на поле и поставьте оценку. Состав сгруппирован по позициям, а не по стартовой схеме.</p>
+        </div>
         <div id="rPlayers"></div>
+
+        <aside class="player-rating-editor" id="playerRatingEditor" hidden aria-labelledby="playerRatingName">
+          <div class="player-rating-editor-head">
+            <span>Оценка игрока</span>
+            <button type="button" onclick="closePlayerRatingEditor()" aria-label="Закрыть оценку игрока">×</button>
+          </div>
+          <div class="player-rating-person">
+            <span class="player-rating-initials" id="playerRatingInitials" aria-hidden="true">—</span>
+            <div><h4 id="playerRatingName">Игрок</h4><p id="playerRatingMeta">Команда · позиция</p></div>
+            <div class="player-rating-output" id="playerRatingValue" data-tone="neutral">—</div>
+          </div>
+          <div class="player-rating-label" id="playerRatingLabel" aria-live="polite">Передвиньте ползунок</div>
+          <label class="sr-only" for="playerRatingRange">Оценка игрока от 1 до 10</label>
+          <input class="player-rating-range" id="playerRatingRange" type="range" min="1" max="10" step="1" value="5" data-tone="neutral" oninput="setActivePlayerScore(this.value)">
+          <div class="player-rating-scale" aria-hidden="true"><span>1</span><span>5</span><span>10</span></div>
+          <div class="player-rating-editor-actions">
+            <button class="player-rating-clear" type="button" onclick="clearActivePlayerRating()">Сбросить</button>
+            <button class="player-best-button" id="playerBestButton" type="button" onclick="toggleActiveBest()" aria-pressed="false" disabled><span data-i="star"></span> Лучший игрок</button>
+            <button class="player-rating-done" type="button" onclick="closePlayerRatingEditor()">Готово</button>
+          </div>
+        </aside>
         
         <label class="sr-only" for="rCmt">Комментарий к матчу</label>
-        <textarea class="input" placeholder="Комментарий к матчу" id="rCmt" rows="3" maxlength="1000" oninput="updateRatingCommentCount()"></textarea>
-        <div class="rating-comment-meta"><span>Ваше мнение о матче</span><span id="rCmtCount">0/1000</span></div>
+        <div class="rating-comment-field">
+          <div class="rating-comment-heading"><span>Отзыв о матче</span><small>Необязательно</small></div>
+          <textarea class="input" placeholder="Что запомнилось в игре?" id="rCmt" rows="4" maxlength="1000" oninput="updateRatingCommentCount()"></textarea>
+          <div class="rating-comment-meta"><span>Пишите по существу и уважайте других</span><span id="rCmtCount">0/1000</span></div>
+        </div>
         
         <button class="btn btn-danger-soft rating-delete" type="button" onclick="requestDeleteRating()" id="rDelete" hidden>Удалить мою оценку</button>
         <div class="rating-actions">
-          <button class="btn btn-g" style="flex:1" onclick="rBack()">← Назад</button>
-          <button class="btn btn-l" style="flex:1" onclick="saveRating()" id="rSave">Сохранить</button>
+          <button class="btn btn-g" type="button" onclick="rBack()"><span aria-hidden="true">←</span> Назад</button>
+          <button class="btn btn-l" type="button" onclick="saveRating()" id="rSave">Сохранить</button>
         </div>
       </div>
     </div>
@@ -678,7 +715,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- APP JS -->
-  <script src="js/domain.js?v=40"></script>
+  <script src="js/domain.js?v=41"></script>
   <script src="js/appearance.js?v=40"></script>
   <script src="js/performance.js?v=1"></script>
   <script src="js/core.js?v=43"></script>
@@ -690,7 +727,7 @@
   <script src="js/home.js?v=2"></script>
   <script src="app.js?v=49"></script>
   <script src="js/auth.js?v=43"></script>
-  <script src="js/ratings.js?v=41"></script>
+  <script src="js/rating-loader.js?v=1"></script>
   <script src="js/matches.js?v=44"></script>
   <script src="js/search.js?v=42"></script>
   <script src="js/account.js?v=40"></script>

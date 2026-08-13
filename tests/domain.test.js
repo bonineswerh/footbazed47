@@ -28,6 +28,14 @@ test('rating draft rejects duplicate players and oversized comments',()=>{
   assert.equal(domain.validateRatingDraft({matchRating:8,comment:'x'.repeat(1001)}).valid,false);
 });
 
+test('rating tones use restrained semantic ranges',()=>{
+  assert.equal(domain.ratingTone(null),'neutral');
+  assert.equal(domain.ratingTone(3),'low');
+  assert.equal(domain.ratingTone(6),'mid');
+  assert.equal(domain.ratingTone(7),'high');
+  assert.equal(domain.ratingTone(10),'high');
+});
+
 test('auth errors are localized without exposing unknown backend text',()=>{
   assert.equal(domain.authErrorMessage({message:'Invalid login credentials'}),'Неверный email или пароль');
   assert.equal(domain.authErrorMessage({message:'internal database detail'},'Безопасная ошибка'),'Безопасная ошибка');
