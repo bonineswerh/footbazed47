@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=49">
+  <link rel="stylesheet" href="styles.css?v=51">
 </head>
 <body>
 
@@ -326,6 +326,7 @@
           <button class="admin-nav-item on" type="button" data-admin-view="overview" onclick="FBZAdmin.showView('overview',this)"><span data-i="dashboard"></span><span>Обзор</span></button>
           <button class="admin-nav-item" type="button" data-admin-view="sync" onclick="FBZAdmin.showView('sync',this)"><span data-i="sync"></span><span>Синхронизация</span></button>
           <button class="admin-nav-item" type="button" data-admin-view="matches" onclick="FBZAdmin.showView('matches',this)"><span data-i="calendar"></span><span>Матчи</span></button>
+          <button class="admin-nav-item" type="button" data-admin-view="maintenance" onclick="FBZAdmin.showView('maintenance',this)"><span data-i="shield"></span><span>Очистка</span></button>
         </nav>
 
         <main class="admin-workspace">
@@ -396,6 +397,24 @@
             <div class="admin-panel admin-table-panel">
               <div class="admin-match-list" id="adminMatchesList"></div>
             </div>
+          </section>
+
+          <section class="admin-view" id="admin-view-maintenance">
+            <div class="admin-section-head">
+              <div><h2>Данные разработки</h2><p>Контролируемая очистка тестовых данных перед следующей синхронизацией</p></div>
+            </div>
+            <section class="admin-panel admin-danger-panel">
+              <div class="admin-panel-head"><h3>Необратимая операция</h3><span>Только для текущего этапа разработки</span></div>
+              <div class="admin-danger-copy"><strong>Пользователи и их аккаунты не удаляются.</strong><p>Удаляются выбранные матчи, игроки или оценки вместе с зависимыми данными. Действие выполняет защищённая серверная функция и записывает результат в журнал администратора.</p></div>
+              <label class="admin-danger-confirm"><span>Введите контрольную фразу</span><input type="text" id="adminCleanupConfirm" autocomplete="off" spellcheck="false" placeholder="DELETE FOOTBAZED DATA" oninput="FBZAdmin.updateCleanupState()"></label>
+              <div class="admin-danger-actions">
+                <button class="btn btn-danger admin-cleanup-action" type="button" onclick="FBZAdmin.cleanup('ratings')" disabled>Удалить оценки</button>
+                <button class="btn btn-danger admin-cleanup-action" type="button" onclick="FBZAdmin.cleanup('players')" disabled>Удалить игроков</button>
+                <button class="btn btn-danger admin-cleanup-action" type="button" onclick="FBZAdmin.cleanup('matches')" disabled>Удалить матчи</button>
+                <button class="btn btn-danger admin-cleanup-action all" type="button" onclick="FBZAdmin.cleanup('all')" disabled>Удалить всё тестовое</button>
+              </div>
+              <div class="admin-cleanup-result" id="adminCleanupResult" role="status" aria-live="polite"></div>
+            </section>
           </section>
         </main>
 
@@ -520,6 +539,15 @@
       
       <div id="rS1">
         <div class="rate-match-context" id="rMI">Матч</div>
+        <fieldset class="rating-supporter-choice">
+          <legend>С чьей позиции вы оцениваете матч?</legend>
+          <p>Так оценки болельщиков обеих команд и нейтральных зрителей можно сравнить честно.</p>
+          <div class="rating-supporter-options">
+            <label><input type="radio" name="ratingSupporterSide" value="home" onchange="selectSupporterSide(this.value)"><span><i data-i="shield"></i><b id="rSupportHome">Первая команда</b><small>Болею за хозяев</small></span></label>
+            <label><input type="radio" name="ratingSupporterSide" value="neutral" onchange="selectSupporterSide(this.value)"><span><i data-i="football"></i><b>Нейтральный зритель</b><small>Смотрю без клубной стороны</small></span></label>
+            <label><input type="radio" name="ratingSupporterSide" value="away" onchange="selectSupporterSide(this.value)"><span><i data-i="shield"></i><b id="rSupportAway">Вторая команда</b><small>Болею за гостей</small></span></label>
+          </div>
+        </fieldset>
         <section class="rate-score-panel" aria-labelledby="rateScorePrompt">
           <span class="rate-score-prompt" id="rateScorePrompt">Насколько вам понравился матч?</span>
           <div class="rate-score" id="rScoreDisp" data-tone="neutral">—</div>
@@ -687,6 +715,30 @@
     </form>
   </div>
 
+  <!-- DIRECT MESSAGES -->
+  <div class="overlay" id="directChatOv" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="directChatTitle" data-close-backdrop="false" tabindex="-1">
+    <section class="dm-shell">
+      <header class="dm-head">
+        <button class="dm-back" id="directChatBack" type="button" onclick="FBZMessages?.showPicker()" aria-label="Назад к друзьям" hidden>‹</button>
+        <button class="dm-person" id="directChatPerson" type="button" disabled>
+          <span class="dm-avatar" id="directChatAvatar">F</span>
+          <span><b id="directChatTitle">Сообщения</b><small id="directChatSubtitle">Личный чат</small></span>
+        </button>
+        <button class="icon-btn" type="button" onclick="FBZMessages?.close()" aria-label="Закрыть">×</button>
+      </header>
+      <div class="dm-body" id="directChatBody" aria-live="polite"></div>
+      <div class="dm-upload-state" id="directChatUploadState" role="status" hidden></div>
+      <form class="dm-composer" id="directChatComposer" onsubmit="FBZMessages?.send(event)" hidden>
+        <input id="directChatMedia" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onchange="FBZMessages?.attach(this.files?.[0])" hidden>
+        <button class="dm-tool" type="button" onclick="document.getElementById('directChatMedia').click()" aria-label="Прикрепить фото или видео" title="Фото или видео"><span data-i="photo"></span></button>
+        <label class="sr-only" for="directChatInput">Сообщение</label>
+        <textarea id="directChatInput" rows="1" maxlength="2000" placeholder="Сообщение" onkeydown="FBZMessages?.composerKeydown(event)"></textarea>
+        <button class="dm-tool" id="directChatVoice" type="button" onclick="FBZMessages?.toggleVoice()" aria-label="Записать голосовое сообщение" title="Голосовое сообщение"><span class="dm-mic">●</span></button>
+        <button class="dm-send" id="directChatSend" type="submit" aria-label="Отправить"><span data-i="send"></span></button>
+      </form>
+    </section>
+  </div>
+
   <!-- MOBILE NAV -->
   <nav class="mob-nav" aria-label="Мобильная навигация">
     <button type="button" class="mob-nav-item active" aria-current="page" id="mn-home" onclick="go('home')">
@@ -715,20 +767,20 @@
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- APP JS -->
-  <script src="js/domain.js?v=41"></script>
+  <script src="js/domain.js?v=51"></script>
   <script src="js/appearance.js?v=40"></script>
   <script src="js/performance.js?v=1"></script>
-  <script src="js/core.js?v=43"></script>
+  <script src="js/core.js?v=51"></script>
   <script src="js/media.js?v=2"></script>
   <script src="js/seo.js?v=2"></script>
   <script src="js/data.js?v=43"></script>
   <script src="js/overlays.js?v=40"></script>
   <script src="js/confirm.js?v=40"></script>
   <script src="js/home.js?v=2"></script>
-  <script src="app.js?v=49"></script>
+  <script src="app.js?v=51"></script>
   <script src="js/auth.js?v=43"></script>
-  <script src="js/rating-loader.js?v=1"></script>
-  <script src="js/matches.js?v=44"></script>
+  <script src="js/rating-loader.js?v=3"></script>
+  <script src="js/matches.js?v=51"></script>
   <script src="js/search.js?v=42"></script>
   <script src="js/account.js?v=40"></script>
 </body>

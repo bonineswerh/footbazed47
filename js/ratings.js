@@ -6,6 +6,7 @@ let rPS={};
 let rBest=null;
 let rExisting=false;
 let rActivePlayer=null;
+let rSupporterSide=null;
 const squadCache=new Map();
 const ratingPlayers=new Map();
 
@@ -72,13 +73,13 @@ const RATING_LABELS=['','Ужасно','Плохо','Слабо','Ниже ср�
 
 async function openRate(mid){
   if(!CU){openAuth();return;}
-  rMID=Number(mid);rScore=null;rPS={};rBest=null;rExisting=false;
+  rMID=Number(mid);rScore=null;rPS={};rBest=null;rExisting=false;rSupporterSide=null;
   resetRatingForm();
   window.FBZOverlay?.open('rateOv','.rate-star');
   try{
     const[{data:match,error:matchError},{data:existing,error:ratingError},{data:playerScores,error:playerError}]=await Promise.all([
       sb.from('matches').select('home_team_name,away_team_name,status').eq('id',rMID).single(),
-      sb.from('ratings').select('match_rating,comment,is_public').eq('user_id',CU.id).eq('match_id',rMID).maybeSingle(),
+      sb.from('ratings').select('match_rating,comment,is_public,supporter_side').eq('user_id',CU.id).eq('match_id',rMID).maybeSingle(),
       sb.from('player_ratings').select('player_id,rating,is_best_player').eq('user_id',CU.id).eq('match_id',rMID)
     ]);
     if(matchError)throw matchError;
@@ -91,11 +92,14 @@ async function openRate(mid){
     }
 
     document.getElementById('rMI').textContent=`${match.home_team_name} — ${match.away_team_name}`;
+    document.getElementById('rSupportHome').textContent=match.home_team_name;
+    document.getElementById('rSupportAway').textContent=match.away_team_name;
     setRatingMode(Boolean(existing));
     if(existing){
       selScore(existing.match_rating,RATING_LABELS);
       document.getElementById('rCmt').value=existing.comment||'';
       document.getElementById('rPub').checked=existing.is_public!==false;
+      selectSupporterSide(existing.supporter_side||'neutral');
       updateRatingCommentCount();
     }
     await loadRatePlayers(match);
@@ -131,6 +135,7 @@ function resetRatingForm(){
   document.getElementById('rScoreLabel').textContent='Выберите оценку';
   document.getElementById('rCmt').value='';
   document.getElementById('rPub').checked=true;
+  document.querySelectorAll('input[name="ratingSupporterSide"]').forEach(input=>{input.checked=false;});
   document.getElementById('rPlayers').innerHTML='<div class="rating-loading"><div class="spin"></div><span>Загружаем составы</span></div>';
   ratingPlayers.clear();
   closePlayerRatingEditor(false);
@@ -163,6 +168,13 @@ function selScore(value,labels=RATING_LABELS){
   document.getElementById('rScoreLabel').textContent=labels[value]||'';
 }
 
+function selectSupporterSide(side){
+  if(!['home','away','neutral'].includes(side))return;
+  rSupporterSide=side;
+  const input=document.querySelector(`input[name="ratingSupporterSide"][value="${side}"]`);
+  if(input)input.checked=true;
+}
+
 function rBack(){
   closePlayerRatingEditor(false);
   document.getElementById('rS1').style.display='block';
@@ -172,6 +184,7 @@ function rBack(){
 }
 
 function rNext(){
+  if(!rSupporterSide){toast('Выберите, за какую сторону вы болеете','err');document.querySelector('input[name="ratingSupporterSide"]')?.focus();return;}
   if(!rScore){toast('Выберите оценку','err');return;}
   document.getElementById('rS1').style.display='none';
   document.getElementById('rS2').style.display='block';
@@ -391,7 +404,9 @@ function ratingErrorMessage(error){
     player_ratings_invalid:'Проверьте оценки игроков',
     duplicate_player_rating:'Один игрок добавлен дважды',
     multiple_best_players:'Можно выбрать только одного лучшего игрока',
-    player_not_found:'Один из игроков больше недоступен'
+    player_not_found:'Один из игроков больше недоступен',
+    player_not_in_match:'Игрок не входит в состав одной из команд этого матча',
+    supporter_side_required:'Выберите, за какую сторону вы болеете'
   };
   const key=Object.keys(messages).find(item=>message.includes(item));
   return key?messages[key]:'Не удалось сохранить оценку';
@@ -409,7 +424,7 @@ async function saveRating(){
   if(!CU){openAuth();return;}
   const comment=document.getElementById('rCmt').value.trim();
   const playerRatings=ratingPayload();
-  const validation=window.FBZDomain.validateRatingDraft({matchRating:rScore,comment,playerRatings,bestPlayerId:rBest});
+  const validation=window.FBZDomain.validateRatingDraft({matchRating:rScore,supporterSide:rSupporterSide,comment,playerRatings,bestPlayerId:rBest});
   if(!validation.valid){toast(validation.error,'err');return;}
 
   const button=document.getElementById('rSave');
@@ -421,13 +436,25 @@ async function saveRating(){
       p_match_rating:rScore,
       p_comment:comment||null,
       p_is_public:document.getElementById('rPub').checked,
-      p_player_ratings:playerRatings
+      p_player_ratings:playerRatings,
+      p_supporter_side:rSupporterSide
     }).single();
     if(error)throw error;
     if(data)Object.assign(CU,{ratings_count:data.ratings_count,avg_rating:data.avg_rating,streak:data.streak,streak_date:data.streak_date});
+    const savedRatingId=Number(data?.rating_id)||null;
+    const wasExisting=Boolean(rExisting);
     toast(rExisting?'Оценка обновлена':'Оценка сохранена','ok');
     closeRate();
     refreshAfterRatingChange();
+    if(savedRatingId&&!wasExisting){
+      setTimeout(()=>window.FBZConfirm?.open({
+        title:'Оценка сохранена',
+        message:'Можно сразу отправить карточку оценки другу в личный чат.',
+        confirmText:'Отправить другу',
+        tone:'neutral',
+        onConfirm:()=>{forwardRating(savedRatingId);return true;}
+      }),250);
+    }
   }catch(error){
     console.error('Rating save error:',error);
     toast(ratingErrorMessage(error),'err');
@@ -471,3 +498,4 @@ function refreshAfterRatingChange(){
 
 window.__FOOTBAZED_RATINGS_READY__=true;
 window.openRate=openRate;
+window.selectSupporterSide=selectSupporterSide;

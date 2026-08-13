@@ -82,8 +82,12 @@ export async function installSupabaseMock(page){
     const state=structuredClone(data);
     state.club.matches=structuredClone(state.matches);
     state.competition.matches=structuredClone(state.matches.filter(match=>match.competition_id===7));
+    state.directConversations=[];
+    state.directMessages=[];
     let nextCommentId=900;
     let nextFriendshipId=900;
+    let nextConversationId=1000;
+    let nextDirectMessageId=2000;
     let authListener=null;
 
     function promiseResult(data,error=null,count=null){
@@ -194,6 +198,37 @@ export async function installSupabaseMock(page){
         state.friendships=state.friendships.filter(item=>!((item.user_id===state.sessionUser.id&&item.friend_id===otherId)||(item.user_id===otherId&&item.friend_id===state.sessionUser.id)));
         return promiseResult({status:'removed',changed:before!==state.friendships.length});
       }
+      if(name==='get_or_create_direct_conversation'){
+        const friendId=String(args.p_friend_id||'');
+        const accepted=state.friendships.some(item=>item.status==='accepted'&&((item.user_id===state.sessionUser.id&&item.friend_id===friendId)||(item.user_id===friendId&&item.friend_id===state.sessionUser.id)));
+        if(!accepted)return promiseResult(null,{message:'friendship_required',code:'42501'});
+        let conversation=state.directConversations.find(item=>item.friendId===friendId);
+        if(!conversation){conversation={id:nextConversationId++,friendId,created_at:new Date().toISOString(),last_message_at:null};state.directConversations.push(conversation);}
+        return promiseResult(structuredClone(conversation));
+      }
+      if(name==='get_direct_messages'){
+        const items=state.directMessages.filter(item=>Number(item.conversation_id)===Number(args.p_conversation_id));
+        return promiseResult({items:structuredClone(items),has_more:false,next_before_id:items[0]?.id||null});
+      }
+      if(name==='send_direct_message'){
+        const ratingItem=state.feed.find(item=>Number(item.rating_id)===Number(args.p_rating_id));
+        const message={
+          id:nextDirectMessageId++,conversation_id:Number(args.p_conversation_id),sender_id:state.sessionUser.id,
+          body:args.p_body||null,media_kind:args.p_media_kind||null,media_path:args.p_media_path||null,rating_id:args.p_rating_id||null,
+          created_at:new Date().toISOString(),updated_at:new Date().toISOString(),edited_at:null,can_edit:true,
+          sender:{username:state.profile.username,display_name:state.profile.display_name,avatar_url:null},
+          rating:ratingItem?{match_id:ratingItem.match_id,score:ratingItem.match_rating,supporter_side:ratingItem.supporter_side||'neutral',...structuredClone(ratingItem.match)}:null
+        };
+        state.directMessages.push(message);
+        return promiseResult({id:message.id,created_at:message.created_at});
+      }
+      if(name==='edit_direct_message'){
+        const message=state.directMessages.find(item=>Number(item.id)===Number(args.p_message_id)&&item.sender_id===state.sessionUser.id);
+        if(!message)return promiseResult(null,{message:'message_not_found',code:'P0002'});
+        message.body=String(args.p_body||'');message.updated_at=new Date().toISOString();message.edited_at=message.updated_at;
+        return promiseResult({id:message.id,body:message.body,updated_at:message.updated_at,edited_at:message.edited_at});
+      }
+      if(name==='get_profile_comparison')return promiseResult({common_matches:1,agreement_score:89,average_gap:1,exact_matches:0,closest:[],contrasts:[]});
       if(name==='get_social_feed_page'||name==='get_social_feed'){
         let items=structuredClone(state.feed);
         if(args.p_scope==='mine')items=items.filter(item=>item.user_id===state.sessionUser.id);
@@ -246,7 +281,10 @@ export async function installSupabaseMock(page){
       if(name==='get_club_page')return promiseResult(Number(args.p_club_id)===24?structuredClone(state.club):null);
       if(name==='get_player_page')return promiseResult(Number(args.p_player_id)===5290?structuredClone(state.player):null);
       if(name==='get_competition_page')return promiseResult(Number(args.p_competition_id)===7?structuredClone(state.competition):null);
-      if(name==='get_match_insights')return promiseResult({rating_count:2,average:8.5,distribution:Array.from({length:10},(_,index)=>({score:10-index,count:index===1?1:index===2?1:0})),top_players:[{player_id:5290,name:'Thibaut Courtois',team:'Real Madrid CF',average:8.7,rating_count:3,best_votes:2}]});
+      if(name==='get_match_insights'){
+        const distribution=Array.from({length:10},(_,index)=>({score:10-index,count:index===1?1:index===2?1:0}));
+        return promiseResult({rating_count:2,average:8.5,distribution,segments:{all:{rating_count:2,average:8.5,distribution},home:{rating_count:1,average:9,distribution},away:{rating_count:0,average:null,distribution:[]},neutral:{rating_count:1,average:8,distribution}},top_players:[{player_id:5290,name:'Thibaut Courtois',team:'Real Madrid CF',average:8.7,rating_count:3,best_votes:2}]});
+      }
       if(name==='search_footbazed'){
         const query=String(args.p_query||'').toLocaleLowerCase();
         const results=[];
@@ -321,7 +359,9 @@ export async function installSupabaseMock(page){
           state.storageUpload={bucket,path,size:file?.size||0,type:file?.type||'',options:structuredClone(options)};
           return promiseResult({path});
         },
-        getPublicUrl:path=>({data:{publicUrl:`https://storage.example.test/${encodeURIComponent(bucket)}/${String(path).split('/').map(encodeURIComponent).join('/')}`}})
+        getPublicUrl:path=>({data:{publicUrl:`https://storage.example.test/${encodeURIComponent(bucket)}/${String(path).split('/').map(encodeURIComponent).join('/')}`}}),
+        createSignedUrl:path=>promiseResult({signedUrl:`https://storage.example.test/signed/${String(path).split('/').map(encodeURIComponent).join('/')}`}),
+        remove:paths=>promiseResult(paths)
       })}
     };
     window.__FOOTBAZED_TEST_AUTH__={

@@ -6,6 +6,7 @@ let matchHasMore=false;
 let matchNextOffset=0;
 let matchLoading=false;
 let matchRequestId=0;
+let activeMatchRatingSegments=null;
 
 function matchPageSize(){
   return window.matchMedia('(max-width: 900px)').matches?12:MATCH_PAGE_SIZE;
@@ -27,6 +28,40 @@ function teamMonogram(name){
   if(!source.length)return'FB';
   if(source.length===1)return source[0].slice(0,2).toLocaleUpperCase('ru-RU');
   return`${source[0][0]}${source[1][0]}`.toLocaleUpperCase('ru-RU');
+}
+
+function matchRatingSegmentLabel(segment,match){
+  return{all:'Все зрители',home:`Болельщики ${match.home_team_name}`,away:`Болельщики ${match.away_team_name}`,neutral:'Нейтральные зрители'}[segment]||'Все зрители';
+}
+
+function matchDistributionMarkup(segment){
+  const distribution=Array.isArray(segment?.distribution)?segment.distribution:Array.from({length:10},(_,index)=>({score:10-index,count:0}));
+  const max=Math.max(...distribution.map(item=>Number(item.count)||0),1);
+  if(!Number(segment?.rating_count))return'<div class="empty-state compact"><strong>В этом сегменте пока нет оценок</strong><span>Показатель появится после первого публичного голоса.</span></div>';
+  return`<div class="rdist">${distribution.map(item=>`<div class="rd-row" data-tone="${window.FBZDomain.ratingTone(item.score)}"><div class="rd-l">${item.score}</div><div class="rd-bar"><div class="rd-fill" style="width:${item.count?Math.round(item.count/max*100):0}%"></div></div><div class="rd-c">${item.count}</div></div>`).join('')}</div>`;
+}
+
+function setMatchRatingSegment(segment,button){
+  const data=activeMatchRatingSegments?.segments?.[segment];
+  if(!data)return;
+  activeMatchRatingSegments.active=segment;
+  document.querySelectorAll('.md-segment').forEach(item=>{
+    const active=item===button||item.dataset.segment===segment;
+    item.classList.toggle('on',active);
+    item.setAttribute('aria-pressed',String(active));
+  });
+  const average=document.getElementById('mdCommunityAverage');
+  const count=document.getElementById('mdCommunityCount');
+  const label=document.getElementById('mdCommunityLabel');
+  const distribution=document.getElementById('mdDistribution');
+  if(average){
+    const value=Number(data.rating_count)&&Number.isFinite(Number(data.average))?Number(data.average):null;
+    average.textContent=value===null?'—':value.toFixed(1);
+    average.dataset.tone=value===null?'':window.FBZDomain.ratingTone(value);
+  }
+  if(count)count.textContent=Number(data.rating_count)||0;
+  if(label)label.textContent=matchRatingSegmentLabel(segment,activeMatchRatingSegments.match);
+  if(distribution)distribution.innerHTML=matchDistributionMarkup(data);
 }
 
 function sortMatches(items){
@@ -210,7 +245,7 @@ async function loadMD(id){
   target.innerHTML='<div class="loading"><div class="spin"></div><span>Загружаем матч</span></div>';
   try{
     const ownRatingRequest=CU
-      ?sb.from('ratings').select('match_rating,comment,is_public,updated_at').eq('user_id',CU.id).eq('match_id',id).maybeSingle()
+      ?sb.from('ratings').select('match_rating,comment,is_public,supporter_side,updated_at').eq('user_id',CU.id).eq('match_id',id).maybeSingle()
       :Promise.resolve({data:null,error:null});
     const[{data:match,error:matchError},{data:ratings,error:ratingsError},{data:insights,error:insightsError},{data:ownRating,error:ownRatingError}]=await Promise.all([
       sb.from('matches').select(MATCH_FIELDS).eq('id',id).single(),
@@ -234,17 +269,20 @@ async function loadMD(id){
     const averageValue=Number(insights?.average);
     const hasAverage=ratingCount>0&&Number.isFinite(averageValue);
     const average=hasAverage?averageValue.toFixed(1):'—';
-    const distribution=Array.isArray(insights?.distribution)?insights.distribution:Array.from({length:10},(_,index)=>({score:10-index,count:0}));
-    const maxDistribution=Math.max(...distribution.map(item=>item.count),1);
+    const segments=insights?.segments&&typeof insights.segments==='object'?insights.segments:{all:{rating_count:ratingCount,average:insights?.average,distribution:insights?.distribution||[]}};
+    activeMatchRatingSegments={segments,match,active:'all'};
     const topPlayers=Array.isArray(insights?.top_players)?insights.top_players:[];
     const statusLabel={live:'LIVE',finished:'Завершён',scheduled:'Предстоит'}[match.status]||match.status;
     const prediction=match.status==='scheduled'?`<section class="md-prediction"><div class="mdcard-title">${ico('target',15)} Прогноз на матч</div>${renderPredBlock(match)}</section>`:'';
     const competitionMeta=[match.season?`Сезон ${match.season}`:'',match.matchday?`${match.matchday}-й тур`:''].filter(Boolean).join(' · ');
+    const segmentControls=ratingCount?`<div class="md-segments" role="group" aria-label="Чьи оценки показать">
+      ${[['all','Все'],['home',match.home_team_name],['neutral','Нейтральные'],['away',match.away_team_name]].map(([key,label])=>{const value=segments[key]||{};const segmentAverage=Number(value.average);const segmentHasAverage=Number(value.rating_count)>0&&Number.isFinite(segmentAverage);return`<button class="md-segment${key==='all'?' on':''}" type="button" data-segment="${key}" aria-pressed="${key==='all'}" onclick="setMatchRatingSegment('${key}',this)"><span>${esc(label)}</span><b data-tone="${segmentHasAverage?window.FBZDomain.ratingTone(segmentAverage):''}">${segmentHasAverage?segmentAverage.toFixed(1):'—'}</b><small>${Number(value.rating_count)||0}</small></button>`;}).join('')}
+    </div>`:'';
     const communityMarkup=ratingCount?`<div class="md-comm">
-      <div class="md-ci"><div class="md-cv">${average}</div><div class="md-cl">Средняя сообщества</div></div>
-      <div class="md-ci"><div class="md-cv">${ratingCount}</div><div class="md-cl">Публичных оценок</div></div>
+      <div class="md-ci"><div class="md-cv" id="mdCommunityAverage" data-tone="${hasAverage?window.FBZDomain.ratingTone(averageValue):''}">${average}</div><div class="md-cl" id="mdCommunityLabel">Все зрители</div></div>
+      <div class="md-ci"><div class="md-cv" id="mdCommunityCount">${ratingCount}</div><div class="md-cl">Публичных оценок</div></div>
       <div class="md-ci"><div class="md-cv md-cv-player">${esc(topPlayers[0]?.name||'—')}</div><div class="md-cl">Лучший игрок</div></div>
-    </div>`:`<div class="md-community-empty"><strong>${match.status==='scheduled'?'Оценки откроются после матча':'Мнение сообщества ещё не сформировано'}</strong><span>${match.status==='scheduled'?'После финального свистка здесь появятся оценки болельщиков.':'Поставьте первую оценку и начните обсуждение матча.'}</span></div>`;
+    </div>${segmentControls}`:`<div class="md-community-empty"><strong>${match.status==='scheduled'?'Оценки откроются после матча':'Мнение сообщества ещё не сформировано'}</strong><span>${match.status==='scheduled'?'После финального свистка здесь появятся оценки болельщиков.':'Поставьте первую оценку и начните обсуждение матча.'}</span></div>`;
     const difference=ownRating&&hasAverage?Number(ownRating.match_rating)-averageValue:null;
     const differenceLabel=difference===null?'Сравнение появится после публичных оценок':Math.abs(difference)<0.05?'Вы совпали с мнением сообщества':difference>0?'Вы оценили матч выше сообщества':'Вы оценили матч ниже сообщества';
     const differenceValue=difference===null?'—':`${difference>0?'+':''}${difference.toFixed(1)}`;
@@ -256,9 +294,7 @@ async function loadMD(id){
         <div><span>Разница</span><b class="${difference===null||Math.abs(difference)<0.05?'neutral':difference>0?'positive':'negative'}">${differenceValue}</b></div>
       </div>
     </section>`:'';
-    const distributionMarkup=ratingCount
-      ?`<div class="rdist">${distribution.map(item=>`<div class="rd-row"><div class="rd-l">${item.score}</div><div class="rd-bar"><div class="rd-fill" style="width:${item.count?Math.round(item.count/maxDistribution*100):0}%"></div></div><div class="rd-c">${item.count}</div></div>`).join('')}</div>`
-      :'<div class="empty-state compact"><strong>Недостаточно данных</strong><span>Распределение появится после первой публичной оценки.</span></div>';
+    const distributionMarkup=matchDistributionMarkup(segments.all);
 
     target.innerHTML=`
       <section class="md-hero">
@@ -280,10 +316,10 @@ async function loadMD(id){
       ${ownRatingMarkup}
       <div class="md-grid">
         <div>
-          <section class="mdcard"><div class="mdcard-title">Топ игроков</div>${topPlayers.length?topPlayers.map((player,index)=>`<button class="pr-row pr-row-link" type="button" onclick="go('player',{id:${Number(player.player_id)}})"><span class="pr-rank">${index+1}</span><span class="pr-info"><span class="pr-name">${esc(player.name)}</span><span class="pr-team">${esc(player.team)} · ${Number(player.rating_count)||0} оценок${Number(player.best_votes)?` · ${Number(player.best_votes)} выборов лучшим`:''}</span></span><span class="pr-r"><span class="pr-bar"><span class="pr-fill" style="width:${Number(player.average)*10}%"></span></span><span class="pr-val">${Number(player.average).toFixed(1)}</span></span></button>`).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong><span>Они появятся, когда болельщики оценят составы.</span></div>'}</section>
-          <section class="mdcard"><div class="mdcard-title">Оценки болельщиков</div>${ratings?.length?ratings.slice(0,8).map(rating=>{const user=userMap[rating.user_id]||{};return`<div class="rh-row"><div><button class="text-link rh-m" onclick="go('profile',{uid:'${rating.user_id}'})">${esc(user.username||'Аноним')}</button><div class="rh-l">@${esc(user.username||'user')}${rating.comment?' · '+esc(rating.comment.substring(0,50)):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(rating.match_rating||0)*10}%"></div></div><div class="rh-v">${rating.match_rating}/10</div></div></div>`;}).join(''):`<div class="empty-state compact"><strong>${match.status==='finished'?'Оценок пока нет':'Обсуждение начнётся после матча'}</strong><span>${match.status==='finished'?'Сформируйте первое мнение о матче.':'Здесь появятся оценки болельщиков.'}</span>${match.status==='finished'?`<button class="btn btn-g btn-sm" type="button" onclick="openRate(${match.id})">Оценить первым</button>`:''}</div>`}</section>
+          <section class="mdcard"><div class="mdcard-title">Топ игроков</div>${topPlayers.length?topPlayers.map((player,index)=>`<button class="pr-row pr-row-link" data-tone="${window.FBZDomain.ratingTone(Number(player.average))}" type="button" onclick="go('player',{id:${Number(player.player_id)}})"><span class="pr-rank">${index+1}</span><span class="pr-info"><span class="pr-name">${esc(player.name)}</span><span class="pr-team">${esc(player.team)} · ${Number(player.rating_count)||0} оценок${Number(player.best_votes)?` · ${Number(player.best_votes)} выборов лучшим`:''}</span></span><span class="pr-r"><span class="pr-bar"><span class="pr-fill" style="width:${Number(player.average)*10}%"></span></span><span class="pr-val">${Number(player.average).toFixed(1)}</span></span></button>`).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong><span>Они появятся, когда болельщики оценят составы.</span></div>'}</section>
+          <section class="mdcard"><div class="mdcard-title">Оценки болельщиков</div>${ratings?.length?ratings.slice(0,8).map(rating=>{const user=userMap[rating.user_id]||{};const sideLabel={home:match.home_team_name,away:match.away_team_name,neutral:'Нейтральный'}[rating.supporter_side]||'Нейтральный';return`<div class="rh-row"><div><button class="text-link rh-m" onclick="go('profile',{uid:'${rating.user_id}'})">${esc(user.username||'Аноним')}</button><div class="rh-l">@${esc(user.username||'user')} · ${esc(sideLabel)}${rating.comment?' · '+esc(rating.comment.substring(0,50)):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" data-tone="${window.FBZDomain.ratingTone(rating.match_rating)}" style="width:${(rating.match_rating||0)*10}%"></div></div><div class="rh-v" data-tone="${window.FBZDomain.ratingTone(rating.match_rating)}">${rating.match_rating}/10</div></div></div>`;}).join(''):`<div class="empty-state compact"><strong>${match.status==='finished'?'Оценок пока нет':'Обсуждение начнётся после матча'}</strong><span>${match.status==='finished'?'Сформируйте первое мнение о матче.':'Здесь появятся оценки болельщиков.'}</span>${match.status==='finished'?`<button class="btn btn-g btn-sm" type="button" onclick="openRate(${match.id})">Оценить первым</button>`:''}</div>`}</section>
         </div>
-        <section class="mdcard"><div class="mdcard-title">Распределение оценок</div>${distributionMarkup}</section>
+        <section class="mdcard"><div class="mdcard-title">Распределение оценок</div><div id="mdDistribution">${distributionMarkup}</div></section>
       </div>`;
 
     if(match.status==='scheduled'&&CU)loadPrediction(match.id,document.getElementById(`pred-${match.id}`));
@@ -292,6 +328,8 @@ async function loadMD(id){
     target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Не удалось открыть матч</strong><button class="btn btn-g btn-sm" onclick="loadMD('+Number(id)+')">Повторить</button></div>';
   }
 }
+
+window.setMatchRatingSegment=setMatchRatingSegment;
 
 async function loadPrediction(matchId,container){
   if(!CU||!container)return;

@@ -38,7 +38,8 @@ if(/fonts\.(?:googleapis|gstatic)\.com/i.test(html))errors.push('Fonts must be s
 for(const feature of [
   {name:'admin',script:'js/admin.js',style:'admin.css'},
   {name:'entities',script:'js/entities.js',style:'css/entities.css'},
-  {name:'feed',script:'js/feed.js',style:'css/feed.css'}
+  {name:'feed',script:'js/feed.js',style:'css/feed.css'},
+  {name:'messages',script:'js/messages.js',style:'css/messages.css'}
 ]){
   if(html.includes(`src="${feature.script}?`)||html.includes(`href="${feature.style}?`))errors.push(`${feature.name} assets must not load eagerly`);
   if(!frontend.includes(`script:'${feature.script}?`)||!frontend.includes(`style:'${feature.style}?`))errors.push(`${feature.name} assets must use the feature loader`);
@@ -110,6 +111,11 @@ if(!fs.existsSync(vercelIgnorePath)){
 
 const vercelConfig=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8'));
 if(vercelConfig.outputDirectory!=='dist')errors.push('Vercel must publish only the isolated dist directory');
+const securityHeaders=(vercelConfig.headers||[]).flatMap(item=>item.headers||[]);
+const csp=securityHeaders.find(item=>item.key==='Content-Security-Policy')?.value||'';
+const permissions=securityHeaders.find(item=>item.key==='Permissions-Policy')?.value||'';
+if(!/media-src[^;]*https:\/\/\*\.supabase\.co/u.test(csp))errors.push('CSP must allow private Supabase chat media');
+if(!permissions.includes('microphone=(self)'))errors.push('Voice messages require a same-origin microphone policy');
 const rewriteSources=new Set((vercelConfig.rewrites||[]).map(item=>item.source));
 for(const route of ['/club/:id','/player/:id','/competition/:id','/profile/:id','/match/:id']){
   if(!rewriteSources.has(route))errors.push(`Missing SPA rewrite for ${route}`);

@@ -108,7 +108,7 @@ select is(public.get_club_page(940001)->>'is_favorite', 'false', 'anon opens a c
 -- 17-21: anonymous roles cannot reach privileged data or write RPCs.
 select ok(not has_table_privilege('anon', 'public.admin_audit_logs', 'SELECT'), 'anon has no audit log privilege');
 select ok(not has_function_privilege('anon', 'public.request_friendship(uuid)', 'EXECUTE'), 'anon cannot request friendships');
-select ok(not has_function_privilege('anon', 'public.save_match_rating(bigint,smallint,text,boolean,jsonb)', 'EXECUTE'), 'anon cannot save ratings');
+select ok(not has_function_privilege('anon', 'public.save_match_rating(bigint,smallint,text,boolean,jsonb,text)', 'EXECUTE'), 'anon cannot save ratings');
 select ok(not has_function_privilege('anon', 'public.set_favorite_club(bigint,boolean)', 'EXECUTE'), 'anon cannot mutate favorite clubs');
 select ok(not has_table_privilege('anon', 'public.favorite_clubs', 'SELECT'), 'anon cannot read favorite clubs');
 
@@ -151,15 +151,8 @@ select ok(not has_table_privilege('authenticated', 'public.player_ratings', 'INS
 select ok(not has_table_privilege('authenticated', 'public.favorite_clubs', 'INSERT'), 'favorite clubs cannot be inserted directly');
 select ok(not has_table_privilege('authenticated', 'public.chat_messages', 'UPDATE'), 'chat messages are not client-editable');
 select ok(not has_table_privilege('authenticated', 'public.chat_messages', 'DELETE'), 'chat messages are not client-deletable');
-select lives_ok(
-  $$insert into public.chat_messages (match_id, user_id, message) values (950001, '11000000-0000-0000-0000-000000000003', 'Own chat message')$$,
-  'authenticated user appends an own chat message'
-);
-select throws_like(
-  $$insert into public.chat_messages (match_id, user_id, message) values (950001, '11000000-0000-0000-0000-000000000001', 'Spoofed chat message')$$,
-  '%row-level security%',
-  'authenticated user cannot spoof a chat author'
-);
+select ok(not has_table_privilege('authenticated', 'public.chat_messages', 'INSERT'), 'match chat cannot be inserted directly');
+select ok(has_function_privilege('authenticated', 'public.send_match_chat_message(bigint,text)', 'EXECUTE'), 'authenticated user appends match chat through RPC');
 
 -- 50-51: prediction RLS permits owner writes and rejects identity spoofing.
 select lives_ok(

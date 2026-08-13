@@ -70,7 +70,7 @@
           ${clubButton(item.match?.away_club_id,item.match?.away_team_name,'away')}
         </div>
       </div>
-      <div class="feed-verdict">
+      <div class="feed-verdict" data-tone="${window.FBZDomain.ratingTone(rating)}">
         <div class="feed-rating"><strong>${rating}</strong><span>/10</span></div>
         <div class="feed-rating-copy"><span>Оценка матча</span><div class="feed-rating-track"><i style="--rating:${rating*10}%"></i></div></div>
       </div>
@@ -79,6 +79,7 @@
       <footer class="feed-actions">
         <button class="feed-action like-action${item.liked_by_me?' on':''}" type="button" ${own?'disabled title="Свою запись нельзя оценить"':`onclick="FBZFeed.toggleLike(${Number(item.rating_id)},this)"`} aria-pressed="${item.liked_by_me?'true':'false'}">${ico('heart',16)}<span>${Number(item.like_count)||0}</span><small>Нравится</small></button>
         <button class="feed-action" type="button" onclick="FBZFeed.toggleComments(${Number(item.rating_id)},this)">${ico('chat',16)}<span data-comment-count>${Number(item.comment_count)||0}</span><small>Обсудить</small></button>
+        <button class="feed-action" type="button" onclick="forwardRating(${Number(item.rating_id)})" aria-label="Отправить оценку другу">${ico('send',16)}<small>Отправить</small></button>
         ${own?`<button class="feed-action feed-edit" type="button" onclick="openRate(${Number(item.match_id)})" aria-label="Изменить оценку" title="Изменить оценку">${ico('edit',15)}<small>Изменить</small></button>`:''}
       </footer>
       <div class="feed-comments" id="feed-comments-${Number(item.rating_id)}" aria-live="polite"></div>
@@ -207,7 +208,7 @@
   function commentMarkup(comment,ratingId){
     return`<div class="feed-comment" data-comment-id="${Number(comment.id)}">
       ${commentAvatar(comment)}
-      <div><div class="feed-comment-head"><button type="button" onclick="go('profile',{uid:${jsStr(comment.user_id)}})">@${esc(comment.user?.username||'user')}</button><time>${esc(relativeDate(comment.created_at))}</time>${comment.can_delete?`<button class="comment-delete" type="button" onclick="FBZFeed.deleteComment(${Number(ratingId)},${Number(comment.id)},this)" aria-label="Удалить комментарий" title="Удалить">×</button>`:''}</div><p>${esc(comment.comment)}</p></div>
+      <div><div class="feed-comment-head"><button type="button" onclick="go('profile',{uid:${jsStr(comment.user_id)}})">@${esc(comment.user?.username||'user')}</button><time datetime="${esc(comment.created_at)}">${new Date(comment.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</time>${comment.edited_at?'<small>ред.</small>':''}${comment.can_edit?`<button class="comment-edit" type="button" onclick="FBZFeed.editComment(${Number(ratingId)},${Number(comment.id)})">Изменить</button>`:''}${comment.can_delete?`<button class="comment-delete" type="button" onclick="FBZFeed.deleteComment(${Number(ratingId)},${Number(comment.id)},this)" aria-label="Удалить комментарий" title="Удалить">×</button>`:''}</div><p>${esc(comment.comment)}</p></div>
     </div>`;
   }
 
@@ -293,6 +294,21 @@
     }
   }
 
+  async function editComment(ratingId,commentId){
+    const comments=commentCache.get(Number(ratingId))||[];
+    const comment=comments.find(item=>Number(item.id)===Number(commentId));
+    if(!comment)return;
+    const updated=prompt('Изменить комментарий',comment.comment);
+    if(updated===null||!updated.trim()||updated.trim()===comment.comment)return;
+    if(updated.trim().length>1000){toast('Комментарий слишком длинный','err');return;}
+    try{
+      const{data,error}=await sb.rpc('edit_rating_comment',{p_comment_id:Number(commentId),p_comment:updated.trim()});
+      if(error)throw error;
+      Object.assign(comment,data,{user:comment.user});
+      renderComments(ratingId,comments);
+    }catch(error){console.error('Edit comment error:',error);toast('Не удалось изменить комментарий','err');}
+  }
+
   function renderHomeItem(item){
     const rating=Math.max(0,Math.min(10,Number(item.match_rating)||0));
     return`<article class="home-feed-card">
@@ -322,5 +338,5 @@
   window.loadHomeF=loadHome;
   window.loadFeed=load;
   window.setFS=setScope;
-  window.FBZFeed={addComment,deleteComment,focusRating,load,loadHome,loadMore,open,setScope,toggleComments,toggleLike};
+  window.FBZFeed={addComment,deleteComment,editComment,focusRating,load,loadHome,loadMore,open,setScope,toggleComments,toggleLike};
 })();

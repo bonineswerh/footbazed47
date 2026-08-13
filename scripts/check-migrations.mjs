@@ -28,6 +28,24 @@ for(const contract of ['validate_player_rating_roster','request_friendship','res
   assert(latest.includes(contract),`Missing database contract: ${contract}`);
 }
 
+const messagingMigration=files.find(file=>file.endsWith('_supporter_ratings_messaging_and_streaks.sql'));
+assert(messagingMigration,'Missing supporter ratings and private messaging migration');
+const messagingSql=(await readFile(resolve(migrationsDir,messagingMigration),'utf8')).toLocaleLowerCase('en-US');
+for(const contract of [
+  'supporter_side',
+  'player_not_in_match',
+  'get_match_insights',
+  'rating_activity_days',
+  'get_or_create_direct_conversation',
+  'send_direct_message',
+  'edit_direct_message',
+  "'chat-media'",
+  'get_profile_comparison',
+  'admin_cleanup_development_data',
+  'service_role_required'
+])assert(messagingSql.includes(contract),`Missing supporter/messaging contract: ${contract}`);
+assert(messagingSql.includes('revoke insert, update, delete on table public.direct_conversations, public.direct_messages'), 'Direct messaging must remain RPC-only');
+
 const matchesPage=files.find(file=>file.endsWith('_server_match_pagination.sql'));
 assert(matchesPage,'Missing server match pagination migration');
 const matchesSql=await readFile(resolve(migrationsDir,matchesPage),'utf8');

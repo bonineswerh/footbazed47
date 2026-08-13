@@ -152,6 +152,26 @@ async function getOverview() {
   };
 }
 
+async function cleanupDevelopmentData(body) {
+  const scope = String(body.scope || '').toLowerCase();
+  const confirmation = String(body.confirmation || '');
+  if (!['matches', 'players', 'ratings', 'all'].includes(scope)) {
+    const error = new Error('Unsupported cleanup scope');
+    error.status = 400;
+    throw error;
+  }
+  if (confirmation !== 'DELETE FOOTBAZED DATA') {
+    const error = new Error('Confirmation phrase is invalid');
+    error.status = 400;
+    throw error;
+  }
+  const response = await supabase('/rest/v1/rpc/admin_cleanup_development_data', {
+    method: 'POST',
+    body: {p_scope: scope, p_confirmation: confirmation}
+  });
+  return parseJson(response.raw, {});
+}
+
 function requireLeague(value) {
   const code = String(value || '').toUpperCase();
   if (!Object.prototype.hasOwnProperty.call(LEAGUES, code)) {
@@ -480,6 +500,14 @@ module.exports = async function handler(req, res) {
     if (action === 'migrate_legacy_avatars') {
       const result = await migrateLegacyAvatars();
       await recordAdminAction(administrator.id, action, {targetType:'user_avatar', metadata:result});
+      return sendJson(res, 200, result);
+    }
+    if (action === 'cleanup_development_data') {
+      const result = await cleanupDevelopmentData(body);
+      await recordAdminAction(administrator.id, action, {
+        targetType:'development_data', targetId:result.scope,
+        metadata:{deleted:result.deleted || {}}
+      });
       return sendJson(res, 200, result);
     }
     if (action === 'test_connection') {

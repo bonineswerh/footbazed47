@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(13);
+select plan(26);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -47,6 +47,26 @@ select throws_ok(
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+select lives_ok(
+  $$select * from public.save_match_rating(920001, 9, 'Supporter-aware rating', true, '[{"player_id":930001,"rating":9,"is_best_player":true}]'::jsonb, 'home')$$,
+  'rating RPC stores a valid match roster and supporter side atomically'
+);
+select is(
+  (select supporter_side from public.ratings where user_id = '10000000-0000-0000-0000-000000000001' and match_id = 920001),
+  'home',
+  'rating keeps the selected supporter side'
+);
+select throws_ok(
+  $$select * from public.save_match_rating(920001, 9, null, true, '[{"player_id":930002,"rating":9}]'::jsonb, 'home')$$,
+  '22023',
+  'player_not_in_match',
+  'rating RPC rejects a player outside both match clubs'
+);
+select is(
+  (public.get_match_insights(920001)#>>'{segments,home,rating_count}')::integer,
+  1,
+  'match insights expose the home-supporter segment'
+);
 select is(public.set_favorite_club(910001, true)->>'changed', 'true', 'favorite club is added atomically');
 select is(public.set_favorite_club(910001, true)->>'changed', 'false', 'duplicate favorite add is idempotent');
 select is(public.set_favorite_club(910001, false)->>'is_favorite', 'false', 'favorite club is removed atomically');
@@ -66,6 +86,50 @@ select is(
   public.respond_friendship('10000000-0000-0000-0000-000000000001', 'accept')->>'status',
   'accepted',
   'recipient accepts through RPC'
+);
+
+select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+select ok(
+  (public.get_or_create_direct_conversation('10000000-0000-0000-0000-000000000002')->>'id')::bigint > 0,
+  'accepted friends create one private conversation through RPC'
+);
+select ok(
+  (public.send_direct_message((select id from public.direct_conversations limit 1), 'First private message', null, null, null)->>'id')::bigint > 0,
+  'conversation member sends a private text message'
+);
+select ok(
+  public.edit_direct_message((select id from public.direct_messages order by id desc limit 1), 'Edited private message')->>'edited_at' is not null,
+  'message author edits a private message with an edited timestamp'
+);
+
+select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
+select is(
+  public.get_direct_messages((select id from public.direct_conversations limit 1), 20, null)#>>'{items,0,body}',
+  'Edited private message',
+  'the other conversation member reads the edited message'
+);
+select is(
+  (public.get_profile_comparison('10000000-0000-0000-0000-000000000001')->>'common_matches')::integer,
+  1,
+  'friends compare only their shared public match ratings'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.direct_messages', 'INSERT'),
+  'direct messages cannot bypass the domain RPC'
+);
+select ok(
+  (public.send_match_chat_message(920001, 'Match chat message')->>'id')::integer > 0,
+  'authenticated user sends a match discussion message through RPC'
+);
+select ok(
+  public.edit_match_chat_message((select id from public.chat_messages order by id desc limit 1), 'Edited match chat')->>'edited_at' is not null,
+  'match discussion author can edit an own message'
+);
+
+reset role;
+select ok(
+  (select public = false and file_size_limit = 31457280 from storage.buckets where id = 'chat-media'),
+  'private chat media is bounded to thirty megabytes'
 );
 
 reset role;

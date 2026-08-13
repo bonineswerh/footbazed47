@@ -47,23 +47,29 @@ export type Database = {
       chat_messages: {
         Row: {
           created_at: string | null
+          edited_at: string | null
           id: number
           match_id: number
           message: string
+          updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          edited_at?: string | null
           id?: number
           match_id: number
           message: string
+          updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string | null
+          edited_at?: string | null
           id?: number
           match_id?: number
           message?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -249,6 +255,84 @@ export type Database = {
             columns: ["logo_asset_id"]
             isOneToOne: false
             referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      direct_conversations: {
+        Row: {
+          created_at: string
+          id: number
+          last_message_at: string | null
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          last_message_at?: string | null
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          last_message_at?: string | null
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: []
+      }
+      direct_messages: {
+        Row: {
+          body: string | null
+          conversation_id: number
+          created_at: string
+          edited_at: string | null
+          id: number
+          media_kind: string | null
+          media_path: string | null
+          rating_id: number | null
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          conversation_id: number
+          created_at?: string
+          edited_at?: string | null
+          id?: number
+          media_kind?: string | null
+          media_path?: string | null
+          rating_id?: number | null
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          conversation_id?: number
+          created_at?: string
+          edited_at?: string | null
+          id?: number
+          media_kind?: string | null
+          media_path?: string | null
+          rating_id?: number | null
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "direct_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_messages_rating_id_fkey"
+            columns: ["rating_id"]
+            isOneToOne: false
+            referencedRelation: "ratings"
             referencedColumns: ["id"]
           },
         ]
@@ -670,26 +754,50 @@ export type Database = {
           },
         ]
       }
+      rating_activity_days: {
+        Row: {
+          activity_date: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_date: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_date?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       rating_comments: {
         Row: {
           comment: string
           created_at: string | null
+          edited_at: string | null
           id: number
           rating_id: number
+          updated_at: string
           user_id: string
         }
         Insert: {
           comment: string
           created_at?: string | null
+          edited_at?: string | null
           id?: number
           rating_id: number
+          updated_at?: string
           user_id: string
         }
         Update: {
           comment?: string
           created_at?: string | null
+          edited_at?: string | null
           id?: number
           rating_id?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -739,6 +847,7 @@ export type Database = {
           is_public: boolean
           match_id: number
           match_rating: number
+          supporter_side: string
           updated_at: string
           user_id: string
         }
@@ -749,6 +858,7 @@ export type Database = {
           is_public?: boolean
           match_id: number
           match_rating: number
+          supporter_side?: string
           updated_at?: string
           user_id: string
         }
@@ -759,6 +869,7 @@ export type Database = {
           is_public?: boolean
           match_id?: number
           match_rating?: number
+          supporter_side?: string
           updated_at?: string
           user_id?: string
         }
@@ -897,6 +1008,14 @@ export type Database = {
         Args: { p_comment: string; p_rating_id: number }
         Returns: Json
       }
+      admin_cleanup_development_data: {
+        Args: { p_confirmation: string; p_scope: string }
+        Returns: Json
+      }
+      are_friends: {
+        Args: { p_user_a: string; p_user_b: string }
+        Returns: boolean
+      }
       delete_match_rating: {
         Args: { p_match_id: number }
         Returns: {
@@ -911,13 +1030,37 @@ export type Database = {
         Args: { p_comment_id: number }
         Returns: boolean
       }
+      edit_direct_message: {
+        Args: { p_body: string; p_message_id: number }
+        Returns: Json
+      }
+      edit_match_chat_message: {
+        Args: { p_message: string; p_message_id: number }
+        Returns: Json
+      }
+      edit_rating_comment: {
+        Args: { p_comment: string; p_comment_id: number }
+        Returns: Json
+      }
       get_club_page: { Args: { p_club_id: number }; Returns: Json }
       get_competition_page: {
         Args: { p_competition_id: number }
         Returns: Json
       }
+      get_direct_messages: {
+        Args: {
+          p_before_id?: number
+          p_conversation_id: number
+          p_limit?: number
+        }
+        Returns: Json
+      }
       get_leaderboard: {
         Args: { p_limit?: number; p_metric?: string }
+        Returns: Json
+      }
+      get_match_chat_messages: {
+        Args: { p_limit?: number; p_match_id: number }
         Returns: Json
       }
       get_match_insights: { Args: { p_match_id: number }; Returns: Json }
@@ -959,7 +1102,12 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_or_create_direct_conversation: {
+        Args: { p_friend_id: string }
+        Returns: Json
+      }
       get_player_page: { Args: { p_player_id: number }; Returns: Json }
+      get_profile_comparison: { Args: { p_user_id: string }; Returns: Json }
       get_profile_page: {
         Args: { p_rating_limit?: number; p_user_id: string }
         Returns: Json
@@ -987,8 +1135,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_my_favorite_club: { Args: { p_club_id: number }; Returns: boolean }
       is_user_visible: { Args: { p_user_id: string }; Returns: boolean }
       record_rating_streak: { Args: never; Returns: undefined }
+      refresh_rating_streak: { Args: { p_user_id: string }; Returns: undefined }
       remove_friendship: { Args: { p_other_id: string }; Returns: Json }
       request_friendship: { Args: { p_friend_id: string }; Returns: Json }
       resolve_invite_code: {
@@ -1010,22 +1160,40 @@ export type Database = {
         Args: { p_action: string; p_requester_id: string }
         Returns: Json
       }
-      save_match_rating: {
-        Args: {
-          p_comment?: string
-          p_is_public?: boolean
-          p_match_id: number
-          p_match_rating: number
-          p_player_ratings?: Json
-        }
-        Returns: {
-          avg_rating: number
-          rating_id: number
-          ratings_count: number
-          streak: number
-          streak_date: string
-        }[]
-      }
+      save_match_rating:
+        | {
+            Args: {
+              p_comment?: string
+              p_is_public?: boolean
+              p_match_id: number
+              p_match_rating: number
+              p_player_ratings?: Json
+            }
+            Returns: {
+              avg_rating: number
+              rating_id: number
+              ratings_count: number
+              streak: number
+              streak_date: string
+            }[]
+          }
+        | {
+            Args: {
+              p_comment: string
+              p_is_public: boolean
+              p_match_id: number
+              p_match_rating: number
+              p_player_ratings: Json
+              p_supporter_side: string
+            }
+            Returns: {
+              avg_rating: number
+              rating_id: number
+              ratings_count: number
+              streak: number
+              streak_date: string
+            }[]
+          }
       search_footbazed: {
         Args: { p_limit?: number; p_query: string }
         Returns: {
@@ -1036,6 +1204,20 @@ export type Database = {
           subtitle: string
           title: string
         }[]
+      }
+      send_direct_message: {
+        Args: {
+          p_body?: string
+          p_conversation_id: number
+          p_media_kind?: string
+          p_media_path?: string
+          p_rating_id?: number
+        }
+        Returns: Json
+      }
+      send_match_chat_message: {
+        Args: { p_match_id: number; p_message: string }
+        Returns: Json
       }
       set_favorite_club: {
         Args: { p_club_id: number; p_favorite?: boolean }

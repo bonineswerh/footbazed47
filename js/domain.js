@@ -23,9 +23,10 @@
     return AUTH_MESSAGES[code]||AUTH_MESSAGES[message]||fallback;
   }
 
-  function validateRatingDraft({matchRating,comment='',playerRatings=[],bestPlayerId=null}={}){
+  function validateRatingDraft({matchRating,supporterSide,comment='',playerRatings=[],bestPlayerId=null}={}){
     const score=Number(matchRating);
     if(!Number.isInteger(score)||score<1||score>10)return{valid:false,error:'Выберите оценку матча от 1 до 10'};
+    if(!['home','away','neutral'].includes(String(supporterSide||'')))return{valid:false,error:'Выберите, с чьей позиции вы оцениваете матч'};
     if(String(comment).trim().length>1000)return{valid:false,error:'Комментарий не может быть длиннее 1000 символов'};
     if(!Array.isArray(playerRatings)||playerRatings.length>60)return{valid:false,error:'Слишком много оценок игроков'};
 
@@ -51,7 +52,8 @@
     if(!Number.isFinite(score)||score<1||score>10)return'neutral';
     if(score<=3)return'low';
     if(score<=6)return'mid';
-    return'high';
+    if(score<=9)return'high';
+    return'elite';
   }
 
   function normalizeSearchQuery(value){

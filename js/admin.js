@@ -210,6 +210,51 @@
     });
     const avatarButton = document.getElementById('adminMigrateAvatars');
     if (avatarButton) avatarButton.disabled = next || state.legacyAvatars === 0;
+    updateCleanupState();
+  }
+
+  function updateCleanupState(){
+    const valid = document.getElementById('adminCleanupConfirm')?.value === 'DELETE FOOTBAZED DATA';
+    document.querySelectorAll('.admin-cleanup-action').forEach(button => {
+      button.disabled = state.syncing || !valid;
+    });
+  }
+
+  function cleanup(scope){
+    if (state.syncing) return;
+    const confirmation = document.getElementById('adminCleanupConfirm')?.value || '';
+    if (confirmation !== 'DELETE FOOTBAZED DATA') return toast('Введите контрольную фразу полностью','err');
+    const labels = {ratings:'все оценки', players:'всех игроков', matches:'все матчи', all:'все матчи, игроков и оценки'};
+    window.FBZConfirm.open({
+      title:'Подтвердите очистку данных',
+      message:`Будут необратимо удалены ${labels[scope] || 'выбранные данные'}. Аккаунты пользователей сохранятся.`,
+      confirmText:'Удалить данные',
+      onConfirm:async()=>{
+        setSyncing(true);
+        setHealth('Удаляем тестовые данные', 'loading');
+        try{
+          const result = await request('cleanup_development_data', {scope, confirmation});
+          const deleted = result.deleted || {};
+          const summary = `Матчи: ${Number(deleted.matches || 0)}, игроки: ${Number(deleted.players || 0)}, оценки: ${Number(deleted.ratings || 0)}`;
+          const host = document.getElementById('adminCleanupResult');
+          if (host) host.innerHTML = `<b>Очистка завершена</b><span>${esc(summary)}</span>`;
+          document.getElementById('adminCleanupConfirm').value = '';
+          addActivity(`Очистка ${scope}: ${summary}`);
+          toast('Выбранные данные удалены','ok');
+          state.loaded = false;
+          await refresh(true);
+          return true;
+        }catch(error){
+          setHealth('Очистка не выполнена', 'bad');
+          addActivity(error.message, 'bad');
+          toast(error.message,'err');
+          return false;
+        }finally{
+          setSyncing(false);
+          updateCleanupState();
+        }
+      }
+    });
   }
 
   function renderTasks(leagues, mode){
@@ -365,5 +410,5 @@
     }
   }
 
-  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch};
+  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState};
 })();

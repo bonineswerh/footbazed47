@@ -181,6 +181,7 @@ test('оценка матча использует поле игроков и с
   await expect(page.locator('#rateOv')).toBeHidden();
   const payload=await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastRating());
   expect(payload.p_match_rating).toBe(9);
+  expect(payload.p_supporter_side).toBe('neutral');
   expect(payload.p_player_ratings).toEqual(expect.arrayContaining([
     {player_id:5290,rating:9,is_best_player:false},
     {player_id:5292,rating:9,is_best_player:true}
@@ -204,6 +205,30 @@ test('дружба меняется только после успешного �
 
   await page.getByRole('button',{name:'Мои друзья'}).click();
   await expect(page.locator('.friend-card').filter({hasText:'natasha'})).toBeVisible();
+});
+
+test('личный чат друга сохраняет автора, время и отметку редактирования',async({page})=>{
+  await page.goto('/?__e2e=1#friends');
+  await page.getByRole('button',{name:/Входящие/}).click();
+  const incoming=page.locator('.friend-card').filter({hasText:'natasha'});
+  await incoming.getByRole('button',{name:/Принять/}).click();
+  await page.getByRole('button',{name:'Мои друзья'}).click();
+
+  const friend=page.locator('.friend-card').filter({hasText:'natasha'});
+  await friend.getByRole('button',{name:/Открыть чат/}).click();
+  await expect(page.locator('#directChatOv')).toHaveClass(/on/u);
+  await expect(page.locator('#directChatTitle')).toHaveText('Natasha');
+
+  await page.locator('#directChatInput').fill('Проверяем личный чат');
+  await page.locator('#directChatSend').click();
+  const message=page.locator('.dm-message').last();
+  await expect(message).toContainText('@bazed');
+  await expect(message.locator('time')).not.toBeEmpty();
+
+  page.once('dialog',dialog=>dialog.accept('Исправленное сообщение'));
+  await message.getByRole('button',{name:'Изменить'}).click();
+  await expect(page.locator('.dm-message').last()).toContainText('Исправленное сообщение');
+  await expect(page.locator('.dm-message').last()).toContainText('ред.');
 });
 
 test('матчи фильтруются серверным RPC без загрузки полного календаря',async({page})=>{

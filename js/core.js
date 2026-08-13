@@ -40,7 +40,7 @@
   }
   window.PUBLIC_USER_FIELDS='id,username,display_name,avatar_url,bio,ratings_count,avg_rating,streak,streak_date,is_public,created_at';
   window.MATCH_FIELDS='id,competition_id,league_name,home_team_name,away_team_name,home_club_id,away_club_id,match_date,status,home_score,away_score,external_id,league_code,matchday,season';
-  window.RATING_FIELDS='id,user_id,match_id,match_rating,comment,is_public,created_at';
+  window.RATING_FIELDS='id,user_id,match_id,match_rating,comment,is_public,supporter_side,created_at,updated_at';
   window.PLAYER_FIELDS='id,name,team,club_id,position,shirt_number';
 
   window.CACHE_TTL=Object.freeze({

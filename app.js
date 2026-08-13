@@ -40,7 +40,7 @@ const I={
 function ico(name,size){return(I[name]||'').replace('class="ico"',`class="ico" style="width:${size||16}px;height:${size||16}px"`);}
 
 const DERBY=[{h:'Зенит',a:'Спартак'},{h:'Реал',a:'Барселона'},{h:'Ман Сити',a:'Ливерпуль'},{h:'Ювентус',a:'Милан'},{h:'Бавария',a:'Дортмунд'},{h:'Арсенал',a:'Тоттенхэм'}];
-const LEVELS=[{n:'🌱 Новичок',m:0},{n:'🌿 Любитель',m:5},{n:'⭐ Профи',m:20},{n:'🏆 Эксперт',m:50},{n:'👑 Легенда',m:100}];
+const LEVELS=[{n:'Первый свисток',m:0},{n:'В игре',m:5},{n:'Голос трибуны',m:20},{n:'Знаток матчей',m:50},{n:'Легенда сектора',m:100}];
 const AVCOLORS=['av-0','av-1','av-2','av-3','av-4','av-5','av-6','av-7'];
 let CU=null,CP='home',PP='home';
 let MF='all',ML='all',LT='likes',FT='list';
@@ -97,13 +97,25 @@ function ensureFeatureModule({key,styleId,style,script,ready}){
 }
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=42',script:'js/admin.js?v=42',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=43',script:'js/admin.js?v=43',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=44',script:'js/entities.js?v=44',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=43',script:'js/feed.js?v=45',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=51',script:'js/feed.js?v=51',ready:()=>window.FBZFeed});
+}
+function ensureMessagesModule(){
+  return ensureFeatureModule({key:'messages',styleId:'messageStyles',style:'css/messages.css?v=2',script:'js/messages.js?v=2',ready:()=>window.FBZMessages});
+}
+
+function openFriendChat(friendId){
+  if(!CU){openAuth();return;}
+  ensureMessagesModule().then(messages=>messages.openFriend(friendId)).catch(()=>{});
+}
+function forwardRating(ratingId){
+  if(!CU){openAuth();return;}
+  ensureMessagesModule().then(messages=>messages.pickFriend(Number(ratingId))).catch(()=>{});
 }
 
 function scheduleHomeFeed(){
@@ -381,29 +393,55 @@ function renderProfileInsights(ratings,matchMap){
   const list=ratings||[];
   if(!list.length)return`<div class="pcard"><div class="pcard-title">${ico('sparkle',14)} Футбольный почерк</div><div class="empty-state" style="padding:18px 0">Появится после первых оценок</div></div>`;
   const nums=list.map(r=>Number(r.match_rating)||0).filter(Boolean);
-  const avg=nums.length?nums.reduce((s,n)=>s+n,0)/nums.length:0;
-  const style=avg>=8.2?{t:'Щедрый эксперт',d:'чаще видит сильные стороны матча'}:avg<=5.8?{t:'Строгий критик',d:'требовательно относится к качеству игры'}:{t:'Сбалансированный судья',d:'оценивает без крайностей'};
   const publicCount=list.filter(r=>r.is_public).length;
   const publicPct=Math.round(publicCount/list.length*100);
   const leagueMap={};
   list.forEach(r=>{const lg=matchMap[r.match_id]?.league_name||'Другое';leagueMap[lg]=(leagueMap[lg]||0)+1;});
   const leagues=Object.entries(leagueMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  const high=nums.filter(n=>n>=8).length;
-  const low=nums.filter(n=>n<=5).length;
-  const best=list.reduce((acc,r)=>!acc||Number(r.match_rating)>Number(acc.match_rating)?r:acc,null);
-  const bestMatch=best&&matchMap[best.match_id];
+  const reviewed=list.filter(r=>String(r.comment||'').trim()).length;
+  const spread=new Set(nums).size;
+  const topLeagueShare=(leagues[0]?.[1]||0)/Math.max(list.length,1);
+  const style=reviewed/list.length>=.45?{t:'Футбольный рассказчик',d:'часто дополняет оценку собственным мнением'}
+    :Object.keys(leagueMap).length>=4?{t:'Исследователь лиг',d:'следит за футболом за пределами одного турнира'}
+    :topLeagueShare>=.7?{t:'Верный чемпионату',d:'последовательно изучает любимый турнир'}
+    :spread>=6?{t:'Внимательный наблюдатель',d:'различает оттенки матчей по всей шкале'}
+    :{t:'Вдумчивый зритель',d:'формирует почерк с каждой новой оценкой'};
+  const memorable=[...list].sort((a,b)=>String(b.comment||'').length-String(a.comment||'').length)[0];
+  const memorableMatch=memorable&&matchMap[memorable.match_id];
   return`<div class="pcard"><div class="pcard-title">${ico('sparkle',14)} Футбольный почерк</div>
     <div class="p-insight-main">
       <div><div class="p-insight-k">Стиль</div><div class="p-insight-v">${style.t}</div><div class="p-insight-d">${style.d}</div></div>
       <div><div class="p-insight-k">Публичность</div><div class="p-insight-v">${publicPct}%</div><div class="p-insight-d">оценок открыты для ленты</div></div>
     </div>
     <div class="p-insight-grid">
-      <div class="p-mini"><span>${high}</span><small>высоких оценок</small></div>
-      <div class="p-mini"><span>${low}</span><small>строгих оценок</small></div>
-      <div class="p-mini"><span>${leagues[0]?.[1]||0}</span><small>${esc(leagues[0]?.[0]||'любимая лига')}</small></div>
+      <div class="p-mini"><span>${reviewed}</span><small>оценок с мнением</small></div>
+      <div class="p-mini"><span>${Object.keys(leagueMap).length}</span><small>турниров в истории</small></div>
+      <div class="p-mini"><span>${spread}</span><small>значений шкалы использовано</small></div>
     </div>
     ${leagues.length?`<div class="p-leagues">${leagues.map(([lg,c])=>`<div class="p-league"><span>${esc(lg)}</span><b>${c}</b></div>`).join('')}</div>`:''}
-    ${bestMatch?`<div class="p-best-match">Самая высокая оценка: <b>${best.match_rating}/10</b> · ${esc(bestMatch.home_team_name)} vs ${esc(bestMatch.away_team_name)}</div>`:''}
+    ${memorableMatch?`<div class="p-best-match">Матч с самым подробным мнением: <b>${memorable.match_rating}/10</b> · ${esc(memorableMatch.home_team_name)} vs ${esc(memorableMatch.away_team_name)}</div>`:''}
+  </div>`;
+}
+
+function activeProfileStreak(user){
+  const value=Math.max(0,Number(user?.streak)||0);
+  if(!value||!user?.streak_date)return 0;
+  const latest=new Date(`${user.streak_date}T00:00:00Z`);
+  const now=new Date();
+  const today=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
+  return today-latest.getTime()<=86400000?value:0;
+}
+
+function renderProfileComparison(comparison,friend){
+  if(!comparison)return'';
+  const common=Number(comparison.common_matches)||0;
+  if(!common)return`<div class="pcard pcompare"><div class="pcard-title">${ico('users',14)} Ваш футбольный ракурс</div><div class="empty-state" style="padding:12px 0">Пока нет общих публично оценённых матчей.</div></div>`;
+  const agreement=Math.max(0,Math.min(100,Number(comparison.agreement_score)||0));
+  const rows=(comparison.closest||[]).map(item=>`<button type="button" onclick="go('md',{mid:${Number(item.match_id)}})"><span>${esc(item.home_team_name)} — ${esc(item.away_team_name)}</span><b>${item.my_score} : ${item.friend_score}</b></button>`).join('');
+  return`<div class="pcard pcompare"><div class="pcard-title">${ico('users',14)} Ваш футбольный ракурс</div>
+    <div class="pcompare-score"><div><strong>${agreement}%</strong><span>совпадение оценок</span></div><div><b>${common}</b><span>общих матчей</span></div><div><b>${Number(comparison.exact_matches)||0}</b><span>точных совпадений</span></div></div>
+    <div class="pcompare-track"><i style="width:${agreement}%"></i></div>
+    ${rows?`<div class="pcompare-list"><small>Самые близкие мнения · сначала ваша оценка</small>${rows}</div>`:''}
   </div>`;
 }
 function renderRatingDistribution(ratings){
@@ -428,7 +466,7 @@ function renderFootballPassport(u,ratings,matchMap,cnt,avg,likes,friends,level,a
   (ratings||[]).forEach(r=>{const lg=matchMap[r.match_id]?.league_name||'Другое';leagueMap[lg]=(leagueMap[lg]||0)+1;});
   const topLeague=Object.entries(leagueMap).sort((a,b)=>b[1]-a[1])[0]?.[0]||'Пока без лиги';
   const fbzScore=Math.min(99,Math.round((cnt||0)*1.4+(likes||0)*1.8+(friends?.length||0)*1.2+(u.streak||0)*3));
-  const role=cnt>=50?'Легенда трибун':cnt>=20?'Эксперт матча':cnt>=5?'Активный болельщик':'Новый голос';
+  const role=level.n;
   const av=avatar?`<img src="${avatar}" class="fpass-av-img" alt="">`:`<div class="fpass-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
   return`<div class="fpass">
     <div class="fpass-bg"></div>
@@ -470,6 +508,12 @@ async function loadProfile(uid){
     ratings.forEach(r=>{if(r.match)matchMap[r.match_id]=r.match;});
     const profileInsights=renderProfileInsights(ratings,matchMap);
     const ratingDistribution=renderRatingDistribution(ratings);
+    let comparison=null;
+    if(!ownsProfile&&CU&&payload.friendship?.status==='accepted'){
+      const result=await sb.rpc('get_profile_comparison',{p_user_id:uid});
+      if(!result.error)comparison=result.data;
+    }
+    const profileComparison=renderProfileComparison(comparison,u);
 
     const cnt=u.ratings_count||0;
     const lv=LEVELS.slice().reverse().find(l=>cnt>=l.m)||LEVELS[0];
@@ -488,7 +532,7 @@ async function loadProfile(uid){
     let friendBtn='';
     if(!isMe&&CU){
       const fr=payload.friendship;
-      if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.6;cursor:default">${ico('users',13)} В друзьях</button>`;
+      if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.7;cursor:default">${ico('users',13)} В друзьях</button><button class="btn btn-l btn-sm" type="button" onclick="openFriendChat('${uid}')">${ico('chat',13)} Чат</button>`;
       else if(fr?.status==='pending'&&fr.direction==='outgoing')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.6;cursor:default">⏳ Заявка отправлена</button>`;
       else if(fr?.status==='pending')friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" onclick="acceptFriendFromProfile('${uid}')">${ico('users',13)} Принять заявку</button>`;
       else friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" onclick="addFriendFromProfile('${uid}')">${ico('users',13)} Добавить в друзья</button>`;
@@ -505,7 +549,7 @@ async function loadProfile(uid){
       ${favoriteClubs.length?`<div class="profile-favorite-clubs" aria-label="Любимые клубы">${favoriteClubs.map(club=>`<button type="button" onclick="go('club',{id:${Number(club.id)}})">${window.FBZMedia.visual({entity:club,kind:'club',className:'profile-club-mark'})}<span>${esc(club.short_name||club.name)}</span></button>`).join('')}</div>`:''}
       <div class="phero-badges">
         <span class="pbadge pb-l">${lv.n}</span>
-        ${u.streak>0?`<span class="pbadge pb-s">🔥 ${u.streak} дней подряд</span>`:''}
+        ${activeProfileStreak(u)>0?`<span class="pbadge pb-s">${ico('fire',12)} ${activeProfileStreak(u)} ${activeProfileStreak(u)===1?'день':'дней'} подряд</span>`:''}
         <span class="pbadge pb-j">С ${j.getDate()} ${ms2[j.getMonth()]} ${j.getFullYear()}</span>
       </div>
       <div class="lp" style="width:100%;max-width:400px">
@@ -525,8 +569,9 @@ async function loadProfile(uid){
     </div>
     <div class="pgrid">
       <div>
+        ${profileComparison}
         ${profileInsights}
-        <div class="pcard"><div class="pcard-title">${ico('chart',14)} История оценок</div>${ratings?.length?ratings.slice(0,20).map(r=>{const mt=matchMap[r.match_id];return`<div class="rh-row" ${mt?`onclick="go('md',{mid:${r.match_id}})" style="cursor:pointer"`:''}><div><div class="rh-m">${mt?esc(mt.home_team_name)+' vs '+esc(mt.away_team_name):'Матч #'+r.match_id}</div><div class="rh-l">${esc(mt?.league_name)} · ${new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}${r.is_public?'':' · приватно'}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
+        <div class="pcard"><div class="pcard-title">${ico('chart',14)} История оценок</div>${ratings?.length?ratings.slice(0,20).map(r=>{const mt=matchMap[r.match_id],tone=window.FBZDomain.ratingTone(r.match_rating);return`<div class="rh-row" ${mt?`onclick="go('md',{mid:${r.match_id}})" style="cursor:pointer"`:''}><div><div class="rh-m">${mt?esc(mt.home_team_name)+' vs '+esc(mt.away_team_name):'Матч #'+r.match_id}</div><div class="rh-l">${esc(mt?.league_name)} · ${new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}${r.is_public?'':' · приватно'}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" data-tone="${tone}" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v" data-tone="${tone}">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
       </div>
       <div>
         ${footballPassport}
@@ -698,7 +743,7 @@ async function loadFriendsTab(tab){
       const fids=fs.map(f=>f.friend_id);
       const{data:users}=await sb.from('users').select(PUBLIC_USER_FIELDS).in('id',fids);
       el.innerHTML=(users||[]).map(u=>{
-        return`<div class="friend-card" onclick="go('profile',{uid:'${u.id}'})">${friendAvatar(u)}<div class="fcard-info"><div class="fcard-name">${esc(u.username||'Аноним')}</div><div class="fcard-sub">@${esc(u.username||'user')} · ${esc(u.ratings_count||0)} оценок</div></div><div class="fcard-action"><button class="fbtn remove" onclick="event.stopPropagation();removeFriend('${u.id}',this)">✕</button></div></div>`;
+        return`<div class="friend-card" onclick="go('profile',{uid:'${u.id}'})">${friendAvatar(u)}<div class="fcard-info"><div class="fcard-name">${esc(u.username||'Аноним')}</div><div class="fcard-sub">@${esc(u.username||'user')} · ${esc(u.ratings_count||0)} оценок</div></div><div class="fcard-action"><button class="fbtn chat" type="button" onclick="event.stopPropagation();openFriendChat('${u.id}')" aria-label="Открыть чат с ${esc(u.username||'пользователем')}">${ico('chat',16)}</button><button class="fbtn remove" type="button" onclick="event.stopPropagation();removeFriend('${u.id}',this)" aria-label="Удалить из друзей">✕</button></div></div>`;
       }).join('')||'<div class="friends-empty">Нет друзей</div>';
     } else if(tab==='incoming'){
       const{data:inc}=await sb.from('friendships').select('user_id').eq('friend_id',CU.id).eq('status','pending');
@@ -821,24 +866,34 @@ async function loadChat(mid){
   if(!mid)return;
   const body=document.getElementById('chatBody');
   body.innerHTML='<div class="loading"><div class="spin"></div></div>';
-  const{data:msgs}=await sb.from('chat_messages').select('id,match_id,user_id,message,created_at').eq('match_id',mid).order('created_at',{ascending:true}).limit(80);
+  const{data:msgs,error}=await sb.rpc('get_match_chat_messages',{p_match_id:Number(mid),p_limit:80});
+  if(error){console.error('Chat load error:',error);body.innerHTML='<div class="empty-state" style="padding:40px">Не удалось загрузить обсуждение</div>';return;}
   if(!msgs?.length){body.innerHTML='<div class="empty-state" style="padding:40px">👋 Начни обсуждение!</div>';return;}
-  const uids=[...new Set(msgs.map(m=>m.user_id))];
-  let uMap={};
-  if(uids.length){const{data:us}=await sb.from('users').select('id,username,display_name').in('id',uids);(us||[]).forEach(u=>uMap[u.id]=u);}
-  body.innerHTML=msgs.map(m=>{const u=uMap[m.user_id];return`<div class="cmsg ${m.user_id===CU?.id?'own':''}">
-    ${m.user_id!==CU?.id?`<div class="cmsg-auth">@${esc(u?.username||'user')}</div>`:''}
-    <div>${esc(m.message)}</div>
-  </div>`;}).join('');
+  body.innerHTML=msgs.map(m=>`<div class="cmsg ${m.user_id===CU?.id?'own':''}" data-message-id="${Number(m.id)}">
+    <div class="cmsg-auth"><button type="button" onclick="go('profile',{uid:${jsStr(m.user_id)}})">@${esc(m.user?.username||'user')}</button></div>
+    <div class="cmsg-text">${esc(m.message)}</div>
+    <div class="cmsg-meta"><time datetime="${esc(m.created_at)}">${new Date(m.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</time>${m.edited_at?'<span>ред.</span>':''}${m.can_edit?`<button type="button" onclick="editChatMessage(${Number(m.id)})">Изменить</button>`:''}</div>
+  </div>`).join('');
   body.scrollTop=body.scrollHeight;
 }
 async function sendChat(){
   if(!CU){openAuth();return;}
   const inp=document.getElementById('chatI');
   const msg=inp.value.trim();if(!msg)return;if(msg.length>1000){toast('Сообщение слишком длинное','err');return;}
-  const{error}=await sb.from('chat_messages').insert({match_id:chatMID,user_id:CU.id,message:msg});
+  const{error}=await sb.rpc('send_match_chat_message',{p_match_id:Number(chatMID),p_message:msg});
   if(error){toast('Ошибка отправки','err');console.error(error);return;}
   inp.value='';loadChat(chatMID);
+}
+
+async function editChatMessage(messageId){
+  const message=document.querySelector(`.cmsg[data-message-id="${Number(messageId)}"] .cmsg-text`);
+  if(!message)return;
+  const updated=prompt('Изменить сообщение',message.textContent);
+  if(updated===null||!updated.trim()||updated.trim()===message.textContent)return;
+  if(updated.trim().length>1000){toast('Сообщение слишком длинное','err');return;}
+  const{error}=await sb.rpc('edit_match_chat_message',{p_message_id:Number(messageId),p_message:updated.trim()});
+  if(error){console.error('Chat edit error:',error);toast('Не удалось изменить сообщение','err');return;}
+  loadChat(chatMID);
 }
 
 // ─── SHARE CARD ───
