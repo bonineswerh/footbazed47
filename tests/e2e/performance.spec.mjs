@@ -49,4 +49,5 @@ test('home stays inside the frontend performance budget',async({page})=>{
   expect(result.assetPaths).not.toContain('/admin.css');
   expect(result.assetPaths).not.toContain('/js/entities.js');
   expect(result.assetPaths).not.toContain('/css/entities.css');
+  expect(result.assetPaths).not.toContain('/js/search.js');
 });

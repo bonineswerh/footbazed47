@@ -30,6 +30,10 @@
     return Number.isFinite(numeric)?numeric.toFixed(1):'—';
   }
 
+  function ratingData(value){
+    return window.FBZDomain.ratingPresentation(value,1);
+  }
+
   function plural(count,one,few,many){
     const value=Math.abs(Number(count)||0)%100;
     const last=value%10;
@@ -93,11 +97,12 @@
   }
 
   function renderPlayerRow(player){
+    const rating=ratingData(player.average);
     return`<button class="squad-player" type="button" onclick="go('player',{id:${Number(player.id)}})">
       ${identityVisual({entity:player,kind:'player',className:'squad-player-photo'})}
       <span class="squad-player-copy"><strong>${esc(player.name)}</strong><small>${esc(positionLabel(player.position))}</small></span>
       <span class="squad-player-number">${player.shirt_number?`#${esc(player.shirt_number)}`:'—'}</span>
-      <span class="squad-player-rating"><b>${ratingValue(player.average)}</b><small>${Number(player.rating_count)||0} ${plural(player.rating_count,'оценка','оценки','оценок')}</small></span>
+      <span class="squad-player-rating" data-tone="${rating.tone}"><b>${rating.value}</b><small>${Number(player.rating_count)||0} ${plural(player.rating_count,'оценка','оценки','оценок')}</small></span>
       <span class="squad-player-arrow">→</span>
     </button>`;
   }
@@ -127,7 +132,7 @@
       </section>
       <aside class="entity-section entity-rankings">
         <header class="entity-section-head"><div><span>Сообщество</span><h2>Игроки клуба</h2></div></header>
-        ${rated.length?rated.map((player,index)=>`<div class="entity-ranking-row"><span>${String(index+1).padStart(2,'0')}</span>${playerRoute(player.id,player.name)}<b>${ratingValue(player.average)}</b></div>`).join(''):'<div class="entity-inline-empty">Оценок игроков пока нет</div>'}
+        ${rated.length?rated.map((player,index)=>{const rating=ratingData(player.average);return`<div class="entity-ranking-row" data-tone="${rating.tone}"><span>${String(index+1).padStart(2,'0')}</span>${playerRoute(player.id,player.name)}<b>${rating.value}</b></div>`;}).join(''):'<div class="entity-inline-empty">Оценок игроков пока нет</div>'}
       </aside>
     </div>`;
   }
@@ -235,9 +240,10 @@
   }
 
   function performanceRow(item){
+    const rating=ratingData(item.average);
     return`<button class="performance-row" type="button" onclick="go('md',{mid:${Number(item.match_id)}})">
       <span class="performance-match"><small>${matchDate(item.match_date)} · ${esc(item.league_name||'')}</small><strong>${esc(item.home_team_name)} <b>${esc(item.home_score??'—')} : ${esc(item.away_score??'—')}</b> ${esc(item.away_team_name)}</strong></span>
-      <span class="performance-community"><b>${ratingValue(item.average)}</b><small>${Number(item.rating_count)||0} ${plural(item.rating_count,'оценка','оценки','оценок')}</small></span>
+      <span class="performance-community" data-tone="${rating.tone}"><b>${rating.value}</b><small>${Number(item.rating_count)||0} ${plural(item.rating_count,'оценка','оценки','оценок')}</small></span>
       <span class="squad-player-arrow">→</span>
     </button>`;
   }

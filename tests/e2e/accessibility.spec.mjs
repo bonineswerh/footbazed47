@@ -58,6 +58,23 @@ for(const scenario of [
 }
 
 for(const scenario of [
+  {name:'account menu dark desktop',theme:'dark',target:'#accountMenu',open:page=>page.locator('#accountBtn').click()},
+  {name:'account menu light desktop',theme:'light',target:'#accountMenu',open:page=>page.locator('#accountBtn').click()},
+  {name:'settings dark desktop',theme:'dark',target:'#settingsOv',open:page=>page.evaluate(()=>openSettings())},
+  {name:'settings light desktop',theme:'light',target:'#settingsOv',open:page=>page.evaluate(()=>openSettings())}
+]){
+  test(`${scenario.name} has no serious WCAG AA violations`,async({page})=>{
+    await page.setViewportSize({width:1280,height:720});
+    await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),scenario.theme);
+    await prepare(page);
+    await page.goto('/?__e2e=1#home');
+    await scenario.open(page);
+    await expect(page.locator(scenario.target)).toBeVisible();
+    await expectNoSeriousWcagViolations(page,scenario.target);
+  });
+}
+
+for(const scenario of [
   {name:'rating field mobile',viewport:{width:390,height:844}},
   {name:'rating field light desktop',viewport:{width:1280,height:720},theme:'light'}
 ]){

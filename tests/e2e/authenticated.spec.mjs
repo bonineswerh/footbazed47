@@ -19,6 +19,23 @@ test('авторизованная главная показывает личн�
   await expect(page.getByRole('button',{name:'Рейтинги',exact:true}).first()).toBeVisible();
 });
 
+test('меню аккаунта полностью управляется с клавиатуры',async({page})=>{
+  await page.goto('/?__e2e=1#home');
+  const trigger=page.locator('#accountBtn');
+  const menu=page.locator('#accountMenu');
+
+  await trigger.click();
+  await expect(trigger).toHaveAttribute('aria-expanded','true');
+  await expect(menu).toHaveAttribute('aria-hidden','false');
+  await expect(menu.getByRole('menuitem').first()).toBeFocused();
+
+  await page.keyboard.press('End');
+  await expect(menu.getByRole('menuitem',{name:'Выйти'})).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(trigger).toHaveAttribute('aria-expanded','false');
+  await expect(trigger).toBeFocused();
+});
+
 test('admin assets load only after an authorized admin opens the panel',async({page})=>{
   const adminAssets=[];
   page.on('request',request=>{
@@ -51,6 +68,14 @@ test('авторизованный пользователь управляет �
 
   const entry=page.locator('.feed-entry[data-rating-id="501"]');
   await expect(entry).toContainText('Сильный второй тайм');
+  await expect(entry.locator('.feed-rating')).toHaveText('10/10');
+  await expect(entry.locator('.feed-verdict')).toHaveAttribute('data-tone','elite');
+  const feedRatingPaint=await entry.locator('.feed-rating strong').evaluate(element=>({
+    color:getComputedStyle(element).color,
+    background:getComputedStyle(element).backgroundColor,
+    text:element.textContent
+  }));
+  expect(feedRatingPaint).toEqual({color:'rgb(56, 189, 248)',background:'rgba(0, 0, 0, 0)',text:'10'});
   const like=entry.locator('.like-action');
   await expect(like.locator('span')).toHaveText('3');
   await like.click();
@@ -135,8 +160,19 @@ test('избранный клуб добавляется, повторно не 
 });
 
 test('глобальный поиск открывает страницу турнира без зависимости от логотипа',async({page})=>{
+  const searchRequests=[];
+  page.on('request',request=>{
+    if(new URL(request.url()).pathname==='/js/search.js')searchRequests.push(request.url());
+  });
   await page.goto('/?__e2e=1#home');
-  await page.evaluate(()=>window.FBZSearch.open());
+  expect(searchRequests).toHaveLength(0);
+  await page.getByRole('button',{name:'Поиск'}).click();
+  await expect(page.locator('#globalSearchInput')).toBeVisible();
+  await expect.poll(()=>searchRequests.length).toBe(1);
+  await page.getByRole('button',{name:'Закрыть поиск'}).click();
+  await page.keyboard.press('Control+k');
+  await expect(page.locator('#globalSearchInput')).toBeVisible();
+  expect(searchRequests).toHaveLength(1);
   await page.locator('#globalSearchInput').fill('Champions');
   const result=page.getByRole('option',{name:/Champions League/});
   await expect(result).toBeVisible();
@@ -155,6 +191,15 @@ test('страница матча сравнивает личную оценку
   await expect(comparison).toContainText('8.5');
   await expect(comparison).toContainText('-0.5');
   await expect(page.getByRole('button',{name:/Изменить оценку/})).toBeVisible();
+
+  const topPlayerRow=page.locator('.pr-row').first();
+  await expect(topPlayerRow).toBeVisible();
+  const nativeBorder=await topPlayerRow.evaluate(element=>({
+    left:getComputedStyle(element).borderLeftWidth,
+    right:getComputedStyle(element).borderRightWidth,
+    top:getComputedStyle(element).borderTopWidth
+  }));
+  expect(nativeBorder).toEqual({left:'0px',right:'0px',top:'0px'});
 });
 
 test('оценка матча использует поле игроков и сохраняет единым RPC',async({page})=>{
@@ -218,6 +263,12 @@ test('личный чат друга сохраняет автора, время
   await friend.getByRole('button',{name:/Открыть чат/}).click();
   await expect(page.locator('#directChatOv')).toHaveClass(/on/u);
   await expect(page.locator('#directChatTitle')).toHaveText('Natasha');
+
+  await page.evaluate(()=>forwardRating(501));
+  await page.locator('.dm-picker-item').filter({hasText:'natasha'}).click();
+  const sharedRating=page.locator('.dm-rating-card');
+  await expect(sharedRating).toContainText('10/10');
+  await expect(sharedRating.locator('.dm-rating-score')).toHaveAttribute('data-tone','elite');
 
   await page.locator('#directChatInput').fill('Проверяем личный чат');
   await page.locator('#directChatSend').click();

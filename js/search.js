@@ -6,21 +6,18 @@
   let requestVersion=0;
   let activeIndex=-1;
   let currentResults=[];
+  let initialized=false;
 
   function init(){
+    if(initialized)return;
     const input=document.getElementById('globalSearchInput');
     if(!input)return;
+    initialized=true;
     input.addEventListener('input',()=>{
       clearTimeout(timer);
       timer=setTimeout(()=>run(input.value),180);
     });
     input.addEventListener('keydown',onInputKeydown);
-    document.addEventListener('keydown',event=>{
-      if((event.ctrlKey||event.metaKey)&&event.key.toLocaleLowerCase('en-US')==='k'){
-        event.preventDefault();
-        open();
-      }
-    });
   }
 
   function open(){

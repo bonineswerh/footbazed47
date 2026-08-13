@@ -33,9 +33,23 @@ test('rating tones use restrained semantic ranges',()=>{
   assert.equal(domain.ratingTone(null),'neutral');
   assert.equal(domain.ratingTone(3),'low');
   assert.equal(domain.ratingTone(6),'mid');
+  assert.equal(domain.ratingTone(6.9),'mid');
   assert.equal(domain.ratingTone(7),'high');
   assert.equal(domain.ratingTone(9),'high');
+  assert.equal(domain.ratingTone(9.9),'high');
   assert.equal(domain.ratingTone(10),'elite');
+});
+
+test('rating presentation keeps the value visible and tied to the ten-point scale',()=>{
+  assert.deepEqual(domain.ratingPresentation(10),{
+    score:10,value:'10',label:'10/10',tone:'elite',progress:100
+  });
+  assert.deepEqual(domain.ratingPresentation(8.5,1),{
+    score:8.5,value:'8.5',label:'8.5/10',tone:'high',progress:85
+  });
+  assert.deepEqual(domain.ratingPresentation(null),{
+    score:null,value:'—',label:'Нет оценки',tone:'neutral',progress:0
+  });
 });
 
 test('auth errors are localized without exposing unknown backend text',()=>{

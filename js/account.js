@@ -17,7 +17,9 @@
     button.setAttribute('aria-expanded', String(open));
     menu.classList.toggle('on', open);
     menu.setAttribute('aria-hidden', String(!open));
-    if (open && focusMenu) menu.querySelector('[role="menuitem"]')?.focus();
+    if (open && focusMenu) {
+      requestAnimationFrame(() => elements().menu?.querySelector('[role="menuitem"]')?.focus());
+    }
   }
 
   function toggle(){

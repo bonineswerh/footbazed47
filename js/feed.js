@@ -48,12 +48,12 @@
 
   function playerHighlights(items){
     if(!Array.isArray(items)||!items.length)return'';
-    return`<div class="feed-players" aria-label="Оценки игроков">${items.map(player=>`<button type="button" onclick="go('player',{id:${Number(player.player_id)}})"><span>${player.is_best_player?'★':'●'}</span><b>${esc(player.name)}</b><strong>${Number(player.rating).toFixed(1)}</strong></button>`).join('')}</div>`;
+    return`<div class="feed-players" aria-label="Оценки игроков">${items.map(player=>{const presentation=window.FBZDomain.ratingPresentation(player.rating,1);return`<button type="button" data-tone="${presentation.tone}" onclick="go('player',{id:${Number(player.player_id)}})"><span>${player.is_best_player?'★':'●'}</span><b>${esc(player.name)}</b><strong>${presentation.value}</strong></button>`;}).join('')}</div>`;
   }
 
   function renderFeedItem(item){
     const own=CU?.id===item.user_id;
-    const rating=Math.max(0,Math.min(10,Number(item.match_rating)||0));
+    const rating=window.FBZDomain.ratingPresentation(item.match_rating);
     return`<article class="feed-entry" data-rating-id="${Number(item.rating_id)}">
       <header class="feed-entry-head">
         <button class="feed-author" type="button" onclick="go('profile',{uid:${jsStr(item.user_id)}})">
@@ -70,9 +70,9 @@
           ${clubButton(item.match?.away_club_id,item.match?.away_team_name,'away')}
         </div>
       </div>
-      <div class="feed-verdict" data-tone="${window.FBZDomain.ratingTone(rating)}">
-        <div class="feed-rating"><strong>${rating}</strong><span>/10</span></div>
-        <div class="feed-rating-copy"><span>Оценка матча</span><div class="feed-rating-track"><i style="--rating:${rating*10}%"></i></div></div>
+      <div class="feed-verdict" data-tone="${rating.tone}" aria-label="Оценка матча ${rating.label}">
+        <div class="feed-rating"><strong>${rating.value}</strong><span>/10</span></div>
+        <div class="feed-rating-copy"><span>Оценка матча</span><div class="feed-rating-track" aria-hidden="true"><i style="--rating:${rating.progress}%"></i></div></div>
       </div>
       ${item.comment?`<blockquote>${esc(item.comment)}</blockquote>`:''}
       ${playerHighlights(item.player_highlights)}
@@ -310,9 +310,9 @@
   }
 
   function renderHomeItem(item){
-    const rating=Math.max(0,Math.min(10,Number(item.match_rating)||0));
-    return`<article class="home-feed-card">
-      <header>${avatar(item,'home-feed-avatar')}<span><strong>${esc(displayName(item))}</strong><small>${esc(relativeDate(item.created_at))}</small></span><b>${rating}</b></header>
+    const rating=window.FBZDomain.ratingPresentation(item.match_rating);
+    return`<article class="home-feed-card" data-tone="${rating.tone}">
+      <header>${avatar(item,'home-feed-avatar')}<span><strong>${esc(displayName(item))}</strong><small>${esc(relativeDate(item.created_at))}</small></span><b aria-label="Оценка ${rating.label}">${rating.label}</b></header>
       <button class="home-feed-match" type="button" onclick="go('md',{mid:${Number(item.match_id)}})"><small>${esc(item.match?.league_name||'')}</small><strong>${esc(item.match?.home_team_name)} <span>${esc(score(item.match||{}))}</span> ${esc(item.match?.away_team_name)}</strong></button>
       ${item.comment?`<p>${esc(item.comment)}</p>`:''}
       <footer><span>${ico('heart',13)} ${Number(item.like_count)||0}</span><button type="button" onclick="go('feed')">Открыть в ленте →</button></footer>

@@ -69,14 +69,6 @@
     return data;
   }
 
-  function tone(score){
-    const value=Number(score)||0;
-    if(value===10)return'elite';
-    if(value>=7)return'high';
-    if(value>=4)return'mid';
-    return'low';
-  }
-
   function supporterLabel(side){
     if(side==='home')return'болельщик хозяев';
     if(side==='away')return'болельщик гостей';
@@ -87,10 +79,11 @@
     const rating=message.rating;
     if(!rating)return'';
     const score=Number(rating.score)||0;
+    const presentation=window.FBZDomain.ratingPresentation(score,Number.isInteger(score)?0:1);
     const title=`${rating.home_team_name||'Команда'} — ${rating.away_team_name||'Команда'}`;
     const result=rating.home_score===null||rating.home_score===undefined?'Матч':`${rating.home_score} : ${rating.away_score}`;
     return`<button class="dm-rating-card" type="button" onclick="FBZMessages.close();go('md',{mid:${Number(rating.match_id)||0}})">
-      <strong class="dm-rating-score ${tone(score)}">${score.toFixed(score%1?1:0)}</strong>
+      <strong class="dm-rating-score" data-tone="${presentation.tone}" aria-label="Оценка ${presentation.label}">${presentation.label}</strong>
       <small>Оценка матча · ${esc(supporterLabel(rating.supporter_side))}</small>
       <b>${esc(title)}</b><span>${esc(result)} · Открыть матч →</span>
     </button>`;

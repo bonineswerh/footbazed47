@@ -64,6 +64,31 @@ for(const viewport of [{width:390,height:844},{width:1280,height:720}]){
   });
 }
 
+for(const scenario of [
+  {viewport:{width:390,height:844},theme:'dark'},
+  {viewport:{width:1280,height:720},theme:'dark'},
+  {viewport:{width:390,height:844},theme:'light'},
+  {viewport:{width:1280,height:720},theme:'light'}
+]){
+  test(`лента показывает полную оценку в ${scenario.theme} теме на ${scenario.viewport.width}px`,async({page})=>{
+    await page.setViewportSize(scenario.viewport);
+    if(scenario.theme==='light'){
+      await page.addInitScript(()=>localStorage.setItem('fbz_appearance',JSON.stringify({theme:'light',accent:'emerald'})));
+    }
+    await prepare(page);
+    await page.goto('/?__e2e=1#feed');
+    await page.evaluate(()=>document.fonts.ready);
+    const entry=page.locator('.feed-entry[data-rating-id="501"]');
+    await expect(entry.locator('.feed-rating')).toHaveText('10/10');
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    await expect(entry).toHaveScreenshot(`feed-rating-${scenario.theme}-${scenario.viewport.width}x${scenario.viewport.height}.png`,{
+      animations:'disabled',
+      caret:'hide',
+      maxDiffPixelRatio:0.05
+    });
+  });
+}
+
 for(const viewport of [{width:320,height:700},{width:390,height:844},{width:1280,height:720}]){
   test(`оценка матча сохраняет композицию ${viewport.width}px`,async({page})=>{
     await page.setViewportSize(viewport);
@@ -84,6 +109,46 @@ for(const viewport of [{width:320,height:700},{width:390,height:844},{width:1280
     await expect(page.locator('#playerRatingEditor')).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     await expect(page).toHaveScreenshot(`rating-player-${viewport.width}x${viewport.height}.png`,{
+      animations:'disabled',
+      caret:'hide',
+      maxDiffPixelRatio:0.05
+    });
+  });
+}
+
+for(const scenario of [
+  {viewport:{width:390,height:844},theme:'dark'},
+  {viewport:{width:1280,height:720},theme:'dark'},
+  {viewport:{width:390,height:844},theme:'light'},
+  {viewport:{width:1280,height:720},theme:'light'}
+]){
+  test(`меню аккаунта сохраняет иерархию в ${scenario.theme} теме на ${scenario.viewport.width}px`,async({page})=>{
+    await page.setViewportSize(scenario.viewport);
+    await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),scenario.theme);
+    await prepare(page);
+    await page.goto('/?__e2e=1#home');
+    await page.locator('#accountBtn').click();
+    await page.mouse.move(0,0);
+    const menu=page.locator('#accountMenu');
+    await expect(menu).toBeVisible();
+    await expect(menu).toHaveCSS('opacity','1');
+    await expect(menu).toHaveScreenshot(`account-menu-${scenario.theme}-${scenario.viewport.width}x${scenario.viewport.height}.png`,{
+      animations:'disabled',
+      caret:'hide',
+      maxDiffPixelRatio:0.05
+    });
+  });
+
+  test(`настройки сохраняют контраст в ${scenario.theme} теме на ${scenario.viewport.width}px`,async({page})=>{
+    await page.setViewportSize(scenario.viewport);
+    await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),scenario.theme);
+    await prepare(page);
+    await page.goto('/?__e2e=1#home');
+    await page.evaluate(()=>openSettings());
+    const settings=page.locator('.settings-box');
+    await expect(settings).toBeVisible();
+    await expect(page.locator('input[name="setTheme"]:checked')).toBeFocused();
+    await expect(settings).toHaveScreenshot(`settings-${scenario.theme}-${scenario.viewport.width}x${scenario.viewport.height}.png`,{
       animations:'disabled',
       caret:'hide',
       maxDiffPixelRatio:0.05

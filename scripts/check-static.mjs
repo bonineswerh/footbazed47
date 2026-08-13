@@ -39,10 +39,11 @@ for(const feature of [
   {name:'admin',script:'js/admin.js',style:'admin.css'},
   {name:'entities',script:'js/entities.js',style:'css/entities.css'},
   {name:'feed',script:'js/feed.js',style:'css/feed.css'},
-  {name:'messages',script:'js/messages.js',style:'css/messages.css'}
+  {name:'messages',script:'js/messages.js',style:'css/messages.css'},
+  {name:'search',script:'js/search.js'}
 ]){
-  if(html.includes(`src="${feature.script}?`)||html.includes(`href="${feature.style}?`))errors.push(`${feature.name} assets must not load eagerly`);
-  if(!frontend.includes(`script:'${feature.script}?`)||!frontend.includes(`style:'${feature.style}?`))errors.push(`${feature.name} assets must use the feature loader`);
+  if(html.includes(`src="${feature.script}?`)||(feature.style&&html.includes(`href="${feature.style}?`)))errors.push(`${feature.name} assets must not load eagerly`);
+  if(!frontend.includes(`script:'${feature.script}?`)||(feature.style&&!frontend.includes(`style:'${feature.style}?`)))errors.push(`${feature.name} assets must use the feature loader`);
 }
 if(!html.includes('<base href="/">'))errors.push('Pretty routes require an absolute document base');
 if(!feedFrontend.includes("rpc('get_social_feed_page'"))errors.push('Social feed must use cursor pagination');
@@ -87,7 +88,7 @@ for(const pattern of forbiddenWrites){
   if(pattern.test(frontend))errors.push(`Direct rating write found: ${pattern}`);
 }
 
-const requiredScripts=['js/session-hint.js','js/domain.js','js/media.js','js/data.js','js/seo.js','js/performance.js','app.js','js/auth.js','js/rating-loader.js','js/matches.js','js/search.js'];
+const requiredScripts=['js/session-hint.js','js/domain.js','js/media.js','js/data.js','js/seo.js','js/performance.js','app.js','js/auth.js','js/rating-loader.js','js/matches.js'];
 for(const script of requiredScripts){
   if(!html.includes(`src="${script}?`))errors.push(`Required script is not versioned in index.html: ${script}`);
 }

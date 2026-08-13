@@ -66,10 +66,10 @@
 .entity-match-club{display:grid;place-items:center;border:0;border-left:1px solid var(--b1);background:transparent;color:var(--text3);cursor:pointer;transition:background .16s,color .16s}
 .entity-match-club:hover{background:var(--bg3);color:var(--snow)}
 .entity-rankings{padding-bottom:5px}
-.entity-ranking-row{display:grid;grid-template-columns:26px minmax(0,1fr) 34px;align-items:center;gap:8px;min-height:50px;padding:0 18px;border-bottom:1px solid var(--b1)}
+.entity-ranking-row{display:grid;grid-template-columns:26px minmax(0,1fr) 40px;align-items:center;gap:10px;min-height:54px;padding:0 18px;border:0;border-bottom:1px solid var(--b1)}
 .entity-ranking-row:last-child{border-bottom:0}
 .entity-ranking-row>span{color:var(--text3);font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:0}
-.entity-ranking-row>b{font-family:'Bebas Neue',sans-serif;font-size:18px;font-weight:400;letter-spacing:0;text-align:right}
+.entity-ranking-row>b{font-family:'Bebas Neue',sans-serif;font-size:19px;font-weight:400;letter-spacing:0;text-align:right}.entity-ranking-row[data-tone="low"]>b{color:var(--rating-low)}.entity-ranking-row[data-tone="mid"]>b{color:var(--rating-mid)}.entity-ranking-row[data-tone="high"]>b{color:var(--rating-high)}.entity-ranking-row[data-tone="elite"]>b{color:var(--rating-elite)}
 .entity-text-link{min-width:0;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:700;text-align:left;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .entity-text-link:hover{color:var(--accent2)}
 .squad-groups{display:grid;gap:18px}
@@ -89,7 +89,7 @@
 .squad-player-number{color:var(--text3);font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:0;text-align:center}
 .squad-player-rating{text-align:right}
 .squad-player-rating b,.squad-player-rating small{display:block}
-.squad-player-rating b{font-family:'Bebas Neue',sans-serif;font-size:18px;font-weight:400;letter-spacing:0}
+.squad-player-rating b{font-family:'Bebas Neue',sans-serif;font-size:18px;font-weight:400;letter-spacing:0}.squad-player-rating[data-tone="low"] b{color:var(--rating-low)}.squad-player-rating[data-tone="mid"] b{color:var(--rating-mid)}.squad-player-rating[data-tone="high"] b{color:var(--rating-high)}.squad-player-rating[data-tone="elite"] b{color:var(--rating-elite)}
 .squad-player-rating small{color:var(--text3);font-size:8px;white-space:nowrap}
 .squad-player-arrow{color:var(--text3);text-align:right}
 .player-body{display:grid;gap:18px}
@@ -103,7 +103,7 @@
 .performance-match strong b{margin:0 5px;color:var(--accent2)}
 .performance-community{text-align:right}
 .performance-community b,.performance-community small{display:block}
-.performance-community b{font-family:'Bebas Neue',sans-serif;font-size:21px;font-weight:400;line-height:1;letter-spacing:0}
+.performance-community b{font-family:'Bebas Neue',sans-serif;font-size:21px;font-weight:400;line-height:1;letter-spacing:0}.performance-community[data-tone="low"] b{color:var(--rating-low)}.performance-community[data-tone="mid"] b{color:var(--rating-mid)}.performance-community[data-tone="high"] b{color:var(--rating-high)}.performance-community[data-tone="elite"] b{color:var(--rating-elite)}
 .performance-community small{margin-top:4px;color:var(--text3);font-size:8px;white-space:nowrap}
 .teammate-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
 .teammate-card{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;min-height:64px;padding:10px 16px;border:0;border-right:1px solid var(--b1);border-bottom:1px solid var(--b1);background:transparent;color:var(--snow);text-align:left;cursor:pointer;transition:background .16s}
@@ -185,3 +185,7 @@
 @media(prefers-reduced-motion:reduce){
   .entity-match-main,.squad-player,.performance-row,.teammate-card{transition:none}
 }
+
+:root[data-theme="light"] .entity-hero{background:#fff}
+:root[data-theme="light"] .entity-hero::before{background:linear-gradient(110deg,var(--accent4),transparent 48%)}
+:root[data-theme="light"] .entity-section,:root[data-theme="light"] .squad-group{box-shadow:0 5px 18px rgba(22,34,28,.045)}

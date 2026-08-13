@@ -53,7 +53,7 @@ function ensureFeatureModule({key,styleId,style,script,ready}){
   if(ready())return Promise.resolve(ready());
   if(featureModulePromises.has(key))return featureModulePromises.get(key);
 
-  const stylesheet=new Promise((resolve,reject)=>{
+  const stylesheet=style?new Promise((resolve,reject)=>{
     const existing=document.getElementById(styleId);
     if(existing){
       if(existing.dataset.loaded==='true')resolve();
@@ -70,7 +70,7 @@ function ensureFeatureModule({key,styleId,style,script,ready}){
     link.addEventListener('load',()=>{link.dataset.loaded='true';resolve();},{once:true});
     link.addEventListener('error',()=>reject(new Error(`${key}_styles_failed`)),{once:true});
     document.head.append(link);
-  });
+  }):Promise.resolve();
 
   const module=new Promise((resolve,reject)=>{
     const element=document.createElement('script');
@@ -100,13 +100,24 @@ function ensureAdminModule(){
   return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=43',script:'js/admin.js?v=43',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=44',script:'js/entities.js?v=44',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=52',script:'js/entities.js?v=52',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=51',script:'js/feed.js?v=51',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=52',script:'js/feed.js?v=52',ready:()=>window.FBZFeed});
 }
 function ensureMessagesModule(){
-  return ensureFeatureModule({key:'messages',styleId:'messageStyles',style:'css/messages.css?v=2',script:'js/messages.js?v=2',ready:()=>window.FBZMessages});
+  return ensureFeatureModule({key:'messages',styleId:'messageStyles',style:'css/messages.css?v=3',script:'js/messages.js?v=3',ready:()=>window.FBZMessages});
+}
+function ensureSearchModule(){
+  return ensureFeatureModule({key:'search',script:'js/search.js?v=53',ready:()=>window.FBZSearch});
+}
+
+function openGlobalSearch(){
+  window.FBZAccount?.close();
+  ensureSearchModule().then(search=>{
+    search.init();
+    search.open();
+  }).catch(()=>{});
 }
 
 function openFriendChat(friendId){
@@ -135,7 +146,11 @@ function avColor(str){let h=0;for(let c of(str||'x'))h=(h<<5)-h+c.charCodeAt(0);
 
 async function init(){
   window.FBZAppearance?.init();
-  window.FBZSearch?.init();
+  document.addEventListener('keydown',event=>{
+    if(event.defaultPrevented||!(event.ctrlKey||event.metaKey)||event.key.toLocaleLowerCase('en-US')!=='k')return;
+    event.preventDefault();
+    openGlobalSearch();
+  });
   if(!window.sb){
     const local=['localhost','127.0.0.1'].includes(window.location.hostname);
     const message=local
@@ -649,7 +664,7 @@ function editProfile(){
       <input class="input" id="ep_email" value="${esc(CU.email)}" disabled style="opacity:0.5;cursor:not-allowed">
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px;text-align:left">О себе</label>
       <input class="input" id="ep_bio" value="${esc(CU.bio)}" placeholder="Расскажи о себе" maxlength="120">
-      <div class="profile-favorites-help"><b>Любимые клубы</b><p>Выбираются через поиск или кнопку «В избранное» на странице клуба.</p><button class="text-action" type="button" onclick="FBZSearch.open()">Найти клуб →</button></div>
+      <div class="profile-favorites-help"><b>Любимые клубы</b><p>Выбираются через поиск или кнопку «В избранное» на странице клуба.</p><button class="text-action" type="button" onclick="openGlobalSearch()">Найти клуб →</button></div>
       <div style="display:flex;gap:10px;margin-top:8px">
         <button class="btn btn-g" style="flex:1" onclick="loadProfile(CU.id)">Отмена</button>
         <button class="btn btn-l" style="flex:1" id="epSaveBtn" onclick="saveEditProfile()">Сохранить</button>
@@ -1028,7 +1043,7 @@ function openSettings(){
     const el=document.getElementById(id);
     if(el)el.textContent=value;
   });
-  FBZOverlay.open('settingsOv','input[name="setTheme"]');
+  FBZOverlay.open('settingsOv','input[name="setTheme"]:checked');
 }
 function closeSettings(){FBZOverlay.close('settingsOv');}
 function saveAppearanceSettings(){

@@ -30,10 +30,10 @@
     if(!target)return;
     const clubs=Array.isArray(user?.favorite_clubs)?user.favorite_clubs.slice(0,6):[];
     if(clubs.length){
-      target.innerHTML=`<div class="home-team-list">${clubs.map(club=>`<button type="button" onclick="go('club',{id:${Number(club.id)}})">${root.FBZMedia.visual({entity:club,kind:'club',className:'home-club-mark'})}<span>${root.esc(club.short_name||club.name)}</span></button>`).join('')}</div><p>Основа будущих персональных матчей, ленты и уведомлений.</p><button class="text-action" type="button" onclick="FBZSearch.open()">Добавить клуб →</button>`;
+      target.innerHTML=`<div class="home-team-list">${clubs.map(club=>`<button type="button" onclick="go('club',{id:${Number(club.id)}})">${root.FBZMedia.visual({entity:club,kind:'club',className:'home-club-mark'})}<span>${root.esc(club.short_name||club.name)}</span></button>`).join('')}</div><p>Основа будущих персональных матчей, ленты и уведомлений.</p><button class="text-action" type="button" onclick="openGlobalSearch()">Добавить клуб →</button>`;
       return;
     }
-    target.innerHTML=`<div class="home-club-empty">${root.ico('football',21)}<strong>Клубы пока не выбраны</strong><p>Найдите любимый клуб и добавьте его в избранное. Эмблема для этого не нужна.</p><button class="btn btn-g btn-sm" type="button" onclick="FBZSearch.open()">Найти клуб</button></div>`;
+    target.innerHTML=`<div class="home-club-empty">${root.ico('football',21)}<strong>Клубы пока не выбраны</strong><p>Найдите любимый клуб и добавьте его в избранное. Эмблема для этого не нужна.</p><button class="btn btn-g btn-sm" type="button" onclick="openGlobalSearch()">Найти клуб</button></div>`;
   }
 
   function pendingMatch(match){

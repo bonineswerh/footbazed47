@@ -51,9 +51,25 @@
     const score=Number(value);
     if(!Number.isFinite(score)||score<1||score>10)return'neutral';
     if(score<=3)return'low';
-    if(score<=6)return'mid';
-    if(score<=9)return'high';
+    if(score<7)return'mid';
+    if(score<10)return'high';
     return'elite';
+  }
+
+  function ratingPresentation(value,precision=0){
+    const score=Number(value);
+    if(!Number.isFinite(score)||score<1||score>10){
+      return{score:null,value:'—',label:'Нет оценки',tone:'neutral',progress:0};
+    }
+    const digits=Number.isInteger(precision)?Math.min(Math.max(precision,0),1):0;
+    const formatted=score.toFixed(digits);
+    return{
+      score,
+      value:formatted,
+      label:`${formatted}/10`,
+      tone:ratingTone(score),
+      progress:score*10
+    };
   }
 
   function normalizeSearchQuery(value){
@@ -77,5 +93,5 @@
     });
   }
 
-  return Object.freeze({authErrorMessage,normalizeSearchQuery,ratingTone,sortMatches,validateRatingDraft});
+  return Object.freeze({authErrorMessage,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});
 });
