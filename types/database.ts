@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.1"
-  }
   public: {
     Tables: {
       admin_audit_logs: {
@@ -1160,40 +1155,23 @@ export type Database = {
         Args: { p_action: string; p_requester_id: string }
         Returns: Json
       }
-      save_match_rating:
-        | {
-            Args: {
-              p_comment?: string
-              p_is_public?: boolean
-              p_match_id: number
-              p_match_rating: number
-              p_player_ratings?: Json
-            }
-            Returns: {
-              avg_rating: number
-              rating_id: number
-              ratings_count: number
-              streak: number
-              streak_date: string
-            }[]
-          }
-        | {
-            Args: {
-              p_comment: string
-              p_is_public: boolean
-              p_match_id: number
-              p_match_rating: number
-              p_player_ratings: Json
-              p_supporter_side: string
-            }
-            Returns: {
-              avg_rating: number
-              rating_id: number
-              ratings_count: number
-              streak: number
-              streak_date: string
-            }[]
-          }
+      save_match_rating: {
+        Args: {
+          p_comment: string
+          p_is_public: boolean
+          p_match_id: number
+          p_match_rating: number
+          p_player_ratings: Json
+          p_supporter_side: string
+        }
+        Returns: {
+          avg_rating: number
+          rating_id: number
+          ratings_count: number
+          streak: number
+          streak_date: string
+        }[]
+      }
       search_footbazed: {
         Args: { p_limit?: number; p_query: string }
         Returns: {
@@ -1356,4 +1334,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
