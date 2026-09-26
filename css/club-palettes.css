@@ -1,4 +1,4 @@
-/* Match identity: matte club colors over neutral surfaces. No animated gradients. */
+/* Match identity: two matte colors per club, separated by a quiet score area. */
 .home-spotlight .home-spotlight-primary{background:var(--grad);color:var(--onAccent)}
 .rating-ink[data-tone="low"],.prdist-row[data-tone="low"]{--score-ink:var(--rating-low)}
 .rating-ink[data-tone="mid"],.prdist-row[data-tone="mid"]{--score-ink:var(--rating-mid)}
@@ -7,7 +7,7 @@
 body .rating-ink[data-tone]{color:var(--score-ink,var(--snow))}
 .prdist-row[data-tone] .prdist-bar i{background:var(--score-ink)}
 .prdist-row[data-tone]>span{color:var(--score-ink)}
-.mcard,.home-spotlight,.md-hero,.feed-match{--club-home:#99a5ad;--club-away:#99a5ad;--club-wash:17%;--club-wash-strong:25%;--match-surface:var(--bg2);--match-ink:var(--snow);--match-muted:var(--text2)}
+.mcard,.home-spotlight,.md-hero,.feed-match{--club-home:#99a5ad;--club-away:#99a5ad;--club-home-secondary:var(--club-home);--club-away-secondary:var(--club-away);--club-wash:27%;--club-wash-strong:32%;--match-surface:var(--bg2);--match-ink:var(--snow);--match-muted:var(--text2);--club-paint:linear-gradient(90deg,transparent 25%,var(--match-surface) 49%,var(--match-surface) 51%,transparent 75%),linear-gradient(145deg,color-mix(in srgb,var(--club-home) var(--club-wash),var(--match-surface)),color-mix(in srgb,var(--club-home-secondary) var(--club-wash),var(--match-surface))) left/50% 100% no-repeat,linear-gradient(215deg,color-mix(in srgb,var(--club-away) var(--club-wash),var(--match-surface)),color-mix(in srgb,var(--club-away-secondary) var(--club-wash),var(--match-surface))) right/50% 100% no-repeat}
 :root[data-theme="light"] :is(.mcard,.home-spotlight,.md-hero,.feed-match){--club-wash:24%;--club-wash-strong:36%}
 .mcard{background:var(--bg2);border-color:var(--b2);box-shadow:0 5px 20px rgba(0,0,0,.05)}
 .mcard .mcard-gradient{height:3px;background:linear-gradient(90deg,var(--club-home) 0 49.8%,var(--club-away) 50.2% 100%);opacity:.65}
@@ -39,3 +39,7 @@ body .rating-ink[data-tone]{color:var(--score-ink,var(--snow))}
 body .feed-match{background:linear-gradient(100deg,color-mix(in srgb,var(--club-home) var(--club-wash),var(--bg3)),var(--bg3) 49%,color-mix(in srgb,var(--club-away) var(--club-wash),var(--bg3)))}
 body .feed-score{border-color:var(--b2);background:var(--bg2)}
 @media(max-width:620px){.mcard .mc-score-num{font-size:1.75rem}.home-spotlight .home-spotlight-team b{font-family:var(--font-ui);font-size:1.75rem;font-weight:650}.md-hero .md-tname{font-size:1rem}.md-hero .md-score{font-family:var(--font-ui);font-size:3rem;font-weight:650}}
+.mcard .mc-score-block,.mcard .mc-score-block:hover,.home-spotlight,.md-hero,body .feed-match{background:var(--club-paint)}
+.mcard .mcard-gradient,.md-hero::before{background:linear-gradient(90deg,var(--club-home),var(--club-home-secondary) 48%,var(--club-away-secondary) 52%,var(--club-away));opacity:.8}
+.mc-score-team:first-child .mc-score-mark{background:linear-gradient(145deg,color-mix(in srgb,var(--club-home) 40%,var(--bg2)),color-mix(in srgb,var(--club-home-secondary) 40%,var(--bg2)))}
+.mc-score-team:last-child .mc-score-mark{background:linear-gradient(215deg,color-mix(in srgb,var(--club-away) 40%,var(--bg2)),color-mix(in srgb,var(--club-away-secondary) 40%,var(--bg2)))}

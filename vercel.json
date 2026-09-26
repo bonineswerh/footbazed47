@@ -17,6 +17,7 @@
     { "source": "/matches", "destination": "/index.html" },
     { "source": "/feed", "destination": "/index.html" },
     { "source": "/leaderboard", "destination": "/index.html" },
+    { "source": "/discover", "destination": "/index.html" },
     { "source": "/friends", "destination": "/index.html" },
     { "source": "/admin", "destination": "/index.html" }
   ],

@@ -10,7 +10,7 @@
   const staticPages=Object.freeze({
     home:{path:'/',title:defaults.title,description:defaults.description,index:true},
     matches:{path:'/matches',title:'Матчи — FOOTBAZED',description:'Календарь футбольных матчей, прогнозы и оценки сообщества FOOTBAZED.',index:true},
-    leaderboard:{path:'/leaderboard',title:'Рейтинги болельщиков — FOOTBAZED',description:'Рейтинг болельщиков FOOTBAZED по отклику сообщества и активности.',index:true},
+    leaderboard:{path:'/discover',title:'Обзор оценок — FOOTBAZED',description:'Средние оценки матчей, клубов, игроков и турниров с фильтрами по периоду и размеру выборки.',index:true},
     feed:{path:'/feed',title:'Лента — FOOTBAZED',description:'Оценки и мнения футбольного сообщества FOOTBAZED.',index:false},
     friends:{path:'/friends',title:'Друзья — FOOTBAZED',description:defaults.description,index:false},
     admin:{path:'/admin',title:'Управление платформой — FOOTBAZED',description:defaults.description,index:false}

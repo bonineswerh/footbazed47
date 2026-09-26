@@ -1,6 +1,41 @@
 (function(root){
   'use strict';
   const profileFriendActions=new Set();
+  let diary=null,disposeDiary=null;
+  function diaryMarkup(){
+    return '<section class="pcard" aria-labelledby="diaryTitle"><div class="collection-toolbar"><h2 id="diaryTitle">История оценок</h2><p id="diaryCount" aria-live="polite"></p></div>'+root.FBZExplore.filters('diaryFilters',{diary:true})+'<div id="diaryError"></div><div class="diary-list" id="diaryList" aria-busy="true"></div><div class="collection-pagination"><span id="diaryPage" aria-live="polite"></span><div><button class="btn btn-g btn-sm" id="diaryPrevious" type="button" onclick="FBZProfile.diaryPage(-1)">Назад</button><button class="btn btn-g btn-sm" id="diaryNext" type="button" onclick="FBZProfile.diaryPage(1)">Далее →</button></div></div></section>';
+  }
+  function diaryCurrent(s){return diary===s&&s.user===CU?.id&&s.route===routeVersion&&s.profile===profileVersion&&CP==='profile';}
+  function diaryControls(){if(!diary)return;document.getElementById('diaryPrevious').disabled=diary.loading||diary.index===0;document.getElementById('diaryNext').disabled=diary.loading||!diary.hasMore;}
+  async function loadDiary(){
+    const s=diary;if(!s||!diaryCurrent(s))return;
+    const version=++s.version;s.loading=true;diaryControls();
+    const list=document.getElementById('diaryList');list.setAttribute('aria-busy','true');
+    document.getElementById('diaryError').innerHTML='';
+    list.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка истории</span></div>';
+    try{
+      const data=await root.FBZData.getProfileDiary(s.uid,{filters:s.filters,cursor:s.cursors[s.index],limit:8});
+      if(!diaryCurrent(s)||version!==s.version)return;
+      if(!data)throw new Error('Profile unavailable');
+      const items=data.items||[];s.hasMore=Boolean(data.has_more);s.next=data.next_cursor;
+      root.FBZExplore.populate(document.getElementById('diaryFilters'),data);
+      list.innerHTML=items.length?items.map(r=>{
+        const score=root.FBZDomain.ratingPresentation(r.match_rating),date=new Date(r.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
+        const result=r.home_score!==null&&r.away_score!==null?`<span class="diary-scoreline">${Number(r.home_score)} : ${Number(r.away_score)}</span> · `:'';
+        return `<button class="rh-row" type="button" onclick="go('md',{mid:${Number(r.match_id)}})"><div><div class="rh-m">${esc(r.home_team_name)} — ${esc(r.away_team_name)}</div><div class="rh-l">${result}${esc(r.league_name)} · ${esc(date)}${r.is_public?'':' · Только вам'}</div></div><div class="rh-r"><div class="rh-v" data-tone="${score.tone}">${score.value}<span class="score-denominator">/10</span></div></div></button>`;
+      }).join(''):'<div class="empty-state"><strong>Оценок по этим условиям нет</strong><p>Измените поиск или сбросьте фильтры.</p></div>';
+      document.getElementById('diaryCount').textContent=root.FBZDomain.countLabel(Number(data.total),{one:'оценка',few:'оценки',many:'оценок'});
+      document.getElementById('diaryPage').textContent=items.length?`${s.index*8+1}–${s.index*8+items.length} из ${Number(data.total)}`:'Нет записей';
+    }catch(error){if(diaryCurrent(s)&&version===s.version){document.getElementById('diaryError').innerHTML='<div class="collection-error"><span>Не удалось загрузить историю</span><button class="btn btn-g btn-sm" onclick="FBZProfile.retryDiary()">Повторить</button></div>';if(list.querySelector('.loading'))list.innerHTML='';}}
+    finally{if(diaryCurrent(s)&&version===s.version){s.loading=false;list.setAttribute('aria-busy','false');diaryControls();}}
+  }
+  function changeDiaryPage(direction){if(!diary||diary.loading)return;if(direction>0&&diary.hasMore){diary.cursors[++diary.index]=diary.next;}else if(direction<0&&diary.index>0){diary.index--;}else return;loadDiary();}
+  function mountDiary(uid){
+    disposeDiary?.();diary={uid,user:CU?.id,route:routeVersion,profile:profileVersion,filters:{},cursors:[null],index:0,version:0,loading:false,hasMore:false};
+    const s=diary;
+    disposeDiary=root.FBZExplore.bind(document.getElementById('diaryFilters'),filters=>{if(!diaryCurrent(s))return;s.filters=filters;s.index=0;s.cursors=[null];loadDiary();},()=>{if(diaryCurrent(s)){s.version++;s.loading=true;s.hasMore=false;diaryControls();}});
+    return loadDiary();
+  }
 function renderProfileInsights(ratings,matchMap){
   const list=ratings||[];
   if(!list.length)return '<section class="pcard"><h2 class="pcard-title">Футбол в деталях</h2><div class="profile-empty"><strong>У каждой истории есть первый матч</strong><p>Здесь появятся турниры и впечатления из доступных оценок.</p></div></section>';
@@ -53,6 +88,7 @@ function renderFootballDiary(count,isOwner){
 }
 
 async function loadProfile(uid){
+  disposeDiary?.();diary=null;
   const token=++profileVersion,user=CU?.id,route=routeVersion;
   const current=()=>token===profileVersion&&CU?.id===user&&route===routeVersion&&CP==='profile';
   const w=document.getElementById('profileW');
@@ -131,7 +167,7 @@ async function loadProfile(uid){
       <div>
         ${profileComparison}
         ${profileInsights}
-        <div class="pcard"><div class="pcard-title">${ico('chart',14)} Последние оценки</div>${ratings?.length?ratings.slice(0,20).map(r=>{const mt=matchMap[r.match_id],tone=window.FBZDomain.ratingTone(r.match_rating);return`<button type="button" class="rh-row" ${mt?`onclick="go('md',{mid:${r.match_id}})" style="cursor:pointer"`:'disabled'}><div><div class="rh-m">${mt?esc(mt.home_team_name)+' — '+esc(mt.away_team_name):'Матч #'+r.match_id}</div><div class="rh-l">${esc(mt?.league_name)} · ${new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}${r.is_public?'':' · приватно'}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" data-tone="${tone}" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v" data-tone="${tone}">${r.match_rating}/10</div></div></button>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
+        ${diaryMarkup()}
       </div>
       <div>
         ${footballDiary}
@@ -143,6 +179,7 @@ async function loadProfile(uid){
         </div>
       </div>
     </div>`;
+    await mountDiary(uid);
   }catch(e){
     if(!current())return;
     console.error('Profile error:',e);
@@ -168,5 +205,5 @@ async function mutateProfileFriendship(fid,accept){
   finally{profileFriendActions.delete(key);if(button?.isConnected)button.disabled=false;}
 }
 
-  root.FBZProfile=Object.freeze({mount:loadProfile,mutateFriendship:mutateProfileFriendship});
+  root.FBZProfile=Object.freeze({mount:loadProfile,mutateFriendship:mutateProfileFriendship,diaryPage:changeDiaryPage,retryDiary:loadDiary});
 })(window);

@@ -55,6 +55,13 @@
     for(const key of cache.keys())if(!prefix||key.startsWith(prefix))cache.delete(key);
   }
 
+  function getProfileDiary(userId,{filters={},cursor=null,limit=8}={}){
+    return rpc('get_profile_diary',{p_user_id:userId,p_filters:filters,p_cursor:cursor,p_limit:limit});
+  }
+  function getFootballStatistics(kind,{filters={},offset=0,limit=12}={}){
+    return rpc('get_football_statistics',{p_kind:kind,p_filters:filters,p_offset:offset,p_limit:limit});
+  }
+
   function setSessionUser(userId){
     const next=userId||null;
     if(next===sessionUserId)return;
@@ -63,5 +70,5 @@
     invalidate();
   }
 
-  root.FBZData=Object.freeze({getLeaderboard,getMatchesPage,getProfilePage,invalidate,setSessionUser});
+  root.FBZData=Object.freeze({getLeaderboard,getMatchesPage,getProfilePage,getProfileDiary,getFootballStatistics,invalidate,setSessionUser});
 })(window);

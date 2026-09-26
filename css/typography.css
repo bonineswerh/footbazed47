@@ -46,4 +46,17 @@ body .league-group-name{font-size:1.125rem}.lb-pname{font-size:1rem!important}
 .md-hero .md-cv-player{font-family:var(--font-ui);font-size:1rem;font-weight:650;line-height:1.4;overflow-wrap:anywhere}
 .rating-position,.rating-player-position{font-size:var(--type-meta);color:#b9d0c4;letter-spacing:.02em}.rating-player-avatar small{font-size:var(--type-meta);height:19px;min-width:19px}.rating-player-name{font-size:var(--type-meta);line-height:1.4;overflow-wrap:anywhere}.rating-player{min-height:104px;padding:8px 4px}.rating-player-row{grid-template-columns:repeat(auto-fit,minmax(82px,1fr));gap:6px}.rating-pitch{gap:20px;padding-block:24px}.rating-player-position{margin-top:4px}
 body .comment-form input,body .comment-edit-form textarea{font-size:1rem}
+/* Comparable rating values share the same type, width and baseline. */
+body :is(.pr-val,.rh-v,.rating-value,.feed-rating-value,.md-cv,.md-segment b){font-family:var(--font-ui);font-variant-numeric:tabular-nums;letter-spacing:-.03em;font-weight:650;line-height:1.2}
+body :is(.pr-val,.rh-v){font-size:1.25rem;min-width:4.5rem;text-align:right;white-space:nowrap}
+body :is(.pr-bar,.rh-bar){width:80px;height:4px;flex:0 0 80px}
+body :is(.pr-r,.rh-r){display:flex;align-items:center;gap:12px}
+body .pbadge{font-family:var(--font-ui);font-size:var(--type-meta);font-weight:600;line-height:1.4;letter-spacing:0;min-height:28px;display:inline-flex;align-items:center;gap:6px;padding:5px 9px}
+body :is(.mc-score-mark,.home-spotlight-mark,.md-team-mark){font-family:var(--font-ui);font-weight:650;letter-spacing:-.03em}
+body .mc-score-block{grid-template-columns:minmax(0,1fr) minmax(64px,auto) minmax(0,1fr);gap:10px;padding-inline:12px}
+body .mc-score-name{font-family:var(--font-ui);font-size:.9375rem;font-weight:600;line-height:1.35;letter-spacing:-.02em;overflow-wrap:normal;word-break:normal;hyphens:auto;min-height:2.7em}
+@media(max-width:400px){body :is(.pr-bar,.rh-bar){width:44px;flex-basis:44px}body :is(.pr-r,.rh-r){gap:8px}body :is(.pr-val,.rh-v){font-size:1.125rem;min-width:4rem}}
 @media(max-width:620px){.hero-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;gap:12px}.hstat{padding:0;border:0}.hstat-l{overflow-wrap:anywhere}.rating-player-row{grid-template-columns:repeat(auto-fit,minmax(82px,1fr))}.rating-player-name{font-size:var(--type-meta)}.md-comparison-values{flex-wrap:wrap}.md-comparison-values span{font-size:var(--type-meta)}}
+
+.score-denominator{font-family:inherit;font-size:.75rem;font-weight:500;letter-spacing:0;margin-left:2px;color:var(--text2)}
+body .mc-score-name{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:break-word}

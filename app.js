@@ -44,7 +44,7 @@ function ico(name,size){return(I[name]||'').replace('class="ico"',`class="ico" s
 const DERBY=[{h:'Зенит',a:'Спартак'},{h:'Реал',a:'Барселона'},{h:'Ман Сити',a:'Ливерпуль'},{h:'Ювентус',a:'Милан'},{h:'Бавария',a:'Дортмунд'},{h:'Арсенал',a:'Тоттенхэм'}];
 const AVCOLORS=['av-0','av-1','av-2','av-3','av-4','av-5','av-6','av-7'];
 let CU=null,CP='home';
-let MF='all',ML='all',LT='likes',FT='list';
+let MF='all',ML='all',FT='list';
 let chatMID=null,mdID=null,viewUID=null;
 let routeApplying=false;
 let routeVersion=0,profileVersion=0,leaderboardVersion=0,chatVersion=0,chatSending=false;
@@ -301,7 +301,8 @@ function syncRoute(p,d){
   else if(p==='player'&&d?.id)path=`/player/${encodeURIComponent(d.id)}`;
   else if(p==='competition'&&d?.id)path=`/competition/${encodeURIComponent(d.id)}`;
   else if(p==='chat'&&d?.mid)path=`/match/${encodeURIComponent(d.mid)}/chat`;
-  else if(['matches','feed','leaderboard','friends','admin'].includes(p))path=`/${p}`;
+  else if(p==='leaderboard')path='/discover';
+  else if(['matches','feed','friends','admin'].includes(p))path=`/${p}`;
   const next=`${path}${window.location.search}`;
   const current=`${window.location.pathname}${window.location.search}${window.location.hash}`;
   if(next!==current)history.pushState({fbzIndex:(Number(history.state?.fbzIndex)||0)+1},'',next);
@@ -329,6 +330,7 @@ function applyRouteFromLocation(){
     else if(type==='club'&&value)go('club',{id:Number(value)});
     else if(type==='player'&&value)go('player',{id:Number(value)});
     else if((type==='competition'||type==='league')&&value)go('competition',{id:Number(value)});
+    else if(type==='discover')go('leaderboard');
     else if(['matches','feed','leaderboard','friends','admin'].includes(type))go(type);
     else{go('home');toast('Не удалось открыть эту ссылку','err');}
   }finally{
@@ -365,65 +367,15 @@ function anim(id,t){
   const el=document.getElementById(id);if(el)el.textContent=Number(t||0).toLocaleString('ru-RU');
 }
 
-// ─── LEADERBOARD ───
-let lbU=[];
+// ─── FOOTBALL OVERVIEW ───
 async function loadLB(){
-  const token=++leaderboardVersion;
-  document.getElementById('lbT').innerHTML='<div class="loading"><div class="spin"></div></div>';
-  document.getElementById('lbPod').innerHTML='';
+  const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
+  document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const users=await window.FBZData.getLeaderboard(LT)||[];
-    if(token!==leaderboardVersion||CP!=='leaderboard')return;
-    lbU=users;
-    if(!lbU.length){document.getElementById('lbT').innerHTML='<div class="empty-state">Нет данных</div>';return;}
-    renderLB();
-  }catch(error){
-    if(token!==leaderboardVersion||CP!=='leaderboard')return;
-    console.error('Leaderboard error:',error);
-    document.getElementById('lbT').innerHTML='<div class="empty-state"><strong>Не удалось загрузить рейтинг</strong><button class="btn btn-g btn-sm" onclick="loadLB()">Повторить</button></div>';
-  }
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=1',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
+  }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" onclick="loadLB()">Повторить</button></div>';}
 }
-function renderLB(){
-  const sorted=[...lbU].sort((a,b)=>LT==='likes'?b.tl-a.tl:b.rc-a.rc);
-  const top3=sorted.slice(0,3);
-  const ord=top3.length>=3?[top3[1],top3[0],top3[2]]:top3;
-  const pc=top3.length>=3?['p2','p1','p3']:['p1','p2','p3'];
-  document.getElementById('lbPod').innerHTML=ord.map((u,i)=>{
-    if(!u)return'';
-    const val=LT==='likes'?u.tl:u.rc;const lbl=LT==='likes'?'лайков':'оценок';
-    const cls=avColor(u.username||'x');
-    const avatar=safeImageUrl(u.avatar_url);
-    const av=avatar?`<img src="${avatar}" style="width:52px;height:52px;border-radius:13px;object-fit:cover" alt="">`:`<div class="lb-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
-    const position=top3.indexOf(u)+1;
-    return`<button type="button" class="lb-pod ${pc[i]}" aria-label="${position} место: ${esc(u.username||'Аноним')}, ${val} ${lbl}" onclick="go('profile',{uid:'${u.id}'})">
-      <div class="lb-crown">${position.toString().padStart(2,'0')}</div>
-      ${av}
-      <div class="lb-pname">${esc(u.username||'Аноним')}</div>
-      <div class="lb-phand">@${esc(u.username||'user')}</div>
-      <div class="lb-pval">${val}</div>
-      <div class="lb-plbl">${lbl}</div>
-    </button>`;
-  }).join('');
-  document.getElementById('lbT').innerHTML=sorted.slice(3).map((u,i)=>{
-    const val=LT==='likes'?u.tl:u.rc;const lbl=LT==='likes'?'лайков':'оценок';
-    const cls=avColor(u.username||'x');
-    const avatar=safeImageUrl(u.avatar_url);
-    const av=avatar?`<img src="${avatar}" style="width:34px;height:34px;border-radius:9px;object-fit:cover" alt="">`:`<div class="lb-uav ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
-    return`<button type="button" class="lb-row" aria-label="${i+4} место: ${esc(u.username||'Аноним')}, ${val} ${lbl}" onclick="go('profile',{uid:'${u.id}'})">
-      <div class="lb-rank">${i+4}</div>
-      <div class="lb-user">${av}<div><div class="lb-uname">${esc(u.username||'Аноним')}</div><div class="lb-uhand">@${esc(u.username||'user')}</div></div></div>
-      <div class="lb-score"><div class="lb-sval">${val}</div><div class="lb-slbl">${lbl}</div></div>
-    </button>`;
-  }).join('');
-}
-function setLT(t,btn){
-  LT=t;
-  document.querySelectorAll('.lb-tab').forEach(b=>{b.className='btn btn-g btn-sm lb-tab';b.setAttribute('aria-pressed','false');});
-  btn.className='btn btn-l btn-sm lb-tab';
-  btn.setAttribute('aria-pressed','true');
-  loadLB();
-}
-
 // ─── PROFILE ───
 function activeProfileStreak(user){
   const value=Math.max(0,Number(user?.streak)||0);
@@ -447,8 +399,9 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=1',script:'js/profile.js?v=1',ready:()=>window.FBZProfile});
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=2',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
+function ensureExploreModule(){return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=1',script:'js/explore.js?v=1',ready:()=>window.FBZExplore});}
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
   const target=document.getElementById('profileW');
@@ -608,7 +561,7 @@ function copyTechValue(id){
 // ─── REVEAL + MISC ───
 function injectIcons(){
   // Nav links
-  const navIcons={Главная:'home',Матчи:'football',Лента:'feed',Рейтинги:'trophy',Друзья:'users'};
+  const navIcons={Главная:'home',Матчи:'football',Лента:'feed',Обзор:'chart',Друзья:'users'};
   document.querySelectorAll('.nav-link').forEach(a=>{
     const t=a.textContent.trim();if(navIcons[t])a.innerHTML=ico(navIcons[t],15)+' '+t;
   });

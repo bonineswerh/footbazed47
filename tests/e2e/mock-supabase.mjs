@@ -76,7 +76,7 @@ const fixture={
   favoriteClubs:[{id:24,name:'Real Madrid CF',short_name:'Real Madrid',tla:'RMA',media:null,primary_color:'#274C77',secondary_color:'#E7ECEF',favorited_at:'2026-08-01T10:00:00Z'}]
 };
 
-export async function installSupabaseMock(page){
+export async function installSupabaseMock(page,overrides={}){
   await page.addInitScript(data=>{
     localStorage.setItem('fbz_session_hint','1');
     const state=structuredClone(data);
@@ -98,6 +98,27 @@ export async function installSupabaseMock(page){
     }
 
     function rpc(name,args={}){
+      if(name==='get_profile_diary'){
+        const f=args.p_filters||{},cursor=args.p_cursor,limit=args.p_limit||8;
+        const visible=state.diary||state.feed.filter(r=>r.user_id===args.p_user_id).map(r=>({id:r.rating_id,user_id:r.user_id,match_id:r.match_id,match_rating:r.match_rating,is_public:true,created_at:r.created_at,...r.match}));
+        const filtered=visible.filter(r=>(!f.query||`${r.home_team_name} ${r.away_team_name}`.toLowerCase().includes(f.query.toLowerCase()))&&(!f.league||r.league_name===f.league)&&(!f.team||[r.home_team_name,r.away_team_name].includes(f.team))&&(!f.from||r.match_date.slice(0,10)>=f.from)&&(!f.to||r.match_date.slice(0,10)<=f.to)&&(!f.min_rating||r.match_rating>=Number(f.min_rating))&&(!f.max_rating||r.match_rating<=Number(f.max_rating))&&(!f.home_score||r.home_score===Number(f.home_score))&&(!f.away_score||r.away_score===Number(f.away_score))).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id-a.id);
+        const remaining=filtered.filter(r=>!cursor||r.created_at<cursor.created_at||r.created_at===cursor.created_at&&r.id<cursor.id),items=remaining.slice(0,limit),last=items.at(-1);
+        return promiseResult({items,total:filtered.length,has_more:remaining.length>limit,next_cursor:last?{created_at:last.created_at,id:last.id}:null,leagues:[...new Set(visible.map(r=>r.league_name))],teams:[...new Set(visible.flatMap(r=>[r.home_team_name,r.away_team_name]))]});
+      }
+      if(name==='get_football_statistics'){
+        const f=args.p_filters||{},kind=args.p_kind||'matches',offset=args.p_offset||0,limit=args.p_limit||12;
+        const base=state.feed.filter(r=>(!f.league||r.match.league_name===f.league)&&(!f.team||[r.match.home_team_name,r.match.away_team_name].includes(f.team))&&(!f.from||r.match.match_date.slice(0,10)>=f.from)&&(!f.to||r.match.match_date.slice(0,10)<=f.to));
+        const groups=new Map();
+        const add=(id,title,subtitle,r,score=r.match_rating)=>{const key=String(id),g=groups.get(key)||{entity_key:key,entity_id:id,title,subtitle,scores:[],people:new Set(),latest:r.match.match_date,home_score:r.match.home_score,away_score:r.match.away_score};g.scores.push(score);g.people.add(r.user_id);groups.set(key,g);};
+        for(const r of base){const m=r.match;
+          if(kind==='matches')add(r.match_id,`${m.home_team_name} — ${m.away_team_name}`,m.league_name,r);
+          if(kind==='leagues')add(7,m.league_name,'Турнир',r);
+          if(kind==='clubs'){add(m.home_club_id,m.home_team_name,'Матчи клуба',r);add(m.away_club_id,m.away_team_name,'Матчи клуба',r);}
+          if(kind==='players')for(const pr of state.playerRatings.filter(p=>p.match_id===r.match_id&&p.user_id===r.user_id)){const p=state.players.find(p=>p.id===pr.player_id);add(p.id,p.name,p.team,r,pr.rating);}
+        }
+        const rows=[...groups.values()].map(g=>({...g,average:g.scores.reduce((a,b)=>a+b,0)/g.scores.length,votes:g.scores.length,voters:g.people.size})).filter(g=>g.votes>=Number(f.min_votes||1)&&(!f.query||`${g.title} ${g.subtitle}`.toLowerCase().includes(f.query.toLowerCase()))).sort((a,b)=>f.sort==='votes'?b.votes-a.votes:b.average-a.average).map((g,i)=>({...g,rank:i+1}));
+        return promiseResult({items:rows.slice(offset,offset+limit),total:rows.length,has_more:rows.length>offset+limit,next_offset:offset+limit,summary:{votes:base.length,matches:new Set(base.map(r=>r.match_id)).size,voters:new Set(base.map(r=>r.user_id)).size},leagues:[...new Set(state.matches.map(m=>m.league_name))],teams:[...new Set(state.matches.flatMap(m=>[m.home_team_name,m.away_team_name]))]});
+      }
       if(name==='get_my_profile')return promiseResult(structuredClone(state.profile));
       if(name==='save_match_rating'){
         state.lastRatingPayload=structuredClone(args);
@@ -377,5 +398,5 @@ export async function installSupabaseMock(page){
       profile:()=>structuredClone(state.profile),
       lastRating:()=>structuredClone(state.lastRatingPayload||null)
     };
-  },fixture);
+  },{...fixture,...overrides});
 }

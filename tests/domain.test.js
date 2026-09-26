@@ -99,6 +99,12 @@ test('club palettes preserve home/away identity and reject arbitrary CSS',()=>{
   assert.equal(domain.clubColor('  REAL   MADRID CF '),domain.clubColor('Реал Мадрид'));
   assert.notEqual(domain.clubColor('Real Madrid CF'),domain.clubColor('Manchester City FC'));
   assert.equal(domain.clubColor('unknown'),domain.clubColor('url(https://invalid.test)'));
-  assert.match(domain.matchPaletteStyle({home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC'}),/^--club-home:#[0-9a-f]{6};--club-away:#[0-9a-f]{6}$/);
+  assert.match(domain.matchPaletteStyle({home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC'}),/^--club-home:#[0-9a-f]{6};--club-away:#[0-9a-f]{6};--club-home-secondary:#[0-9a-f]{6};--club-away-secondary:#[0-9a-f]{6}$/);
+  assert.deepEqual(domain.clubPalette('Barça'),domain.clubPalette('FC Barcelona'));
+  assert.notEqual(...domain.clubPalette('Barça'));
+  assert.notEqual(...domain.clubPalette('Brighton Hove'));
+  assert.notDeepEqual(domain.clubPalette('Atleti'),domain.clubPalette('Barça'));
+  assert.equal(...domain.clubPalette('PSG'));
+  assert.equal(...domain.clubPalette('Real Madrid'));
   assert.equal(domain.ratingTone(8.9),'high');
 });

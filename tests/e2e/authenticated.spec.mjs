@@ -16,7 +16,7 @@ test('авторизованная главная показывает личн�
   await expect(page.locator('#homeOverview .home-overview-item')).toHaveCount(3);
   await expect(page.locator('#homePendingRatings')).toContainText('Всё оценено');
   await expect(page.locator('#homeFavoriteTeams')).toContainText('Real Madrid');
-  await expect(page.getByRole('button',{name:'Рейтинги',exact:true}).first()).toBeVisible();
+  await expect(page.getByRole('button',{name:'Обзор',exact:true}).first()).toBeVisible();
 });
 
 test('меню аккаунта полностью управляется с клавиатуры',async({page})=>{
@@ -297,14 +297,14 @@ test('матчи фильтруются серверным RPC без загру
   await expect(page.locator('#matchG .mcard')).toContainText('Manchester City FC');
 });
 
-test('лидерборд открывает профиль с клавиатуры',async({page})=>{
+test('обзор открывает матч с клавиатуры и сохраняет старую ссылку',async({page})=>{
   await page.goto('/?__e2e=1#leaderboard');
-  const leader=page.getByRole('button',{name:/^1 место:/});
-  await expect(leader).toBeVisible();
-  await leader.focus();
+  const row=page.locator('.statistics-row').first();
+  await expect(row).toContainText('Real Madrid');
+  await row.focus();
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/profile\/cd291181-2db6-42cb-9f3d-ef84ab3a9660\?__e2e=1$/u);
-  await expect(page.getByRole('heading',{name:/gamlet/i,exact:true})).toBeVisible();
+  await expect(page).toHaveURL(/\/match\/101\?__e2e=1$/u);
+  await expect(page.locator('.md-hero')).toBeVisible();
 });
 
 test('восстановление пароля обрабатывает recovery-сессию и очищает токен',async({page})=>{
