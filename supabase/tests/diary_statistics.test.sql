@@ -10,6 +10,7 @@ insert into public.users(id,username,is_public) values
 ('13000000-0000-0000-0000-000000000002','diary_private',false);
 insert into public.clubs(id,name) overriding system value values(960001,'Diary Home'),(960002,'Diary Away');
 insert into public.matches(id,home_team_name,away_team_name,league_name,match_date,status,home_score,away_score,home_club_id,away_club_id)
+overriding system value
 select 960000+n,'Diary Home','Diary Away',case when n<=9 then 'Diary League A' else 'Diary League B' end,
  '2026-09-01'::timestamptz+(n-1)*interval '1 day','finished',2,1,960001,960002 from generate_series(1,18) n;
 insert into public.ratings(user_id,match_id,match_rating,is_public,created_at,supporter_side)

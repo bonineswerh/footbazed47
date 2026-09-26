@@ -1050,6 +1050,15 @@ export type Database = {
         }
         Returns: Json
       }
+      get_football_statistics: {
+        Args: {
+          p_filters?: Json
+          p_kind?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
       get_leaderboard: {
         Args: { p_limit?: number; p_metric?: string }
         Returns: Json
@@ -1103,6 +1112,15 @@ export type Database = {
       }
       get_player_page: { Args: { p_player_id: number }; Returns: Json }
       get_profile_comparison: { Args: { p_user_id: string }; Returns: Json }
+      get_profile_diary: {
+        Args: {
+          p_cursor?: Json
+          p_filters?: Json
+          p_limit?: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       get_profile_page: {
         Args: { p_rating_limit?: number; p_user_id: string }
         Returns: Json
@@ -1334,4 +1352,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
