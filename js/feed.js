@@ -8,9 +8,13 @@
   let hasMore=false;
   let loadingMore=false;
   let requestVersion=0;
+  let viewVersion=0;
+  let homeVersion=0;
+  let sessionVersion=0;
   const seenRatings=new Set();
   const openComments=new Set();
   const commentCache=new Map();
+  const commentRequests=new Map();
 
   function displayName(item){return item.user?.display_name||item.user?.username||'Болельщик';}
 
@@ -62,7 +66,7 @@
         </button>
         <time datetime="${esc(item.created_at)}">${esc(relativeDate(item.created_at))}</time>
       </header>
-      <div class="feed-match">
+      <div class="feed-match" style="${FBZDomain.matchPaletteStyle(item.match||{})}">
         <div class="feed-match-meta"><span>${esc(item.match?.league_name||'Футбол')}</span><time>${new Date(item.match?.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</time></div>
         <div class="feed-scoreline">
           ${clubButton(item.match?.home_club_id,item.match?.home_team_name,'home')}
@@ -78,7 +82,7 @@
       ${playerHighlights(item.player_highlights)}
       <footer class="feed-actions">
         <button class="feed-action like-action${item.liked_by_me?' on':''}" type="button" ${own?'disabled title="Свою запись нельзя оценить"':`onclick="FBZFeed.toggleLike(${Number(item.rating_id)},this)"`} aria-pressed="${item.liked_by_me?'true':'false'}">${ico('heart',16)}<span>${Number(item.like_count)||0}</span><small>Нравится</small></button>
-        <button class="feed-action" type="button" onclick="FBZFeed.toggleComments(${Number(item.rating_id)},this)">${ico('chat',16)}<span data-comment-count>${Number(item.comment_count)||0}</span><small>Обсудить</small></button>
+        <button class="feed-action" type="button" onclick="FBZFeed.toggleComments(${Number(item.rating_id)},this)" aria-expanded="false" aria-controls="feed-comments-${Number(item.rating_id)}" aria-label="Обсудить оценку">${ico('chat',16)}<span data-comment-count>${Number(item.comment_count)||0}</span><small>Обсудить</small></button>
         <button class="feed-action" type="button" onclick="forwardRating(${Number(item.rating_id)})" aria-label="Отправить оценку другу">${ico('send',16)}<small>Отправить</small></button>
         ${own?`<button class="feed-action feed-edit" type="button" onclick="openRate(${Number(item.match_id)})" aria-label="Изменить оценку" title="Изменить оценку">${ico('edit',15)}<small>Изменить</small></button>`:''}
       </footer>
@@ -111,9 +115,10 @@
     const meta=document.getElementById('feedMeta');
     if(!target)return;
     if(append&&loadingMore)return;
-    if(!append){cursor=null;loadedCount=0;seenRatings.clear();openComments.clear();commentCache.clear();target.innerHTML=feedSkeleton();}
+    if(!append){viewVersion++;cursor=null;loadedCount=0;hasMore=false;seenRatings.clear();openComments.clear();commentCache.clear();commentRequests.clear();target.innerHTML=feedSkeleton();}
     loadingMore=append;
     const version=++requestVersion;
+    target.setAttribute('aria-busy','true');
     document.getElementById('feedMore').innerHTML=append?'<span class="feed-loading-more"><span class="spin"></span>Загружаем</span>':'';
     try{
       const{data,error}=await sb.rpc('get_social_feed_page',{
@@ -135,7 +140,7 @@
       cursor=data?.next_cursor&&typeof data.next_cursor==='object'?data.next_cursor:null;
       hasMore=Boolean(data?.has_more&&cursor);
       loadedCount+=items.length;
-      if(append&&items.length)target.insertAdjacentHTML('beforeend',items.map(renderFeedItem).join(''));
+      if(append){if(items.length)target.insertAdjacentHTML('beforeend',items.map(renderFeedItem).join(''));}
       else target.innerHTML=items.length?items.map(renderFeedItem).join(''):emptyState();
       if(meta)meta.textContent=loadedCount?`${scopeLabel()} · ${loadedCount}`:scopeLabel();
       renderMore();
@@ -145,7 +150,8 @@
       if(version!==requestVersion)return;
       if(!append)target.innerHTML='<div class="feed-empty"><strong>Не удалось обновить ленту</strong><span>Проверь соединение и повтори попытку.</span><button class="btn btn-g" type="button" onclick="FBZFeed.load()">Повторить</button></div>';
       renderMore();
-    }finally{loadingMore=false;}
+      if(append)document.getElementById('feedMore').innerHTML='<div class="feed-page-error" role="status"><span>Не удалось загрузить следующие оценки</span><button class="feed-more-button" type="button" onclick="FBZFeed.loadMore()">Повторить</button></div>';
+    }finally{if(version===requestVersion){loadingMore=false;target.setAttribute('aria-busy','false');}}
   }
 
   function loadMore(){if(hasMore)load({append:true});}
@@ -227,17 +233,22 @@
     const id=Number(ratingId);
     const target=document.getElementById(`feed-comments-${id}`);
     if(!target)return;
-    if(openComments.has(id)){openComments.delete(id);target.innerHTML='';return;}
+    const toggle=document.querySelector(`[aria-controls="feed-comments-${id}"]`);
+    if(openComments.has(id)){openComments.delete(id);commentRequests.delete(id);target.innerHTML='';toggle?.setAttribute('aria-expanded','false');return;}
     openComments.add(id);
+    toggle?.setAttribute('aria-expanded','true');
     target.innerHTML='<div class="comments-loading"><span class="spin"></span>Загружаем обсуждение</div>';
     if(commentCache.has(id)){renderComments(id,commentCache.get(id));return;}
+    const request={version:viewVersion,userId:CU?.id};commentRequests.set(id,request);
     try{
       const{data,error}=await sb.rpc('get_rating_comments',{p_rating_id:id,p_limit:60});
       if(error)throw error;
+      if(commentRequests.get(id)!==request||request.version!==viewVersion||request.userId!==CU?.id)return;
       const comments=Array.isArray(data)?data:[];
       commentCache.set(id,comments);
       if(openComments.has(id))renderComments(id,comments);
     }catch(error){
+      if(commentRequests.get(id)!==request||request.version!==viewVersion||request.userId!==CU?.id)return;
       console.error('Comments error:',error);
       target.innerHTML='<button class="comments-retry" type="button" onclick="FBZFeed.toggleComments('+id+');FBZFeed.toggleComments('+id+')">Не удалось загрузить · повторить</button>';
     }
@@ -259,54 +270,79 @@
     const form=event.currentTarget;
     const input=form.querySelector('input');
     const button=form.querySelector('button');
+    if(button.disabled)return;
     const comment=input.value.trim();
     if(!comment)return;
+    const version=viewVersion,userId=CU.id;
     button.disabled=true;
     try{
       const{data,error}=await sb.rpc('add_rating_comment',{p_rating_id:Number(ratingId),p_comment:comment});
       if(error)throw error;
+      if(version!==viewVersion||userId!==CU?.id)return;
       const comments=[...(commentCache.get(Number(ratingId))||[]),data];
       commentCache.set(Number(ratingId),comments);
-      renderComments(ratingId,comments);
+      if(openComments.has(Number(ratingId)))renderComments(ratingId,comments);
       adjustCommentCount(ratingId,1);
       document.getElementById(`comment-${Number(ratingId)}`)?.focus();
     }catch(error){
-      console.error('Add comment error:',error);
-      toast('Не удалось отправить комментарий','err');
-      button.disabled=false;
-    }
+      if(version===viewVersion&&userId===CU?.id){console.error('Add comment error:',error);toast('Не удалось отправить комментарий','err');}
+    }finally{button.disabled=false;}
   }
 
-  async function deleteComment(ratingId,commentId,button){
+  function deleteComment(ratingId,commentId,button){
+    if(button.disabled)return;
+    window.FBZConfirm.open({title:'Удалить комментарий?',message:'Комментарий будет удалён из обсуждения.',confirmText:'Удалить',onConfirm:()=>removeComment(ratingId,commentId,button)});
+  }
+
+  async function removeComment(ratingId,commentId,button){
+    const version=viewVersion,userId=CU?.id;
     button.disabled=true;
     try{
       const{data,error}=await sb.rpc('delete_rating_comment',{p_comment_id:Number(commentId)});
       if(error)throw error;
       if(!data)throw new Error('Comment was not deleted');
+      if(version!==viewVersion||userId!==CU?.id)return true;
       const comments=(commentCache.get(Number(ratingId))||[]).filter(comment=>Number(comment.id)!==Number(commentId));
       commentCache.set(Number(ratingId),comments);
-      renderComments(ratingId,comments);
+      if(openComments.has(Number(ratingId)))renderComments(ratingId,comments);
       adjustCommentCount(ratingId,-1);
+      return true;
     }catch(error){
       console.error('Delete comment error:',error);
       toast('Не удалось удалить комментарий','err');
-      button.disabled=false;
-    }
+      return false;
+    }finally{button.disabled=false;}
   }
 
-  async function editComment(ratingId,commentId){
+  function editComment(ratingId,commentId){
     const comments=commentCache.get(Number(ratingId))||[];
     const comment=comments.find(item=>Number(item.id)===Number(commentId));
     if(!comment)return;
-    const updated=prompt('Изменить комментарий',comment.comment);
-    if(updated===null||!updated.trim()||updated.trim()===comment.comment)return;
-    if(updated.trim().length>1000){toast('Комментарий слишком длинный','err');return;}
+    const host=document.querySelector(`[data-rating-id="${Number(ratingId)}"] [data-comment-id="${Number(commentId)}"] p`);
+    if(!host)return;
+    host.outerHTML=`<form class="comment-edit-form" onsubmit="FBZFeed.saveCommentEdit(event,${Number(ratingId)},${Number(commentId)})"><label class="sr-only" for="edit-comment-${Number(commentId)}">Изменить комментарий</label><textarea id="edit-comment-${Number(commentId)}" maxlength="1000" rows="3" required>${esc(comment.comment)}</textarea><div><button class="btn btn-g btn-sm" type="button" onclick="FBZFeed.cancelCommentEdit(${Number(ratingId)})">Отмена</button><button class="btn btn-l btn-sm" type="submit">Сохранить</button></div></form>`;
+    document.getElementById(`edit-comment-${Number(commentId)}`)?.focus({preventScroll:true});
+  }
+
+  function cancelCommentEdit(ratingId){renderComments(ratingId,commentCache.get(Number(ratingId))||[]);}
+
+  async function saveCommentEdit(event,ratingId,commentId){
+    event.preventDefault();
+    const form=event.currentTarget,button=form.querySelector('[type="submit"]');
+    if(button.disabled)return;
+    const updated=form.querySelector('textarea').value.trim();
+    if(!updated||updated.length>1000){toast('Введите комментарий от 1 до 1000 символов','err');return;}
+    const comments=commentCache.get(Number(ratingId))||[],comment=comments.find(item=>Number(item.id)===Number(commentId));
+    if(!comment)return;
+    const version=viewVersion,userId=CU?.id;button.disabled=true;
     try{
-      const{data,error}=await sb.rpc('edit_rating_comment',{p_comment_id:Number(commentId),p_comment:updated.trim()});
+      const{data,error}=await sb.rpc('edit_rating_comment',{p_comment_id:Number(commentId),p_comment:updated});
       if(error)throw error;
+      if(version!==viewVersion||userId!==CU?.id)return;
       Object.assign(comment,data,{user:comment.user});
-      renderComments(ratingId,comments);
-    }catch(error){console.error('Edit comment error:',error);toast('Не удалось изменить комментарий','err');}
+      if(openComments.has(Number(ratingId)))renderComments(ratingId,comments);
+    }catch(error){if(version===viewVersion&&userId===CU?.id){console.error('Edit comment error:',error);toast('Не удалось изменить комментарий','err');}}
+    finally{button.disabled=false;}
   }
 
   function renderHomeItem(item){
@@ -315,11 +351,12 @@
       <header>${avatar(item,'home-feed-avatar')}<span><strong>${esc(displayName(item))}</strong><small>${esc(relativeDate(item.created_at))}</small></span><b aria-label="Оценка ${rating.label}">${rating.label}</b></header>
       <button class="home-feed-match" type="button" onclick="go('md',{mid:${Number(item.match_id)}})"><small>${esc(item.match?.league_name||'')}</small><strong>${esc(item.match?.home_team_name)} <span>${esc(score(item.match||{}))}</span> ${esc(item.match?.away_team_name)}</strong></button>
       ${item.comment?`<p>${esc(item.comment)}</p>`:''}
-      <footer><span>${ico('heart',13)} ${Number(item.like_count)||0}</span><button type="button" onclick="go('feed')">Открыть в ленте →</button></footer>
+      <footer><span>${ico('heart',13)} ${Number(item.like_count)||0}</span><button type="button" onclick="go('feed',{ratingId:${Number(item.rating_id)}})">Открыть в ленте →</button></footer>
     </article>`;
   }
 
   async function loadHome(){
+    const version=++homeVersion,session=sessionVersion;
     const target=document.getElementById('homeF');
     if(!target)return;
     try{
@@ -327,9 +364,11 @@
         p_scope:'all',p_limit:3,p_cursor_created_at:null,p_cursor_rating_id:null,p_cursor_score:null
       });
       if(error)throw error;
+      if(version!==homeVersion||session!==sessionVersion)return;
       const items=Array.isArray(data?.items)?data.items:[];
       target.innerHTML=items.length?items.map(renderHomeItem).join(''):'<div class="empty-state"><strong>Оценки появятся здесь</strong></div>';
     }catch(error){
+      if(version!==homeVersion||session!==sessionVersion)return;
       console.warn('Home feed error:',error);
       target.innerHTML='<div class="empty-state"><strong>Лента временно недоступна</strong></div>';
     }
@@ -338,5 +377,13 @@
   window.loadHomeF=loadHome;
   window.loadFeed=load;
   window.setFS=setScope;
-  window.FBZFeed={addComment,deleteComment,editComment,focusRating,load,loadHome,loadMore,open,setScope,toggleComments,toggleLike};
+  function resetSession(){
+    requestVersion++;viewVersion++;homeVersion++;sessionVersion++;scope='all';cursor=null;loadedCount=0;hasMore=false;loadingMore=false;
+    seenRatings.clear();openComments.clear();commentCache.clear();commentRequests.clear();
+    document.getElementById('feedG')?.replaceChildren();document.getElementById('homeF')?.replaceChildren();
+    document.getElementById('feedMore')?.replaceChildren();
+    document.querySelectorAll('#feedT .feed-filter').forEach((item,index)=>{item.classList.toggle('on',index===0);item.setAttribute('aria-pressed',String(index===0));});
+  }
+
+  window.FBZFeed={addComment,cancelCommentEdit,deleteComment,editComment,focusRating,load,loadHome,loadMore,open,resetSession,saveCommentEdit,setScope,toggleComments,toggleLike};
 })();

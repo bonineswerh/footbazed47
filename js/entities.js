@@ -10,9 +10,15 @@
   const positionNames={GK:'Вратарь',LB:'Левый защитник',LWB:'Левый латераль',CB:'Центральный защитник',RB:'Правый защитник',RWB:'Правый латераль',DM:'Опорный полузащитник',CDM:'Опорный полузащитник',CM:'Центральный полузащитник',AM:'Атакующий полузащитник',CAM:'Атакующий полузащитник',LM:'Левый полузащитник',RM:'Правый полузащитник',LW:'Левый вингер',RW:'Правый вингер',CF:'Оттянутый нападающий',ST:'Нападающий',SS:'Второй нападающий'};
   let clubPayload=null;
   let clubTab='overview';
-  let clubRequest=0;
-  let playerRequest=0;
-  let competitionRequest=0;
+  let entityRequest=0;
+  const favoriteRequests=new Set();
+
+  function startRequest(kind,target){
+    const version=++entityRequest;
+    const userId=CU?.id||null;
+    target.setAttribute('aria-busy','true');
+    return()=>version===entityRequest&&CP===kind&&(CU?.id||null)===userId;
+  }
 
   function initials(value){
     return String(value||'FB').trim().split(/\s+/).slice(0,2).map(part=>part[0]||'').join('').toLocaleUpperCase('ru-RU');
@@ -44,12 +50,12 @@
   }
 
   function entityLoading(label){
-    return`<div class="entity-loading"><div class="spin"></div><span>${esc(label)}</span></div>`;
+    return`<div class="entity-loading" role="status"><div class="spin"></div><span>${esc(label)}</span></div>`;
   }
 
-  function entityError(kind,id){
+  function entityError(kind,id,missing=false){
     const config={club:['loadClub','Клуб'],player:['loadPlayer','Игрок'],competition:['loadCompetition','Турнир']}[kind]||['loadClub','Объект'];
-    return`<div class="entity-empty"><span class="entity-empty-code">404</span><h1>${config[1]} не найден</h1><p>Данные могли обновиться. Попробуй открыть страницу ещё раз.</p><button class="btn btn-g" type="button" onclick="FBZEntities.${config[0]}(${Number(id)})">Повторить</button></div>`;
+    return`<div class="entity-empty" role="status">${missing?'<span class="entity-empty-code">404</span>':''}<h1>${missing?`${config[1]} не найден`:'Не удалось загрузить страницу'}</h1><p>${missing?'Проверьте ссылку или найдите нужную страницу через поиск.':'Проверьте соединение и попробуйте ещё раз.'}</p><button class="btn btn-g" type="button" onclick="${missing?'openGlobalSearch()':`FBZEntities.${config[0]}(${Number(id)})`}">${missing?'Открыть поиск':'Повторить'}</button></div>`;
   }
 
   function clubRoute(id,label){
@@ -152,9 +158,21 @@
       const active=item.dataset.tab===tab;
       item.classList.toggle('on',active);
       item.setAttribute('aria-selected',String(active));
+      item.tabIndex=active?0:-1;
     });
+    document.getElementById('clubBody')?.setAttribute('aria-labelledby',`club-tab-${tab}`);
     renderClubBody();
-    if(button)document.getElementById('clubBody')?.scrollIntoView({block:'start',behavior:'smooth'});
+  }
+
+  function onClubTabKey(event){
+    const tabs=[...document.querySelectorAll('#clubTabs .entity-tab')];
+    const index=tabs.indexOf(event.target);
+    if(index<0)return;
+    const next={ArrowRight:(index+1)%tabs.length,ArrowLeft:(index+tabs.length-1)%tabs.length,Home:0,End:tabs.length-1}[event.key];
+    if(next===undefined)return;
+    event.preventDefault();
+    setClubTab(tabs[next].dataset.tab);
+    tabs[next].focus();
   }
 
   function renderClub(payload){
@@ -178,64 +196,85 @@
         <div><strong>${Number(stats.squad_count)||0}</strong><span>Игроков</span></div>
         <div><strong>${Number(stats.match_count)||0}</strong><span>Матчей</span></div>
         <div><strong>${Number(stats.upcoming_count)||0}</strong><span>Впереди</span></div>
-        <div><strong>${ratingValue(stats.player_rating)}</strong><span>Оценка состава</span></div>
+        <div><strong class="rating-ink" data-tone="${ratingData(stats.player_rating).tone}">${ratingValue(stats.player_rating)}</strong><span>Оценка состава</span></div>
       </div>
-      <div class="entity-tabs" id="clubTabs" role="tablist" aria-label="Разделы клуба">
-        <button class="entity-tab on" data-tab="overview" role="tab" aria-selected="true" type="button" onclick="FBZEntities.setClubTab('overview',this)">Обзор</button>
-        <button class="entity-tab" data-tab="squad" role="tab" aria-selected="false" type="button" onclick="FBZEntities.setClubTab('squad',this)">Состав <span>${Number(stats.squad_count)||0}</span></button>
-        <button class="entity-tab" data-tab="matches" role="tab" aria-selected="false" type="button" onclick="FBZEntities.setClubTab('matches',this)">Матчи <span>${Number(stats.match_count)||0}</span></button>
+      <div class="entity-tabs" id="clubTabs" role="tablist" aria-label="Разделы клуба" onkeydown="FBZEntities.onClubTabKey(event)">
+        <button class="entity-tab on" id="club-tab-overview" data-tab="overview" role="tab" aria-controls="clubBody" aria-selected="true" tabindex="0" type="button" onclick="FBZEntities.setClubTab('overview',this)">Обзор</button>
+        <button class="entity-tab" id="club-tab-squad" data-tab="squad" role="tab" aria-controls="clubBody" aria-selected="false" tabindex="-1" type="button" onclick="FBZEntities.setClubTab('squad',this)">Состав <span>${Number(stats.squad_count)||0}</span></button>
+        <button class="entity-tab" id="club-tab-matches" data-tab="matches" role="tab" aria-controls="clubBody" aria-selected="false" tabindex="-1" type="button" onclick="FBZEntities.setClubTab('matches',this)">Матчи <span>${Number(stats.match_count)||0}</span></button>
       </div>
-      <div class="entity-body" id="clubBody"></div>
+      <div class="entity-body" id="clubBody" role="tabpanel" aria-labelledby="club-tab-overview" tabindex="0"></div>
     </article>`;
   }
 
   async function loadClub(id){
     const numericId=Number(id);
     const target=document.getElementById('clubC');
-    if(!target||!Number.isFinite(numericId))return;
-    const request=++clubRequest;
+    if(!target||!Number.isSafeInteger(numericId)||numericId<1)return;
+    const isCurrent=startRequest('club',target);
+    clubPayload=null;
     target.innerHTML=entityLoading('Загружаем клуб');
     try{
       const{data,error}=await sb.rpc('get_club_page',{p_club_id:numericId});
       if(error)throw error;
-      if(request!==clubRequest)return;
-      if(!data?.club){target.innerHTML=entityError('club',numericId);return;}
+      if(!isCurrent())return;
+      if(!data?.club){target.innerHTML=entityError('club',numericId,true);return;}
       clubPayload={...data,squad:Array.isArray(data.squad)?data.squad:[],matches:Array.isArray(data.matches)?data.matches:[]};
       clubTab='overview';
       target.innerHTML=renderClub(clubPayload);
       renderClubBody();
+      syncFavoriteButton();
       window.FBZSEO?.club(data.club);
     }catch(error){
       console.error('Club page error:',error);
-      if(request===clubRequest)target.innerHTML=entityError('club',numericId);
+      if(isCurrent())target.innerHTML=entityError('club',numericId);
+    }finally{
+      if(isCurrent())target.setAttribute('aria-busy','false');
     }
+  }
+
+  function syncFavoriteButton(){
+    const button=document.getElementById('clubFavoriteButton');
+    if(!button||!clubPayload)return;
+    const favorite=Boolean(clubPayload.is_favorite);
+    const busy=favoriteRequests.has(`${CU?.id}:${clubPayload.club.id}`);
+    button.setAttribute('aria-disabled',String(busy));
+    button.classList.toggle('on',favorite);
+    button.setAttribute('aria-pressed',String(favorite));
+    button.setAttribute('aria-busy',String(busy));
+    button.title=favorite?'Убрать из избранного':'Добавить в избранное';
+    button.querySelector('span').textContent=busy?'Сохраняем…':favorite?'В избранном':'В избранное';
   }
 
   async function toggleFavorite(){
     if(!clubPayload?.club)return;
     if(!CU){openAuth();return;}
-    const button=document.getElementById('clubFavoriteButton');
-    if(button)button.disabled=true;
-    const next=!Boolean(clubPayload.is_favorite);
+    const payload=clubPayload;
+    const clubId=Number(payload.club.id);
+    const userId=CU.id;
+    const key=`${userId}:${clubId}`;
+    if(favoriteRequests.has(key))return;
+    favoriteRequests.add(key);
+    syncFavoriteButton();
+    const next=!Boolean(payload.is_favorite);
     try{
-      const{data,error}=await sb.rpc('set_favorite_club',{p_club_id:Number(clubPayload.club.id),p_favorite:next});
+      const{data,error}=await sb.rpc('set_favorite_club',{p_club_id:clubId,p_favorite:next});
       if(error)throw error;
-      clubPayload.is_favorite=Boolean(data?.is_favorite);
-      const{data:favorites,error:favoritesError}=await sb.rpc('get_my_favorite_clubs');
-      if(favoritesError)throw favoritesError;
-      CU.favorite_clubs=Array.isArray(favorites)?favorites:[];
+      if(CU?.id!==userId)return;
+      const favorite=Boolean(data?.is_favorite);
+      if(Number(clubPayload?.club.id)===clubId)clubPayload.is_favorite=favorite;
+      const favorites=(CU.favorite_clubs||[]).filter(club=>Number(club.id)!==clubId);
+      if(favorite)favorites.push({...payload.club,favorited_at:new Date().toISOString()});
+      CU.favorite_clubs=favorites;
       window.FBZData?.invalidate('profile:');
       window.FBZHome?.sync(CU);
-      const activeTab=clubTab;
-      document.getElementById('clubC').innerHTML=renderClub(clubPayload);
-      clubTab=activeTab;
-      renderClubBody();
-      setClubTab(activeTab);
-      toast(next?'Клуб добавлен в избранное':'Клуб удалён из избранного','ok');
+      toast(favorite?'Клуб добавлен в избранное':'Клуб удалён из избранного','ok');
     }catch(error){
       console.error('Favorite club error:',error);
-      if(button)button.disabled=false;
-      toast('Не удалось изменить избранное','err');
+      if(CU?.id===userId)toast('Не удалось изменить избранное','err');
+    }finally{
+      favoriteRequests.delete(key);
+      syncFavoriteButton();
     }
   }
 
@@ -273,7 +312,7 @@
         <button class="entity-share" type="button" onclick="copyAppLink('/player/${Number(player.id)}','Ссылка на игрока')" aria-label="Поделиться игроком" title="Поделиться">${ico('share',18)}</button>
       </header>
       <div class="entity-stat-strip player-stats">
-        <div><strong>${ratingValue(stats.average)}</strong><span>Средняя оценка</span></div>
+        <div><strong class="rating-ink" data-tone="${ratingData(stats.average).tone}">${ratingValue(stats.average)}</strong><span>Средняя оценка</span></div>
         <div><strong>${Number(stats.rating_count)||0}</strong><span>Оценок</span></div>
         <div><strong>${Number(stats.matches_rated)||0}</strong><span>Матчей оценено</span></div>
         <div><strong>${Number(stats.best_votes)||0}</strong><span>Лучший игрок</span></div>
@@ -294,19 +333,21 @@
   async function loadPlayer(id){
     const numericId=Number(id);
     const target=document.getElementById('playerC');
-    if(!target||!Number.isFinite(numericId))return;
-    const request=++playerRequest;
+    if(!target||!Number.isSafeInteger(numericId)||numericId<1)return;
+    const isCurrent=startRequest('player',target);
     target.innerHTML=entityLoading('Загружаем игрока');
     try{
       const{data,error}=await sb.rpc('get_player_page',{p_player_id:numericId});
       if(error)throw error;
-      if(request!==playerRequest)return;
-      if(!data?.player){target.innerHTML=entityError('player',numericId);return;}
+      if(!isCurrent())return;
+      if(!data?.player){target.innerHTML=entityError('player',numericId,true);return;}
       target.innerHTML=renderPlayer(data);
       window.FBZSEO?.player(data.player);
     }catch(error){
       console.error('Player page error:',error);
-      if(request===playerRequest)target.innerHTML=entityError('player',numericId);
+      if(isCurrent())target.innerHTML=entityError('player',numericId);
+    }finally{
+      if(isCurrent())target.setAttribute('aria-busy','false');
     }
   }
 
@@ -355,21 +396,23 @@
   async function loadCompetition(id){
     const numericId=Number(id);
     const target=document.getElementById('competitionC');
-    if(!target||!Number.isFinite(numericId))return;
-    const request=++competitionRequest;
+    if(!target||!Number.isSafeInteger(numericId)||numericId<1)return;
+    const isCurrent=startRequest('competition',target);
     target.innerHTML=entityLoading('Загружаем турнир');
     try{
       const{data,error}=await sb.rpc('get_competition_page',{p_competition_id:numericId});
       if(error)throw error;
-      if(request!==competitionRequest)return;
-      if(!data?.competition){target.innerHTML=entityError('competition',numericId);return;}
+      if(!isCurrent())return;
+      if(!data?.competition){target.innerHTML=entityError('competition',numericId,true);return;}
       target.innerHTML=renderCompetition(data);
       window.FBZSEO?.competition(data.competition);
     }catch(error){
       console.error('Competition page error:',error);
-      if(request===competitionRequest)target.innerHTML=entityError('competition',numericId);
+      if(isCurrent())target.innerHTML=entityError('competition',numericId);
+    }finally{
+      if(isCurrent())target.setAttribute('aria-busy','false');
     }
   }
 
-  window.FBZEntities={loadClub,loadCompetition,loadPlayer,setClubTab,toggleFavorite};
+  window.FBZEntities={loadClub,loadCompetition,loadPlayer,onClubTabKey,setClubTab,toggleFavorite};
 })();

@@ -1,0 +1,29 @@
+/* ═══ FRIENDS ═══ */
+.friend-card{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg2);border:1px solid var(--b2);border-radius:12px;margin-bottom:8px;transition:all .25s var(--ease);cursor:pointer}.friend-card:hover{border-color:var(--b3);background:var(--bg3)}
+.fcard-av{width:40px;height:40px;border-radius:10px;background:var(--grad);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fcard-info{flex:1;min-width:0}.fcard-name{font-weight:600;font-size:var(--type-small);margin-bottom:1px}.fcard-sub{font-size:var(--type-meta);color:var(--text2)}
+.fcard-action{display:flex;gap:5px;flex-shrink:0}
+.fbtn{min-height:44px;padding:5px 12px;border-radius:6px;font-size:var(--type-small);font-weight:600;cursor:pointer;border:1px solid var(--b2);background:transparent;color:var(--text2);transition:all .2s;font-family:inherit}
+.fbtn:hover{border-color:var(--accent);color:var(--accent2);background:var(--accent3)}
+.fbtn.accept{background:var(--accent3);color:var(--accent2)}.fbtn.accept:hover{background:var(--accent);color:#fff}.fbtn.chat{display:grid;place-items:center;width:44px;padding:0;color:var(--accent2)}
+.fbtn.remove,.fbtn.reject{color:var(--text3)}.fbtn.remove:hover,.fbtn.reject:hover{color:var(--danger);border-color:var(--danger);background:var(--danger2)}
+.ftab2.on,.ftab2.btn-l{background:var(--grad)!important;color:var(--onAccent)!important;border:none!important}
+.friends-empty{padding:60px 20px;text-align:center;color:var(--text3);font-size:var(--type-small);line-height:1.7;grid-column:1/-1}
+
+.community-page{max-width:1040px;padding-top:48px}
+.community-header{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-bottom:28px;border-bottom:1px solid var(--b2);margin-bottom:24px}
+.community-header .page-title{margin-bottom:8px}.community-header p{max-width:520px;color:var(--text2);font-size:var(--type-small);line-height:1.6}.community-header>.btn{flex-shrink:0}
+.community-search{position:relative;margin-bottom:22px}.community-search>[data-i]{position:absolute;top:17px;left:16px;color:var(--text3)}.community-search .input{margin:0;padding-left:44px;background:var(--bg2);min-height:50px}
+.community-tabs{display:flex;gap:4px;padding:4px;background:var(--bg2);border:1px solid var(--b2);border-radius:8px;margin-bottom:20px;overflow-x:auto}
+.community-tabs .ftab2{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;flex:1;padding:8px 14px;white-space:nowrap;border:0;border-radius:5px;background:transparent;color:var(--text2);font-size:var(--type-small);font-weight:650;cursor:pointer}.community-tabs .ftab2:hover{background:var(--bg3);color:var(--snow)}
+.community-tabs .ftab2.on{background:var(--bg4)!important;color:var(--snow)!important;border:0!important;box-shadow:inset 0 -2px var(--accent)}
+.community-badge{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:5px;background:var(--accent3);color:var(--accent2);font-size:var(--type-meta)}.community-badge[hidden]{display:none}
+.community-page .friend-card{padding:8px 12px;margin-bottom:10px;border-radius:8px;cursor:default;gap:16px;transition:background .18s,border-color .18s}
+.friend-profile{display:flex;align-items:center;gap:14px;min-height:64px;min-width:0;flex:1;padding:6px 0;color:var(--snow);text-decoration:none;border-radius:5px}.friend-profile:hover .fcard-name{color:var(--accent2)}
+.community-page .fcard-av{width:44px;height:44px;object-fit:cover;border-radius:8px}.community-page .fcard-info{display:block}.community-page .fcard-name{display:block;font-size:var(--type-small);font-weight:650;overflow-wrap:anywhere}.community-page .fcard-sub{display:block;font-size:var(--type-meta);color:var(--text3);overflow-wrap:anywhere}
+.community-page .fbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px}.community-page .fbtn:disabled{opacity:.5;cursor:wait}.community-self{font-size:var(--type-small);color:var(--text3);padding:10px}
+.community-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:270px;padding:36px 24px;border:1px dashed var(--b2);border-radius:8px;text-align:center;background:var(--bg2)}
+.community-state-icon{display:grid;place-items:center;width:52px;height:52px;margin-bottom:18px;background:var(--bg3);border-radius:12px;color:var(--accent2)}.community-state strong{font-size:18px;font-weight:600}.community-state p{max-width:350px;margin-top:6px;color:var(--text2);font-size:var(--type-small);line-height:1.65}.community-state>.btn{margin-top:20px}
+.community-result-label{padding:0 0 14px;color:var(--text3);font-size:var(--type-small)}.community-more{text-align:center;margin-top:16px}
+@media(max-width:620px){.community-page{padding-top:28px}.community-header{align-items:flex-start;flex-direction:column;gap:16px;padding-bottom:22px}.community-header .page-title{font-size:28px}.community-header p{font-size:var(--type-small)}.community-header>.btn{width:100%}.community-tabs .ftab2{padding:8px 10px}.community-page .friend-card{flex-wrap:wrap;gap:0;padding:8px 12px}.friend-profile{flex-basis:calc(100% - 92px)}.community-page .fcard-action{margin-left:auto;flex-wrap:wrap}.community-page .fbtn{font-size:var(--type-meta);padding:7px 9px}.community-page .fcard-av{width:38px;height:38px}.friend-profile{gap:10px}.community-state{min-height:250px}}
+@media(max-width:380px){.community-page .friend-card{display:block}.community-page .fcard-action{justify-content:flex-end;padding-bottom:4px}.community-tabs{margin-left:-4px;margin-right:-4px}.community-tabs .ftab2{font-size:var(--type-meta);padding:8px}}

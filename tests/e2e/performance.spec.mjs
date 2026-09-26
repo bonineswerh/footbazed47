@@ -1,7 +1,7 @@
 import {expect,test} from '@playwright/test';
 import {installSupabaseMock} from './mock-supabase.mjs';
 
-test('home stays inside the frontend performance budget',async({page})=>{
+test('home stays inside the frontend performance budget',async({page},testInfo)=>{
   await page.addInitScript(()=>{
     window.__FOOTBAZED_LAYOUT_SHIFTS__=[];
     try{
@@ -40,6 +40,8 @@ test('home stays inside the frontend performance budget',async({page})=>{
     };
   });
 
+  await testInfo.attach('performance.json',{body:JSON.stringify(result,null,2),contentType:'application/json'});
+  console.log('PERFORMANCE',JSON.stringify({metrics:result.metrics,assetBytes:result.assetBytes}));
   expect(result.metrics).toBeTruthy();
   expect(result.metrics.lcp).not.toBeNull();
   expect(result.metrics.lcp).toBeLessThanOrEqual(2_500);
@@ -49,5 +51,5 @@ test('home stays inside the frontend performance budget',async({page})=>{
   expect(result.assetPaths).not.toContain('/admin.css');
   expect(result.assetPaths).not.toContain('/js/entities.js');
   expect(result.assetPaths).not.toContain('/css/entities.css');
-  expect(result.assetPaths).not.toContain('/js/search.js');
+  for(const path of ['/js/search.js','/js/profile.js','/css/profile.css','/js/share.js'])expect(result.assetPaths).not.toContain(path);
 });

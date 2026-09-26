@@ -13,16 +13,29 @@
     const input=document.getElementById('globalSearchInput');
     if(!input)return;
     initialized=true;
+    input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');
+    input.setAttribute('aria-expanded','false');input.setAttribute('aria-controls','globalSearchList');
     input.addEventListener('input',()=>{
       clearTimeout(timer);
+      requestVersion++;currentResults=[];activeIndex=-1;
+      input.removeAttribute('aria-activedescendant');input.setAttribute('aria-expanded','false');
+      if(window.FBZDomain.normalizeSearchQuery(input.value).length<2){renderStart();return;}
+      renderLoading();
       timer=setTimeout(()=>run(input.value),180);
     });
     input.addEventListener('keydown',onInputKeydown);
+    document.getElementById('searchOv')?.addEventListener('fbz:overlay-close',cancelRequest);
+  }
+
+  function cancelRequest(){
+    requestVersion++;clearTimeout(timer);currentResults=[];activeIndex=-1;
+    const input=document.getElementById('globalSearchInput');
+    input?.removeAttribute('aria-activedescendant');input?.setAttribute('aria-expanded','false');
   }
 
   function open(){
     window.FBZAccount?.close();
-    requestVersion++;
+    cancelRequest();
     const input=document.getElementById('globalSearchInput');
     input.value='';
     activeIndex=-1;
@@ -32,14 +45,16 @@
   }
 
   function close(){
-    requestVersion++;
-    clearTimeout(timer);
+    cancelRequest();
     window.FBZOverlay?.close('searchOv');
   }
 
   async function run(rawQuery){
+    clearTimeout(timer);
     const query=window.FBZDomain.normalizeSearchQuery(rawQuery);
-    activeIndex=-1;
+    activeIndex=-1;currentResults=[];
+    document.getElementById('globalSearchInput').removeAttribute('aria-activedescendant');
+    document.getElementById('globalSearchInput').setAttribute('aria-expanded','false');
     if(query.length<2){requestVersion++;renderStart();return;}
     const version=++requestVersion;
     renderLoading();
@@ -53,6 +68,7 @@
       if(version!==requestVersion)return;
       console.error('Global search error:',error);
       currentResults=[];
+      document.getElementById('globalSearchResults').setAttribute('aria-busy','false');
       document.getElementById('globalSearchResults').innerHTML='<div class="search-state"><strong>Поиск временно недоступен</strong><button class="btn btn-g btn-sm" type="button" onclick="FBZSearch.retry()">Повторить</button></div>';
     }
   }
@@ -60,6 +76,7 @@
   function retry(){run(document.getElementById('globalSearchInput').value);}
 
   function renderLoading(){
+    document.getElementById('globalSearchResults').setAttribute('aria-busy','true');
     document.getElementById('globalSearchResults').innerHTML='<div class="search-loading"><div class="spin"></div><span>Ищем в FOOTBAZED</span></div>';
   }
 
@@ -78,6 +95,7 @@
   function renderStart(){
     const recent=readRecent();
     const target=document.getElementById('globalSearchResults');
+    target.setAttribute('aria-busy','false');
     if(recent.length){
       currentResults=[];
       target.innerHTML=`<div class="search-section-title"><span>Недавние</span><button type="button" onclick="FBZSearch.clearRecent()">Очистить</button></div><div class="search-recent">${recent.map(query=>`<button type="button" onclick="FBZSearch.useRecent(${jsStr(query)})">${ico('search',14)}<span>${esc(query)}</span></button>`).join('')}</div>`;
@@ -85,7 +103,8 @@
     }
     const featured=typeof featuredMatches==='function'&&Array.isArray(matchCatalog)?featuredMatches(matchCatalog).slice(0,4):[];
     currentResults=featured.map(match=>({entity_type:'match',entity_id:String(match.id),title:`${match.home_team_name} — ${match.away_team_name}`,subtitle:match.league_name,meta:match.status}));
-    target.innerHTML=currentResults.length?`<div class="search-section-title"><span>Ближайшие матчи</span></div>${currentResults.map(searchResultMarkup).join('')}`:'<div class="search-state search-state-brand"><span>FOOTBAZED</span><strong>Клубы, игроки, матчи и болельщики</strong></div>';
+    document.getElementById('globalSearchInput').setAttribute('aria-expanded',String(currentResults.length>0));
+    target.innerHTML=currentResults.length?`<div class="search-section-title"><span>Ближайшие матчи</span></div><div class="search-result-list" id="globalSearchList" role="listbox" aria-label="Ближайшие матчи">${currentResults.map(searchResultMarkup).join('')}</div>`:'<div class="search-state search-state-brand"><span>FOOTBAZED</span><strong>Клубы, игроки, матчи и болельщики</strong></div>';
   }
 
   function clearRecent(){
@@ -119,16 +138,18 @@
   function searchResultMarkup(item,index){
     const rawMeta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='player'?positionLabel(item.meta):(item.meta||resultLabel(item.entity_type)));
     const meta=rawMeta&&rawMeta!==item.subtitle?rawMeta:'';
-    return`<button class="search-result" type="button" role="option" aria-selected="false" data-index="${index}" onclick="FBZSearch.select(${index})"><span class="search-result-icon">${ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(item.title)}</strong><small>${esc(item.subtitle||'')}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
+    return`<button class="search-result" id="global-search-option-${index}" type="button" role="option" aria-selected="false" data-index="${index}" onclick="FBZSearch.select(${index})"><span class="search-result-icon">${ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(item.title)}</strong><small>${esc(item.subtitle||'')}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
   }
 
   function renderResults(results,query){
     const target=document.getElementById('globalSearchResults');
+    target.setAttribute('aria-busy','false');
+    document.getElementById('globalSearchInput').setAttribute('aria-expanded',String(results.length>0));
     if(!results.length){
       target.innerHTML=`<div class="search-state"><strong>Ничего не найдено</strong><span>«${esc(query)}»</span></div>`;
       return;
     }
-    target.innerHTML=`<div class="search-section-title"><span>Результаты</span><small>${results.length}</small></div><div class="search-result-list" role="listbox">${results.map(searchResultMarkup).join('')}</div>`;
+    target.innerHTML=`<div class="search-section-title"><span>Результаты</span><small>${results.length}</small></div><div class="search-result-list" id="globalSearchList" role="listbox" aria-label="Результаты поиска">${results.map(searchResultMarkup).join('')}</div>`;
   }
 
   function onInputKeydown(event){
@@ -147,6 +168,7 @@
 
   function setActive(index){
     activeIndex=index;
+    document.getElementById('globalSearchInput').setAttribute('aria-activedescendant',`global-search-option-${index}`);
     document.querySelectorAll('.search-result[data-index]').forEach(button=>{
       const selected=Number(button.dataset.index)===index;
       button.classList.toggle('active',selected);
@@ -191,5 +213,7 @@
     if(input){input.value=team;visibleMatchCount=matchPageSize();renderMatchResults();input.focus({preventScroll:true});}
   }
 
-  window.FBZSearch={clearRecent,close,init,open,retry,select,useRecent};
+  function resetSession(){close();document.getElementById('globalSearchResults').replaceChildren();document.getElementById('globalSearchInput').value='';}
+
+  window.FBZSearch={clearRecent,close,init,open,resetSession,retry,select,useRecent};
 })();

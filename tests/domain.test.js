@@ -35,8 +35,8 @@ test('rating tones use restrained semantic ranges',()=>{
   assert.equal(domain.ratingTone(6),'mid');
   assert.equal(domain.ratingTone(6.9),'mid');
   assert.equal(domain.ratingTone(7),'high');
-  assert.equal(domain.ratingTone(9),'high');
-  assert.equal(domain.ratingTone(9.9),'high');
+  assert.equal(domain.ratingTone(9),'elite');
+  assert.equal(domain.ratingTone(9.9),'elite');
   assert.equal(domain.ratingTone(10),'elite');
 });
 
@@ -72,4 +72,33 @@ test('matches are ordered by live, upcoming and recent finished',()=>{
     {id:5,status:'finished',match_date:'2026-08-08T12:00:00Z'}
   ];
   assert.deepEqual(domain.sortMatches(items,now).map(item=>item.id),[3,2,4,5,1]);
+});
+
+
+test('diary labels use Russian plurals and neutral factual counts',()=>{
+  for(const [count,label] of [[1,'1 матч в дневнике'],[2,'2 матча в дневнике'],[11,'11 матчей в дневнике'],[21,'21 матч в дневнике'],[112,'112 матчей в дневнике']]){
+    assert.equal(domain.profileActivity(count).label,label);
+  }
+  for(const value of [undefined,null,-5,NaN,Infinity,1.5,Number.MAX_SAFE_INTEGER+1]){
+    assert.equal(domain.profileActivity(value).count,0);
+    assert.equal(domain.profileActivity(value).label,'Дневник болельщика');
+  }
+  assert.deepEqual(domain.profileActivity({ratings:11,likes:1000,friends:500}),domain.profileActivity(0));
+});
+
+test('diary milestones advance at boundaries without awarding expertise',()=>{
+  for(const [count,next,remaining,progress] of [[0,1,1,0],[1,10,9,0],[10,25,15,0],[11,25,14,7],[24,25,1,93],[25,50,25,0],[999,1000,1,99],[1000,1500,500,0],[1250,1500,250,50],[1500,2000,500,0]]){
+    const activity=domain.profileActivity(count);
+    assert.equal(activity.next,next);assert.equal(activity.remaining,remaining);assert.equal(activity.progress,progress);
+    assert.equal(Object.isFrozen(activity),true);
+  }
+});
+
+
+test('club palettes preserve home/away identity and reject arbitrary CSS',()=>{
+  assert.equal(domain.clubColor('  REAL   MADRID CF '),domain.clubColor('Реал Мадрид'));
+  assert.notEqual(domain.clubColor('Real Madrid CF'),domain.clubColor('Manchester City FC'));
+  assert.equal(domain.clubColor('unknown'),domain.clubColor('url(https://invalid.test)'));
+  assert.match(domain.matchPaletteStyle({home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC'}),/^--club-home:#[0-9a-f]{6};--club-away:#[0-9a-f]{6}$/);
+  assert.equal(domain.ratingTone(8.9),'high');
 });

@@ -52,3 +52,13 @@ test('CI cannot enable the production escape hatch',async()=>{
     files:[]
   }),['FOOTBAZED_ALLOW_PRODUCTION cannot be enabled in CI']);
 });
+
+test('nonliteral true CI values cannot enable the production escape hatch',async()=>{
+  const {validateEnvironment}=await import('../scripts/check-environment.mjs');
+  assert.deepEqual(validateEnvironment({environment:{CI:'1',FOOTBAZED_ALLOW_PRODUCTION:'1'},files:[]}),['FOOTBAZED_ALLOW_PRODUCTION cannot be enabled in CI']);
+});
+
+test('environment policy rejects privileged keys without printing them',async()=>{
+  const {validateEnvironment}=await import('../scripts/check-environment.mjs');
+  assert.deepEqual(validateEnvironment({environment:{SUPABASE_PUBLISHABLE_KEY:'sb_secret_fixture'},files:[]}),['SUPABASE_PUBLISHABLE_KEY must contain a public publishable or anon key']);
+});

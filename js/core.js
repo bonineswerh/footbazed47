@@ -2,7 +2,7 @@
   'use strict';
 
   const isLocalTest=['localhost','127.0.0.1'].includes(window.location.hostname)
-    &&new URLSearchParams(window.location.search).has('__e2e');
+    &&new URLSearchParams(window.location.search).get('__e2e')==='1';
   const testClient=isLocalTest?window.__FOOTBAZED_TEST_CLIENT__:null;
   const runtime=window.__FOOTBAZED_RUNTIME_CONFIG__||{};
   const config=Object.freeze({
@@ -29,7 +29,7 @@
   }else if(!config.supabaseUrl||!config.supabaseKey){
     window.sb=null;
     window.FBZ_BOOT_ERROR='runtime_config_missing';
-  }else if(jwtRole(config.supabaseKey)==='service_role'){
+  }else if(!/^sb_publishable_[A-Za-z0-9_-]+$/.test(config.supabaseKey)&&jwtRole(config.supabaseKey)!=='anon'){
     window.sb=null;
     window.FBZ_BOOT_ERROR='unsafe_runtime_key';
   }else if(!window.supabase?.createClient){

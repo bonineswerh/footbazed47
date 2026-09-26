@@ -8,7 +8,7 @@
     if(loading)return loading;
     loading=new Promise((resolve,reject)=>{
       const script=document.createElement('script');
-      script.src='js/ratings.js?v=51';
+      script.src='js/ratings.js?v=53';
       script.async=true;
       script.dataset.feature='ratings';
       script.onload=resolve;

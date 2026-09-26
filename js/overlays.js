@@ -12,8 +12,10 @@
   function open(id,focusSelector){
     const overlay=document.getElementById(id);
     if(!overlay)return;
-    returnFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
-    if(activeOverlay&&activeOverlay!==overlay)close(activeOverlay.id,false);
+    if(activeOverlay===overlay)return;
+    const previousFocus=activeOverlay?returnFocus:document.activeElement;
+    if(activeOverlay)close(activeOverlay.id,false);
+    returnFocus=previousFocus instanceof HTMLElement?previousFocus:null;
     activeOverlay=overlay;
     overlay.classList.add('on');
     overlay.setAttribute('aria-hidden','false');
@@ -27,13 +29,17 @@
 
   function close(id,restoreFocus=true){
     const overlay=typeof id==='string'?document.getElementById(id):id;
-    if(!overlay)return;
+    if(!overlay||!overlay.classList.contains('on'))return;
+    const wasActive=activeOverlay===overlay;
     overlay.classList.remove('on');
     overlay.setAttribute('aria-hidden','true');
-    if(activeOverlay===overlay)activeOverlay=null;
-    document.body.classList.remove('modal-open');
-    if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus({preventScroll:true});
-    returnFocus=null;
+    if(wasActive)activeOverlay=null;
+    document.body.classList.toggle('modal-open',Boolean(activeOverlay));
+    if(wasActive){
+      if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus({preventScroll:true});
+      returnFocus=null;
+    }
+    overlay.dispatchEvent(new CustomEvent('fbz:overlay-close',{bubbles:true}));
   }
 
   document.addEventListener('keydown',event=>{

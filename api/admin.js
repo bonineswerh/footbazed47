@@ -55,16 +55,24 @@ function parseJson(raw, fallback = null) {
 }
 
 function readBody(req) {
-  if (req.body && typeof req.body === 'object') return Promise.resolve(req.body);
-  if (typeof req.body === 'string') return Promise.resolve(parseJson(req.body, {}));
+  function decode(value) {
+    const raw = typeof value === 'string' ? value : JSON.stringify(value);
+    if (Buffer.byteLength(raw || '') > MAX_BODY_BYTES) throw Object.assign(new Error('body_too_large'), {status:413});
+    const body = typeof value === 'string' ? parseJson(raw) : value;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw Object.assign(new Error('invalid_body'), {status:400});
+    return body;
+  }
+  if (req.body !== undefined) return Promise.resolve().then(() => decode(req.body));
   return new Promise((resolve, reject) => {
-    let raw = '';
+    let raw = '', bytes = 0, tooLarge = false;
     req.setEncoding('utf8');
     req.on('data', chunk => {
+      if (tooLarge) return;
+      bytes += Buffer.byteLength(chunk);
+      if (bytes > MAX_BODY_BYTES) {tooLarge = true; raw = ''; reject(Object.assign(new Error('body_too_large'), {status:413})); return;}
       raw += chunk;
-      if (Buffer.byteLength(raw) > MAX_BODY_BYTES) reject(new Error('Request body is too large'));
     });
-    req.on('end', () => resolve(parseJson(raw || '{}', {})));
+    req.on('end', () => {try {resolve(decode(raw || '{}'));} catch (error) {reject(error);}});
     req.on('error', reject);
   });
 }
@@ -184,7 +192,8 @@ function requireLeague(value) {
 
 function requireDate(value, label) {
   const date = String(value || '');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
+  const parsed = new Date(`${date}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0,10) !== date) {
     const error = new Error(`${label} must use YYYY-MM-DD format`);
     error.status = 400;
     throw error;
@@ -358,7 +367,19 @@ async function syncMatches(input) {
   }
 
   const payload = await football(`/competitions/${league}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`);
-  const matches = (payload.matches || []).filter(match => match.id && match.homeTeam?.name && match.awayTeam?.name);
+  if (!Array.isArray(payload.matches)) throw Object.assign(new Error('invalid_matches_response'), {status:502});
+  const unique = new Map();
+  for (const match of payload.matches) {
+    if (!Number.isSafeInteger(match?.id) || match.id <= 0 ||
+        !Number.isSafeInteger(match.homeTeam?.id) || match.homeTeam.id <= 0 || !Number.isSafeInteger(match.awayTeam?.id) || match.awayTeam.id <= 0 ||
+        typeof match.homeTeam?.name !== 'string' || !match.homeTeam.name.trim() ||
+        typeof match.awayTeam?.name !== 'string' || !match.awayTeam.name.trim() ||
+        typeof match.utcDate !== 'string' || Number.isNaN(Date.parse(match.utcDate))) {
+      throw Object.assign(new Error('invalid_match_response'), {status:502});
+    }
+    unique.set(match.id, match);
+  }
+  const matches = [...unique.values()];
   const clubIds = await upsertClubs(matches.flatMap(match => [match.homeTeam, match.awayTeam]));
   const rows = matches.map(match => ({
     external_id: match.id,
@@ -391,13 +412,18 @@ async function syncMatches(input) {
 async function syncSquads(input) {
   const league = requireLeague(input.league);
   const payload = await football(`/competitions/${league}/teams`);
-  const clubIds = await upsertClubs(payload.teams || []);
-  const rows = [];
-  for (const team of payload.teams || []) {
-    for (const player of team.squad || []) {
-      if (!player.name || !team.name) continue;
-      rows.push({
-        name: player.name,
+  if (!Array.isArray(payload.teams) || payload.teams.some(team => !Number.isSafeInteger(team?.id) || team.id <= 0 ||
+      typeof team.name !== 'string' || !team.name.trim() || !Array.isArray(team.squad) ||
+      team.squad.some(player => typeof player?.name !== 'string' || !player.name.trim()))) {
+    throw Object.assign(new Error('invalid_squads_response'), {status:502});
+  }
+  const clubIds = await upsertClubs(payload.teams);
+  const unique = new Map();
+  for (const team of payload.teams) {
+    for (const player of team.squad) {
+      const name = player.name.trim();
+      unique.set(JSON.stringify([name, team.name]), {
+        name,
         team: team.name,
         club_id: clubIds.get(Number(team.id)) || null,
         position: mapPosition(player.position),
@@ -405,6 +431,7 @@ async function syncSquads(input) {
       });
     }
   }
+  const rows = [...unique.values()];
   if (rows.length) {
     await supabase('/rest/v1/players?on_conflict=name,team', {
       method: 'POST',
@@ -435,13 +462,14 @@ async function updateMatch(input) {
   }
   const homeScore = input.homeScore === '' || input.homeScore == null ? null : Number(input.homeScore);
   const awayScore = input.awayScore === '' || input.awayScore == null ? null : Number(input.awayScore);
-  if ([homeScore, awayScore].some(score => score !== null && (!Number.isInteger(score) || score < 0 || score > 99))) {
+  if ([input.homeScore,input.awayScore].some(score => score != null && !['string','number'].includes(typeof score)) ||
+      [homeScore, awayScore].some(score => score !== null && (!Number.isInteger(score) || score < 0 || score > 99))) {
     const error = new Error('Scores must be whole numbers from 0 to 99');
     error.status = 400;
     throw error;
   }
   const matchDate = new Date(input.matchDate);
-  if (Number.isNaN(matchDate.getTime())) {
+  if (typeof input.matchDate !== 'string' || !input.matchDate.trim() || Number.isNaN(matchDate.getTime())) {
     const error = new Error('Invalid match date');
     error.status = 400;
     throw error;
@@ -475,7 +503,7 @@ module.exports = async function handler(req, res) {
     if (!administrator) return sendJson(res, 403, { error: 'Administrator access required' });
 
     if (req.method === 'GET') {
-      const action = String(req.query.action || 'overview');
+      const action = String(req.query?.action || 'overview');
       if (action !== 'overview') return sendJson(res, 400, { error: 'Unsupported action' });
       return sendJson(res, 200, await getOverview());
     }
@@ -518,10 +546,11 @@ module.exports = async function handler(req, res) {
     }
     return sendJson(res, 400, { error: 'Unsupported action' });
   } catch (error) {
-    console.error('Admin API error:', error);
+    console.error('Admin API request failed:', Number(error.status) || 500);
     const status = Number(error.status) || 500;
-    const safeStatus = [400, 403, 404, 429, 502, 503].includes(status) ? status : 500;
-    const message = safeStatus === 500 ? 'Administrative service is unavailable' : error.message;
+    const safeStatus = [400, 403, 404, 413, 429, 502, 503].includes(status) ? status : 500;
+    const messages = {400:'Invalid administrative request',403:'Administrator access required',404:'Record not found',413:'Request body is too large',429:'Upstream rate limit reached',502:'Football data service is unavailable',503:'Administrative service is not configured',500:'Administrative service is unavailable'};
+    const message = messages[safeStatus];
     return sendJson(res, safeStatus, { error: message });
   }
 };

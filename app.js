@@ -1,5 +1,7 @@
 // ─── SVG ICONS (Heroicons style) ───
 const I={
+  close:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18"/></svg>`,
+  plus:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>`,
   home:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.955-8.955a1.126 1.126 0 0 1 1.59 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>`,
   football:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>`,
   feed:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg>`,
@@ -40,13 +42,21 @@ const I={
 function ico(name,size){return(I[name]||'').replace('class="ico"',`class="ico" style="width:${size||16}px;height:${size||16}px"`);}
 
 const DERBY=[{h:'Зенит',a:'Спартак'},{h:'Реал',a:'Барселона'},{h:'Ман Сити',a:'Ливерпуль'},{h:'Ювентус',a:'Милан'},{h:'Бавария',a:'Дортмунд'},{h:'Арсенал',a:'Тоттенхэм'}];
-const LEVELS=[{n:'Первый свисток',m:0},{n:'В игре',m:5},{n:'Голос трибуны',m:20},{n:'Знаток матчей',m:50},{n:'Легенда сектора',m:100}];
 const AVCOLORS=['av-0','av-1','av-2','av-3','av-4','av-5','av-6','av-7'];
-let CU=null,CP='home',PP='home';
+let CU=null,CP='home';
 let MF='all',ML='all',LT='likes',FT='list';
 let chatMID=null,mdID=null,viewUID=null;
-let notifOpen=false;
 let routeApplying=false;
+let routeVersion=0,profileVersion=0,leaderboardVersion=0,chatVersion=0,chatSending=false;
+window.addEventListener('fbz:session-change',()=>{
+  profileVersion++;leaderboardVersion++;chatVersion++;routeVersion++;
+  window.FBZCommunity?.resetSession();
+  window.FBZNotifications?.resetSession();
+  window.FBZProfileEditor?.resetSession();
+  document.querySelectorAll('.overlay.on').forEach(overlay=>window.FBZOverlay?.close(overlay.id,false));
+  ['profileW','chatBody','mdC','clubC','playerC','competitionC'].forEach(id=>document.getElementById(id)?.replaceChildren());
+  if(CP!=='home')go('home');
+});
 const featureModulePromises=new Map();
 
 function ensureFeatureModule({key,styleId,style,script,ready}){
@@ -97,19 +107,19 @@ function ensureFeatureModule({key,styleId,style,script,ready}){
 }
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=43',script:'js/admin.js?v=43',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=45',script:'js/admin.js?v=45',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=52',script:'js/entities.js?v=52',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=55',script:'js/entities.js?v=55',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=52',script:'js/feed.js?v=52',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=57',script:'js/feed.js?v=55',ready:()=>window.FBZFeed});
 }
 function ensureMessagesModule(){
-  return ensureFeatureModule({key:'messages',styleId:'messageStyles',style:'css/messages.css?v=3',script:'js/messages.js?v=3',ready:()=>window.FBZMessages});
+  return ensureFeatureModule({key:'messages',styleId:'messageStyles',style:'css/messages.css?v=6',script:'js/messages.js?v=5',ready:()=>window.FBZMessages});
 }
 function ensureSearchModule(){
-  return ensureFeatureModule({key:'search',script:'js/search.js?v=53',ready:()=>window.FBZSearch});
+  return ensureFeatureModule({key:'search',script:'js/search.js?v=55',ready:()=>window.FBZSearch});
 }
 
 function openGlobalSearch(){
@@ -146,6 +156,7 @@ function avColor(str){let h=0;for(let c of(str||'x'))h=(h<<5)-h+c.charCodeAt(0);
 
 async function init(){
   window.FBZAppearance?.init();
+  if(!Number.isInteger(history.state?.fbzIndex))history.replaceState({...history.state,fbzIndex:0},'',location.href);
   document.addEventListener('keydown',event=>{
     if(event.defaultPrevented||!(event.ctrlKey||event.metaKey)||event.key.toLocaleLowerCase('en-US')!=='k')return;
     event.preventDefault();
@@ -196,7 +207,6 @@ async function init(){
   const chatI=document.getElementById('chatI');
   if(chatS)chatS.onclick=sendChat;
   if(chatI)chatI.onkeypress=e=>{if(e.key==='Enter')sendChat();};
-  document.addEventListener('click',e=>{if(notifOpen&&!e.target.closest('#notifPanel')&&!e.target.closest('#notifBtn'))closeNotif();});
   window.addEventListener('hashchange',applyRouteFromLocation);
   window.addEventListener('popstate',applyRouteFromLocation);
   const inv=new URLSearchParams(window.location.search).get('invite');
@@ -216,7 +226,7 @@ function renderNav(){
     const navAv=safeAvatar?`<img src="${safeAvatar}" style="width:32px;height:32px;border-radius:8px;object-fit:cover" alt="">`:`<div class="nav-av ${cls}">${esc(n[0].toUpperCase())}</div>`;
     const adminItem=CU.is_admin?`<button type="button" role="menuitem" onclick="FBZAccount.close();go('admin')">${ico('dashboard',17)}<span><b>Админ-панель</b><small>Управление платформой</small></span></button>`:'';
     nr.innerHTML=`
-      <button class="notif-btn header-icon-button" id="notifBtn" type="button" onclick="toggleNotif()" aria-label="Уведомления">${ico('bell',18)}<span class="notif-badge" id="notifBadge"></span></button>
+      <button class="notif-btn header-icon-button" id="notifBtn" type="button" onclick="toggleNotif()" aria-label="Уведомления" aria-controls="notifPanel" aria-expanded="false">${ico('bell',18)}<span class="notif-badge" id="notifBadge"></span></button>
       <button class="header-icon-button header-settings" type="button" onclick="openSettings()" aria-label="Настройки" title="Настройки">${ico('settings',18)}</button>
       <div class="account-shell">
         <button class="account-trigger" id="accountBtn" type="button" onclick="toggleAccountMenu()" aria-haspopup="menu" aria-expanded="false" aria-controls="accountMenu">${navAv}<span class="nav-uname">${safeName}</span>${ico('chevron',14)}</button>
@@ -233,7 +243,7 @@ function renderNav(){
     if(hb)hb.innerHTML=`<button class="btn btn-l" onclick="go('matches')">Смотреть матчи →</button>`;
   }else{
     nr.innerHTML=`<button class="nbtn nbtn-lime" onclick="openAuth()">Войти</button>`;
-    if(hb)hb.innerHTML=`<button class="btn btn-l" onclick="openRegister()">Зарегистрироваться →</button>`;
+    if(hb)hb.innerHTML=`<button class="btn btn-l" onclick="openRegister()">Начать свой дневник</button><button class="btn btn-g" onclick="go('matches')">Посмотреть матчи</button>`;
   }
   window.FBZHome?.sync(CU);
 }
@@ -249,13 +259,16 @@ function go(p,d){
   if(p==='admin'&&!CU?.is_admin){toast('Только для администратора','err');return;}
   const page=document.getElementById(`page-${p}`);
   if(!page)return;
-  PP=CP;
+  routeVersion++;
+  window.FBZProfileEditor?.resetSession();
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   page.classList.add('on');
   document.querySelectorAll('.nav-link').forEach(l=>{l.classList.remove('active');l.removeAttribute('aria-current');});
   const lk=document.querySelector(`.nav-link[onclick*="'${p}'"]`);
   if(lk){lk.classList.add('active');lk.setAttribute('aria-current','page');}
-  CP=p;window.scrollTo(0,0);closeNotif();window.FBZAccount?.close();
+  CP=p;window.scrollTo({top:0,behavior:'instant'});closeNotif();window.FBZAccount?.close();
+  page.setAttribute('tabindex','-1');
+  page.focus({preventScroll:true});
   // Update mobile nav
   document.querySelectorAll('.mob-nav-item').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current');});
   const mn=document.getElementById(`mn-${p}`);if(mn){mn.classList.add('active');mn.setAttribute('aria-current','page');}
@@ -274,7 +287,11 @@ function go(p,d){
   else if(p==='friends')loadFriendsTab(FT);
   else if(p==='admin')ensureAdminModule().then(admin=>{if(CP==='admin')admin.mount();}).catch(()=>{});
 }
-function goBack(){go(PP);}
+function goBack(){
+  if(Number(history.state?.fbzIndex)>0){history.back();return;}
+  if(CP==='chat'&&chatMID){go('md',{mid:chatMID});return;}
+  go(['md','club','player','competition'].includes(CP)?'matches':'home');
+}
 
 function syncRoute(p,d){
   let path='/';
@@ -287,30 +304,33 @@ function syncRoute(p,d){
   else if(['matches','feed','leaderboard','friends','admin'].includes(p))path=`/${p}`;
   const next=`${path}${window.location.search}`;
   const current=`${window.location.pathname}${window.location.search}${window.location.hash}`;
-  if(next!==current)history.pushState(null,'',next);
+  if(next!==current)history.pushState({fbzIndex:(Number(history.state?.fbzIndex)||0)+1},'',next);
 }
 
 function applyRouteFromLocation(){
   const hashRoute=window.location.hash.replace(/^#/,'');
   const pathRoute=window.location.pathname.replace(/^\/+|\/+$/gu,'');
   const raw=hashRoute||pathRoute;
-  if(!raw||raw==='index.html'){
+  if(!raw||raw==='index.html'||raw==='home'){
     if(CP!=='home'){
       routeApplying=true;
       try{go('home');}finally{routeApplying=false;}
     }
     return;
   }
-  const [type,value,section]=raw.split('/');
+  const [type,encodedValue,section]=raw.split('/');
+  let value;
+  try{value=encodedValue?decodeURIComponent(encodedValue):'';}catch{value='';}
   routeApplying=true;
   try{
-    if(type==='profile'&&value)go('profile',{uid:decodeURIComponent(value)});
-    else if(type==='match'&&value&&section==='chat')go('chat',{mid:decodeURIComponent(value),title:'Чат матча'});
-    else if(type==='match'&&value)go('md',{mid:decodeURIComponent(value)});
-    else if(type==='club'&&value)go('club',{id:Number(decodeURIComponent(value))});
-    else if(type==='player'&&value)go('player',{id:Number(decodeURIComponent(value))});
-    else if((type==='competition'||type==='league')&&value)go('competition',{id:Number(decodeURIComponent(value))});
+    if(type==='profile'&&value)go('profile',{uid:value});
+    else if(type==='match'&&value&&section==='chat')go('chat',{mid:value,title:'Чат матча'});
+    else if(type==='match'&&value)go('md',{mid:value});
+    else if(type==='club'&&value)go('club',{id:Number(value)});
+    else if(type==='player'&&value)go('player',{id:Number(value)});
+    else if((type==='competition'||type==='league')&&value)go('competition',{id:Number(value)});
     else if(['matches','feed','leaderboard','friends','admin'].includes(type))go(type);
+    else{go('home');toast('Не удалось открыть эту ссылку','err');}
   }finally{
     routeApplying=false;
   }
@@ -342,22 +362,23 @@ async function loadHeroStats(){
   anim('hU',u||0);anim('hR',r||0);anim('hM',m||0);
 }
 function anim(id,t){
-  const el=document.getElementById(id);if(!el)return;
-  if(!t){el.textContent='0';return;}
-  let c=0;const s=Math.ceil(t/40);
-  const iv=setInterval(()=>{c=Math.min(c+s,t);el.textContent=c.toLocaleString('ru-RU');if(c>=t)clearInterval(iv);},25);
+  const el=document.getElementById(id);if(el)el.textContent=Number(t||0).toLocaleString('ru-RU');
 }
 
 // ─── LEADERBOARD ───
 let lbU=[];
 async function loadLB(){
+  const token=++leaderboardVersion;
   document.getElementById('lbT').innerHTML='<div class="loading"><div class="spin"></div></div>';
   document.getElementById('lbPod').innerHTML='';
   try{
-    lbU=await window.FBZData.getLeaderboard(LT)||[];
+    const users=await window.FBZData.getLeaderboard(LT)||[];
+    if(token!==leaderboardVersion||CP!=='leaderboard')return;
+    lbU=users;
     if(!lbU.length){document.getElementById('lbT').innerHTML='<div class="empty-state">Нет данных</div>';return;}
     renderLB();
   }catch(error){
+    if(token!==leaderboardVersion||CP!=='leaderboard')return;
     console.error('Leaderboard error:',error);
     document.getElementById('lbT').innerHTML='<div class="empty-state"><strong>Не удалось загрузить рейтинг</strong><button class="btn btn-g btn-sm" onclick="loadLB()">Повторить</button></div>';
   }
@@ -375,7 +396,7 @@ function renderLB(){
     const av=avatar?`<img src="${avatar}" style="width:52px;height:52px;border-radius:13px;object-fit:cover" alt="">`:`<div class="lb-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
     const position=top3.indexOf(u)+1;
     return`<button type="button" class="lb-pod ${pc[i]}" aria-label="${position} место: ${esc(u.username||'Аноним')}, ${val} ${lbl}" onclick="go('profile',{uid:'${u.id}'})">
-      <div class="lb-crown">${i===1&&top3.length>=3?'👑':'⠀'}</div>
+      <div class="lb-crown">${position.toString().padStart(2,'0')}</div>
       ${av}
       <div class="lb-pname">${esc(u.username||'Аноним')}</div>
       <div class="lb-phand">@${esc(u.username||'user')}</div>
@@ -404,40 +425,6 @@ function setLT(t,btn){
 }
 
 // ─── PROFILE ───
-function renderProfileInsights(ratings,matchMap){
-  const list=ratings||[];
-  if(!list.length)return`<div class="pcard"><div class="pcard-title">${ico('sparkle',14)} Футбольный почерк</div><div class="empty-state" style="padding:18px 0">Появится после первых оценок</div></div>`;
-  const nums=list.map(r=>Number(r.match_rating)||0).filter(Boolean);
-  const publicCount=list.filter(r=>r.is_public).length;
-  const publicPct=Math.round(publicCount/list.length*100);
-  const leagueMap={};
-  list.forEach(r=>{const lg=matchMap[r.match_id]?.league_name||'Другое';leagueMap[lg]=(leagueMap[lg]||0)+1;});
-  const leagues=Object.entries(leagueMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  const reviewed=list.filter(r=>String(r.comment||'').trim()).length;
-  const spread=new Set(nums).size;
-  const topLeagueShare=(leagues[0]?.[1]||0)/Math.max(list.length,1);
-  const style=reviewed/list.length>=.45?{t:'Футбольный рассказчик',d:'часто дополняет оценку собственным мнением'}
-    :Object.keys(leagueMap).length>=4?{t:'Исследователь лиг',d:'следит за футболом за пределами одного турнира'}
-    :topLeagueShare>=.7?{t:'Верный чемпионату',d:'последовательно изучает любимый турнир'}
-    :spread>=6?{t:'Внимательный наблюдатель',d:'различает оттенки матчей по всей шкале'}
-    :{t:'Вдумчивый зритель',d:'формирует почерк с каждой новой оценкой'};
-  const memorable=[...list].sort((a,b)=>String(b.comment||'').length-String(a.comment||'').length)[0];
-  const memorableMatch=memorable&&matchMap[memorable.match_id];
-  return`<div class="pcard"><div class="pcard-title">${ico('sparkle',14)} Футбольный почерк</div>
-    <div class="p-insight-main">
-      <div><div class="p-insight-k">Стиль</div><div class="p-insight-v">${style.t}</div><div class="p-insight-d">${style.d}</div></div>
-      <div><div class="p-insight-k">Публичность</div><div class="p-insight-v">${publicPct}%</div><div class="p-insight-d">оценок открыты для ленты</div></div>
-    </div>
-    <div class="p-insight-grid">
-      <div class="p-mini"><span>${reviewed}</span><small>оценок с мнением</small></div>
-      <div class="p-mini"><span>${Object.keys(leagueMap).length}</span><small>турниров в истории</small></div>
-      <div class="p-mini"><span>${spread}</span><small>значений шкалы использовано</small></div>
-    </div>
-    ${leagues.length?`<div class="p-leagues">${leagues.map(([lg,c])=>`<div class="p-league"><span>${esc(lg)}</span><b>${c}</b></div>`).join('')}</div>`:''}
-    ${memorableMatch?`<div class="p-best-match">Матч с самым подробным мнением: <b>${memorable.match_rating}/10</b> · ${esc(memorableMatch.home_team_name)} vs ${esc(memorableMatch.away_team_name)}</div>`:''}
-  </div>`;
-}
-
 function activeProfileStreak(user){
   const value=Math.max(0,Number(user?.streak)||0);
   if(!value||!user?.streak_date)return 0;
@@ -447,193 +434,34 @@ function activeProfileStreak(user){
   return today-latest.getTime()<=86400000?value:0;
 }
 
-function renderProfileComparison(comparison,friend){
-  if(!comparison)return'';
-  const common=Number(comparison.common_matches)||0;
-  if(!common)return`<div class="pcard pcompare"><div class="pcard-title">${ico('users',14)} Ваш футбольный ракурс</div><div class="empty-state" style="padding:12px 0">Пока нет общих публично оценённых матчей.</div></div>`;
-  const agreement=Math.max(0,Math.min(100,Number(comparison.agreement_score)||0));
-  const rows=(comparison.closest||[]).map(item=>`<button type="button" onclick="go('md',{mid:${Number(item.match_id)}})"><span>${esc(item.home_team_name)} — ${esc(item.away_team_name)}</span><b>${item.my_score} : ${item.friend_score}</b></button>`).join('');
-  return`<div class="pcard pcompare"><div class="pcard-title">${ico('users',14)} Ваш футбольный ракурс</div>
-    <div class="pcompare-score"><div><strong>${agreement}%</strong><span>совпадение оценок</span></div><div><b>${common}</b><span>общих матчей</span></div><div><b>${Number(comparison.exact_matches)||0}</b><span>точных совпадений</span></div></div>
-    <div class="pcompare-track"><i style="width:${agreement}%"></i></div>
-    ${rows?`<div class="pcompare-list"><small>Самые близкие мнения · сначала ваша оценка</small>${rows}</div>`:''}
-  </div>`;
-}
-function renderRatingDistribution(ratings){
-  const list=(ratings||[]).filter(r=>Number(r.match_rating)>0);
-  if(!list.length)return`<div class="pcard"><div class="pcard-title">${ico('chart',14)} Распределение оценок</div><div class="empty-state" style="padding:18px 0">Нет данных</div></div>`;
-  const total=list.length;
-  const counts=Array.from({length:10},(_,i)=>10-i).map(n=>({n,c:list.filter(r=>Number(r.match_rating)===n).length}));
-  const max=Math.max(...counts.map(x=>x.c),1);
-  return`<div class="pcard"><div class="pcard-title">${ico('chart',14)} Распределение оценок</div>
-    <div class="prdist">${counts.map(x=>`
-      <div class="prdist-row">
-        <span>${x.n}</span>
-        <div class="prdist-bar"><i style="width:${Math.max((x.c/max)*100, x.c?8:0)}%"></i></div>
-        <b>${x.c}</b>
-      </div>`).join('')}
-    </div>
-    <div class="prdist-note">${total} последних оценок в профиле</div>
-  </div>`;
-}
-function renderFootballPassport(u,ratings,matchMap,cnt,avg,likes,friends,level,avatar,cls){
-  const leagueMap={};
-  (ratings||[]).forEach(r=>{const lg=matchMap[r.match_id]?.league_name||'Другое';leagueMap[lg]=(leagueMap[lg]||0)+1;});
-  const topLeague=Object.entries(leagueMap).sort((a,b)=>b[1]-a[1])[0]?.[0]||'Пока без лиги';
-  const fbzScore=Math.min(99,Math.round((cnt||0)*1.4+(likes||0)*1.8+(friends?.length||0)*1.2+(u.streak||0)*3));
-  const role=level.n;
-  const av=avatar?`<img src="${avatar}" class="fpass-av-img" alt="">`:`<div class="fpass-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
-  return`<div class="fpass">
-    <div class="fpass-bg"></div>
-    <div class="fpass-top"><span>FOOTBAZED CARD</span><b>${fbzScore}</b></div>
-    <div class="fpass-main">
-      ${av}
-      <div>
-        <div class="fpass-name">${esc(u.username||'Аноним')}</div>
-        <div class="fpass-role">${role}</div>
-      </div>
-    </div>
-    <div class="fpass-strip">
-      <div><span>${cnt||0}</span><small>Оценки</small></div>
-      <div><span>${avg}</span><small>Средняя</small></div>
-      <div><span>${likes||0}</span><small>Лайки</small></div>
-    </div>
-    <div class="fpass-meta">
-      <div><small>Уровень</small><b>${level.n}</b></div>
-      <div><small>Главная лига</small><b>${esc(topLeague)}</b></div>
-    </div>
-  </div>`;
-}
-async function loadProfile(uid){
-  const w=document.getElementById('profileW');
-  if(!uid){w.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>Войдите чтобы увидеть профиль</div>';return;}
-  w.innerHTML='<div class="loading"><div class="spin"></div></div>';
-  try{
-    const ownsProfile=CU?.id===uid;
-    const payload=await window.FBZData.getProfilePage(uid);
-    let u=payload?.profile;
-    const favoriteClubs=Array.isArray(payload?.favorite_clubs)?payload.favorite_clubs:[];
-    if(ownsProfile&&u){u={...u,email:CU?.email};CU={...CU,...u,favorite_clubs:favoriteClubs};}
-    if(!u){w.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>Профиль не найден<br><span style="font-size:13px;color:var(--fog);margin-top:8px;display:block">Попробуйте войти заново</span></div>';return;}
-    window.FBZSEO?.profile(u);
-    const ratings=payload.ratings||[];
-    const friendCount=payload.stats?.friend_count||0;
-    const tl=payload.stats?.like_count||0;
-    const matchMap={};
-    ratings.forEach(r=>{if(r.match)matchMap[r.match_id]=r.match;});
-    const profileInsights=renderProfileInsights(ratings,matchMap);
-    const ratingDistribution=renderRatingDistribution(ratings);
-    let comparison=null;
-    if(!ownsProfile&&CU&&payload.friendship?.status==='accepted'){
-      const result=await sb.rpc('get_profile_comparison',{p_user_id:uid});
-      if(!result.error)comparison=result.data;
-    }
-    const profileComparison=renderProfileComparison(comparison,u);
-
-    const cnt=u.ratings_count||0;
-    const lv=LEVELS.slice().reverse().find(l=>cnt>=l.m)||LEVELS[0];
-    const nx=LEVELS[LEVELS.indexOf(lv)+1];
-    const pct=nx?Math.min(((cnt-lv.m)/(nx.m-lv.m))*100,100):100;
-    const avg=cnt?Number(u.avg_rating||0).toFixed(1):'—';
-    const isMe=ownsProfile;
-    const j=new Date(u.created_at||Date.now());
-    const ms2=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-    const cls=avColor(u.username||'x');
-        const avatar=safeImageUrl(u.avatar_url);
-        const avatarHtml=avatar?`<img src="${avatar}" class="phero-av-img" alt="">`:`<div class="phero-av ${cls}">${esc((u.username?.[0]||'U').toUpperCase())}</div>`;
-    const footballPassport=renderFootballPassport(u,ratings,matchMap,cnt,avg,tl,{length:friendCount},lv,avatar,cls);
-
-    // Check friendship status for non-self profiles
-    let friendBtn='';
-    if(!isMe&&CU){
-      const fr=payload.friendship;
-      if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.7;cursor:default">${ico('users',13)} В друзьях</button><button class="btn btn-l btn-sm" type="button" onclick="openFriendChat('${uid}')">${ico('chat',13)} Чат</button>`;
-      else if(fr?.status==='pending'&&fr.direction==='outgoing')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.6;cursor:default">⏳ Заявка отправлена</button>`;
-      else if(fr?.status==='pending')friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" onclick="acceptFriendFromProfile('${uid}')">${ico('users',13)} Принять заявку</button>`;
-      else friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" onclick="addFriendFromProfile('${uid}')">${ico('users',13)} Добавить в друзья</button>`;
-    }else if(!isMe){
-      friendBtn=`<button class="btn btn-l btn-sm" onclick="openAuth()">Войти чтобы добавить</button>`;
-    }
-    const ownerActions=isMe?`<button class="btn btn-g btn-sm" onclick="editProfile()">${ico('edit',13)} Редактировать</button>`:friendBtn;
-
-    w.innerHTML=`
-    <div class="phero">
-      ${avatarHtml}
-      <h1 class="phero-name">${esc(u.username||'Аноним')}</h1>
-      ${u.bio?`<div class="phero-bio">${esc(u.bio)}</div>`:''}
-      ${favoriteClubs.length?`<div class="profile-favorite-clubs" aria-label="Любимые клубы">${favoriteClubs.map(club=>`<button type="button" onclick="go('club',{id:${Number(club.id)}})">${window.FBZMedia.visual({entity:club,kind:'club',className:'profile-club-mark'})}<span>${esc(club.short_name||club.name)}</span></button>`).join('')}</div>`:''}
-      <div class="phero-badges">
-        <span class="pbadge pb-l">${lv.n}</span>
-        ${activeProfileStreak(u)>0?`<span class="pbadge pb-s">${ico('fire',12)} ${activeProfileStreak(u)} ${activeProfileStreak(u)===1?'день':'дней'} подряд</span>`:''}
-        <span class="pbadge pb-j">С ${j.getDate()} ${ms2[j.getMonth()]} ${j.getFullYear()}</span>
-      </div>
-      <div class="lp" style="width:100%;max-width:400px">
-        <div class="lp-t"><span class="lp-c">${lv.n}</span>${nx?`<span class="lp-n">${nx.n} при ${nx.m} оценках</span>`:''}</div>
-        <div class="lp-bar"><div class="lp-fill" style="width:${pct}%"></div></div>
-      </div>
-      <div class="pstats">
-        <div class="pst"><div class="pst-v">${cnt}</div><div class="pst-l">Оценок</div></div>
-        <div class="pst"><div class="pst-v">${avg}</div><div class="pst-l">Средняя</div></div>
-        <div class="pst"><div class="pst-v">${tl}</div><div class="pst-l">Лайков</div></div>
-        <div class="pst"><div class="pst-v">${friendCount}</div><div class="pst-l">Друзей</div></div>
-      </div>
-      <div class="phero-acts">
-        ${ownerActions}
-        <button class="btn btn-g btn-sm" onclick="copyAppLink('/profile/${uid}','Ссылка на профиль')">${ico('link',13)} Ссылка</button>
-      </div>
-    </div>
-    <div class="pgrid">
-      <div>
-        ${profileComparison}
-        ${profileInsights}
-        <div class="pcard"><div class="pcard-title">${ico('chart',14)} История оценок</div>${ratings?.length?ratings.slice(0,20).map(r=>{const mt=matchMap[r.match_id],tone=window.FBZDomain.ratingTone(r.match_rating);return`<div class="rh-row" ${mt?`onclick="go('md',{mid:${r.match_id}})" style="cursor:pointer"`:''}><div><div class="rh-m">${mt?esc(mt.home_team_name)+' vs '+esc(mt.away_team_name):'Матч #'+r.match_id}</div><div class="rh-l">${esc(mt?.league_name)} · ${new Date(r.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}${r.is_public?'':' · приватно'}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" data-tone="${tone}" style="width:${(r.match_rating||0)*10}%"></div></div><div class="rh-v" data-tone="${tone}">${r.match_rating}/10</div></div></div>`;}).join(''):'<div class="empty-state" style="padding:20px 0">Нет оценок</div>'}</div>
-      </div>
-      <div>
-        ${footballPassport}
-        ${ratingDistribution}
-        ${isMe&&u.invite_code?`<div class="pcard"><div class="pcard-title">${ico('link',14)} Пригласи друга</div><div style="background:var(--bg3);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:12px;word-break:break-all;font-size:11px;color:var(--accent2)">https://footbazed47.vercel.app/?invite=${u.invite_code}</div><button class="btn btn-l" style="width:100%" onclick="copyInv('${u.invite_code}')">${ico('copy',13)} Копировать ссылку</button></div>`:''}
-        <div class="pcard"><div class="pcard-title">${ico('share',14)} Поделиться</div>
-          <button class="btn btn-l" style="width:100%;margin-bottom:8px" onclick="openShare('profile',{name:${jsStr(u.display_name||'')},username:${jsStr(u.username||'user')},ratings:${cnt},avg:${jsStr(avg)},likes:${tl},friends:${friendCount},level:${jsStr(lv.n)}})">${ico('photo',13)} Создать карточку</button>
-          <button class="btn btn-g" style="width:100%" onclick="expStats(${cnt},${jsStr(avg)},${jsStr(u.username||'user')})">${ico('copy',13)} Копировать текст</button>
-        </div>
-      </div>
-    </div>`;
-  }catch(e){
-    console.error('Profile error:',e);
-    w.innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div>Ошибка загрузки профиля</div>`;
-  }
-}
 async function addFriend(fid){
   if(!CU){openAuth();return false;}
-  const{data,error}=await sb.rpc('request_friendship',{p_friend_id:fid});
-  if(error){console.error('Friend request error:',error);toast('Не удалось отправить заявку','err');return false;}
-  if(data?.status==='accepted')toast(data.changed?'Заявка принята — вы теперь друзья':'Вы уже друзья','ok');
-  else toast(data?.changed?'Заявка отправлена':'Заявка уже отправлена','ok');
-  return true;
+  const user=CU.id;
+  try{
+    const{data,error}=await sb.rpc('request_friendship',{p_friend_id:fid});
+    if(error)throw error;
+    if(CU?.id!==user)return false;
+    window.FBZData?.invalidate('profile:');
+    toast(data?.status==='accepted'?'Теперь вы друзья':'Заявка отправлена','ok');
+    return true;
+  }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
-async function addFriendFromProfile(fid){
-  const success=await addFriend(fid);
-  if(!success)return;
-  window.FBZData?.invalidate('profile:');
-  const btn=document.getElementById('profAddBtn');
-  if(btn){btn.disabled=true;btn.style.opacity='0.6';btn.style.cursor='default';btn.innerHTML='⏳ Заявка отправлена';btn.onclick=null;}
+function ensureProfileModule(){
+  return ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=1',script:'js/profile.js?v=1',ready:()=>window.FBZProfile});
 }
-async function acceptFriendFromProfile(fid){
-  const button=document.getElementById('profAddBtn');
-  if(button)button.disabled=true;
-  const{error}=await sb.rpc('respond_friendship',{p_requester_id:fid,p_action:'accept'});
-  if(error){
-    console.error('Friend response error:',error);
-    if(button)button.disabled=false;
-    toast('Не удалось принять заявку','err');
-    return;
-  }
-  window.FBZData?.invalidate('profile:');
-  await loadProfile(fid);
-  toast('Заявка принята','ok');
-  loadNotifications();
+async function loadProfile(uid){
+  const route=routeVersion,user=CU?.id;
+  const target=document.getElementById('profileW');
+  target.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка профиля</span></div>';
+  try{
+    const profile=await ensureProfileModule();
+    if(CP==='profile'&&routeVersion===route&&CU?.id===user)return profile.mount(uid);
+  }catch(error){if(CP==='profile'&&routeVersion===route)target.innerHTML='<div class="empty-state"><strong>Не удалось открыть профиль</strong><button class="btn btn-g" onclick="loadProfile(viewUID)">Повторить</button></div>';}
 }
-function copyInv(c){copyText(`${window.location.origin}${window.location.pathname}?invite=${encodeURIComponent(c)}`,'Ссылка скопирована');}
+function addFriendFromProfile(fid){return window.FBZProfile?.mutateFriendship(fid,false);}
+function acceptFriendFromProfile(fid){return window.FBZProfile?.mutateFriendship(fid,true);}
+function invitationUrl(code){return new URL('/?invite='+encodeURIComponent(code),window.location.origin).href;}
+function copyInv(c){copyText(invitationUrl(c),'Ссылка скопирована');}
 async function expStats(c,a,u){
   const text=`FOOTBAZED\n@${u}\nОценок: ${c}\nСредняя: ${a}/10`;
   if(navigator.share){
@@ -642,397 +470,116 @@ async function expStats(c,a,u){
   copyText(text);
 }
 function editProfile(){
-  pendingAvatar=null;
-  if(pendingAvatarObjectUrl)URL.revokeObjectURL(pendingAvatarObjectUrl);
-  pendingAvatarObjectUrl='';
-  const w=document.getElementById('profileW');
-  const cls=avColor(CU.username||'x');
-  const avatar=safeImageUrl(CU.avatar_url);
-  const avatarHtml=avatar?`<img src="${avatar}" class="phero-av-img" id="avPreview" alt="">`:`<div class="phero-av ${cls}" id="avPreview">${esc((CU.username?.[0]||'U').toUpperCase())}</div>`;
-  w.innerHTML=`
-  <div class="phero" style="max-width:500px;margin:0 auto">
-    <div style="position:relative;cursor:pointer" onclick="document.getElementById('avFile').click()">
-      ${avatarHtml}
-      <div class="av-overlay">${ico('photo',20)}</div>
-    </div>
-    <input type="file" id="avFile" accept="image/*" style="display:none" onchange="previewAvatar(this)">
-    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:24px;margin:16px 0 20px">${ico('edit',20)} Редактирование профиля</h2>
-    <div style="width:100%;max-width:380px">
-      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px;text-align:left">Никнейм</label>
-      <input class="input" id="ep_user" value="${esc(CU.username)}" placeholder="Твой никнейм">
-      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px;text-align:left">Email</label>
-      <input class="input" id="ep_email" value="${esc(CU.email)}" disabled style="opacity:0.5;cursor:not-allowed">
-      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px;text-align:left">О себе</label>
-      <input class="input" id="ep_bio" value="${esc(CU.bio)}" placeholder="Расскажи о себе" maxlength="120">
-      <div class="profile-favorites-help"><b>Любимые клубы</b><p>Выбираются через поиск или кнопку «В избранное» на странице клуба.</p><button class="text-action" type="button" onclick="openGlobalSearch()">Найти клуб →</button></div>
-      <div style="display:flex;gap:10px;margin-top:8px">
-        <button class="btn btn-g" style="flex:1" onclick="loadProfile(CU.id)">Отмена</button>
-        <button class="btn btn-l" style="flex:1" id="epSaveBtn" onclick="saveEditProfile()">Сохранить</button>
-      </div>
-    </div>
-  </div>`;
-}
-let pendingAvatar=null;
-let pendingAvatarObjectUrl='';
-function previewAvatar(input){
-  if(!input.files||!input.files[0])return;
-  const file=input.files[0];
-  if(file.size>5*1024*1024){toast('Максимум 5MB','err');return;}
-  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('Поддерживаются JPG, PNG и WebP','err');return;}
-  const reader=new FileReader();
-  reader.onload=e=>{
-    // Resize to 200x200
-    const img=new Image();
-    img.onload=()=>{
-      const c=document.createElement('canvas');
-      const size=200;c.width=size;c.height=size;
-      const ctx=c.getContext('2d');
-      const s=Math.min(img.width,img.height);
-      const sx=(img.width-s)/2,sy=(img.height-s)/2;
-      ctx.drawImage(img,sx,sy,s,s,0,0,size,size);
-      c.toBlob(blob=>{
-        if(!blob){toast('Не удалось обработать изображение','err');return;}
-        pendingAvatar=blob;
-        if(pendingAvatarObjectUrl)URL.revokeObjectURL(pendingAvatarObjectUrl);
-        pendingAvatarObjectUrl=URL.createObjectURL(blob);
-        const preview=document.getElementById('avPreview');
-        if(preview.tagName==='IMG'){preview.src=pendingAvatarObjectUrl;}
-        else{preview.outerHTML=`<img src="${pendingAvatarObjectUrl}" class="phero-av-img" id="avPreview" alt="Предпросмотр аватара">`;}
-      },'image/jpeg',0.86);
-    };
-    img.src=e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-async function saveEditProfile(){
-  const user=document.getElementById('ep_user').value.trim();
-  const bio=document.getElementById('ep_bio').value.trim();
-  if(!user||user.length<3){toast('Никнейм: минимум 3 символа','err');return;}
-  if(!/^[a-zA-Z0-9_а-яёА-ЯЁ]{3,30}$/.test(user)){toast('Без пробелов и спецсимволов','err');return;}
-  // Check if username changed and is taken
-  if(user!==CU.username){
-    const{data:exU}=await sb.from('users').select('id').eq('username',user).maybeSingle();
-    if(exU){toast('Никнейм занят','err');return;}
-  }
-  const btn=document.getElementById('epSaveBtn');
-  btn.disabled=true;btn.textContent='Сохраняем...';
-  const upd={username:user,display_name:user,bio:bio||null};
-  if(pendingAvatar){
-    const objectPath=`${CU.id}/avatar.jpg`;
-    const{error:uploadError}=await sb.storage.from('avatars').upload(objectPath,pendingAvatar,{upsert:true,contentType:'image/jpeg',cacheControl:'31536000'});
-    if(uploadError){console.error('Avatar upload error:',uploadError);toast('Не удалось загрузить аватар','err');btn.disabled=false;btn.textContent='Сохранить';return;}
-    const{data:publicAvatar}=sb.storage.from('avatars').getPublicUrl(objectPath);
-    if(!publicAvatar?.publicUrl){toast('Не удалось получить адрес аватара','err');btn.disabled=false;btn.textContent='Сохранить';return;}
-    upd.avatar_url=`${publicAvatar.publicUrl}?v=${Date.now()}`;
-  }
-  const{error}=await sb.from('users').update(upd).eq('id',CU.id);
-  if(error){toast('Ошибка: '+error.message,'err');btn.disabled=false;btn.textContent='Сохранить';return;}
-  CU.username=user;CU.display_name=user;CU.bio=bio;
-  if(upd.avatar_url){
-    CU.avatar_url=upd.avatar_url;pendingAvatar=null;
-    if(pendingAvatarObjectUrl)URL.revokeObjectURL(pendingAvatarObjectUrl);
-    pendingAvatarObjectUrl='';
-  }
-  // Clear cached data so feeds reflect updated profile
-  clearAppCache();window.FBZData?.invalidate('profile:');
-  renderNav();loadProfile(CU.id);toast('Профиль обновлён!','ok');
+  profileVersion++;
+  const user=CU?.id,route=routeVersion,profile=profileVersion;
+  ensureFeatureModule({key:'profile-editor',styleId:'profileEditorCss',style:'css/profile-editor.css?v=2',script:'js/profile-editor.js?v=1',ready:()=>window.FBZProfileEditor})
+    .then(editor=>{if(CP==='profile'&&user&&CU?.id===user&&routeVersion===route&&profileVersion===profile)editor.open();}).catch(()=>{});
 }
 
-// ─── FRIENDS PAGE ───
-function friendAvatar(u,size=40){
-  const cls=avColor(u?.display_name||u?.username||'x');
-  const avatar=safeImageUrl(u?.avatar_url);
-  const initial=esc((u?.username?.[0]||'U').toUpperCase());
-  if(avatar)return`<img src="${avatar}" style="width:${size}px;height:${size}px;border-radius:${Math.max(8,Math.round(size/4))}px;object-fit:cover;flex-shrink:0" alt="">`;
-  return`<div class="fcard-av ${cls}" style="width:${size}px;height:${size}px;font-size:${Math.max(14,Math.round(size*0.45))}px">${initial}</div>`;
+// ─── COMMUNITY LOADER ───
+function ensureCommunityModule(){
+  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=2',script:'js/community.js?v=1',ready:()=>window.FBZCommunity});
 }
-async function loadFriendsTab(tab){
+function loadFriendsTab(tab){
   FT=tab;
-  const el=document.getElementById('friendsContent');
-  el.innerHTML='<div class="loading"><div class="spin"></div></div>';
-  if(!CU){el.innerHTML='<div class="friends-empty">Войди чтобы видеть друзей</div>';return;}
-  try{
-    if(tab==='list'){
-      const{data:fs}=await sb.from('friendships').select('friend_id').eq('user_id',CU.id).eq('status','accepted');
-      if(!fs?.length){el.innerHTML='<div class="friends-empty"><div class="empty-icon">👥</div>У тебя пока нет друзей<br><small style="font-size:13px">Найди их через поиск или поделись ссылкой</small></div>';return;}
-      const fids=fs.map(f=>f.friend_id);
-      const{data:users}=await sb.from('users').select(PUBLIC_USER_FIELDS).in('id',fids);
-      el.innerHTML=(users||[]).map(u=>{
-        return`<div class="friend-card" onclick="go('profile',{uid:'${u.id}'})">${friendAvatar(u)}<div class="fcard-info"><div class="fcard-name">${esc(u.username||'Аноним')}</div><div class="fcard-sub">@${esc(u.username||'user')} · ${esc(u.ratings_count||0)} оценок</div></div><div class="fcard-action"><button class="fbtn chat" type="button" onclick="event.stopPropagation();openFriendChat('${u.id}')" aria-label="Открыть чат с ${esc(u.username||'пользователем')}">${ico('chat',16)}</button><button class="fbtn remove" type="button" onclick="event.stopPropagation();removeFriend('${u.id}',this)" aria-label="Удалить из друзей">✕</button></div></div>`;
-      }).join('')||'<div class="friends-empty">Нет друзей</div>';
-    } else if(tab==='incoming'){
-      const{data:inc}=await sb.from('friendships').select('user_id').eq('friend_id',CU.id).eq('status','pending');
-      if(!inc?.length){el.innerHTML='<div class="friends-empty"><div class="empty-icon">📭</div>Нет входящих заявок</div>';return;}
-      const uids=inc.map(f=>f.user_id);
-      const{data:users}=await sb.from('users').select(PUBLIC_USER_FIELDS).in('id',uids);
-      el.innerHTML=(users||[]).map(u=>{
-        return`<div class="friend-card">${friendAvatar(u)}<div class="fcard-info"><div class="fcard-name">${esc(u.username||'Аноним')}</div><div class="fcard-sub">@${esc(u.username||'user')}</div></div><div class="fcard-action"><button class="fbtn accept" onclick="acceptFriend('${u.id}',this.parentElement.parentElement)">✓ Принять</button><button class="fbtn reject" onclick="rejectFriend('${u.id}',this.parentElement.parentElement)">✕</button></div></div>`;
-      }).join('');
-    } else if(tab==='outgoing'){
-      const{data:out}=await sb.from('friendships').select('friend_id').eq('user_id',CU.id).eq('status','pending');
-      if(!out?.length){el.innerHTML='<div class="friends-empty"><div class="empty-icon">📤</div>Нет исходящих заявок</div>';return;}
-      const fids=out.map(f=>f.friend_id);
-      const{data:users}=await sb.from('users').select(PUBLIC_USER_FIELDS).in('id',fids);
-      el.innerHTML=(users||[]).map(u=>{
-        return`<div class="friend-card">${friendAvatar(u)}<div class="fcard-info"><div class="fcard-name">${esc(u.username||'Аноним')}</div><div class="fcard-sub">@${esc(u.username||'user')} · Ожидает ответа</div></div><div class="fcard-action"><button class="fbtn reject" onclick="cancelFriend('${u.id}',this.parentElement.parentElement)">Отменить</button></div></div>`;
-      }).join('');
-    } else if(tab==='suggest'){
-      const{data:top}=await sb.from('users').select(PUBLIC_USER_FIELDS).neq('id',CU.id).order('ratings_count',{ascending:false}).limit(12);
-      if(!top?.length){el.innerHTML='<div class="friends-empty">Нет рекомендаций</div>';return;}
-      const{data:myFs}=await sb.from('friendships').select('friend_id').eq('user_id',CU.id);
-      const myFIds=(myFs||[]).map(f=>f.friend_id);
-      const filtered=top.filter(u=>!myFIds.includes(u.id));
-      el.innerHTML=filtered.slice(0,8).map(u=>{
-        return`<div class="friend-card" onclick="go('profile',{uid:'${u.id}'})">${friendAvatar(u)}<div class="fcard-info"><div class="fcard-name">${esc(u.username||'Аноним')}</div><div class="fcard-sub">@${esc(u.username||'user')} · ${esc(u.ratings_count||0)} оценок</div></div><div class="fcard-action"><button class="fbtn add" onclick="event.stopPropagation();addFriendQ('${u.id}',this)">+ Добавить</button></div></div>`;
-      }).join('');
-    }
-  }catch(e){
-    console.error('Friends error:',e);
-    el.innerHTML='<div class="friends-empty"><div class="empty-icon">⚠️</div>Ошибка загрузки</div>';
-  }
-}
-function setFTab(tab,btn){document.querySelectorAll('.ftab2').forEach(b=>{b.className='btn btn-g btn-sm ftab2';});btn.className='btn btn-l btn-sm ftab2';loadFriendsTab(tab);}
-async function searchFriends(){
-  const q=document.getElementById('friendSearch').value.trim();
-  const el=document.getElementById('friendSearchRes');
-  if(q.length<2){el.innerHTML='';return;}
-  const{data:users}=await sb.from('users').select(PUBLIC_USER_FIELDS).ilike('username','%'+q+'%').limit(8);
-  if(!users?.length){el.innerHTML='<div style="padding:16px;color:var(--fog);font-size:13px;text-align:center">Не найдено</div>';return;}
-  el.innerHTML=users.map(u=>{
-    const isSelf=CU&&u.id===CU.id;
-    return`<div class="friend-card" onclick="go('profile',{uid:'${u.id}'})">${friendAvatar(u,36)}<div class="fcard-info"><div class="fcard-name">${esc(u.username||'Аноним')}</div><div class="fcard-sub">@${esc(u.username||'user')}</div></div>${!isSelf?`<button class="fbtn add btn-sm" onclick="event.stopPropagation();addFriendQ('${u.id}',this)">+</button>`:''}</div>`;
-  }).join('');
-}
-async function addFriendQ(fid,btn){
-  btn.disabled=true;
-  const success=await addFriend(fid);
-  if(!success){btn.disabled=false;return;}
-  btn.textContent='✓';btn.classList.remove('add');
-}
-async function acceptFriend(fid,card){
-  const{error}=await sb.rpc('respond_friendship',{p_requester_id:fid,p_action:'accept'});
-  if(error){console.error('Friend response error:',error);toast('Не удалось принять заявку','err');return;}
-  window.FBZData?.invalidate('profile:');card.remove();toast('Заявка принята','ok');
-  loadNotifications();
-}
-async function rejectFriend(fid,card){
-  const{error}=await sb.rpc('respond_friendship',{p_requester_id:fid,p_action:'reject'});
-  if(error){console.error('Friend response error:',error);toast('Не удалось отклонить заявку','err');return;}
-  window.FBZData?.invalidate('profile:');card.remove();loadNotifications();
-}
-function removeFriend(fid,button){
-  window.FBZConfirm.open({
-    title:'Удалить из друзей?',
-    message:'Пользователь исчезнет из списка друзей. Новый запрос можно будет отправить позже.',
-    confirmText:'Удалить',
-    onConfirm:async()=>{
-      const{error}=await sb.rpc('remove_friendship',{p_other_id:fid});
-      if(error){
-        console.error('Friend removal error:',error);
-        toast('Не удалось удалить пользователя','err');
-        return false;
-      }
-      button.closest('.friend-card')?.remove();
-      window.FBZData?.invalidate('profile:');
-      toast('Пользователь удалён из друзей','ok');
-      return true;
-    }
+  document.getElementById('friendsContent').innerHTML='<div class="loading"><div class="spin"></div></div>';
+  return ensureCommunityModule().then(community=>{if(CP==='friends')return community.load(tab);}).catch(()=>{
+    if(CP==='friends')document.getElementById('friendsContent').innerHTML='<div class="empty-state">Не удалось загрузить сообщество<button class="btn btn-g" onclick="loadFriendsTab(FT)">Повторить</button></div>';
   });
 }
-async function cancelFriend(fid,card){
-  const{error}=await sb.rpc('remove_friendship',{p_other_id:fid});
-  if(error){console.error('Friend cancellation error:',error);toast('Не удалось отменить заявку','err');return;}
-  window.FBZData?.invalidate('profile:');card.remove();
-}
+function searchFriends(){ensureCommunityModule().then(community=>community.search()).catch(()=>{});}
+function setFTab(tab){ensureCommunityModule().then(community=>community.changeTab(tab)).catch(()=>{});}
+function inviteFriend(){ensureCommunityModule().then(community=>community.invite()).catch(()=>{});}
+
 async function handleInvite(code){
   if(!CU){openAuth();return;}
   const{data:invUser}=await sb.rpc('resolve_invite_code',{lookup_code:code}).maybeSingle();
   if(invUser&&invUser.id!==CU.id){await addFriend(invUser.id);}
 }
 
-// ─── NOTIFICATIONS ───
-async function loadNotifications(){
-  if(!CU)return;
-  const{data:notifs}=await sb.from('notifications').select('id,user_id,from_user_id,type,message,read,created_at,rating_id,comment_id').eq('user_id',CU.id).order('created_at',{ascending:false}).limit(20);
-  const unread=(notifs||[]).filter(n=>!n.read).length;
-  const badge=document.getElementById('notifBadge');
-  if(badge){badge.textContent=unread;badge.classList.toggle('on',unread>0);}
-  const incBadge=document.getElementById('inBadge');
-  const friendReqs=(notifs||[]).filter(n=>n.type==='friend_request'&&!n.read).length;
-  if(incBadge){incBadge.textContent=friendReqs;incBadge.style.display=friendReqs>0?'inline':'none';}
-  const list=document.getElementById('notifList');
-  if(!notifs?.length){list.innerHTML='<div class="notif-item"><div class="notif-ico">🔔</div><div class="notif-text">Нет уведомлений</div></div>';return;}
-  
-  list.innerHTML=notifs.map(n=>`<div class="notif-item${!n.read?' unread':''}" onclick="clickNotif(${Number(n.id)},${jsStr(n.type)},${n.rating_id?Number(n.rating_id):'null'})"><div class="notif-ico">${ico({friend_request:'users',like:'heart',comment:'chat',system:'bell'}[n.type]||'bell',16)}</div><div><div class="notif-text">${esc(n.message||'Уведомление')}</div><div class="notif-time">${new Date(n.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div></div>`).join('');
-}
-async function clickNotif(id,type,ratingId){
-  await sb.from('notifications').update({read:true}).eq('id',id);
-  closeNotif();
-  if(type==='friend_request'){FT='incoming';go('friends');return;}
-  if((type==='like'||type==='comment')&&ratingId){go('feed',{ratingId});return;}
-  loadNotifications();
-}
-async function markAllRead(){if(!CU)return;await sb.from('notifications').update({read:true}).eq('user_id',CU.id);loadNotifications();closeNotif();}
-function toggleNotif(){notifOpen=!notifOpen;const p=document.getElementById('notifPanel');if(notifOpen){p.style.display='flex';p.classList.add('on');}else{p.style.display='none';p.classList.remove('on');}}
-function closeNotif(){notifOpen=false;const p=document.getElementById('notifPanel');p.style.display='none';p.classList.remove('on');}
+// ─── NOTIFICATIONS LOADER ───
+function ensureNotificationsModule(){return ensureFeatureModule({key:'notifications',styleId:'notificationsCss',style:'css/notifications.css?v=2',script:'js/notifications.js?v=1',ready:()=>window.FBZNotifications});}
+function loadNotifications(){if(!CU)return;return ensureNotificationsModule().then(notifications=>notifications.load()).catch(()=>{});}
+function toggleNotif(){ensureNotificationsModule().then(notifications=>notifications.toggle()).catch(()=>{});}
+function closeNotif(returnFocus=false){window.FBZNotifications?.close(returnFocus);}
+function markAllRead(){window.FBZNotifications?.markAll();}
 
-// ─── CHAT ───
+// ─── MATCH DISCUSSION ───
 async function loadChat(mid){
   if(!mid)return;
+  const version=++chatVersion,user=CU?.id,route=routeVersion;
+  const current=()=>version===chatVersion&&user===CU?.id&&route===routeVersion&&CP==='chat'&&String(chatMID)===String(mid);
   const body=document.getElementById('chatBody');
-  body.innerHTML='<div class="loading"><div class="spin"></div></div>';
-  const{data:msgs,error}=await sb.rpc('get_match_chat_messages',{p_match_id:Number(mid),p_limit:80});
-  if(error){console.error('Chat load error:',error);body.innerHTML='<div class="empty-state" style="padding:40px">Не удалось загрузить обсуждение</div>';return;}
-  if(!msgs?.length){body.innerHTML='<div class="empty-state" style="padding:40px">👋 Начни обсуждение!</div>';return;}
-  body.innerHTML=msgs.map(m=>`<div class="cmsg ${m.user_id===CU?.id?'own':''}" data-message-id="${Number(m.id)}">
-    <div class="cmsg-auth"><button type="button" onclick="go('profile',{uid:${jsStr(m.user_id)}})">@${esc(m.user?.username||'user')}</button></div>
-    <div class="cmsg-text">${esc(m.message)}</div>
-    <div class="cmsg-meta"><time datetime="${esc(m.created_at)}">${new Date(m.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</time>${m.edited_at?'<span>ред.</span>':''}${m.can_edit?`<button type="button" onclick="editChatMessage(${Number(m.id)})">Изменить</button>`:''}</div>
-  </div>`).join('');
-  body.scrollTop=body.scrollHeight;
+  body.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обсуждения</span></div>';
+  try{
+    const{data:msgs,error}=await sb.rpc('get_match_chat_messages',{p_match_id:Number(mid),p_limit:80});
+    if(!current())return;
+    if(error)throw error;
+    if(!msgs?.length){body.innerHTML='<div class="empty-state"><strong>Начните обсуждение</strong><p>Что запомнилось в этом матче?</p></div>';return;}
+    body.innerHTML=msgs.map(m=>`<div class="cmsg ${m.user_id===CU?.id?'own':''}" data-message-id="${Number(m.id)}">
+      <div class="cmsg-auth"><button type="button" onclick="go('profile',{uid:${jsStr(m.user_id)}})">@${esc(m.user?.username||'user')}</button></div>
+      <div class="cmsg-text">${esc(m.message)}</div>
+      <div class="cmsg-meta"><time datetime="${esc(m.created_at)}">${new Date(m.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</time>${m.edited_at?'<span>ред.</span>':''}${m.can_edit?`<button type="button" onclick="editChatMessage(${Number(m.id)})">Изменить</button>`:''}</div>
+    </div>`).join('');
+    body.scrollTop=body.scrollHeight;
+  }catch(error){if(current())body.innerHTML='<div class="empty-state"><strong>Не удалось загрузить обсуждение</strong><button class="btn btn-g" onclick="loadChat(chatMID)">Повторить</button></div>';}
 }
 async function sendChat(){
   if(!CU){openAuth();return;}
-  const inp=document.getElementById('chatI');
+  if(chatSending)return;
+  const inp=document.getElementById('chatI'),button=document.getElementById('chatS');
   const msg=inp.value.trim();if(!msg)return;if(msg.length>1000){toast('Сообщение слишком длинное','err');return;}
-  const{error}=await sb.rpc('send_match_chat_message',{p_match_id:Number(chatMID),p_message:msg});
-  if(error){toast('Ошибка отправки','err');console.error(error);return;}
-  inp.value='';loadChat(chatMID);
+  const user=CU.id,mid=chatMID,route=routeVersion,original=inp.value;
+  const current=()=>CU?.id===user&&routeVersion===route&&CP==='chat'&&chatMID===mid;
+  chatSending=true;button.disabled=true;
+  try{
+    const{error}=await sb.rpc('send_match_chat_message',{p_match_id:Number(mid),p_message:msg});
+    if(error)throw error;
+    if(!current())return;
+    if(inp.value===original)inp.value='';
+    await loadChat(mid);
+  }catch(error){if(current())toast('Не удалось отправить сообщение. Текст сохранён.','err');}
+  finally{chatSending=false;button.disabled=false;}
 }
-
-async function editChatMessage(messageId){
-  const message=document.querySelector(`.cmsg[data-message-id="${Number(messageId)}"] .cmsg-text`);
-  if(!message)return;
-  const updated=prompt('Изменить сообщение',message.textContent);
-  if(updated===null||!updated.trim()||updated.trim()===message.textContent)return;
-  if(updated.trim().length>1000){toast('Сообщение слишком длинное','err');return;}
-  const{error}=await sb.rpc('edit_match_chat_message',{p_message_id:Number(messageId),p_message:updated.trim()});
-  if(error){console.error('Chat edit error:',error);toast('Не удалось изменить сообщение','err');return;}
-  loadChat(chatMID);
+function editChatMessage(messageId){
+  const message=document.querySelector(`.cmsg[data-message-id="${Number(messageId)}"]`);
+  if(!message||message.querySelector('form'))return;
+  const text=message.querySelector('.cmsg-text');text.hidden=true;
+  const form=document.createElement('form');form.className='match-chat-editor';
+  form.innerHTML=`<label class="sr-only" for="chat-edit-${Number(messageId)}">Изменить сообщение</label><textarea class="input" id="chat-edit-${Number(messageId)}" maxlength="1000" rows="3" required>${esc(text.textContent)}</textarea><div><button class="btn btn-g btn-sm" type="button">Отмена</button><button class="btn btn-l btn-sm" type="submit">Сохранить</button></div>`;
+  form.querySelector('[type="button"]').onclick=()=>{text.hidden=false;form.remove();message.querySelector('.cmsg-meta button')?.focus();};
+  const mid=chatMID,user=CU?.id,route=routeVersion;
+  form.onsubmit=async event=>{
+    event.preventDefault();const button=form.querySelector('[type="submit"]');if(button.disabled)return;
+    const updated=form.querySelector('textarea').value.trim();if(!updated||updated.length>1000)return;
+    button.disabled=true;
+    try{
+      const{error}=await sb.rpc('edit_match_chat_message',{p_message_id:Number(messageId),p_message:updated});
+      if(error)throw error;
+      if(CU?.id===user&&routeVersion===route&&chatMID===mid)await loadChat(mid);
+    }catch(error){if(form.isConnected)toast('Не удалось изменить сообщение. Текст сохранён.','err');}
+    finally{button.disabled=false;}
+  };
+  text.after(form);form.querySelector('textarea').focus();
 }
 
 // ─── SHARE CARD ───
-function openShare(type,data){
-  const c=document.getElementById('shareCanvas');
-  const ctx=c.getContext('2d');
-  c.width=600;c.height=400;
-  const css=getComputedStyle(document.documentElement);
-  const accent=css.getPropertyValue('--accent').trim()||'#14b8a6';
-  const accent2=css.getPropertyValue('--accent2').trim()||'#a7f3d0';
-
-  // Background
-  const bg=ctx.createLinearGradient(0,0,600,400);
-  bg.addColorStop(0,'#040806');bg.addColorStop(0.52,'#0b1110');bg.addColorStop(1,'#101817');
-  ctx.fillStyle=bg;ctx.fillRect(0,0,600,400);
-
-  // Subtle pitch pattern
-  ctx.strokeStyle='rgba(167,243,208,0.07)';ctx.lineWidth=2;
-  ctx.strokeRect(42,70,516,260);
-  ctx.beginPath();ctx.moveTo(300,70);ctx.lineTo(300,330);ctx.stroke();
-  ctx.beginPath();ctx.arc(300,200,54,0,Math.PI*2);ctx.stroke();
-  ctx.strokeStyle='rgba(94,234,212,0.04)';ctx.lineWidth=1;
-  for(let i=0;i<600;i+=44){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,400);ctx.stroke();}
-
-  // Glow
-  const glow=ctx.createRadialGradient(300,200,0,300,200,300);
-  glow.addColorStop(0,'rgba(20,184,166,0.1)');glow.addColorStop(1,'transparent');
-  ctx.fillStyle=glow;ctx.fillRect(0,0,600,400);
-
-  if(type==='profile'){
-    // Logo
-    ctx.font='bold 16px "Bebas Neue",sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';
-    ctx.letterSpacing='3px';ctx.fillText('FOOTBAZED',24,36);
-
-    // Lime accent line
-    ctx.fillStyle=accent;ctx.fillRect(24,56,80,3);
-
-    // Username
-    ctx.font='bold 42px "Bebas Neue",sans-serif';ctx.fillStyle='#eef0ff';
-    ctx.fillText(data.name||'Аноним',24,110);
-
-    ctx.font='14px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#8890b8';
-    ctx.fillText('@'+(data.username||'user'),24,132);
-
-    // Stats boxes
-    const stats=[
-      {v:String(data.ratings||0),l:'Оценок'},
-      {v:data.avg||'—',l:'Средняя'},
-      {v:String(data.likes||0),l:'Лайков'},
-      {v:String(data.friends||0),l:'Друзей'}
-    ];
-    const bw=130,bh=90,startX=24,startY=160,gap=10;
-    stats.forEach((s,i)=>{
-      const x=startX+i*(bw+gap);
-      ctx.fillStyle='rgba(255,255,255,0.03)';
-      ctx.beginPath();ctx.roundRect(x,startY,bw,bh,12);ctx.fill();
-      ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.beginPath();ctx.roundRect(x,startY,bw,bh,12);ctx.stroke();
-      ctx.font='bold 32px "Bebas Neue",sans-serif';ctx.fillStyle=accent2;
-      ctx.fillText(s.v,x+16,startY+42);
-      ctx.font='10px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#4a5070';
-      ctx.fillText(s.l.toUpperCase(),x+16,startY+64);
-    });
-
-    // Level badge
-    ctx.fillStyle='rgba(167,243,208,0.08)';
-    ctx.beginPath();ctx.roundRect(24,280,200,36,18);ctx.fill();
-    ctx.strokeStyle='rgba(167,243,208,0.2)';ctx.beginPath();ctx.roundRect(24,280,200,36,18);ctx.stroke();
-    ctx.font='bold 13px "Plus Jakarta Sans",sans-serif';ctx.fillStyle=accent2;
-    ctx.fillText(data.level||'🌱 Новичок',40,303);
-
-    // Footer
-    ctx.font='11px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#4a5070';
-    ctx.fillText('footbazed.com',24,380);
-
-  } else if(type==='rating'){
-    // Match rating share card
-    ctx.font='bold 16px "Bebas Neue",sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';
-    ctx.fillText('FOOTBAZED',24,36);
-    ctx.fillStyle=accent;ctx.fillRect(24,56,80,3);
-
-    ctx.font='bold 28px "Bebas Neue",sans-serif';ctx.fillStyle='#eef0ff';
-    ctx.fillText(data.match||'',24,100);
-
-    ctx.font='bold 120px "Bebas Neue",sans-serif';ctx.fillStyle=accent2;
-    ctx.fillText(data.score+'/10',24,240);
-
-    if(data.comment){
-      ctx.font='italic 14px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#8890b8';
-      const words=data.comment.split(' ');let line='',y=280;
-      words.forEach(w=>{
-        if(ctx.measureText(line+w).width>540){ctx.fillText('"'+line.trim()+'"',24,y);y+=22;line='';}
-        line+=w+' ';
-      });
-      if(line)ctx.fillText('"'+line.trim()+'"',24,y);
-    }
-
-    ctx.font='bold 13px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#8890b8';
-    ctx.fillText('by @'+(data.username||'user'),24,360);
-    ctx.font='11px "Plus Jakarta Sans",sans-serif';ctx.fillStyle='#4a5070';
-    ctx.fillText('footbazed.com',24,380);
-  }
-
-  FBZOverlay.open('shareOv','.share-box button');
-}
-function closeShare(){FBZOverlay.close('shareOv');}
-function downloadShare(){
-  const c=document.getElementById('shareCanvas');
-  const a=document.createElement('a');
-  a.download='footbazed-card.png';a.href=c.toDataURL('image/png');a.click();
-}
-async function copyShare(){
+async function openShare(type,data){
+  const route=routeVersion,user=CU?.id;
   try{
-    const c=document.getElementById('shareCanvas');
-    const blob=await new Promise(r=>c.toBlob(r,'image/png'));
-    await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
-    toast('📋 Карточка скопирована!','ok');
-  }catch(e){downloadShare();toast('Скачано (копирование не поддерживается)','ok');}
+    const share=await ensureFeatureModule({key:'share',script:'js/share.js?v=1',ready:()=>window.FBZShare});
+    if(route===routeVersion&&CU?.id===user)return share.open(type,data);
+  }catch(error){toast('Не удалось подготовить карточку. Попробуйте ещё раз.','err');}
 }
+function closeShare(){window.FBZShare?.close();}
+function downloadShare(){window.FBZShare?.download();}
+function copyShare(){return window.FBZShare?.copy();}
 
 function openSettings(){
   const ov=document.getElementById('settingsOv');
   if(!ov)return;
   window.FBZAppearance?.syncControls();
-  const profileUrl=CU?.id?`${window.location.origin}${window.location.pathname}#profile/${encodeURIComponent(CU.id)}`:'—';
+  const profileUrl=CU?.id?`${window.location.origin}/profile/${encodeURIComponent(CU.id)}`:'—';
   const values={
     techUserId:CU?.id||'—',
     techEmail:CU?.email||'—',
@@ -1068,7 +615,7 @@ function injectIcons(){
   // Mobile nav
   document.querySelectorAll('[data-i]').forEach(s=>{s.innerHTML=ico(s.dataset.i,s.classList.contains('mob-nav-icon')?20:16);});
   // Page titles
-  const pgIcons={'Матчи':'football','Лента оценок':'feed','Рейтинги болельщиков':'trophy','Друзья и сообщество':'users','Админ-панель':'settings'};
+  const pgIcons={'Матчи':'football','Лента оценок':'feed','Голоса сообщества':'trophy','Друзья и сообщество':'users','Админ-панель':'settings'};
   document.querySelectorAll('.page-title').forEach(h=>{
     const t=h.textContent.trim();if(pgIcons[t])h.innerHTML=ico(pgIcons[t],28)+' '+t;
   });

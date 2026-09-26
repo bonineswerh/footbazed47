@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(59);
+select plan(61);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -95,7 +95,9 @@ select is((select count(*)::integer from public.rating_comments where id = 97500
 select is((select count(*)::integer from public.rating_comments where id = 975002), 0, 'anon cannot read comments on a private rating');
 select is((select count(*)::integer from public.rating_likes where id = 974001), 1, 'anon reads likes on a public rating');
 select is((select count(*)::integer from public.rating_likes where id = 974002), 0, 'anon cannot read likes on a private rating');
-select is((select count(*)::integer from public.chat_messages where id = 977001), 1, 'anon reads public match chat');
+select is((public.get_match_chat_messages(950001, 80)#>>'{0,id}')::integer, 977001, 'anon reads public match chat through the bounded RPC');
+select ok(not has_table_privilege('anon', 'public.chat_messages', 'SELECT'), 'anon cannot bypass the match chat RPC');
+select ok(not has_table_privilege('authenticated', 'public.chat_messages', 'SELECT'), 'authenticated cannot bypass the match chat RPC');
 
 -- 12-16: public catalog remains media-optional and exposes VERIFIED assets only.
 select is((select count(*)::integer from public.clubs where id = 940001), 1, 'anon reads a club without a logo');

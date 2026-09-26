@@ -1,6 +1,7 @@
 import {readFileSync,readdirSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import runtimeConfig from '../api/config.js';
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const productionRef='uukacnyvjvgmmhbkmfzf';
@@ -14,19 +15,26 @@ const checkedVariables=[
 export function validateEnvironment({environment=process.env,files=[]}={}){
   const violations=[];
   const isVercelProduction=environment.VERCEL==='1'&&environment.VERCEL_ENV==='production';
-  const allowLocalOverride=environment.CI!=='true'&&environment.FOOTBAZED_ALLOW_PRODUCTION==='1';
+  const ci=runtimeConfig.isCI(environment);
+  const allowLocalOverride=!ci&&!environment.VERCEL&&environment.FOOTBAZED_ALLOW_PRODUCTION==='1';
 
   for(const name of checkedVariables){
-    if(String(environment[name]||'').includes(productionRef)&&!allowLocalOverride&&!isVercelProduction){
+    if(String(environment[name]||'').toLowerCase().includes(productionRef)&&!allowLocalOverride&&!isVercelProduction){
       violations.push(`${name} points to the production Supabase project`);
     }
   }
 
-  for(const file of files){
-    if(file.contents.includes(productionRef))violations.push(`${file.name} contains the production Supabase project ref`);
+  for(const name of ['SUPABASE_PUBLISHABLE_KEY','SUPABASE_ANON_KEY']){
+    if(environment[name]&&!runtimeConfig.isPublicSupabaseKey(environment[name])){
+      violations.push(`${name} must contain a public publishable or anon key`);
+    }
   }
 
-  if(environment.CI==='true'&&environment.FOOTBAZED_ALLOW_PRODUCTION==='1'&&!isVercelProduction){
+  for(const file of files){
+    if(file.contents.toLowerCase().includes(productionRef))violations.push(`${file.name} contains the production Supabase project ref`);
+  }
+
+  if(ci&&environment.FOOTBAZED_ALLOW_PRODUCTION==='1'){
     violations.push('FOOTBAZED_ALLOW_PRODUCTION cannot be enabled in CI');
   }
   return violations;

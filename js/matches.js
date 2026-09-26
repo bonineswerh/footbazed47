@@ -7,6 +7,7 @@ let matchNextOffset=0;
 let matchLoading=false;
 let matchRequestId=0;
 let activeMatchRatingSegments=null;
+let matchDetailRequest=0;
 
 function matchPageSize(){
   return window.matchMedia('(max-width: 900px)').matches?12:MATCH_PAGE_SIZE;
@@ -83,17 +84,17 @@ function renderMCard(match){
   const statusLabel={live:'LIVE',finished:'Завершён',scheduled:'Предстоит'}[match.status]||match.status;
   const statusClass={live:'t-live',finished:'t-fin',scheduled:'t-sched'}[match.status]||'';
   const derby=isDerby(match.home_team_name,match.away_team_name);
-  return`<article class="mcard${derby?' derby':''}">
+  return`<article class="mcard mcard--${['live','finished','scheduled'].includes(match.status)?match.status:'other'}${derby?' derby':''}" style="${FBZDomain.matchPaletteStyle(match)}">
     <div class="mcard-gradient"></div>
     <div class="mcard-body">
       <div class="mc-t">
         <span class="mc-lg">${esc(match.league_name)}</span>
         <div class="mc-tags">${derby?`<span class="tag t-derby">${ico('fire',12)} Дерби</span>`:''}<span class="tag ${statusClass}">${esc(statusLabel)}</span></div>
       </div>
-      <button class="mc-score-block mc-score-link" type="button" aria-label="${esc(match.home_team_name)} против ${esc(match.away_team_name)}" onclick="go('md',{mid:${match.id}})">
-        <div class="mc-score-team"><div class="mc-score-name">${esc(match.home_team_name)}</div><div class="mc-score-num">${esc(match.home_score??'—')}</div></div>
-        <div class="mc-score-vs">VS</div>
-        <div class="mc-score-team"><div class="mc-score-name">${esc(match.away_team_name)}</div><div class="mc-score-num">${esc(match.away_score??'—')}</div></div>
+      <button class="mc-score-block mc-score-link" type="button" aria-label="Открыть матч: ${esc(match.home_team_name)} против ${esc(match.away_team_name)}" onclick="go('md',{mid:${match.id}})">
+        <span class="mc-score-team"><span class="mc-score-mark" aria-hidden="true">${esc(teamMonogram(match.home_team_name))}</span><span class="mc-score-name">${esc(match.home_team_name)}</span></span>
+        <span class="mc-score-result"><span class="mc-score-num">${esc(match.home_score??'—')}<span class="mc-score-separator">:</span>${esc(match.away_score??'—')}</span><span class="mc-score-vs">${match.status==='scheduled'?'НЕТ СЧЁТА':'СЧЁТ'}</span></span>
+        <span class="mc-score-team"><span class="mc-score-mark" aria-hidden="true">${esc(teamMonogram(match.away_team_name))}</span><span class="mc-score-name">${esc(match.away_team_name)}</span></span>
       </button>
       <div class="mc-bottom">
         <span class="mc-meta-date">${ico('calendar',12)} ${fmtDate(match.match_date)}</span>
@@ -118,9 +119,11 @@ async function loadHomeM(){
   try{
     const page=await window.FBZData.getMatchesPage({limit:6});
     const items=featuredMatches(page?.items||[]);
+    window.FBZHome?.spotlight(page?.items||[]);
     target.innerHTML=items.length?items.map(renderMCard).join(''):'<div class="empty-state"><div class="empty-icon">🏟️</div><strong>Матчей пока нет</strong><span>Новые встречи появятся после обновления календаря.</span></div>';
   }catch(error){
     console.warn('loadHomeM:',error);
+    window.FBZHome?.spotlight([]);
     target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Не удалось загрузить матчи</strong><button class="btn btn-g btn-sm" onclick="loadHomeM()">Повторить</button></div>';
   }
 }
@@ -241,29 +244,36 @@ function setMF(filter,button){
 
 async function loadMD(id){
   if(!id)return;
+  const request=++matchDetailRequest;
+  const userId=CU?.id||null;
+  const isCurrent=()=>request===matchDetailRequest&&CP==='md'&&Number(mdID)===Number(id)&&(CU?.id||null)===userId;
   const target=document.getElementById('mdC');
-  target.innerHTML='<div class="loading"><div class="spin"></div><span>Загружаем матч</span></div>';
+  activeMatchRatingSegments=null;
+  target.setAttribute('aria-busy','true');
+  target.innerHTML='<div class="loading" role="status"><div class="spin"></div><span>Загружаем матч</span></div>';
   try{
-    const ownRatingRequest=CU
-      ?sb.from('ratings').select('match_rating,comment,is_public,supporter_side,updated_at').eq('user_id',CU.id).eq('match_id',id).maybeSingle()
+    const ownRatingRequest=userId
+      ?sb.from('ratings').select('match_rating,comment,is_public,supporter_side,updated_at').eq('user_id',userId).eq('match_id',id).maybeSingle()
       :Promise.resolve({data:null,error:null});
     const[{data:match,error:matchError},{data:ratings,error:ratingsError},{data:insights,error:insightsError},{data:ownRating,error:ownRatingError}]=await Promise.all([
       sb.from('matches').select(MATCH_FIELDS).eq('id',id).single(),
-      sb.from('ratings').select(RATING_FIELDS).eq('match_id',id).eq('is_public',true).order('created_at',{ascending:false}).limit(200),
+      sb.from('ratings').select(RATING_FIELDS).eq('match_id',id).eq('is_public',true).order('created_at',{ascending:false}).limit(8),
       sb.rpc('get_match_insights',{p_match_id:Number(id)}),
       ownRatingRequest
     ]);
+    if(!isCurrent())return;
     if(matchError)throw matchError;
     if(ratingsError)throw ratingsError;
     if(insightsError)throw insightsError;
     if(ownRatingError)throw ownRatingError;
     if(!match){target.innerHTML='<div class="empty-state"><strong>Матч не найден</strong></div>';return;}
-    window.FBZSEO?.match(match);
 
     const userIds=[...new Set((ratings||[]).map(rating=>rating.user_id))];
     const{data:users}=userIds.length
       ?await sb.from('users').select('id,display_name,username,avatar_url').in('id',userIds)
       :{data:[]};
+    if(!isCurrent())return;
+    window.FBZSEO?.match(match);
     const userMap={};(users||[]).forEach(user=>{userMap[user.id]=user;});
     const ratingCount=Number(insights?.rating_count||0);
     const averageValue=Number(insights?.average);
@@ -297,7 +307,7 @@ async function loadMD(id){
     const distributionMarkup=matchDistributionMarkup(segments.all);
 
     target.innerHTML=`
-      <section class="md-hero">
+      <section class="md-hero" style="${FBZDomain.matchPaletteStyle(match)}">
         <div class="md-lg"><span>${esc(match.league_name)}</span><b class="md-status md-status-${esc(match.status)}">${esc(statusLabel)}</b></div>
         <div class="md-sl">
           <div class="md-team"><span class="md-team-mark" aria-hidden="true">${esc(teamMonogram(match.home_team_name))}</span>${match.home_club_id?`<button class="md-tname md-club-link" type="button" onclick="go('club',{id:${Number(match.home_club_id)}})">${esc(match.home_team_name)}</button>`:`<div class="md-tname">${esc(match.home_team_name)}</div>`}<div class="md-score">${esc(match.home_score??'—')}</div></div>
@@ -324,8 +334,11 @@ async function loadMD(id){
 
     if(match.status==='scheduled'&&CU)loadPrediction(match.id,document.getElementById(`pred-${match.id}`));
   }catch(error){
+    if(!isCurrent())return;
     console.error('Match detail error:',error);
     target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Не удалось открыть матч</strong><button class="btn btn-g btn-sm" onclick="loadMD('+Number(id)+')">Повторить</button></div>';
+  }finally{
+    if(isCurrent())target.setAttribute('aria-busy','false');
   }
 }
 
@@ -333,7 +346,9 @@ window.setMatchRatingSegment=setMatchRatingSegment;
 
 async function loadPrediction(matchId,container){
   if(!CU||!container)return;
-  const{data:prediction,error}=await sb.from('predictions').select('home_pred,away_pred').eq('user_id',CU.id).eq('match_id',matchId).maybeSingle();
+  const userId=CU.id;
+  const{data:prediction,error}=await sb.from('predictions').select('home_pred,away_pred').eq('user_id',userId).eq('match_id',matchId).maybeSingle();
+  if(CU?.id!==userId||!container.isConnected||CP!=='md'||Number(mdID)!==Number(matchId))return;
   if(error){console.warn('Prediction load error:',error);return;}
   if(!prediction)return;
   container.querySelector('.pred-input[data-side="home"]').value=prediction.home_pred??'';

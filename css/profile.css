@@ -1,0 +1,35 @@
+/* The profile is a diary of participation, not a ranking of people. */
+.phero{display:grid;grid-template-columns:88px minmax(0,1fr) auto;column-gap:24px;align-items:start;text-align:left;padding:32px}
+.phero>.phero-av,.phero>.phero-av-img{grid-column:1;grid-row:1/4;margin:0;box-shadow:none;border-radius:14px}
+.phero-name{grid-column:2;grid-row:1;overflow-wrap:anywhere;line-height:1.15}
+.phero-hand{grid-column:2;grid-row:2;margin:6px 0 0;overflow-wrap:anywhere}
+.phero-bio{grid-column:2;grid-row:3;max-width:60ch;margin:12px 0 0;overflow-wrap:anywhere}
+.profile-favorite-clubs{grid-column:2;grid-row:4;justify-content:flex-start;margin:16px 0 0}
+.phero-badges{grid-column:2;grid-row:5;justify-content:flex-start;margin:14px 0 0;gap:8px}
+.phero-badges .pbadge{padding:0;border:0;border-radius:0;background:none;color:var(--text3);font-size:var(--type-meta)}
+.phero-badges .pb-l{color:var(--accent2)}
+.phero-badges .pb-j::before{content:'·';margin-right:6px}
+.phero-acts{grid-column:3;grid-row:1/4;justify-content:flex-end;margin:0}
+.phero .pstats{grid-column:1/-1;grid-row:6;width:100%;max-width:none;background:none;border-radius:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:28px 0 0;border-top:1px solid var(--b2);padding-top:22px;gap:16px}
+.phero .pst{padding:0;border:0;background:none;text-align:left;min-width:0}
+.phero .pst-v{font-family:var(--font-ui);font-size:1.75rem;font-weight:650;font-variant-numeric:tabular-nums;background:none;color:var(--snow);-webkit-text-fill-color:currentColor}
+.phero .pst-l{font-size:var(--type-meta);text-transform:none}
+.pgrid{grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:22px}
+.pgrid>div{min-width:0}
+.pcard{padding:24px;box-shadow:none}
+.profile-sample,.profile-empty p{max-width:64ch;color:var(--text2);font-size:var(--type-small);line-height:1.65;margin:0 0 20px}
+.profile-empty strong{display:block;margin-bottom:8px;font-size:1rem}
+.profile-subtitle{margin:22px 0 12px;font-size:var(--type-small);font-weight:650}
+.p-insight-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.p-mini{padding:0;border:0;background:none}.p-mini span{font-family:var(--font-ui);font-size:1.5rem;font-weight:600;font-variant-numeric:tabular-nums}.p-mini small{font-size:var(--type-meta);line-height:1.4}
+.p-league{padding:10px 0;border-bottom:1px solid var(--b1);background:none;border-radius:0;font-size:var(--type-small)}.p-league:last-child{border:0}
+.profile-diary{position:relative;padding:24px;margin-bottom:20px;border:1px solid var(--b2);border-radius:10px;background:var(--bg2);overflow:hidden}
+.profile-diary::before{content:'';position:absolute;inset:0 0 auto;height:3px;background:var(--accent)}
+.profile-diary h2{margin:10px 0 8px;font-size:1.4rem;line-height:1.25;letter-spacing:-.4px;font-weight:650}
+.profile-diary>p{font-size:var(--type-small);line-height:1.6;color:var(--text2)}
+.diary-milestone{padding:20px 0}.diary-milestone>div:first-child{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:var(--type-meta)}.diary-milestone strong{color:var(--snow);font-weight:650}.diary-milestone span,.diary-milestone small{color:var(--text2)}
+.diary-track{height:5px;background:var(--bg4);border-radius:3px;margin:12px 0 9px;overflow:hidden}.diary-track i{display:block;height:100%;background:var(--accent);border-radius:inherit}.diary-milestone small{font-size:var(--type-meta)}
+.diary-note{margin-top:16px;padding-top:16px;border-top:1px solid var(--b1);font-size:var(--type-meta);line-height:1.6;color:var(--text3)}
+.rh-row{width:100%;background:transparent;color:var(--snow);text-align:left;border:0;border-bottom:1px solid var(--b1);gap:16px;padding:16px 0}.rh-row>div:first-child{min-width:0}.rh-row:disabled{opacity:.75}.rh-m{font-size:var(--type-small);line-height:1.5;overflow-wrap:anywhere}.rh-l{font-size:var(--type-meta);line-height:1.5}.rh-r{flex-shrink:0}.rh-v{font-size:1.125rem;font-family:var(--font-ui);font-weight:650;white-space:nowrap}
+.prdist-note{font-size:var(--type-meta);line-height:1.55}.prdist-row{min-height:26px}
+@media(max-width:900px){.phero{grid-template-columns:72px minmax(0,1fr)}.phero>.phero-av,.phero>.phero-av-img{width:72px;height:72px}.phero-acts{grid-column:1/-1;grid-row:6;justify-content:flex-start;margin-top:20px}.phero .pstats{grid-row:7}.pgrid{grid-template-columns:1fr}}
+@media(max-width:620px){.phero{padding:22px 18px;column-gap:16px;grid-template-columns:56px minmax(0,1fr)}.phero>.phero-av,.phero>.phero-av-img{width:56px;height:56px;font-size:1.5rem;border-radius:10px}.phero-name{font-size:1.625rem}.phero-bio,.profile-favorite-clubs,.phero-badges{grid-column:1/-1}.phero-bio{margin-top:18px}.phero .pstats{gap:16px 10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:22px}.phero .pst-v{font-size:1.625rem}.pcard,.profile-diary{padding:20px 18px}.p-insight-grid{gap:12px}.p-mini span{font-size:1.25rem}.p-mini small{font-size:.75rem}.rh-bar{display:none}.phero-acts .btn{flex:1;justify-content:center}}

@@ -1,29 +1,33 @@
-import {createReadStream,existsSync,statSync} from 'node:fs';
+import {createReadStream,existsSync,statSync,readFileSync} from 'node:fs';
 import {createServer} from 'node:http';
 import {extname,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import publicConfig from '../api/config.js';
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const port=Number(process.env.PORT)||4173;
+const demo=process.argv.includes('--demo');
+if(demo&&(port!==4174||process.env.PORT!=='4174'||publicConfig.isCI(process.env)||process.env.VERCEL||process.env.VERCEL_ENV)){
+  throw new Error('Demo requires PORT=4174 on a local machine outside CI and Vercel.');
+}
+const demoFixture=demo?await (await import('./demo-fixture.mjs')).createDemoFixture():'';
 const types={'.css':'text/css; charset=utf-8','.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2'};
-const productionSupabaseUrl='https://uukacnyvjvgmmhbkmfzf.supabase.co';
-
 function runtimeConfig(){
-  const supabaseUrl=String(process.env.SUPABASE_PUBLIC_URL||process.env.SUPABASE_URL||'').trim();
-  const supabaseKey=String(process.env.SUPABASE_PUBLISHABLE_KEY||process.env.SUPABASE_ANON_KEY||'').trim();
-  if(!supabaseUrl||!supabaseKey){
-    return {environment:'development',error:'runtime_config_missing'};
-  }
-  if(supabaseUrl===productionSupabaseUrl&&process.env.FOOTBAZED_ALLOW_PRODUCTION!=='1'){
-    return {environment:'development',error:'production_supabase_blocked'};
-  }
-  return {environment:'development',supabaseUrl,supabaseKey};
+  return demo?{environment:'demo',error:'runtime_config_missing'}:publicConfig.resolveRuntimeConfig(process.env,{local:true});
 }
 
 const server=createServer((request,response)=>{
   let pathname;
-  try{pathname=decodeURIComponent(new URL(request.url,'http://localhost').pathname);}
+  let url;
+  try{url=new URL(request.url,'http://localhost');pathname=decodeURIComponent(url.pathname);}
   catch{response.writeHead(400).end('Bad request');return;}
+  if(!['GET','HEAD'].includes(request.method)){response.writeHead(405,{'Allow':'GET, HEAD'}).end();return;}
+  if(pathname==='/__demo/fixture.js'){
+    if(!demo){response.writeHead(404).end('Not found');return;}
+    response.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+    response.end(request.method==='HEAD'?'':demoFixture);
+    return;
+  }
   if(pathname==='/api/config.js'){
     const body=`window.__FOOTBAZED_RUNTIME_CONFIG__=Object.freeze(${JSON.stringify(runtimeConfig())});`;
     response.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
@@ -40,6 +44,11 @@ const server=createServer((request,response)=>{
     'Cache-Control':'no-store',
     'X-Content-Type-Options':'nosniff'
   });
+  if(request.method==='HEAD'){response.end();return;}
+  if(demo&&file===resolve(root,'index.html')&&url.searchParams.get('__e2e')==='1'){
+    response.end(readFileSync(file,'utf8').replace('<script src="/api/config.js"','<script src="/__demo/fixture.js"></script>\n  <script src="/api/config.js"'));
+    return;
+  }
   createReadStream(file).pipe(response);
 });
 

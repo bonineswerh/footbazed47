@@ -6,15 +6,60 @@
     friend:null,
     messages:[],
     channel:null,
+    viewVersion:0,
+    messageVersion:0,
+    sending:false,
     uploading:false,
     recorder:null,
     recordingStream:null,
     recordingChunks:[],
     forwardRatingId:null,
-    signedUrls:new Map()
+    signedUrls:new Map(),
+    drafts:new Map(),
+    hasMore:false,
+    beforeId:null,
+    loadingOlder:false,
+    editingId:null,
+    recordingPending:false
   };
 
   const el=id=>document.getElementById(id);
+
+  function context(){return{version:state.viewVersion,conversationId:state.conversationId,userId:CU?.id};}
+  function isCurrent(snapshot){return snapshot.version===state.viewVersion&&snapshot.conversationId===state.conversationId&&snapshot.userId===CU?.id;}
+
+  function resizeComposer(){
+    const input=el('directChatInput');
+    input.style.height='auto';input.style.height=`${Math.min(input.scrollHeight,116)}px`;
+  }
+
+  function saveDraft(){
+    if(state.friend?.id)state.drafts.set(state.friend.id,el('directChatInput').value);
+  }
+
+  function stopRecording(send=false){
+    const recorder=state.recorder;
+    if(recorder){recorder.sendOnStop=send;if(recorder.state==='recording')recorder.stop();}
+    state.recordingStream?.getTracks().forEach(track=>track.stop());
+    state.recordingStream=null;state.recorder=null;state.recordingPending=false;
+    const button=el('directChatVoice');
+    button.classList.remove('recording');button.setAttribute('aria-pressed','false');
+    button.setAttribute('aria-label','Записать голосовое сообщение');button.title='Голосовое сообщение';
+  }
+
+  function leaveView(){
+    saveDraft();state.viewVersion++;state.messageVersion++;
+    stopRecording();unsubscribe();
+    state.conversationId=null;state.friend=null;state.messages=[];state.signedUrls.clear();
+    state.sending=false;state.uploading=false;state.loadingOlder=false;state.hasMore=false;state.beforeId=null;state.editingId=null;
+    el('directChatInput').value='';el('directChatInput').style.height='';el('directChatSend').disabled=false;
+    el('directChatMedia').value='';setComposer(false);setBusy('');
+    el('directChatBody').replaceChildren();
+  }
+
+  function errorState(message,action,label='Повторить'){
+    return`<div class="dm-empty"><span>${esc(message)}</span><button class="btn btn-g btn-sm" type="button" onclick="${action}">${esc(label)}</button></div>`;
+  }
 
   function absoluteTime(value){
     const date=new Date(value);
@@ -38,7 +83,7 @@
 
   function avatarMarkup(user){
     const image=safeImageUrl(user?.avatar_url);
-    return image?`<img src="${image}" alt="">`:`<span>${esc(initials(user))}</span>`;
+    return image?`<img src="${image}" alt="" decoding="async">`:`<span>${esc(initials(user))}</span>`;
   }
 
   function setPerson(user,subtitle='Личный чат'){
@@ -90,10 +135,10 @@
   }
 
   function mediaMarkup(message){
-    const url=state.signedUrls.get(message.media_path)||'';
+    const url=state.signedUrls.get(message.media_path)?.url||'';
     if(!url)return message.media_kind&&message.media_kind!=='rating'?'<div class="dm-text">Медиа недоступно</div>':'';
     const safe=safeImageUrl(url);
-    if(message.media_kind==='image')return`<img class="dm-media" src="${safe}" alt="Отправленное изображение" loading="lazy">`;
+    if(message.media_kind==='image')return`<img class="dm-media" src="${safe}" alt="Отправленное изображение" loading="lazy" decoding="async">`;
     if(message.media_kind==='video')return`<video class="dm-media" src="${safe}" controls preload="metadata"></video>`;
     if(message.media_kind==='audio')return`<audio class="dm-media" src="${safe}" controls preload="metadata"></audio>`;
     return'';
@@ -112,41 +157,67 @@
           <time datetime="${esc(message.created_at)}">${esc(absoluteTime(message.created_at))}</time>
           ${message.can_edit&&message.body?`<button class="dm-edit" type="button" onclick="FBZMessages.edit(${Number(message.id)})">Изменить</button>`:''}
         </div>
-        ${message.body?`<div class="dm-text">${esc(message.body)}</div>`:''}
+        ${state.editingId===Number(message.id)?`<form class="dm-edit-form" onsubmit="FBZMessages.saveEdit(event,${Number(message.id)})"><label class="sr-only" for="dm-edit-${Number(message.id)}">Изменить сообщение</label><textarea id="dm-edit-${Number(message.id)}" maxlength="2000" rows="3" required>${esc(message.body)}</textarea><div><button class="btn btn-g btn-sm" type="button" onclick="FBZMessages.cancelEdit()">Отмена</button><button class="btn btn-l btn-sm" type="submit">Сохранить</button></div></form>`:message.body?`<div class="dm-text">${esc(message.body)}</div>`:''}
         ${mediaMarkup(message)}${ratingCard(message)}
       </div>
     </article>`;
   }
 
-  async function hydrateMedia(messages){
+  async function hydrateMedia(messages,snapshot){
     const paths=[...new Set(messages.filter(message=>['image','video','audio'].includes(message.media_kind)&&message.media_path)
-      .map(message=>message.media_path).filter(path=>!state.signedUrls.has(path)))];
+      .map(message=>message.media_path).filter(path=>(state.signedUrls.get(path)?.expiresAt||0)<Date.now()+60000))];
     await Promise.all(paths.map(async path=>{
       const{data,error}=await sb.storage.from('chat-media').createSignedUrl(path,3600);
-      if(!error&&data?.signedUrl)state.signedUrls.set(path,data.signedUrl);
+      if(isCurrent(snapshot)&&!error&&data?.signedUrl)state.signedUrls.set(path,{url:data.signedUrl,expiresAt:Date.now()+3600000});
     }));
   }
 
-  function renderMessages(){
+  function renderMessages({scroll='preserve'}={}){
     const host=el('directChatBody');
+    const previousTop=host.scrollTop,previousHeight=host.scrollHeight;
+    const atBottom=previousHeight-previousTop-host.clientHeight<80;
+    const editor=host.querySelector('.dm-edit-form textarea');
+    const draft=editor?.value,selection=editor?[editor.selectionStart,editor.selectionEnd]:null;
+    const editorFocused=editor===document.activeElement;
     if(!state.messages.length){host.innerHTML='<div class="dm-empty">Здесь пока нет сообщений.<br>Начните разговор или отправьте оценку матча.</div>';return;}
     let currentDay='';
-    host.innerHTML=state.messages.map(message=>{
+    const older=state.hasMore?`<div class="dm-history"><button class="btn btn-g btn-sm" type="button" onclick="FBZMessages.loadOlder()" ${state.loadingOlder?'disabled':''}>${state.loadingOlder?'Загружаем…':'Более ранние сообщения'}</button></div>`:'';
+    host.innerHTML=older+state.messages.map(message=>{
       const label=dayLabel(message.created_at);
       const divider=label===currentDay?'':`<div class="dm-day"><span>${esc(label)}</span></div>`;
       currentDay=label;
       return divider+messageMarkup(message);
     }).join('');
-    requestAnimationFrame(()=>{host.scrollTop=host.scrollHeight;});
+    const nextEditor=host.querySelector('.dm-edit-form textarea');
+    if(nextEditor&&draft!==undefined){nextEditor.value=draft;if(editorFocused){nextEditor.focus({preventScroll:true});nextEditor.setSelectionRange(...selection);}}
+    if(scroll==='bottom'||(scroll==='preserve'&&atBottom))host.scrollTop=host.scrollHeight;
+    else if(scroll==='prepend')host.scrollTop=previousTop+host.scrollHeight-previousHeight;
+    else host.scrollTop=previousTop;
   }
 
-  async function loadMessages(){
+  async function loadMessages({older=false,scroll='preserve'}={}){
     if(!state.conversationId)return;
-    const{data,error}=await sb.rpc('get_direct_messages',{p_conversation_id:state.conversationId,p_limit:80,p_before_id:null});
+    const snapshot=context(),version=++state.messageVersion;
+    const{data,error}=await sb.rpc('get_direct_messages',{p_conversation_id:snapshot.conversationId,p_limit:80,p_before_id:older?state.beforeId:null});
+    if(!isCurrent(snapshot)||version!==state.messageVersion)return;
     if(error)throw error;
-    state.messages=Array.isArray(data?.items)?data.items:[];
-    await hydrateMedia(state.messages);
-    renderMessages();
+    const incoming=Array.isArray(data?.items)?data.items:[];
+    await hydrateMedia(incoming,snapshot);
+    if(!isCurrent(snapshot)||version!==state.messageVersion)return;
+    const existing=new Map(state.messages.map(message=>[Number(message.id),message]));
+    incoming.forEach(message=>existing.set(Number(message.id),message));
+    state.messages=[...existing.values()].sort((a,b)=>Number(a.id)-Number(b.id));
+    if(older||state.beforeId===null){state.beforeId=data?.next_before_id||null;state.hasMore=Boolean(data?.has_more&&state.beforeId);}
+    state.loadingOlder=false;
+    renderMessages({scroll:older?'prepend':scroll});
+  }
+
+  async function loadOlder(){
+    if(!state.hasMore||state.loadingOlder)return;
+    const snapshot=context();state.loadingOlder=true;renderMessages({scroll:'keep'});
+    try{await loadMessages({older:true});}
+    catch{if(isCurrent(snapshot))setBusy('Не удалось загрузить историю. Повторите попытку.',true);}
+    finally{if(isCurrent(snapshot)){state.loadingOlder=false;renderMessages({scroll:'keep'});}}
   }
 
   function unsubscribe(){
@@ -157,13 +228,15 @@
     unsubscribe();
     if(!state.conversationId||!sb.channel)return;
     state.channel=sb.channel(`direct-${state.conversationId}-${Date.now()}`)
-      .on('postgres_changes',{event:'INSERT',schema:'public',table:'direct_messages',filter:`conversation_id=eq.${state.conversationId}`},()=>loadMessages().catch(()=>{}))
-      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'direct_messages',filter:`conversation_id=eq.${state.conversationId}`},()=>loadMessages().catch(()=>{}))
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'direct_messages',filter:`conversation_id=eq.${state.conversationId}`},()=>loadMessages().catch(()=>setBusy('Не удалось обновить сообщения. Откройте чат снова.',true)))
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'direct_messages',filter:`conversation_id=eq.${state.conversationId}`},()=>loadMessages().catch(()=>setBusy('Не удалось обновить сообщения. Откройте чат снова.',true)))
       .subscribe();
   }
 
   async function openFriend(friendId){
     if(!CU){openAuth();return;}
+    leaveView();
+    const version=state.viewVersion,userId=CU.id;
     state.forwardRatingId=null;
     FBZOverlay.open('directChatOv','#directChatInput');
     setComposer(false);setBusy('');setPerson(null,'Загрузка');
@@ -172,13 +245,19 @@
       const[{data:conversation,error},user]=await Promise.all([
         sb.rpc('get_or_create_direct_conversation',{p_friend_id:friendId}),friendUser(friendId)
       ]);
+      if(version!==state.viewVersion||userId!==CU?.id)return;
       if(error)throw error;
       state.conversationId=Number(conversation.id);
       setPerson(user);setComposer(true);
-      await loadMessages();subscribe();
+      el('directChatInput').value=state.drafts.get(friendId)||'';resizeComposer();
+      await loadMessages({scroll:'bottom'});
+      if(version!==state.viewVersion||userId!==CU?.id)return;
+      subscribe();el('directChatInput').focus({preventScroll:true});
     }catch(error){
+      if(version!==state.viewVersion||userId!==CU?.id)return;
       console.error('Direct chat error:',error);
-      el('directChatBody').innerHTML='<div class="dm-empty">Не удалось открыть чат. Проверьте, что пользователь остаётся в списке друзей.</div>';
+      setComposer(false);el('directChatBack').hidden=false;
+      el('directChatBody').innerHTML=errorState('Не удалось открыть чат. Проверьте соединение и дружбу с пользователем.',`FBZMessages.openFriend(${jsStr(friendId)})`);
       setBusy('Чат временно недоступен',true);
     }
   }
@@ -194,8 +273,9 @@
   }
 
   async function showPicker(){
-    unsubscribe();
-    state.conversationId=null;state.friend=null;
+    if(!CU){close();openAuth();return;}
+    leaveView();
+    const version=state.viewVersion,userId=CU.id;
     setComposer(false);setBusy('');
     el('directChatBack').hidden=true;
     el('directChatTitle').textContent=state.forwardRatingId?'Кому отправить':'Сообщения';
@@ -206,10 +286,12 @@
     host.innerHTML='<div class="dm-loading"><span class="spin"></span>Загружаем друзей</div>';
     try{
       const friends=await acceptedFriends();
-      if(!friends.length){host.innerHTML='<div class="dm-empty">Чтобы начать личный чат, сначала добавьте пользователя в друзья.</div>';return;}
-      host.innerHTML=`<h2 class="dm-picker-title">${state.forwardRatingId?'Отправить оценку':'Выберите чат'}</h2><div class="dm-picker-list">${friends.map(user=>`<button class="dm-picker-item" type="button" onclick="FBZMessages.chooseFriend('${user.id}')"><span class="dm-avatar">${avatarMarkup(user)}</span><span><b>${esc(user.display_name||user.username||'Болельщик')}</b><small>@${esc(user.username||'user')}</small></span><span>→</span></button>`).join('')}</div>`;
+      if(version!==state.viewVersion||userId!==CU?.id)return;
+      if(!friends.length){host.innerHTML=errorState('Чтобы начать личный чат, сначала добавьте пользователя в друзья.',"FBZMessages.close();go('friends')",'Найти друзей');return;}
+      host.innerHTML=`<h2 class="dm-picker-title">${state.forwardRatingId?'Отправить оценку':'Выберите чат'}</h2><div class="dm-picker-list">${friends.map(user=>`<button class="dm-picker-item" type="button" onclick="FBZMessages.chooseFriend(${jsStr(user.id)})"><span class="dm-avatar">${avatarMarkup(user)}</span><span><b>${esc(user.display_name||user.username||'Болельщик')}</b><small>@${esc(user.username||'user')}</small></span><span>→</span></button>`).join('')}</div>`;
     }catch(error){
-      console.error('Friend picker error:',error);host.innerHTML='<div class="dm-empty">Не удалось загрузить список друзей.</div>';
+      if(version!==state.viewVersion||userId!==CU?.id)return;
+      console.error('Friend picker error:',error);host.innerHTML=errorState('Не удалось загрузить список друзей.','FBZMessages.showPicker()');
     }
   }
 
@@ -221,40 +303,50 @@
   }
 
   async function chooseFriend(friendId){
+    if(state.sending)return;
     const ratingId=state.forwardRatingId;
     if(!ratingId){await openFriend(friendId);return;}
+    state.sending=true;
+    const snapshot=context();
     el('directChatBody').innerHTML='<div class="dm-loading"><span class="spin"></span>Отправляем оценку</div>';
     try{
       const{data:conversation,error}=await sb.rpc('get_or_create_direct_conversation',{p_friend_id:friendId});
+      if(!isCurrent(snapshot))return;
       if(error)throw error;
       const{error:sendError}=await sb.rpc('send_direct_message',{p_conversation_id:Number(conversation.id),p_body:null,p_media_kind:'rating',p_media_path:null,p_rating_id:ratingId});
       if(sendError)throw sendError;
+      if(!isCurrent(snapshot))return;
       toast('Оценка отправлена другу','ok');
       await openFriend(friendId);
     }catch(error){
+      if(!isCurrent(snapshot))return;
       console.error('Forward rating error:',error);toast('Не удалось отправить оценку','err');await showPicker();
-    }
+    }finally{if(isCurrent(snapshot))state.sending=false;}
   }
 
   async function send(event){
     event?.preventDefault();
-    if(state.uploading||!state.conversationId)return;
+    if(state.uploading||state.sending||!state.conversationId)return;
     const input=el('directChatInput');
     const body=input.value.trim();
     if(!body)return;
+    if(body.length>2000){toast('Сообщение не должно превышать 2000 символов','err');return;}
+    const snapshot=context(),friendId=state.friend?.id,original=input.value;
+    state.sending=true;
     const button=el('directChatSend');button.disabled=true;
     try{
-      const{error}=await sb.rpc('send_direct_message',{p_conversation_id:state.conversationId,p_body:body,p_media_kind:null,p_media_path:null,p_rating_id:null});
+      const{error}=await sb.rpc('send_direct_message',{p_conversation_id:snapshot.conversationId,p_body:body,p_media_kind:null,p_media_path:null,p_rating_id:null});
       if(error)throw error;
-      input.value='';input.style.height='';await loadMessages();
-    }catch(error){console.error('Send message error:',error);toast(error.message==='message_rate_limited'?'Слишком много сообщений. Подождите немного.':'Не удалось отправить сообщение','err');}
-    finally{button.disabled=false;input.focus();}
+      if(!isCurrent(snapshot)){if(snapshot.userId===CU?.id&&state.drafts.get(friendId)===original)state.drafts.delete(friendId);return;}
+      if(input.value===original){input.value='';input.style.height='';state.drafts.delete(friendId);}
+      setBusy('');
+      await loadMessages({scroll:'bottom'}).catch(()=>setBusy('Сообщение отправлено. Не удалось обновить историю.',true));
+    }catch(error){if(isCurrent(snapshot)){console.error('Send message error:',error);toast(error.message==='message_rate_limited'?'Слишком много сообщений. Подождите немного.':'Не удалось отправить сообщение. Текст сохранён.','err');}}
+    finally{if(isCurrent(snapshot)){state.sending=false;button.disabled=false;input.focus();}}
   }
 
   function composerKeydown(event){
-    const input=event.currentTarget;
-    input.style.height='auto';input.style.height=`${Math.min(input.scrollHeight,116)}px`;
-    if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}
+    if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();send();}
   }
 
   function extensionFor(type,name=''){
@@ -264,19 +356,22 @@
 
   async function upload(file,kind,fileName=''){
     if(state.uploading||!state.conversationId||!file)return;
+    const snapshot=context();
     const max=kind==='video'?30*1024*1024:kind==='audio'?12*1024*1024:8*1024*1024;
     if(file.size>max){toast(`Файл больше ${Math.round(max/1024/1024)} МБ`,'err');return;}
     state.uploading=true;setBusy(kind==='audio'?'Отправляем голосовое сообщение…':'Загружаем медиа…');
-    const path=`${state.conversationId}/${CU.id}/${Date.now()}-${crypto.randomUUID()}.${extensionFor(file.type,fileName||file.name)}`;
+    const path=`${snapshot.conversationId}/${snapshot.userId}/${Date.now()}-${crypto.randomUUID()}.${extensionFor(file.type,fileName||file.name)}`;
     try{
       const contentType=String(file.type||'application/octet-stream').split(';')[0];
       const{error:uploadError}=await sb.storage.from('chat-media').upload(path,file,{contentType,upsert:false,cacheControl:'3600'});
       if(uploadError)throw uploadError;
-      const{error:sendError}=await sb.rpc('send_direct_message',{p_conversation_id:state.conversationId,p_body:null,p_media_kind:kind,p_media_path:path,p_rating_id:null});
+      if(!isCurrent(snapshot)){await sb.storage.from('chat-media').remove([path]);return;}
+      const{error:sendError}=await sb.rpc('send_direct_message',{p_conversation_id:snapshot.conversationId,p_body:null,p_media_kind:kind,p_media_path:path,p_rating_id:null});
       if(sendError){await sb.storage.from('chat-media').remove([path]);throw sendError;}
-      await loadMessages();setBusy('');
-    }catch(error){console.error('Media upload error:',error);setBusy('Не удалось отправить файл',true);toast('Не удалось отправить файл','err');}
-    finally{state.uploading=false;el('directChatMedia').value='';}
+      if(!isCurrent(snapshot))return;
+      setBusy('');await loadMessages({scroll:'bottom'}).catch(()=>setBusy('Файл отправлен. Не удалось обновить историю.',true));
+    }catch(error){if(isCurrent(snapshot)){console.error('Media upload error:',error);setBusy('Не удалось отправить файл. Выберите его повторно.',true);toast('Не удалось отправить файл','err');}}
+    finally{if(isCurrent(snapshot)){state.uploading=false;el('directChatMedia').value='';}}
   }
 
   function attach(file){
@@ -287,40 +382,67 @@
   }
 
   async function toggleVoice(){
-    if(state.recorder&&state.recorder.state==='recording'){state.recorder.stop();return;}
+    if(state.recorder&&state.recorder.state==='recording'){stopRecording(true);return;}
+    if(state.recordingPending||state.uploading||!state.conversationId)return;
     if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast('Запись голоса не поддерживается этим браузером','err');return;}
+    const snapshot=context();state.recordingPending=true;
+    let stream;
     try{
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      if(!isCurrent(snapshot)){stream.getTracks().forEach(track=>track.stop());return;}
       const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg'].find(type=>MediaRecorder.isTypeSupported(type))||'';
       const recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
       state.recordingStream=stream;state.recorder=recorder;state.recordingChunks=[];
-      recorder.ondataavailable=event=>{if(event.data.size)state.recordingChunks.push(event.data);};
+      const chunks=[];recorder.sendOnStop=false;
+      recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data);};
       recorder.onstop=async()=>{
-        const blob=new Blob(state.recordingChunks,{type:recorder.mimeType||'audio/webm'});
-        stream.getTracks().forEach(track=>track.stop());state.recordingStream=null;state.recorder=null;
-        el('directChatVoice').classList.remove('recording');el('directChatVoice').setAttribute('aria-pressed','false');
-        if(blob.size>1000)await upload(blob,'audio','voice.webm');
+        const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});
+        stream.getTracks().forEach(track=>track.stop());
+        if(!isCurrent(snapshot))return;
+        if(state.recorder===recorder){state.recordingStream=null;state.recorder=null;}
+        setBusy('');
+        if(recorder.sendOnStop&&blob.size>1000)await upload(blob,'audio','voice.webm');
       };
       recorder.start(500);el('directChatVoice').classList.add('recording');el('directChatVoice').setAttribute('aria-pressed','true');
-      setBusy('Идёт запись. Нажмите красную кнопку ещё раз, чтобы отправить.');
-    }catch(error){console.error('Voice recording error:',error);toast('Нет доступа к микрофону','err');}
+      el('directChatVoice').setAttribute('aria-label','Завершить и отправить голосовое сообщение');el('directChatVoice').title='Завершить и отправить';
+      setBusy('Идёт запись. Нажмите микрофон для отправки. Закрытие чата отменит запись.');
+    }catch(error){stream?.getTracks().forEach(track=>track.stop());if(isCurrent(snapshot)){console.error('Voice recording error:',error);toast('Нет доступа к микрофону','err');}}
+    finally{if(isCurrent(snapshot))state.recordingPending=false;}
   }
 
-  async function edit(messageId){
+  function edit(messageId){
     const message=state.messages.find(item=>Number(item.id)===Number(messageId));
     if(!message?.can_edit||!message.body)return;
-    const next=prompt('Изменить сообщение',message.body);
-    if(next===null||next.trim()===message.body)return;
-    const{error}=await sb.rpc('edit_direct_message',{p_message_id:Number(messageId),p_body:next.trim()});
-    if(error){toast('Не удалось изменить сообщение','err');return;}
-    await loadMessages();
+    state.editingId=Number(messageId);renderMessages({scroll:'keep'});
+    el(`dm-edit-${state.editingId}`)?.focus({preventScroll:true});
+  }
+
+  function cancelEdit(){state.editingId=null;renderMessages({scroll:'keep'});}
+
+  async function saveEdit(event,messageId){
+    event.preventDefault();
+    const form=event.currentTarget,button=form.querySelector('[type="submit"]');
+    if(button.disabled)return;
+    const body=form.querySelector('textarea').value.trim();
+    if(!body||body.length>2000){toast('Введите сообщение от 1 до 2000 символов','err');return;}
+    const snapshot=context();button.disabled=true;
+    try{
+      const{error}=await sb.rpc('edit_direct_message',{p_message_id:Number(messageId),p_body:body});
+      if(error)throw error;
+      if(!isCurrent(snapshot))return;
+      state.editingId=null;
+      await loadMessages();
+    }catch(error){if(isCurrent(snapshot))toast('Не удалось изменить сообщение. Текст сохранён.','err');}
+    finally{button.disabled=false;}
   }
 
   function close(){
-    if(state.recorder?.state==='recording')state.recorder.stop();
-    state.recordingStream?.getTracks().forEach(track=>track.stop());
-    unsubscribe();setBusy('');FBZOverlay.close('directChatOv');
+    leaveView();state.forwardRatingId=null;FBZOverlay.close('directChatOv');
   }
 
-  window.FBZMessages=Object.freeze({attach,chooseFriend,close,composerKeydown,edit,openFriend,pickFriend,send,showPicker,toggleVoice});
+  function resetSession(){close();state.drafts.clear();}
+
+  el('directChatOv').addEventListener('fbz:overlay-close',()=>{leaveView();state.forwardRatingId=null;});
+  el('directChatInput').addEventListener('input',resizeComposer);
+  window.FBZMessages=Object.freeze({attach,cancelEdit,chooseFriend,close,composerKeydown,edit,loadOlder,openFriend,pickFriend,resetSession,saveEdit,send,showPicker,toggleVoice});
 })();

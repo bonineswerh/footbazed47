@@ -335,6 +335,10 @@ export async function installSupabaseMock(page){
           state.users=state.users.map(row=>matchingIds.has(String(row.id))?{...row,...structuredClone(query.writeData)}:row);
           if(matchingIds.has(String(state.profile.id)))state.profile={...state.profile,...structuredClone(query.writeData)};
         }
+        if(query.operation==='update'&&table==='notifications'){
+          const matchingIds=new Set(rows.map(row=>row.id));
+          state.notifications=state.notifications.map(row=>matchingIds.has(row.id)?{...row,...structuredClone(query.writeData)}:row);
+        }
         if(query.operation!=='select')return Promise.resolve({data:query.writeData,error:null,count:null});
         return Promise.resolve({data:query.head?null:(single?(rows[0]||null):rows),error:null,count:query.countMode?count:null});
       }

@@ -21,6 +21,15 @@ test('only a matching VERIFIED HTTPS asset is rendered',()=>{
   assert.match(media.visual({entity:{name:'Verified FC',media:verified},kind:'club'}),/has-image/u);
 });
 
+test('verified media retains an escaped fallback for a failed image request',()=>{
+  const markup=media.visual({entity:{name:'Club "A" <FC>',media:{asset_type:'club_logo',usage_status:'verified',url:'https://media.example/expired.png'}},kind:'club'});
+  assert.match(markup,/data-fbz-media/u);
+  assert.match(markup,/data-media-initials="C&amp;quot;/u.test(markup)?/data-media-initials/u:/data-media-initials="C&quot;"/u);
+  assert.match(markup,/data-media-label="Логотип Club &quot;A&quot; &lt;FC&gt;"/u);
+  assert.match(markup,/--media-primary:#[A-Fa-f0-9]{6}/u);
+  assert.doesNotMatch(markup,/<FC>/u);
+});
+
 test('media providers are explicit and disabled until registered',async()=>{
   await assert.rejects(media.resolveFromProvider('missing',{kind:'club'}),/not_registered/u);
   const id=`test_provider_${Date.now()}`;

@@ -7,11 +7,25 @@ let authStateVersion=0;
 let profileCompletionUser=null;
 let profileLoadPromise=null;
 
+function resetSessionData(userId){
+  window.FBZData?.setSessionUser(userId);
+  window.FBZMessages?.resetSession();
+  window.FBZFeed?.resetSession();
+  window.FBZSearch?.resetSession();
+  window.clearAppCache?.();
+  window.dispatchEvent(new CustomEvent('fbz:session-change',{detail:{userId:userId||null}}));
+}
+
 async function onLogin(user){
   if(!user)return false;
   if(authSessionUserId===user.id&&CU)return true;
   if(authSessionUserId===user.id&&profileLoadPromise)return profileLoadPromise;
 
+  if(authSessionUserId!==user.id){
+    CU=null;
+    profileCompletionUser=null;
+    resetSessionData(user.id);
+  }
   authSessionUserId=user.id;
   const version=++authStateVersion;
   profileLoadPromise=loadSessionProfile(user,version);
@@ -21,11 +35,11 @@ async function onLogin(user){
 
 async function loadSessionProfile(user,version){
   const{data:profile,error}=await sb.rpc('get_my_profile').maybeSingle();
+  if(version!==authStateVersion)return false;
   if(error){
-    if(version===authStateVersion)authSessionUserId=null;
+    authSessionUserId=null;
     throw error;
   }
-  if(version!==authStateVersion)return false;
   if(!profile){
     CU=null;
     renderNav();
@@ -58,6 +72,7 @@ function onLogout(){
   profileLoadPromise=null;
   profileCompletionUser=null;
   CU=null;
+  resetSessionData(null);
   try{localStorage.removeItem('fbz_session_hint');}catch{}
   document.documentElement.classList.remove('session-hint-authenticated');
   window.FBZAccount?.close();

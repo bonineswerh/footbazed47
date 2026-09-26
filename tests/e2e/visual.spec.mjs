@@ -56,11 +56,48 @@ for(const viewport of [{width:390,height:844},{width:1280,height:720}]){
     await page.evaluate(()=>document.fonts.ready);
     await expect(page.locator('.md-rating-comparison')).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    const scoreSize=await page.locator('.md-score').first().evaluate(element=>getComputedStyle(element).fontSize);
+    expect(Number.parseFloat(scoreSize)).toBeGreaterThanOrEqual(viewport.width<620?47:65);
+    await page.screenshot({path:test.info().outputPath(`match-detail-${viewport.width}.png`)});
     await expect(page).toHaveScreenshot(`match-${viewport.width}x${viewport.height}.png`,{
       animations:'disabled',
       caret:'hide',
       maxDiffPixelRatio:0.05
     });
+  });
+}
+
+test('матч в фокусе открывает тот же матч из календаря',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await prepare(page);
+  await page.goto('/?__e2e=1#home');
+  const spotlight=page.locator('#homeMatchSpotlight .home-spotlight');
+  await expect(spotlight).toContainText('Real Madrid CF');
+  await expect(spotlight).toContainText('Manchester City FC');
+  await expect(spotlight.locator('.home-spotlight-team b')).toHaveText(['2','1']);
+  await spotlight.getByRole('button',{name:'Открыть матч'}).click();
+  await expect(page).toHaveURL(/\/match\/101\?__e2e=1$/u);
+  await expect(page.locator('.md-hero')).toContainText('Manchester City FC');
+});
+
+for(const scenario of [
+  {width:390,theme:'dark'},
+  {width:1280,theme:'dark'},
+  {width:390,theme:'light'},
+  {width:1280,theme:'light'}
+]){
+  test(`карточка матча показывает счёт и команды в ${scenario.theme} теме на ${scenario.width}px`,async({page})=>{
+    await page.setViewportSize({width:scenario.width,height:900});
+    await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),scenario.theme);
+    await prepare(page);
+    await page.goto('/?__e2e=1#matches');
+    const card=page.locator('#matchG .mcard').filter({hasText:'Manchester City FC'}).first();
+    await expect(card).toBeVisible();
+    await expect(card.locator('.mc-score-num')).toContainText('2:1');
+    await expect(card.getByRole('button',{name:/Открыть матч: Real Madrid CF против Manchester City FC/})).toBeVisible();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    await page.evaluate(()=>document.fonts.ready);
+    await expect(card).toHaveScreenshot(`match-card-${scenario.theme}-${scenario.width}.png`,{animations:'disabled',maxDiffPixelRatio:0.03});
   });
 }
 

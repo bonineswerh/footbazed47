@@ -1,0 +1,41 @@
+/* Match identity: matte club colors over neutral surfaces. No animated gradients. */
+.home-spotlight .home-spotlight-primary{background:var(--grad);color:var(--onAccent)}
+.rating-ink[data-tone="low"],.prdist-row[data-tone="low"]{--score-ink:var(--rating-low)}
+.rating-ink[data-tone="mid"],.prdist-row[data-tone="mid"]{--score-ink:var(--rating-mid)}
+.rating-ink[data-tone="high"],.prdist-row[data-tone="high"]{--score-ink:var(--rating-high)}
+.rating-ink[data-tone="elite"],.prdist-row[data-tone="elite"]{--score-ink:var(--rating-elite)}
+body .rating-ink[data-tone]{color:var(--score-ink,var(--snow))}
+.prdist-row[data-tone] .prdist-bar i{background:var(--score-ink)}
+.prdist-row[data-tone]>span{color:var(--score-ink)}
+.mcard,.home-spotlight,.md-hero,.feed-match{--club-home:#99a5ad;--club-away:#99a5ad;--club-wash:17%;--club-wash-strong:25%;--match-surface:var(--bg2);--match-ink:var(--snow);--match-muted:var(--text2)}
+:root[data-theme="light"] :is(.mcard,.home-spotlight,.md-hero,.feed-match){--club-wash:24%;--club-wash-strong:36%}
+.mcard{background:var(--bg2);border-color:var(--b2);box-shadow:0 5px 20px rgba(0,0,0,.05)}
+.mcard .mcard-gradient{height:3px;background:linear-gradient(90deg,var(--club-home) 0 49.8%,var(--club-away) 50.2% 100%);opacity:.65}
+.mcard .mc-score-block,.mcard .mc-score-block:hover{position:relative;background:linear-gradient(100deg,color-mix(in srgb,var(--club-home) var(--club-wash),var(--match-surface)) 0%,var(--match-surface) 49%,color-mix(in srgb,var(--club-away) var(--club-wash),var(--match-surface)) 100%);border-color:var(--b2);border-radius:8px;padding:20px 8px}
+.mcard .mc-score-block:hover{border-color:var(--b3)}
+.mc-score-team:first-child .mc-score-mark{background:color-mix(in srgb,var(--club-home) var(--club-wash-strong),var(--bg2));border-color:color-mix(in srgb,var(--club-home) 45%,var(--b2));color:var(--snow)}
+.mc-score-team:last-child .mc-score-mark{background:color-mix(in srgb,var(--club-away) var(--club-wash-strong),var(--bg2));border-color:color-mix(in srgb,var(--club-away) 45%,var(--b2));color:var(--snow)}
+.mcard .mc-score-num{font-family:var(--font-ui);font-size:2rem;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.mcard .mc-score-separator{padding-bottom:3px;color:var(--text3)}
+.home-spotlight,.md-hero{background:linear-gradient(110deg,color-mix(in srgb,var(--club-home) var(--club-wash),var(--bg2)),var(--bg2) 49%,color-mix(in srgb,var(--club-away) var(--club-wash),var(--bg2)));border-color:var(--b2);color:var(--snow)}
+.home-spotlight::before{display:none}
+.home-spotlight .home-spotlight-art{background:linear-gradient(115deg,color-mix(in srgb,var(--club-home) 20%,var(--bg2)),color-mix(in srgb,var(--club-away) 26%,var(--bg2)));border-color:var(--b2)}
+.home-spotlight-art::before{box-shadow:none;border-color:var(--b2)}.home-spotlight-art::after{border-color:var(--b2)}
+.home-spotlight-field{transform:none;gap:20px}.home-spotlight-art-mark{box-shadow:none;text-shadow:none;border-radius:8px;color:var(--snow);font-family:var(--font-ui);font-size:2rem;font-weight:650;letter-spacing:-.04em;background:color-mix(in srgb,var(--club-home) 24%,var(--bg2));border-color:color-mix(in srgb,var(--club-home) 48%,var(--b2))}.home-spotlight-art-mark:last-child{transform:none;background:color-mix(in srgb,var(--club-away) 24%,var(--bg2));border-color:color-mix(in srgb,var(--club-away) 48%,var(--b2))}
+.home-spotlight .home-spotlight-title,.home-spotlight .home-spotlight-team strong,.home-spotlight .home-spotlight-team b{color:var(--snow)}
+.home-spotlight .home-spotlight-overline,.home-spotlight .home-spotlight-league,.home-spotlight .home-spotlight-art-caption,.home-spotlight .home-spotlight-art-cross{color:var(--text2)}
+.home-spotlight .home-spotlight-status{color:var(--text2);background:var(--bg3);border-color:var(--b2)}
+.home-spotlight.is-live .home-spotlight-status{color:var(--rating-low)}
+.home-spotlight .home-spotlight-score,.home-spotlight .home-spotlight-team{border-color:var(--b2)}
+.home-spotlight .home-spotlight-mark{color:var(--snow);border-color:var(--b2);background:color-mix(in srgb,var(--club-home) 20%,var(--bg2))}.home-spotlight-team:last-child .home-spotlight-mark{background:color-mix(in srgb,var(--club-away) 20%,var(--bg2))}
+.home-spotlight .home-spotlight-secondary{color:var(--snow);border-color:var(--b2);background:var(--bg3)}.home-spotlight .home-spotlight-secondary:hover{background:var(--bg4)}.home-spotlight-actions button:focus-visible{outline-color:var(--accent2)}
+.md-hero::before{background:linear-gradient(90deg,var(--club-home) 0 49.8%,var(--club-away) 50.2% 100%);opacity:.65;height:3px}
+.md-hero .md-tname,.md-hero .md-score,.md-hero .md-cv{color:var(--snow)}
+.md-hero .md-lg,.md-hero .md-meta,.md-hero .md-cl,.md-hero .md-vs{color:var(--text2)}
+.md-hero .md-status{color:var(--text2);background:var(--bg3);border-color:var(--b2)}.md-hero .md-status-live{color:var(--rating-low)}
+.md-hero .md-team-mark{color:var(--snow);border-color:var(--b2);background:color-mix(in srgb,var(--club-home) 24%,var(--bg2))}.md-hero .md-team:last-child .md-team-mark{background:color-mix(in srgb,var(--club-away) 24%,var(--bg2))}
+.md-hero .md-comm{background:var(--bg2);border-color:var(--b2)}.md-hero .md-ci{border-color:var(--b1)}
+.md-hero .md-cv[data-tone="low"]{color:var(--rating-low)}.md-hero .md-cv[data-tone="mid"]{color:var(--rating-mid)}.md-hero .md-cv[data-tone="high"]{color:var(--rating-high)}.md-hero .md-cv[data-tone="elite"]{color:var(--rating-elite)}
+body .feed-match{background:linear-gradient(100deg,color-mix(in srgb,var(--club-home) var(--club-wash),var(--bg3)),var(--bg3) 49%,color-mix(in srgb,var(--club-away) var(--club-wash),var(--bg3)))}
+body .feed-score{border-color:var(--b2);background:var(--bg2)}
+@media(max-width:620px){.mcard .mc-score-num{font-size:1.75rem}.home-spotlight .home-spotlight-team b{font-family:var(--font-ui);font-size:1.75rem;font-weight:650}.md-hero .md-tname{font-size:1rem}.md-hero .md-score{font-family:var(--font-ui);font-size:3rem;font-weight:650}}

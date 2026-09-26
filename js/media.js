@@ -81,13 +81,27 @@
     const expectedType=assetTypes[kind]||assetTypes.other;
     const resolved=resolveAsset(entity.media,expectedType);
     const classes=`fbz-media ${className}${resolved?' has-image':' is-fallback'}`;
-    if(resolved){
-      return `<span class="${escapeHtml(classes)}"><img src="${escapeHtml(resolved.url)}" alt="${escapeHtml(alt)}" loading="${loading==='eager'?'eager':'lazy'}" decoding="async"></span>`;
-    }
     const [primary,secondary]=palette(entity);
     const label=kind==='player'?`Фото ${entity.name||'игрока'} отсутствует`:`Логотип ${entity.name||'не добавлен'}`;
+    if(resolved){
+      return `<span class="${escapeHtml(classes)}" style="--media-primary:${primary};--media-secondary:${secondary}" data-media-initials="${escapeHtml(initials(entity.name))}" data-media-label="${escapeHtml(label)}"><img data-fbz-media src="${escapeHtml(resolved.url)}" alt="${escapeHtml(alt)}" loading="${loading==='eager'?'eager':'lazy'}" decoding="async"></span>`;
+    }
     return `<span class="${escapeHtml(classes)}" style="--media-primary:${primary};--media-secondary:${secondary}" role="img" aria-label="${escapeHtml(label)}"><span>${escapeHtml(initials(entity.name))}</span></span>`;
   }
+
+  root?.document?.addEventListener('error',event=>{
+    const image=event.target;
+    if(!image?.matches?.('img[data-fbz-media]'))return;
+    const container=image.parentElement;
+    if(!container?.classList.contains('fbz-media'))return;
+    const monogram=root.document.createElement('span');
+    monogram.textContent=container.dataset.mediaInitials||'FB';
+    container.replaceChildren(monogram);
+    container.classList.remove('has-image');
+    container.classList.add('is-fallback');
+    container.setAttribute('role','img');
+    container.setAttribute('aria-label',container.dataset.mediaLabel||'Изображение недоступно');
+  },true);
 
   function registerProvider(provider){
     const id=String(provider?.id||'').trim();

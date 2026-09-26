@@ -90,6 +90,7 @@ test('авторизованный пользователь управляет �
   await expect(created).toBeVisible();
   await expect(entry.locator('[data-comment-count]')).toHaveText('62');
   await created.getByRole('button',{name:'Удалить комментарий'}).click();
+  await page.locator('#confirmAction').click();
   await expect(created).toHaveCount(0);
   await expect(entry.locator('[data-comment-count]')).toHaveText('61');
   expect(pageErrors).toEqual([]);
@@ -238,8 +239,7 @@ test('дружба меняется только после успешного �
   const addButton=page.locator('#profAddBtn');
   await expect(addButton).toBeVisible();
   await addButton.click();
-  await expect(addButton).toBeDisabled();
-  await expect(addButton).toContainText('Заявка отправлена');
+  await expect(page.getByRole('button',{name:/Заявка отправлена/})).toBeDisabled();
 
   await page.goto('/?__e2e=1#friends');
   await page.getByRole('button',{name:/Входящие/}).click();
@@ -276,8 +276,9 @@ test('личный чат друга сохраняет автора, время
   await expect(message).toContainText('@bazed');
   await expect(message.locator('time')).not.toBeEmpty();
 
-  page.once('dialog',dialog=>dialog.accept('Исправленное сообщение'));
   await message.getByRole('button',{name:'Изменить'}).click();
+  await message.getByRole('textbox',{name:'Изменить сообщение'}).fill('Исправленное сообщение');
+  await message.getByRole('button',{name:'Сохранить',exact:true}).click();
   await expect(page.locator('.dm-message').last()).toContainText('Исправленное сообщение');
   await expect(page.locator('.dm-message').last()).toContainText('ред.');
 });
@@ -343,12 +344,16 @@ test('уведомление открывает публикацию без та
 });
 
 test('avatar is normalized and stored outside the profile row',async({page})=>{
-  const pixel=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVR42mNkYGD4z8DAwMDAxAADAA4GAQGm9k1hAAAAAElFTkSuQmCC','base64');
+  const pixel=Buffer.from(await page.evaluate(()=>{
+    const canvas=document.createElement('canvas');canvas.width=canvas.height=2;
+    canvas.getContext('2d').fillRect(0,0,2,2);
+    return canvas.toDataURL('image/png').split(',')[1];
+  }),'base64');
   await page.route('https://storage.example.test/**',route=>route.fulfill({status:200,contentType:'image/jpeg',body:pixel}));
   await page.goto('/?__e2e=1#profile/3615141a-7700-46b8-9ba5-e4f4450537fc');
   await page.locator('button[onclick="editProfile()"]').click();
   await page.locator('#avFile').setInputFiles({name:'avatar.png',mimeType:'image/png',buffer:pixel});
-  await expect(page.locator('#avPreview')).toHaveAttribute('src',/^blob:/u);
+  await expect(page.locator('#avPreview img')).toHaveAttribute('src',/^blob:/u);
   await page.locator('#epSaveBtn').click();
 
   await expect.poll(()=>page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.storage())).toMatchObject({

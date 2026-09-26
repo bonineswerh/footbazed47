@@ -2,15 +2,23 @@
   'use strict';
 
   const cache=new Map();
+  let sessionUserId=null;
+  let cacheVersion=0;
+  let sessionVersion=0;
 
   async function rpc(name,args,cacheKey,ttl=0){
     if(cacheKey&&ttl>0){
       const cached=cache.get(cacheKey);
       if(cached&&Date.now()-cached.createdAt<ttl)return structuredClone(cached.value);
     }
+    const requestSession=sessionVersion;
+    const requestCache=cacheVersion;
     const{data,error}=await root.sb.rpc(name,args);
+    if(requestSession!==sessionVersion){
+      throw Object.assign(new Error('Session changed'),{name:'AbortError'});
+    }
     if(error)throw error;
-    if(cacheKey&&ttl>0)cache.set(cacheKey,{value:data,createdAt:Date.now()});
+    if(cacheKey&&ttl>0&&requestCache===cacheVersion)cache.set(cacheKey,{value:structuredClone(data),createdAt:Date.now()});
     return data;
   }
 
@@ -43,8 +51,17 @@
   }
 
   function invalidate(prefix=''){
+    cacheVersion++;
     for(const key of cache.keys())if(!prefix||key.startsWith(prefix))cache.delete(key);
   }
 
-  root.FBZData=Object.freeze({getLeaderboard,getMatchesPage,getProfilePage,invalidate});
+  function setSessionUser(userId){
+    const next=userId||null;
+    if(next===sessionUserId)return;
+    sessionUserId=next;
+    sessionVersion++;
+    invalidate();
+  }
+
+  root.FBZData=Object.freeze({getLeaderboard,getMatchesPage,getProfilePage,invalidate,setSessionUser});
 })(window);

@@ -48,7 +48,7 @@ select throws_ok(
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
 select lives_ok(
-  $$select * from public.save_match_rating(920001, 9, 'Supporter-aware rating', true, '[{"player_id":930001,"rating":9,"is_best_player":true}]'::jsonb, 'home')$$,
+  $$select * from public.save_match_rating(920001, 9::smallint, 'Supporter-aware rating', true, '[{"player_id":930001,"rating":9,"is_best_player":true}]'::jsonb, 'home')$$,
   'rating RPC stores a valid match roster and supporter side atomically'
 );
 select is(
@@ -57,7 +57,7 @@ select is(
   'rating keeps the selected supporter side'
 );
 select throws_ok(
-  $$select * from public.save_match_rating(920001, 9, null, true, '[{"player_id":930002,"rating":9}]'::jsonb, 'home')$$,
+  $$select * from public.save_match_rating(920001, 9::smallint, null, true, '[{"player_id":930002,"rating":9}]'::jsonb, 'home')$$,
   '22023',
   'player_not_in_match',
   'rating RPC rejects a player outside both match clubs'
@@ -122,7 +122,7 @@ select ok(
   'authenticated user sends a match discussion message through RPC'
 );
 select ok(
-  public.edit_match_chat_message((select id from public.chat_messages order by id desc limit 1), 'Edited match chat')->>'edited_at' is not null,
+  public.edit_match_chat_message((public.get_match_chat_messages(920001, 80)#>>'{0,id}')::integer, 'Edited match chat')->>'edited_at' is not null,
   'match discussion author can edit an own message'
 );
 

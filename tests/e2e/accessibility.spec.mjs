@@ -37,10 +37,13 @@ async function expectNoSeriousWcagViolations(page,contextSelector=null){
 
 for(const scenario of [
   {name:'home desktop',url:'/?__e2e=1#home',ready:'#homeDashboardTitle',viewport:{width:1280,height:720}},
+  {name:'home mobile spotlight',url:'/?__e2e=1#home',ready:'#homeMatchSpotlight .home-spotlight',viewport:{width:390,height:844}},
   {name:'feed mobile',url:'/?__e2e=1#feed',ready:'.feed-entry',viewport:{width:390,height:844}},
   {name:'club desktop',url:'/club/24?__e2e=1',ready:'.entity-hero h1',viewport:{width:1280,height:720}},
   {name:'competition mobile',url:'/competition/7?__e2e=1',ready:'.competition-shell h1',viewport:{width:390,height:844}},
   {name:'match desktop',url:'/match/101?__e2e=1',ready:'.md-hero',viewport:{width:1280,height:720}},
+  {name:'match light mobile',url:'/match/101?__e2e=1',ready:'.md-hero',viewport:{width:390,height:844},theme:'light'},
+  {name:'calendar light desktop',url:'/?__e2e=1#matches',ready:'#matchG .mcard',viewport:{width:1280,height:720},theme:'light'},
   {name:'admin mobile',url:'/?__e2e=1#admin',ready:'#adminMetrics .admin-metric',viewport:{width:390,height:844}},
   {name:'home light desktop',url:'/?__e2e=1#home',ready:'#homeDashboardTitle',viewport:{width:1280,height:720},theme:'light'},
   {name:'feed light mobile',url:'/?__e2e=1#feed',ready:'.feed-entry',viewport:{width:390,height:844},theme:'light'}
@@ -73,6 +76,19 @@ for(const scenario of [
     await expectNoSeriousWcagViolations(page,scenario.target);
   });
 }
+
+test('матч в фокусе сохраняет контраст при смене темы и акцента',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await prepare(page);
+  for(const theme of ['dark','light']){
+    for(const accent of ['emerald','ice','gold','mono']){
+      await page.addInitScript(({theme,accent})=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent})),{theme,accent});
+      await page.goto('/?__e2e=1#home');
+      await expect(page.locator('#homeMatchSpotlight .home-spotlight')).toBeVisible();
+      await expectNoSeriousWcagViolations(page,'#homeMatchSpotlight');
+    }
+  }
+});
 
 for(const scenario of [
   {name:'rating field mobile',viewport:{width:390,height:844}},
