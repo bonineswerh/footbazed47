@@ -37,7 +37,8 @@ jobs:
         with:
           version: 2.114.0
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
-      - run: supabase db reset --local
+      - id: reset
+        run: supabase db reset --local
       # CLI 2.114.0 uses this exact postgres-meta tag for type generation.
       # Its ECR pull ignores the setup action's GHCR mirror; shared runners hit
       # rate limits. Cache the official mirror under the expected image name.
@@ -51,8 +52,10 @@ jobs:
           cp types/database.ts /tmp/database.ts
           supabase gen types typescript --local --schema public > types/database.ts
           diff -u /tmp/database.ts types/database.ts
-      - run: supabase test db
-      - run: supabase db lint --local --level error
+      - if: ${{ !cancelled() && steps.reset.outcome == 'success' }}
+        run: supabase test db
+      - if: ${{ !cancelled() && steps.reset.outcome == 'success' }}
+        run: supabase db lint --local --level error
       - if: always()
         run: supabase stop --no-backup
 
