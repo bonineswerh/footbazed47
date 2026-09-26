@@ -32,6 +32,24 @@ async function openChat(page){
   await expect(page.locator('#directChatInput')).toBeVisible();
 }
 
+test('поиск исправляет только известные повреждённые служебные подписи старого RPC',async({page})=>{
+  await page.goto('/?__e2e=1');
+  await page.getByRole('button',{name:'Поиск',exact:true}).click();
+  await expect(page.locator('#globalSearchInput')).toBeVisible();
+  await page.evaluate(()=>{
+    const original=sb.rpc.bind(sb);
+    sb.rpc=(name,args)=>name==='search_footbazed'?Promise.resolve({data:[
+      {entity_type:'club',entity_id:'24',title:'Real Madrid CF',subtitle:'РљР»СѓР±'},
+      {entity_type:'match',entity_id:'101',title:'Real Madrid вЂ” Man City',subtitle:'Champions League',meta:'finished'},
+      {entity_type:'club',entity_id:'25',title:'Динамо',subtitle:'Россия',meta:'DIN'}
+    ],error:null}):original(name,args);
+  });
+  await page.locator('#globalSearchInput').fill('real');
+  await expect(page.getByRole('option').first()).toHaveText('Real Madrid CFКлуб→');
+  await expect(page.getByRole('option').nth(1)).toContainText('Real Madrid — Man City');
+  await expect(page.getByRole('option').nth(2)).toContainText('ДинамоРоссия');
+});
+
 test('новый поисковый запрос сразу отменяет выбор прежнего результата с клавиатуры',async({page})=>{
   await page.goto('/?__e2e=1');
   await page.getByRole('button',{name:'Поиск',exact:true}).click();

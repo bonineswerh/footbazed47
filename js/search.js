@@ -136,9 +136,13 @@
   }
 
   function searchResultMarkup(item,index){
+    // Older hosted RPC definitions emitted these UTF-8 labels as Windows-1251.
+    // Repair only known service text, never attempt to decode user names.
+    const subtitle=({'РљР»СѓР±':'Клуб','РўСѓСЂРЅРёСЂ':'Турнир'})[item.subtitle]||item.subtitle||'';
+    const title=item.entity_type==='match'?String(item.title||'').replaceAll(' вЂ” ',' — '):item.title;
     const rawMeta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='player'?positionLabel(item.meta):(item.meta||resultLabel(item.entity_type)));
-    const meta=rawMeta&&rawMeta!==item.subtitle?rawMeta:'';
-    return`<button class="search-result" id="global-search-option-${index}" type="button" role="option" aria-selected="false" data-index="${index}" onclick="FBZSearch.select(${index})"><span class="search-result-icon">${ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(item.title)}</strong><small>${esc(item.subtitle||'')}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
+    const meta=rawMeta&&rawMeta!==subtitle?rawMeta:'';
+    return`<button class="search-result" id="global-search-option-${index}" type="button" role="option" aria-selected="false" data-index="${index}" onclick="FBZSearch.select(${index})"><span class="search-result-icon">${ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(title)}</strong><small>${esc(subtitle)}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
   }
 
   function renderResults(results,query){

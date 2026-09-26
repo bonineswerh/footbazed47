@@ -119,7 +119,7 @@ function ensureMessagesModule(){
   return ensureFeatureModule({key:'messages',styleId:'messageStyles',style:'css/messages.css?v=6',script:'js/messages.js?v=5',ready:()=>window.FBZMessages});
 }
 function ensureSearchModule(){
-  return ensureFeatureModule({key:'search',script:'js/search.js?v=55',ready:()=>window.FBZSearch});
+  return ensureFeatureModule({key:'search',script:'js/search.js?v=56',ready:()=>window.FBZSearch});
 }
 
 function openGlobalSearch(){
