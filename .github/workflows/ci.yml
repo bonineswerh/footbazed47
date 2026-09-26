@@ -38,6 +38,14 @@ jobs:
           version: 2.114.0
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - run: supabase db reset --local
+      # CLI 2.114.0 uses this exact postgres-meta tag for type generation.
+      # Its ECR pull ignores the setup action's GHCR mirror; shared runners hit
+      # rate limits. Cache the official mirror under the expected image name.
+      # https://github.com/supabase/cli/issues/5785
+      - name: Prepare type generator from official mirror
+        run: |
+          docker pull ghcr.io/supabase/postgres-meta:v0.97.0
+          docker tag ghcr.io/supabase/postgres-meta:v0.97.0 public.ecr.aws/supabase/postgres-meta:v0.97.0
       - name: Verify generated database types
         run: |
           cp types/database.ts /tmp/database.ts
