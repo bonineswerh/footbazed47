@@ -52,6 +52,10 @@ jobs:
           cp types/database.ts /tmp/database.ts
           supabase gen types typescript --local --schema public > types/database.ts
           diff -u /tmp/database.ts types/database.ts
+      - if: ${{ !cancelled() && steps.reset.outcome == 'success' }}
+        run: supabase db lint --local --level error
+      # The CLI installs its privileged lint extension before the test session
+      # switches to PostgREST's preload configuration.
       # Match the hosted PostgREST session without granting superuser to tests.
       # This container and role configuration exist only in the disposable CI DB.
       - name: Enable production write guard for SQL tests
@@ -59,8 +63,6 @@ jobs:
         run: docker exec supabase_db_footbazed psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c "ALTER ROLE postgres SET session_preload_libraries = 'safeupdate';"
       - if: ${{ !cancelled() && steps.reset.outcome == 'success' }}
         run: supabase test db
-      - if: ${{ !cancelled() && steps.reset.outcome == 'success' }}
-        run: supabase db lint --local --level error
       - if: always()
         run: supabase stop --no-backup
 
