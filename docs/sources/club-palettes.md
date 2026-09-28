@@ -15,3 +15,5 @@ Home-kit reference collections checked during this update:
 These references support the visual direction, not a claim that every swatch is a certified brand color. The data provider's [team resource](https://docs.football-data.org/general/v4/team.html) includes `clubColors`; squad import retains that field for checking and future catalogue maintenance. Existing legacy records inspected on 2026-09-26 had no populated color fields.
 
 To add a club, confirm its identity and home colors, add exact aliases and two safe hex swatches (or repeat one for a single-color treatment), and check a dark/light match card. Avoid substring matching, arbitrary hash-derived colors, and animated gradients.
+
+The 2026-09-28 provider catalogue was checked against the registry: all 111 imported club names resolve to an explicit palette. New entries use the provider's `clubColors` field. Venezia's orange/green accents on a black kit also follow its [official 2026/27 home announcement](https://en.veneziafc.it/news/26-27-home-jersey). Sabah's blue/white treatment is an editorial approximation; the provider does not supply `clubColors` for it.

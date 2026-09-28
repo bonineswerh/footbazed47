@@ -199,6 +199,18 @@ c45255 e3e4dc|PAE Olympiakos SFP|Olympiakos|Olympiacos
 83b7d0 e5e4dc|Paphos FC|Paphos
 465570 e2e3df|Qarabağ Ağdam FK|Qarabağ|Qarabağ Ağdam|Qarabag
 c65357 e5e2da|SK Slavia Praha|Slavia Praha|Slavia Prague
+c34e53 e5e1d8|AC Monza|Monza
+4177b7 e4e6df|FC Porto|Porto
+d7be58 3a517b|Fenerbahçe SK|Fenerbahçe|Fenerbahce
+bf4c51 e4e2dc|Feyenoord Rotterdam|Feyenoord
+d08751 363d42|FK Shakhtar Donetsk|Shakhtar Donetsk|Shakhtar
+dfc35c 4a77b0|Frosinone Calcio|Frosinone
+394047 e4e3dc|LASK Linz|LASK
+dcc052 363c42|PAE AEK|AEK Athens|AEK
+477ba9 e4e5df|Sabah FK|Sabah FC|Sabah
+8abbcf e6e6df|ŠK Slovan Bratislava|Slovan Bratislava|Slovan
+c48251 528575|Venezia FC|Venezia
+384e71 e2e5e0|Viking FK|Viking
 73b7cd|Зенит|Zenit|Zenit St. Petersburg
 c05958 e8e3dd|Спартак|Спартак Москва|Spartak Moscow
 7193c3 e2e6e4|Динамо Москва|Dynamo Moscow|Dinamo Moscow
