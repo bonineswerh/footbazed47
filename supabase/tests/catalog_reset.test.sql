@@ -1,9 +1,8 @@
 begin;
--- PostgREST preloads this in production; direct SQL sessions must opt in too.
-load 'safeupdate';
 create extension if not exists pgtap with schema extensions;
 set search_path=public,extensions;
-select plan(16);
+select plan(17);
+select ok(coalesce(current_setting('safeupdate.enabled',true),'off')::boolean,'SQL session has the production safeupdate guard enabled');
 insert into auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('14000000-0000-0000-0000-000000000001','authenticated','authenticated','reset-owner@example.test','{}','{}',now(),now()),
 ('14000000-0000-0000-0000-000000000002','authenticated','authenticated','reset-friend@example.test','{}','{}',now(),now());
