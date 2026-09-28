@@ -1,4 +1,6 @@
 begin;
+-- PostgREST preloads this in production; direct SQL sessions must opt in too.
+load 'safeupdate';
 create extension if not exists pgtap with schema extensions;
 set search_path=public,extensions;
 select plan(16);
@@ -57,7 +59,7 @@ reset role;
 -- Exercise the recovery format on this disposable database, never production.
 do $$ declare snap jsonb; name text; begin
   select snapshot into snap from private.football_backups where id=(select (data->>'backup_id')::uuid from reset_result);
-  delete from public.matches;delete from public.players;delete from public.clubs;delete from public.competitions;
+  delete from public.matches where id is not null;delete from public.players where id is not null;delete from public.clubs where id is not null;delete from public.competitions where id is not null;
   foreach name in array array['competitions','clubs','club_aliases','club_competitions','favorite_clubs','players','matches','ratings','player_ratings','rating_likes','rating_comments','predictions','chat_messages','live_chat_messages','referee_ratings','rating_activity_days','notifications'] loop
     execute format('insert into public.%I overriding system value select * from jsonb_populate_recordset(null::public.%I,$1) on conflict do nothing',name,name) using snap->name;
   end loop;
