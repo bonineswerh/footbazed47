@@ -1003,8 +1003,16 @@ export type Database = {
         Args: { p_comment: string; p_rating_id: number }
         Returns: Json
       }
+      admin_apply_prepared_catalog: {
+        Args: { p_batch: string; p_confirmation: string }
+        Returns: Json
+      }
       admin_cleanup_development_data: {
         Args: { p_confirmation: string; p_scope: string }
+        Returns: Json
+      }
+      admin_stage_catalog: {
+        Args: { p_batch: string; p_league: string; p_payload: Json }
         Returns: Json
       }
       are_friends: {
