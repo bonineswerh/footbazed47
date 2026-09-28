@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path=public,extensions;
-select plan(17);
+select plan(20);
 insert into auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
 ('13000000-0000-0000-0000-000000000001','authenticated','authenticated','diary-owner@example.test','{}','{}',now(),now()),
 ('13000000-0000-0000-0000-000000000002','authenticated','authenticated','diary-private@example.test','{}','{}',now(),now());
@@ -35,6 +35,9 @@ select is((public.get_football_statistics('clubs','{"league":"Diary League A"}')
 select is((public.get_football_statistics('players','{"league":"Diary League A"}')->'items'->0->>'average')::numeric,9.0::numeric,'player average uses player votes');
 select is((public.get_football_statistics('leagues','{"league":"Diary League A"}')->'items'->0->>'votes')::integer,7,'league counts its eligible ratings');
 select is((public.get_football_statistics('matches','{"league":"Diary League A","min_votes":2}')->>'total')::integer,0,'minimum sample filter hides one-vote matches');
+select is((public.get_football_statistics('matches','{"min_votes":2}')->'summary'->>'votes')::integer,0,'summary respects minimum sample filter');
+select is((public.get_football_statistics('clubs','{"league":"Diary League A"}')->'summary'->>'votes')::integer,7,'club summary never double counts the same match vote');
+select is((public.get_football_statistics('players','{"query":"missing player"}')->'summary'->>'matches')::integer,0,'summary respects entity search');
 select throws_ok($$select public.get_football_statistics('users')$$,'22023','invalid_statistics_filters','no user leaderboard or unsupported kinds');
 select throws_ok($$select public.get_profile_diary('13000000-0000-0000-0000-000000000001','{"from":"2026-09-20","to":"2026-09-01"}')$$,'22023','invalid_diary_filters','reversed dates are rejected');
 set local role authenticated;

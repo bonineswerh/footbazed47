@@ -45,6 +45,8 @@ for(const scenario of [
   {name:'match light mobile',url:'/match/101?__e2e=1',ready:'.md-hero',viewport:{width:390,height:844},theme:'light'},
   {name:'calendar light desktop',url:'/?__e2e=1#matches',ready:'#matchG .mcard',viewport:{width:1280,height:720},theme:'light'},
   {name:'admin mobile',url:'/?__e2e=1#admin',ready:'#adminMetrics .admin-metric',viewport:{width:390,height:844}},
+  {name:'overview dark mobile',url:'/discover?__e2e=1',ready:'.statistics-row',viewport:{width:390,height:844}},
+  {name:'overview light desktop',url:'/discover?__e2e=1',ready:'.statistics-row',viewport:{width:1440,height:1000},theme:'light'},
   {name:'home light desktop',url:'/?__e2e=1#home',ready:'#homeDashboardTitle',viewport:{width:1280,height:720},theme:'light'},
   {name:'feed light mobile',url:'/?__e2e=1#feed',ready:'.feed-entry',viewport:{width:390,height:844},theme:'light'}
 ]){

@@ -107,7 +107,7 @@ function ensureFeatureModule({key,styleId,style,script,ready}){
 }
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=45',script:'js/admin.js?v=45',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=45',script:'js/admin.js?v=46',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=55',script:'js/entities.js?v=55',ready:()=>window.FBZEntities});
@@ -401,7 +401,7 @@ async function addFriend(fid){
 function ensureProfileModule(){
   return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=2',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
-function ensureExploreModule(){return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=1',script:'js/explore.js?v=1',ready:()=>window.FBZExplore});}
+function ensureExploreModule(){return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=2',script:'js/explore.js?v=1',ready:()=>window.FBZExplore});}
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
   const target=document.getElementById('profileW');

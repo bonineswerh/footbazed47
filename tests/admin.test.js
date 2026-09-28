@@ -95,3 +95,27 @@ test('malformed provider collections fail before any database import',async()=>{
     assert.equal(app.calls.some(call=>call.method==='POST'),false);
   }
 });
+
+test('catalogue reset requires a prepared batch and uses the protected transaction',async()=>{
+  const app=api(),base={action:'cleanup_development_data',scope:'all',confirmation:'DELETE FOOTBAZED DATA'};
+  assert.equal((await app.send(base)).status,400);
+  assert.equal((await app.send({...base,batch:'not-a-batch'})).status,400);
+  const batch='14000000-0000-4000-8000-000000000001';
+  assert.equal((await app.send({...base,batch})).status,200);
+  assert.deepEqual(app.calls.find(c=>c.url.endsWith('/rpc/admin_apply_prepared_catalog')).body,{p_batch:batch,p_confirmation:base.confirmation});
+});
+
+test('catalogue preparation validates both provider collections and writes only staging',async()=>{
+  const teams=[{id:2,name:'Home',clubColors:'Blue / White',squad:[{id:9,name:'Player',position:'Goalkeeper'}]},{id:3,name:'Away',squad:[]}];
+  const matches=[{id:1,homeTeam:teams[0],awayTeam:teams[1],utcDate:'2026-09-24T19:00:00Z',status:'FINISHED',score:{fullTime:{home:2,away:1}}}];
+  const body={action:'prepare_catalog',batch:'14000000-0000-4000-8000-000000000001',league:'PL',dateFrom:'2026-09-01',dateTo:'2026-10-10'};
+  const app=api({route:c=>({data:c.url.includes('/matches?')?{matches,competition:{id:2021}}:c.url.includes('/teams')?{teams}:{} })});
+  assert.equal((await app.send(body)).status,200);
+  const stage=app.calls.find(c=>c.url.endsWith('/rpc/admin_stage_catalog'));
+  assert.equal(stage.body.p_payload.players[0].metadata.external_id,9);
+  assert.equal(stage.body.p_payload.clubs[0].club_colors,'Blue / White');
+  assert.equal(app.calls.some(c=>/\/rest\/v1\/(matches|players|clubs)\?/.test(c.url)),false);
+  const broken=api({route:c=>({data:c.url.includes('/matches?')?{matches}: {teams:[]}})});
+  assert.equal((await broken.send(body)).status,502);
+  assert.equal(broken.calls.some(c=>c.method==='POST'),false);
+});

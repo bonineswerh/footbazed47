@@ -122,6 +122,8 @@ begin
       max(e.home_score) home_score,max(e.away_score) away_score
     from entries e where q='' or position(lower(q) in lower(e.title||' '||coalesce(e.subtitle,'')))>0
     group by e.entity_key having count(*)>=min_votes
+  ), selected_votes as materialized (
+    select distinct e.match_id,e.user_id from entries e join grouped g using(entity_key)
   ), ranked as (
     select g.*,row_number() over(order by
       case when ordering='average' then g.average end desc,
@@ -134,7 +136,7 @@ begin
     'total',(select count(*) from grouped),
     'has_more',(select count(*)>page_offset+page_size from grouped),
     'next_offset',page_offset+page_size,
-    'summary',jsonb_build_object('matches',(select count(distinct match_id) from base),'votes',(select count(*) from base),'voters',(select count(distinct user_id) from base)),
+    'summary',jsonb_build_object('matches',(select count(distinct match_id) from selected_votes),'votes',(select count(*) from selected_votes),'voters',(select count(distinct user_id) from selected_votes)),
     'leagues',coalesce((select jsonb_agg(x.league_name order by x.league_name) from (select distinct league_name from public.matches limit 200) x),'[]'::jsonb),
     'teams',coalesce((select jsonb_agg(x.name order by x.name) from (select home_team_name name from public.matches union select away_team_name from public.matches limit 1000) x),'[]'::jsonb)
   ) into result;

@@ -389,14 +389,15 @@
               <div><h2>Данные разработки</h2><p>Контролируемая очистка тестовых данных перед следующей синхронизацией</p></div>
             </div>
             <section class="admin-panel admin-danger-panel">
-              <div class="admin-panel-head"><h3>Необратимая операция</h3><span>Только для текущего этапа разработки</span></div>
+              <div class="admin-panel-head"><h3>Замена тестового каталога</h3><span>С резервной копией</span></div>
+              <div class="admin-danger-copy"><p>Сначала подготовьте матчи за последние 30 дней и ближайшие две недели, клубы и составы шести турниров. Подготовка занимает около двух минут. Если загрузка не удастся, текущие данные сохранятся.</p><button class="btn btn-g" type="button" id="adminPrepareCatalog" onclick="FBZAdmin.prepareCatalog()">Подготовить новый каталог</button><p id="adminCatalogProgress" role="status" aria-live="polite"></p></div>
               <div class="admin-danger-copy"><strong>Пользователи и их аккаунты не удаляются.</strong><p>Удаляются выбранные матчи, игроки или оценки вместе с зависимыми данными. Действие выполняет защищённая серверная функция и записывает результат в журнал администратора.</p></div>
               <label class="admin-danger-confirm"><span>Введите контрольную фразу</span><input type="text" id="adminCleanupConfirm" autocomplete="off" spellcheck="false" placeholder="DELETE FOOTBAZED DATA" oninput="FBZAdmin.updateCleanupState()"></label>
               <div class="admin-danger-actions">
                 <button class="btn btn-danger admin-cleanup-action" type="button" onclick="FBZAdmin.cleanup('ratings')" disabled>Удалить оценки</button>
                 <button class="btn btn-danger admin-cleanup-action" type="button" onclick="FBZAdmin.cleanup('players')" disabled>Удалить игроков</button>
                 <button class="btn btn-danger admin-cleanup-action" type="button" onclick="FBZAdmin.cleanup('matches')" disabled>Удалить матчи</button>
-                <button class="btn btn-danger admin-cleanup-action all" type="button" onclick="FBZAdmin.cleanup('all')" disabled>Удалить всё тестовое</button>
+                <button class="btn btn-danger admin-cleanup-action all" type="button" onclick="FBZAdmin.cleanup('all')" disabled>Заменить всё тестовое</button>
               </div>
               <div class="admin-cleanup-result" id="adminCleanupResult" role="status" aria-live="polite"></div>
             </section>

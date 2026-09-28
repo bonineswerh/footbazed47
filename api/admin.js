@@ -173,9 +173,10 @@ async function cleanupDevelopmentData(body) {
     error.status = 400;
     throw error;
   }
-  const response = await supabase('/rest/v1/rpc/admin_cleanup_development_data', {
+  if (scope === 'all' && !validBatch(body.batch)) throw Object.assign(new Error('prepared_catalog_required'), {status:400});
+  const response = await supabase(scope === 'all' ? '/rest/v1/rpc/admin_apply_prepared_catalog' : '/rest/v1/rpc/admin_cleanup_development_data', {
     method: 'POST',
-    body: {p_scope: scope, p_confirmation: confirmation}
+    body: scope === 'all' ? {p_batch:body.batch,p_confirmation:confirmation} : {p_scope: scope, p_confirmation: confirmation}
   });
   return parseJson(response.raw, {});
 }
@@ -336,6 +337,41 @@ function clubPayload(team) {
     club_colors: team.clubColors || undefined,
     updated_at: new Date().toISOString()
   }).filter(([, value]) => value !== undefined && value !== null && value !== ''));
+}
+
+function validBatch(value) { return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value); }
+
+async function prepareCatalog(input) {
+  const league=requireLeague(input.league),from=requireDate(input.dateFrom,'dateFrom'),to=requireDate(input.dateTo,'dateTo');
+  if (!validBatch(input.batch) || to<from || Date.parse(to)-Date.parse(from)>62*86400000) throw Object.assign(new Error('invalid_catalog_request'),{status:400});
+  const schedule=await football(`/competitions/${league}/matches?dateFrom=${from}&dateTo=${to}`);
+  const squads=await football(`/competitions/${league}/teams`);
+  const validTeam=t=>Number.isSafeInteger(t?.id)&&t.id>0&&typeof t.name==='string'&&t.name.trim().length>0;
+  const validScore=n=>n==null||Number.isInteger(n)&&n>=0&&n<=99;
+  if (!Array.isArray(schedule.matches)||!schedule.matches.length||schedule.matches.length>2000||
+      !Array.isArray(squads.teams)||squads.teams.length<2||squads.teams.length>100||
+      squads.teams.some(t=>!validTeam(t)||!Array.isArray(t.squad)||t.squad.some(p=>typeof p.name!=='string'||!p.name.trim()))||
+      schedule.matches.some(m=>!Number.isSafeInteger(m?.id)||m.id<=0||!validTeam(m.homeTeam)||!validTeam(m.awayTeam)||m.homeTeam.id===m.awayTeam.id||
+        typeof m.utcDate!=='string'||Number.isNaN(Date.parse(m.utcDate))||!validScore(m.score?.fullTime?.home)||!validScore(m.score?.fullTime?.away))) {
+    throw Object.assign(new Error('invalid_catalog_response'),{status:502});
+  }
+  const clubs=new Map(squads.teams.map(t=>[t.id,clubPayload(t)]));
+  for(const m of schedule.matches)for(const t of [m.homeTeam,m.awayTeam])if(!clubs.has(t.id))clubs.set(t.id,clubPayload(t));
+  const players=new Map();
+  for(const t of squads.teams)for(const p of t.squad)players.set(JSON.stringify([p.name.trim(),t.id]),{
+    name:p.name.trim(),external_club_id:t.id,position:mapPosition(p.position),shirt_number:Number.isInteger(p.shirtNumber)?p.shirtNumber:null,
+    metadata:Number.isSafeInteger(p.id)&&p.id>0?{external_id:p.id,provider:'football-data.org'}:{provider:'football-data.org'}
+  });
+  if(!players.size||players.size>6000)throw Object.assign(new Error('empty_squads'),{status:502});
+  const matches=[...new Map(schedule.matches.map(m=>[m.id,{
+    external_id:m.id,home_external_id:m.homeTeam.id,away_external_id:m.awayTeam.id,match_date:m.utcDate,status:mapStatus(m.status),
+    home_score:m.score?.fullTime?.home??null,away_score:m.score?.fullTime?.away??null,matchday:Number.isInteger(m.matchday)?m.matchday:null,
+    season:m.season?.startDate?String(m.season.startDate).slice(0,4):null
+  }])).values()];
+  const competition=schedule.competition||squads.competition||{};
+  const payload={from,to,competition:{external_id:Number.isSafeInteger(competition.id)?competition.id:null,code:league,name:LEAGUES[league],area_name:squads.area?.name||null,competition_type:league==='CL'?'CUP':'LEAGUE'},clubs:[...clubs.values()],players:[...players.values()],matches};
+  const response=await supabase('/rest/v1/rpc/admin_stage_catalog',{method:'POST',body:{p_batch:input.batch,p_league:league,p_payload:payload}});
+  return parseJson(response.raw,{});
 }
 
 async function upsertClubs(teams) {
@@ -510,6 +546,11 @@ module.exports = async function handler(req, res) {
 
     const body = await readBody(req);
     const action = String(body.action || '');
+    if (action === 'prepare_catalog') {
+      const result=await prepareCatalog(body);
+      await recordAdminAction(administrator.id,action,{targetType:'league',targetId:result.league,metadata:{batch:result.batch,matches:result.matches,players:result.players}});
+      return sendJson(res,200,result);
+    }
     if (action === 'sync_matches') {
       const result = await syncMatches(body);
       await recordAdminAction(administrator.id, action, {targetType:'league', targetId:result.league, metadata:{processed:result.processed}});

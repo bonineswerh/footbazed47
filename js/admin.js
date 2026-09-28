@@ -9,6 +9,7 @@
     matches: [],
     activities: []
   };
+  let catalogBatch=null,catalogReady=false;
   const STATUS_LABELS = {
     scheduled: 'Запланирован', live: 'LIVE', finished: 'Завершен',
     postponed: 'Перенесен', cancelled: 'Отменен'
@@ -208,7 +209,7 @@
 
   function setSyncing(next){
     state.syncing = next;
-    ['adminSyncMatches','adminSyncSquads'].forEach(id => {
+    ['adminSyncMatches','adminSyncSquads','adminPrepareCatalog'].forEach(id => {
       const button = document.getElementById(id);
       if (button) button.disabled = next;
     });
@@ -220,7 +221,7 @@
   function updateCleanupState(){
     const valid = document.getElementById('adminCleanupConfirm')?.value === 'DELETE FOOTBAZED DATA';
     document.querySelectorAll('.admin-cleanup-action').forEach(button => {
-      button.disabled = state.syncing || !valid;
+      button.disabled = state.syncing || !valid || (button.classList.contains('all')&&!catalogReady);
     });
   }
 
@@ -228,20 +229,22 @@
     if (state.syncing) return;
     const confirmation = document.getElementById('adminCleanupConfirm')?.value || '';
     if (confirmation !== 'DELETE FOOTBAZED DATA') return toast('Введите контрольную фразу полностью','err');
-    const labels = {ratings:'все оценки', players:'всех игроков', matches:'все матчи', all:'все матчи, игроков и оценки'};
+    if(scope==='all'&&!catalogReady)return toast('Сначала подготовьте новый каталог','err');
+    const labels = {ratings:'все оценки', players:'всех игроков', matches:'все матчи', all:'все матчи, игроков, клубы, турниры и оценки'};
     window.FBZConfirm.open({
       title:'Подтвердите очистку данных',
-      message:`Будут необратимо удалены ${labels[scope] || 'выбранные данные'}. Аккаунты пользователей сохранятся.`,
-      confirmText:'Удалить данные',
+      message:`Будут удалены ${labels[scope] || 'выбранные данные'}. Сервер сохранит резервную копию. Аккаунты и переписки сохранятся.${scope==='all'?' Новый каталог заменит старый одной операцией.':''}`,
+      confirmText:scope==='all'?'Заменить каталог':'Удалить данные',
       onConfirm:async()=>{
         setSyncing(true);
         setHealth('Удаляем тестовые данные', 'loading');
         try{
-          const result = await request('cleanup_development_data', {scope, confirmation});
+          const result = await request('cleanup_development_data', {scope, confirmation,...(scope==='all'?{batch:catalogBatch}:{})});
           const deleted = result.deleted || {};
           const summary = `Матчи: ${Number(deleted.matches || 0)}, игроки: ${Number(deleted.players || 0)}, оценки: ${Number(deleted.ratings || 0)}`;
           const host = document.getElementById('adminCleanupResult');
-          if (host) host.innerHTML = `<b>Очистка завершена</b><span>${esc(summary)}</span>`;
+          if (host) host.innerHTML = `<b>${result.imported?'Каталог заменён':'Очистка завершена'}</b><span>${esc(summary)}</span>${result.imported?`<span>Загружено: ${Number(result.imported.clubs)} клубов, ${Number(result.imported.players)} игроков, ${Number(result.imported.matches)} матчей.</span>`:''}<span>Резервная копия: ${esc(result.backup_id||'—')}</span>`;
+          if(scope==='all'){catalogReady=false;catalogBatch=null;}
           document.getElementById('adminCleanupConfirm').value = '';
           addActivity(`Очистка ${scope}: ${summary}`);
           toast('Выбранные данные удалены','ok');
@@ -259,6 +262,23 @@
         }
       }
     });
+  }
+
+  async function prepareCatalog(){
+    if(state.syncing)return;
+    catalogReady=false;catalogBatch=crypto.randomUUID();setSyncing(true);
+    const now=new Date(),start=new Date(now),end=new Date(now);start.setDate(start.getDate()-30);end.setDate(end.getDate()+14);
+    const leagues=['PL','PD','BL1','SA','FL1','CL'],host=document.getElementById('adminCatalogProgress');
+    try{
+      for(let i=0;i<leagues.length;i++){
+        host.textContent=`Подготовка ${i+1} из 6 · ${leagues[i]}. Действующий каталог остаётся доступным.`;
+        const result=await request('prepare_catalog',{batch:catalogBatch,league:leagues[i],dateFrom:start.toISOString().slice(0,10),dateTo:end.toISOString().slice(0,10)});
+        addActivity(`Подготовлено ${leagues[i]}: ${Number(result.matches)} матчей, ${Number(result.players)} игроков`);
+        if(i<leagues.length-1){host.textContent=`Готово ${i+1} из 6. Пауза перед следующей лигой с учётом лимита API.`;await sleep(15000);}
+      }
+      catalogReady=true;host.textContent='Все 6 турниров подготовлены. Можно заменить каталог с резервной копией.';
+    }catch(error){host.textContent='Подготовка не завершена. Старые данные сохранены. '+error.message;toast(error.message,'err');}
+    finally{setSyncing(false);}
   }
 
   function renderTasks(leagues, mode){
@@ -414,5 +434,5 @@
     }
   }
 
-  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState};
+  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog};
 })();
