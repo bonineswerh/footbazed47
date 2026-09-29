@@ -351,7 +351,7 @@ test('avatar is normalized and stored outside the profile row',async({page})=>{
   }),'base64');
   await page.route('https://storage.example.test/**',route=>route.fulfill({status:200,contentType:'image/jpeg',body:pixel}));
   await page.goto('/?__e2e=1#profile/3615141a-7700-46b8-9ba5-e4f4450537fc');
-  await page.locator('button[onclick="editProfile()"]').click();
+  await page.locator('button[data-fbz-click="profile.edit-profile"]').click();
   await page.locator('#avFile').setInputFiles({name:'avatar.png',mimeType:'image/png',buffer:pixel});
   await expect(page.locator('#avPreview img')).toHaveAttribute('src',/^blob:/u);
   await page.locator('#epSaveBtn').click();

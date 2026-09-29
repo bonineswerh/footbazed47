@@ -10,7 +10,7 @@
     if(badge){badge.textContent=String(unread);badge.classList.toggle('on',unread>0);}
     el('notifBtn')?.setAttribute('aria-label',unread?`Уведомления: ${unread} непрочитанных`:'Уведомления');
     el('notifMarkAll').disabled=writing||!unread;
-    el('notifList').innerHTML=items.length?items.map(item=>`<button type="button" class="notif-item${item.read?'':' unread'}" data-notification="${Number(item.id)}" onclick="FBZNotifications.openItem(${Number(item.id)},this)"><span class="notif-ico">${ico({friend_request:'users',like:'heart',comment:'chat'}[item.type]||'bell',18)}</span><span class="notif-content"><span class="notif-text">${esc(item.message||'Уведомление')}</span><time class="notif-time" datetime="${esc(item.created_at)}">${new Date(item.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</time></span>${item.read?'':'<span class="notif-unread" aria-label="Непрочитанное"></span>'}</button>`).join(''):'<div class="notif-empty">'+ico('bell',26)+'<strong>Пока тихо</strong><p>Заявки в друзья и отклики на ваши оценки появятся здесь.</p></div>';
+    el('notifList').innerHTML=items.length?items.map(item=>`<button type="button" class="notif-item${item.read?'':' unread'}" data-notification="${Number(item.id)}" ${FBZActions.attrs("notifications.open-item",[Number(item.id)])}><span class="notif-ico">${ico({friend_request:'users',like:'heart',comment:'chat'}[item.type]||'bell',18)}</span><span class="notif-content"><span class="notif-text">${esc(item.message||'Уведомление')}</span><time class="notif-time" datetime="${esc(item.created_at)}">${new Date(item.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</time></span>${item.read?'':'<span class="notif-unread" aria-label="Непрочитанное"></span>'}</button>`).join(''):'<div class="notif-empty">'+ico('bell',26)+'<strong>Пока тихо</strong><p>Заявки в друзья и отклики на ваши оценки появятся здесь.</p></div>';
   }
   async function load(){
     const user=CU?.id,token=++version;
@@ -26,7 +26,7 @@
       items=result.data||[];totalUnread=Number(count.count)||0;render();
     }catch(error){
       if(token!==version||CU?.id!==user)return;
-      el('notifList').innerHTML='<div class="notif-empty"><strong>Не удалось загрузить уведомления</strong><p>Попробуйте ещё раз.</p><button class="btn btn-g btn-sm" onclick="loadNotifications()">Повторить</button></div>';
+      el('notifList').innerHTML='<div class="notif-empty"><strong>Не удалось загрузить уведомления</strong><p>Попробуйте ещё раз.</p><button class="btn btn-g btn-sm" data-fbz-click="notifications.load-notifications">Повторить</button></div>';
     }finally{if(token===version)el('notifList').setAttribute('aria-busy','false');}
   }
   function toggle(){
@@ -79,3 +79,9 @@
   document.addEventListener('focusin',event=>{if(opened&&!event.target.closest('#notifPanel')&&!event.target.closest('#notifBtn'))close();});
   window.FBZNotifications={load,toggle,close,openItem,markAll,resetSession};
 })();
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "notifications.open-item":(event,element,[id])=>FBZNotifications.openItem(id,element),
+  "notifications.load-notifications":()=>loadNotifications()
+});

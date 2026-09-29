@@ -3,7 +3,7 @@
   const profileFriendActions=new Set();
   let diary=null,disposeDiary=null;
   function diaryMarkup(){
-    return '<section class="pcard" aria-labelledby="diaryTitle"><div class="collection-toolbar"><h2 id="diaryTitle">История оценок</h2><p id="diaryCount" aria-live="polite"></p></div>'+root.FBZExplore.filters('diaryFilters',{diary:true})+'<div id="diaryError"></div><div class="diary-list" id="diaryList" aria-busy="true"></div><div class="collection-pagination"><span id="diaryPage" aria-live="polite"></span><div><button class="btn btn-g btn-sm" id="diaryPrevious" type="button" onclick="FBZProfile.diaryPage(-1)">Назад</button><button class="btn btn-g btn-sm" id="diaryNext" type="button" onclick="FBZProfile.diaryPage(1)">Далее →</button></div></div></section>';
+    return '<section class="pcard" aria-labelledby="diaryTitle"><div class="collection-toolbar"><h2 id="diaryTitle">История оценок</h2><p id="diaryCount" aria-live="polite"></p></div>'+root.FBZExplore.filters('diaryFilters',{diary:true})+'<div id="diaryError"></div><div class="diary-list" id="diaryList" aria-busy="true"></div><div class="collection-pagination"><span id="diaryPage" aria-live="polite"></span><div><button class="btn btn-g btn-sm" id="diaryPrevious" type="button" data-fbz-click="profile.diary-previous">Назад</button><button class="btn btn-g btn-sm" id="diaryNext" type="button" data-fbz-click="profile.diary-next">Далее →</button></div></div></section>';
   }
   function diaryCurrent(s){return diary===s&&s.user===CU?.id&&s.route===routeVersion&&s.profile===profileVersion&&CP==='profile';}
   function diaryControls(){if(!diary)return;document.getElementById('diaryPrevious').disabled=diary.loading||diary.index===0;document.getElementById('diaryNext').disabled=diary.loading||!diary.hasMore;}
@@ -24,11 +24,11 @@
       list.innerHTML=items.length?items.map(r=>{
         const score=root.FBZDomain.ratingPresentation(r.match_rating),date=new Date(r.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
         const result=r.home_score!==null&&r.away_score!==null?`<span class="diary-scoreline">${Number(r.home_score)} : ${Number(r.away_score)}</span> · `:'';
-        return `<button class="rh-row" type="button" onclick="go('md',{mid:${Number(r.match_id)}})"><div><div class="rh-m">${esc(r.home_team_name)} — ${esc(r.away_team_name)}</div><div class="rh-l">${result}${esc(r.league_name)} · ${esc(date)}${r.is_public?'':' · Только вам'}</div></div><div class="rh-r"><div class="rh-v" data-tone="${score.tone}">${score.value}<span class="score-denominator">/10</span></div></div></button>`;
-      }).join(''):(root.FBZExplore.activeCount(document.getElementById('diaryFilters'))?'<div class="empty-state"><strong>Оценок по этим условиям нет</strong><p>Измените поиск или сбросьте фильтры.</p></div>':'<div class="empty-state"><strong>История оценок пока пуста</strong><p>Здесь появятся оценки просмотренных матчей.</p><button class="btn btn-g" type="button" onclick="go(\'matches\')">Найти матч</button></div>');
+        return `<button class="rh-row" type="button" ${FBZActions.attrs("profile.go-md",[Number(r.match_id)])}><div><div class="rh-m">${esc(r.home_team_name)} — ${esc(r.away_team_name)}</div><div class="rh-l">${result}${esc(r.league_name)} · ${esc(date)}${r.is_public?'':' · Только вам'}</div></div><div class="rh-r"><div class="rh-v" data-tone="${score.tone}">${score.value}<span class="score-denominator">/10</span></div></div></button>`;
+      }).join(''):(root.FBZExplore.activeCount(document.getElementById('diaryFilters'))?'<div class="empty-state"><strong>Оценок по этим условиям нет</strong><p>Измените поиск или сбросьте фильтры.</p></div>':'<div class="empty-state"><strong>История оценок пока пуста</strong><p>Здесь появятся оценки просмотренных матчей.</p><button class="btn btn-g" type="button" data-fbz-click="shell.go-matches">Найти матч</button></div>');
       document.getElementById('diaryCount').textContent=root.FBZDomain.countLabel(Number(data.total),{one:'оценка',few:'оценки',many:'оценок'});
       document.getElementById('diaryPage').textContent=items.length?`${s.index*8+1}–${s.index*8+items.length} из ${Number(data.total)}`:'Нет записей';
-    }catch(error){if(diaryCurrent(s)&&version===s.version){s.hasMore=false;document.getElementById('diaryPage').textContent='';document.getElementById('diaryError').innerHTML='<div class="collection-error" role="status"><span>Не удалось загрузить историю</span><button class="btn btn-g btn-sm" onclick="FBZProfile.retryDiary()">Повторить</button></div>';list.innerHTML='';}}
+    }catch(error){if(diaryCurrent(s)&&version===s.version){s.hasMore=false;document.getElementById('diaryPage').textContent='';document.getElementById('diaryError').innerHTML='<div class="collection-error" role="status"><span>Не удалось загрузить историю</span><button class="btn btn-g btn-sm" data-fbz-click="profile.retry-diary">Повторить</button></div>';list.innerHTML='';}}
     finally{if(diaryCurrent(s)&&version===s.version){s.loading=false;list.setAttribute('aria-busy','false');diaryControls();}}
   }
   function changeDiaryPage(direction){if(!diary||diary.loading)return;if(direction>0&&diary.hasMore){diary.cursors[++diary.index]=diary.next;}else if(direction<0&&diary.index>0){diary.index--;}else return;loadDiary();}
@@ -62,7 +62,7 @@ function renderProfileComparison(comparison,friend){
   const common=Number(comparison.common_matches)||0;
   if(!common)return`<div class="pcard pcompare"><div class="pcard-title">${ico('users',14)} Ваш футбольный ракурс</div><div class="empty-state" style="padding:12px 0">Пока нет общих публично оценённых матчей.</div></div>`;
   const agreement=Math.max(0,Math.min(100,Number(comparison.agreement_score)||0));
-  const rows=(comparison.closest||[]).map(item=>`<button type="button" onclick="go('md',{mid:${Number(item.match_id)}})"><span>${esc(item.home_team_name)} — ${esc(item.away_team_name)}</span><b>${item.my_score} : ${item.friend_score}</b></button>`).join('');
+  const rows=(comparison.closest||[]).map(item=>`<button type="button" ${FBZActions.attrs("profile.go-md",[Number(item.match_id)])}><span>${esc(item.home_team_name)} — ${esc(item.away_team_name)}</span><b>${item.my_score} : ${item.friend_score}</b></button>`).join('');
   return`<div class="pcard pcompare"><div class="pcard-title">${ico('users',14)} Ваш футбольный ракурс</div>
     <div class="pcompare-score"><div><strong>${agreement}%</strong><span>совпадение оценок</span></div><div><b>${common}</b><span>общих матчей</span></div><div><b>${Number(comparison.exact_matches)||0}</b><span>точных совпадений</span></div></div>
     <div class="pcompare-track"><i style="width:${agreement}%"></i></div>
@@ -139,21 +139,21 @@ async function loadProfile(uid){
     let friendBtn='';
     if(!isMe&&CU){
       const fr=payload.friendship;
-      if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.7;cursor:default">${ico('users',13)} В друзьях</button><button class="btn btn-l btn-sm" type="button" onclick="openFriendChat(${jsStr(uid)})">${ico('chat',13)} Чат</button>`;
+      if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.7;cursor:default">${ico('users',13)} В друзьях</button><button class="btn btn-l btn-sm" type="button" ${FBZActions.attrs("profile.open-friend-chat",[uid])}>${ico('chat',13)} Чат</button>`;
       else if(fr?.status==='pending'&&fr.direction==='outgoing')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.6;cursor:default">⏳ Заявка отправлена</button>`;
-      else if(fr?.status==='pending')friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" onclick="acceptFriendFromProfile(${jsStr(uid)})">${ico('users',13)} Принять заявку</button>`;
-      else friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" onclick="addFriendFromProfile(${jsStr(uid)})">${ico('users',13)} Добавить в друзья</button>`;
+      else if(fr?.status==='pending')friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" ${FBZActions.attrs("profile.accept-friend-from-profile",[uid])}>${ico('users',13)} Принять заявку</button>`;
+      else friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" ${FBZActions.attrs("profile.add-friend-from-profile",[uid])}>${ico('users',13)} Добавить в друзья</button>`;
     }else if(!isMe){
-      friendBtn=`<button class="btn btn-l btn-sm" onclick="openAuth()">Войти чтобы добавить</button>`;
+      friendBtn=`<button class="btn btn-l btn-sm" data-fbz-click="shell.open-auth">Войти чтобы добавить</button>`;
     }
-    const ownerActions=isMe?`<button class="btn btn-g btn-sm" onclick="editProfile()">${ico('edit',13)} Редактировать</button>`:friendBtn;
+    const ownerActions=isMe?`<button class="btn btn-g btn-sm" data-fbz-click="profile.edit-profile">${ico('edit',13)} Редактировать</button>`:friendBtn;
 
     w.innerHTML=`
     <div class="phero">
       ${avatarHtml}
       <h1 class="phero-name">${esc(u.display_name||u.username||'Болельщик')}</h1><p class="phero-hand">@${esc(u.username||'user')}</p>
       ${u.bio?`<div class="phero-bio">${esc(u.bio)}</div>`:''}
-      ${favoriteClubs.length?`<div class="profile-favorite-clubs" aria-label="Любимые клубы">${favoriteClubs.map(club=>`<button type="button" onclick="go('club',{id:${Number(club.id)}})">${window.FBZMedia.visual({entity:club,kind:'club',className:'profile-club-mark'})}<span>${esc(club.short_name||club.name)}</span></button>`).join('')}</div>`:''}
+      ${favoriteClubs.length?`<div class="profile-favorite-clubs" aria-label="Любимые клубы">${favoriteClubs.map(club=>`<button type="button" ${FBZActions.attrs("profile.go-club",[Number(club.id)])}>${window.FBZMedia.visual({entity:club,kind:'club',className:'profile-club-mark'})}<span>${esc(club.short_name||club.name)}</span></button>`).join('')}</div>`:''}
       <div class="phero-badges">
         <span class="pbadge pb-l">Болельщик</span>
         ${activeProfileStreak(u)>0?`<span class="pbadge pb-s">${ico('fire',12)} ${FBZDomain.countLabel(activeProfileStreak(u),{one:'день',few:'дня',many:'дней'})} подряд</span>`:''}
@@ -167,7 +167,7 @@ async function loadProfile(uid){
       </div>
       <div class="phero-acts">
         ${ownerActions}
-        <button class="btn btn-g btn-sm" onclick="copyAppLink(${jsStr('/profile/'+encodeURIComponent(uid))},'Ссылка на профиль')">${ico('link',13)} Ссылка</button>
+        <button class="btn btn-g btn-sm" ${FBZActions.attrs("profile.copy-app-link",['/profile/'+encodeURIComponent(uid)])}>${ico('link',13)} Ссылка</button>
       </div>
     </div>
     <div class="pgrid">
@@ -179,10 +179,10 @@ async function loadProfile(uid){
       <div>
         ${footballDiary}
         ${ratingDistribution}
-        ${isMe&&u.invite_code?`<div class="pcard"><div class="pcard-title">${ico('link',14)} Пригласи друга</div><div style="background:var(--bg3);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:12px;word-break:break-all;font-size:var(--type-meta);color:var(--accent2)">${esc(invitationUrl(u.invite_code))}</div><button class="btn btn-l" style="width:100%" onclick="copyInv(${jsStr(u.invite_code)})">${ico('copy',13)} Копировать ссылку</button></div>`:''}
+        ${isMe&&u.invite_code?`<div class="pcard"><div class="pcard-title">${ico('link',14)} Пригласи друга</div><div style="background:var(--bg3);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:12px;word-break:break-all;font-size:var(--type-meta);color:var(--accent2)">${esc(invitationUrl(u.invite_code))}</div><button class="btn btn-l" style="width:100%" ${FBZActions.attrs("profile.copy-inv",[u.invite_code])}>${ico('copy',13)} Копировать ссылку</button></div>`:''}
         <div class="pcard"><div class="pcard-title">${ico('share',14)} Поделиться</div>
-          <button class="btn btn-l" style="width:100%;margin-bottom:8px" onclick="openShare('profile',{name:${jsStr(u.display_name||'')},username:${jsStr(u.username||'user')},ratings:${cnt},avg:${jsStr(avg)},likes:${tl},friends:${friendCount},activity:${jsStr(FBZDomain.profileActivity(cnt).label)}})">${ico('photo',13)} Создать карточку</button>
-          <button class="btn btn-g" style="width:100%" onclick="expStats(${cnt},${jsStr(avg)},${jsStr(u.username||'user')})">${ico('copy',13)} Копировать текст</button>
+          <button class="btn btn-l" style="width:100%;margin-bottom:8px" ${FBZActions.attrs("profile.open-share-profile",[u.display_name||'',u.username||'user',cnt,avg,tl,friendCount,FBZDomain.profileActivity(cnt).label])}>${ico('photo',13)} Создать карточку</button>
+          <button class="btn btn-g" style="width:100%" ${FBZActions.attrs("profile.exp-stats",[cnt,avg,u.username||'user'])}>${ico('copy',13)} Копировать текст</button>
         </div>
       </div>
     </div>`;
@@ -190,7 +190,7 @@ async function loadProfile(uid){
   }catch(e){
     if(!current())return;
     console.error('Profile error:',e);
-    w.innerHTML=`<div class="empty-state"><strong>Не удалось загрузить профиль</strong><p>Проверьте соединение и попробуйте ещё раз.</p><button class="btn btn-g" onclick="loadProfile(${jsStr(uid)})">Повторить</button></div>`;
+    w.innerHTML=`<div class="empty-state"><strong>Не удалось загрузить профиль</strong><p>Проверьте соединение и попробуйте ещё раз.</p><button class="btn btn-g" ${FBZActions.attrs("profile.load-profile",[uid])}>Повторить</button></div>`;
   }
 }
 async function mutateProfileFriendship(fid,accept){
@@ -214,3 +214,21 @@ async function mutateProfileFriendship(fid,accept){
 
   root.FBZProfile=Object.freeze({mount:loadProfile,mutateFriendship:mutateProfileFriendship,diaryPage:changeDiaryPage,retryDiary:loadDiary});
 })(window);
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "profile.diary-previous":()=>FBZProfile.diaryPage(-1),
+  "profile.diary-next":()=>FBZProfile.diaryPage(1),
+  "profile.go-md":(event,element,[id])=>go('md',{mid:id}),
+  "profile.retry-diary":()=>FBZProfile.retryDiary(),
+  "profile.open-friend-chat":(event,element,[userId])=>openFriendChat(userId),
+  "profile.accept-friend-from-profile":(event,element,[userId])=>acceptFriendFromProfile(userId),
+  "profile.add-friend-from-profile":(event,element,[userId])=>addFriendFromProfile(userId),
+  "profile.edit-profile":()=>editProfile(),
+  "profile.go-club":(event,element,[id])=>go('club',{id:id}),
+  "profile.copy-app-link":(event,element,[url])=>copyAppLink(url,'Ссылка на профиль'),
+  "profile.copy-inv":(event,element,[code])=>copyInv(code),
+  "profile.open-share-profile":(event,element,[name,username,ratings,average,likes,friends,activity])=>openShare('profile',{name:name,username:username,ratings:ratings,avg:average,likes:likes,friends:friends,activity:activity}),
+  "profile.exp-stats":(event,element,[count,average,username])=>expStats(count,average,username),
+  "profile.load-profile":(event,element,[userId])=>loadProfile(userId)
+});

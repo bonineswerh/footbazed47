@@ -91,7 +91,7 @@ function renderMCard(match){
         <span class="mc-lg">${esc(match.league_name)}</span>
         <div class="mc-tags">${derby?`<span class="tag t-derby">${ico('fire',12)} Дерби</span>`:''}<span class="tag ${statusClass}">${esc(statusLabel)}</span></div>
       </div>
-      <button class="mc-score-block mc-score-link" type="button" aria-label="Открыть матч: ${esc(match.home_team_name)} против ${esc(match.away_team_name)}" onclick="go('md',{mid:${match.id}})">
+      <button class="mc-score-block mc-score-link" type="button" aria-label="Открыть матч: ${esc(match.home_team_name)} против ${esc(match.away_team_name)}" ${FBZActions.attrs("matches.go-md",[match.id])}>
         <span class="mc-score-team"><span class="mc-score-mark" aria-hidden="true">${esc(teamMonogram(match.home_team_name))}</span><span class="mc-score-name">${esc(match.home_team_name)}</span></span>
         <span class="mc-score-result"><span class="mc-score-num">${esc(match.home_score??'—')}<span class="mc-score-separator">:</span>${esc(match.away_score??'—')}</span><span class="mc-score-vs">${match.status==='scheduled'?'НЕТ СЧЁТА':'СЧЁТ'}</span></span>
         <span class="mc-score-team"><span class="mc-score-mark" aria-hidden="true">${esc(teamMonogram(match.away_team_name))}</span><span class="mc-score-name">${esc(match.away_team_name)}</span></span>
@@ -99,8 +99,8 @@ function renderMCard(match){
       <div class="mc-bottom">
         <span class="mc-meta-date">${ico('calendar',12)} ${fmtDate(match.match_date)}</span>
         <div class="mc-acts">
-          ${match.status==='finished'?`<button class="mbtn lime" onclick="openRate(${match.id})">${ico('star',14)} Оценить</button>`:''}
-          <button class="mbtn" aria-label="Обсуждение матча" title="Обсуждение" onclick="go('chat',{mid:${match.id},title:'Чат матча'})">${ico('chat',14)}</button>
+          ${match.status==='finished'?`<button class="mbtn lime" ${FBZActions.attrs("matches.open-rate",[match.id])}>${ico('star',14)} Оценить</button>`:''}
+          <button class="mbtn" aria-label="Обсуждение матча" title="Обсуждение" ${FBZActions.attrs("matches.go-chat",[match.id])}>${ico('chat',14)}</button>
         </div>
       </div>
     </div>
@@ -124,15 +124,15 @@ async function loadHomeM(){
   }catch(error){
     console.warn('loadHomeM:',error);
     window.FBZHome?.spotlight([]);
-    target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Не удалось загрузить матчи</strong><button class="btn btn-g btn-sm" onclick="loadHomeM()">Повторить</button></div>';
+    target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Не удалось загрузить матчи</strong><button class="btn btn-g btn-sm" data-fbz-click="matches.load-home-m">Повторить</button></div>';
   }
 }
 
 function renderLeagueTabs(){
   const target=document.getElementById('leagueTabs');
   if(!target)return;
-  target.innerHTML=`<button type="button" class="league-tab${ML==='all'?' on':''}" aria-pressed="${ML==='all'}" onclick="setLeague('all',this)">Все лиги</button>`+
-    matchLeagues.map(league=>`<button type="button" class="league-tab${ML===league?' on':''}" aria-pressed="${ML===league}" onclick="setLeague(${jsStr(league)},this)">${esc(league)}</button>`).join('');
+  target.innerHTML=`<button type="button" class="league-tab${ML==='all'?' on':''}" aria-pressed="${ML==='all'}" data-fbz-click="shell.set-league-all">Все лиги</button>`+
+    matchLeagues.map(league=>`<button type="button" class="league-tab${ML===league?' on':''}" aria-pressed="${ML===league}" ${FBZActions.attrs("matches.set-league",[league])}>${esc(league)}</button>`).join('');
 }
 
 function matchCountLabel(count){
@@ -168,7 +168,7 @@ function renderMatchResults(){
   }
 
   const shown=visible.length,total=matchTotal;
-  target.innerHTML=`<div class="match-results-summary"><span>Показано ${shown} из ${total}</span><span>${ML==='all'?'Все лиги':esc(ML)}</span></div>${content}${matchHasMore?`<div class="load-more-wrap"><button class="btn btn-g load-more" type="button" onclick="loadMoreMatches()">Показать ещё <span>${Math.min(matchPageSize(),Math.max(total-shown,0))}</span></button></div>`:''}`;
+  target.innerHTML=`<div class="match-results-summary"><span>Показано ${shown} из ${total}</span><span>${ML==='all'?'Все лиги':esc(ML)}</span></div>${content}${matchHasMore?`<div class="load-more-wrap"><button class="btn btn-g load-more" type="button" data-fbz-click="matches.load-more-matches">Показать ещё <span>${Math.min(matchPageSize(),Math.max(total-shown,0))}</span></button></div>`:''}`;
 }
 
 async function loadM(reset=true){
@@ -190,7 +190,7 @@ async function loadM(reset=true){
   }catch(error){
     if(requestId!==matchRequestId)return;
     console.error('Matches error:',error);
-    target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Календарь временно недоступен</strong><span>Проверь соединение и попробуй ещё раз.</span><button class="btn btn-g btn-sm" onclick="loadM(true)">Повторить</button></div>';
+    target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Календарь временно недоступен</strong><span>Проверь соединение и попробуй ещё раз.</span><button class="btn btn-g btn-sm" data-fbz-click="matches.load-m">Повторить</button></div>';
   }finally{
     if(requestId===matchRequestId)matchLoading=false;
   }
@@ -286,7 +286,7 @@ async function loadMD(id){
     const prediction=match.status==='scheduled'?`<section class="md-prediction"><div class="mdcard-title">${ico('target',15)} Прогноз на матч</div>${renderPredBlock(match)}</section>`:'';
     const competitionMeta=[match.season?`Сезон ${match.season}`:'',match.matchday?`${match.matchday}-й тур`:''].filter(Boolean).join(' · ');
     const segmentControls=ratingCount?`<div class="md-segments" role="group" aria-label="Чьи оценки показать">
-      ${[['all','Все'],['home',match.home_team_name],['neutral','Нейтральные'],['away',match.away_team_name]].map(([key,label])=>{const value=segments[key]||{};const segmentAverage=Number(value.average);const segmentHasAverage=Number(value.rating_count)>0&&Number.isFinite(segmentAverage);return`<button class="md-segment${key==='all'?' on':''}" type="button" data-segment="${key}" aria-pressed="${key==='all'}" onclick="setMatchRatingSegment('${key}',this)"><span>${esc(label)}</span><b data-tone="${segmentHasAverage?window.FBZDomain.ratingTone(segmentAverage):''}">${segmentHasAverage?segmentAverage.toFixed(1):'—'}</b><small>${Number(value.rating_count)||0}</small></button>`;}).join('')}
+      ${[['all','Все'],['home',match.home_team_name],['neutral','Нейтральные'],['away',match.away_team_name]].map(([key,label])=>{const value=segments[key]||{};const segmentAverage=Number(value.average);const segmentHasAverage=Number(value.rating_count)>0&&Number.isFinite(segmentAverage);return`<button class="md-segment${key==='all'?' on':''}" type="button" data-segment="${key}" aria-pressed="${key==='all'}" ${FBZActions.attrs("matches.set-match-rating-segment",[key])}><span>${esc(label)}</span><b data-tone="${segmentHasAverage?window.FBZDomain.ratingTone(segmentAverage):''}">${segmentHasAverage?segmentAverage.toFixed(1):'—'}</b><small>${Number(value.rating_count)||0}</small></button>`;}).join('')}
     </div>`:'';
     const communityMarkup=ratingCount?`<div class="md-comm">
       <div class="md-ci"><div class="md-cv" id="mdCommunityAverage" data-tone="${hasAverage?window.FBZDomain.ratingTone(averageValue):''}">${average}</div><div class="md-cl" id="mdCommunityLabel">Все зрители</div></div>
@@ -310,24 +310,24 @@ async function loadMD(id){
       <section class="md-hero" style="${FBZDomain.matchPaletteStyle(match)}">
         <div class="md-lg"><span>${esc(match.league_name)}</span><b class="md-status md-status-${esc(match.status)}">${esc(statusLabel)}</b></div>
         <div class="md-sl">
-          <div class="md-team"><span class="md-team-mark" aria-hidden="true">${esc(teamMonogram(match.home_team_name))}</span>${match.home_club_id?`<button class="md-tname md-club-link" type="button" onclick="go('club',{id:${Number(match.home_club_id)}})">${esc(match.home_team_name)}</button>`:`<div class="md-tname">${esc(match.home_team_name)}</div>`}<div class="md-score">${esc(match.home_score??'—')}</div></div>
+          <div class="md-team"><span class="md-team-mark" aria-hidden="true">${esc(teamMonogram(match.home_team_name))}</span>${match.home_club_id?`<button class="md-tname md-club-link" type="button" ${FBZActions.attrs("matches.go-club",[Number(match.home_club_id)])}>${esc(match.home_team_name)}</button>`:`<div class="md-tname">${esc(match.home_team_name)}</div>`}<div class="md-score">${esc(match.home_score??'—')}</div></div>
           <div class="md-vs">VS</div>
-          <div class="md-team"><span class="md-team-mark" aria-hidden="true">${esc(teamMonogram(match.away_team_name))}</span>${match.away_club_id?`<button class="md-tname md-club-link" type="button" onclick="go('club',{id:${Number(match.away_club_id)}})">${esc(match.away_team_name)}</button>`:`<div class="md-tname">${esc(match.away_team_name)}</div>`}<div class="md-score">${esc(match.away_score??'—')}</div></div>
+          <div class="md-team"><span class="md-team-mark" aria-hidden="true">${esc(teamMonogram(match.away_team_name))}</span>${match.away_club_id?`<button class="md-tname md-club-link" type="button" ${FBZActions.attrs("matches.go-club",[Number(match.away_club_id)])}>${esc(match.away_team_name)}</button>`:`<div class="md-tname">${esc(match.away_team_name)}</div>`}<div class="md-score">${esc(match.away_score??'—')}</div></div>
         </div>
         <div class="md-meta">${ico('calendar',12)} ${new Date(match.match_date).toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}${competitionMeta?`<span>·</span>${esc(competitionMeta)}`:''}</div>
         ${communityMarkup}
       </section>
       ${prediction}
       <div class="md-actions">
-        ${match.status==='finished'?`<button class="btn btn-l md-primary-action" onclick="openRate(${match.id})">${ico('star',16)} ${ownRating?'Изменить оценку':'Оценить матч'}</button>`:''}
-        <button class="btn btn-g" onclick="go('chat',{mid:${match.id},title:'Чат матча'})">${ico('chat',14)} Чат матча</button>
-        <button class="btn btn-g" onclick="copyAppLink('/match/${match.id}','Ссылка на матч')">${ico('link',14)} Ссылка</button>
+        ${match.status==='finished'?`<button class="btn btn-l md-primary-action" ${FBZActions.attrs("matches.open-rate",[match.id])}>${ico('star',16)} ${ownRating?'Изменить оценку':'Оценить матч'}</button>`:''}
+        <button class="btn btn-g" ${FBZActions.attrs("matches.go-chat",[match.id])}>${ico('chat',14)} Чат матча</button>
+        <button class="btn btn-g" ${FBZActions.attrs("matches.copy-app-link",[match.id])}>${ico('link',14)} Ссылка</button>
       </div>
       ${ownRatingMarkup}
       <div class="md-grid">
         <div>
-          <section class="mdcard"><div class="mdcard-title">Топ игроков</div>${topPlayers.length?topPlayers.map((player,index)=>{const presentation=window.FBZDomain.ratingPresentation(player.average,1);return`<button class="pr-row pr-row-link" data-tone="${presentation.tone}" type="button" onclick="go('player',{id:${Number(player.player_id)}})"><span class="pr-rank">${index+1}</span><span class="pr-info"><span class="pr-name">${esc(player.name)}</span><span class="pr-team">${esc(player.team)} · ${FBZDomain.countLabel(Number(player.rating_count)||0,{one:'оценка',few:'оценки',many:'оценок'})}${Number(player.best_votes)?` · ${Number(player.best_votes)} выборов лучшим`:''}</span></span><span class="pr-r"><span class="pr-bar"><span class="pr-fill" style="width:${presentation.progress}%"></span></span><span class="pr-val">${presentation.value}<span class="score-denominator">/10</span></span></span></button>`;}).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong><span>Они появятся, когда болельщики оценят составы.</span></div>'}</section>
-          <section class="mdcard"><div class="mdcard-title">Оценки болельщиков</div>${ratings?.length?ratings.slice(0,8).map(rating=>{const user=userMap[rating.user_id]||{};const sideLabel={home:match.home_team_name,away:match.away_team_name,neutral:'Нейтральный'}[rating.supporter_side]||'Нейтральный';return`<div class="rh-row"><div><button class="text-link rh-m" onclick="go('profile',{uid:'${rating.user_id}'})">${esc(user.username||'Аноним')}</button><div class="rh-l">@${esc(user.username||'user')} · ${esc(sideLabel)}${rating.comment?' · '+esc(rating.comment.substring(0,50)):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" data-tone="${window.FBZDomain.ratingTone(rating.match_rating)}" style="width:${(rating.match_rating||0)*10}%"></div></div><div class="rh-v" data-tone="${window.FBZDomain.ratingTone(rating.match_rating)}">${rating.match_rating}<span class="score-denominator">/10</span></div></div></div>`;}).join(''):`<div class="empty-state compact"><strong>${match.status==='finished'?'Оценок пока нет':'Обсуждение начнётся после матча'}</strong><span>${match.status==='finished'?'Сформируйте первое мнение о матче.':'Здесь появятся оценки болельщиков.'}</span>${match.status==='finished'?`<button class="btn btn-g btn-sm" type="button" onclick="openRate(${match.id})">Оценить первым</button>`:''}</div>`}</section>
+          <section class="mdcard"><div class="mdcard-title">Топ игроков</div>${topPlayers.length?topPlayers.map((player,index)=>{const presentation=window.FBZDomain.ratingPresentation(player.average,1);return`<button class="pr-row pr-row-link" data-tone="${presentation.tone}" type="button" ${FBZActions.attrs("matches.go-player",[Number(player.player_id)])}><span class="pr-rank">${index+1}</span><span class="pr-info"><span class="pr-name">${esc(player.name)}</span><span class="pr-team">${esc(player.team)} · ${FBZDomain.countLabel(Number(player.rating_count)||0,{one:'оценка',few:'оценки',many:'оценок'})}${Number(player.best_votes)?` · ${Number(player.best_votes)} выборов лучшим`:''}</span></span><span class="pr-r"><span class="pr-bar"><span class="pr-fill" style="width:${presentation.progress}%"></span></span><span class="pr-val">${presentation.value}<span class="score-denominator">/10</span></span></span></button>`;}).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong><span>Они появятся, когда болельщики оценят составы.</span></div>'}</section>
+          <section class="mdcard"><div class="mdcard-title">Оценки болельщиков</div>${ratings?.length?ratings.slice(0,8).map(rating=>{const user=userMap[rating.user_id]||{};const sideLabel={home:match.home_team_name,away:match.away_team_name,neutral:'Нейтральный'}[rating.supporter_side]||'Нейтральный';return`<div class="rh-row"><div><button class="text-link rh-m" ${FBZActions.attrs("app.go-profile",[rating.user_id])}>${esc(user.username||'Аноним')}</button><div class="rh-l">@${esc(user.username||'user')} · ${esc(sideLabel)}${rating.comment?' · '+esc(rating.comment.substring(0,50)):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" data-tone="${window.FBZDomain.ratingTone(rating.match_rating)}" style="width:${(rating.match_rating||0)*10}%"></div></div><div class="rh-v" data-tone="${window.FBZDomain.ratingTone(rating.match_rating)}">${rating.match_rating}<span class="score-denominator">/10</span></div></div></div>`;}).join(''):`<div class="empty-state compact"><strong>${match.status==='finished'?'Оценок пока нет':'Обсуждение начнётся после матча'}</strong><span>${match.status==='finished'?'Сформируйте первое мнение о матче.':'Здесь появятся оценки болельщиков.'}</span>${match.status==='finished'?`<button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs("matches.open-rate",[match.id])}>Оценить первым</button>`:''}</div>`}</section>
         </div>
         <section class="mdcard"><div class="mdcard-title">Распределение оценок</div><div id="mdDistribution">${distributionMarkup}</div></section>
       </div>`;
@@ -336,7 +336,7 @@ async function loadMD(id){
   }catch(error){
     if(!isCurrent())return;
     console.error('Match detail error:',error);
-    target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Не удалось открыть матч</strong><button class="btn btn-g btn-sm" onclick="loadMD('+Number(id)+')">Повторить</button></div>';
+    target.innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Не удалось открыть матч</strong><button class="btn btn-g btn-sm" ${FBZActions.attrs('matches.retry-match',[Number(id)])}>Повторить</button></div>`;
   }finally{
     if(isCurrent())target.setAttribute('aria-busy','false');
   }
@@ -394,7 +394,7 @@ function renderPredBlock(match){
       <label class="sr-only" for="pred-away-${match.id}">Голы ${esc(match.away_team_name)}</label>
       <input class="pred-input" id="pred-away-${match.id}" data-side="away" inputmode="numeric" type="number" min="0" max="20" placeholder="—">
     </div>
-    <button class="pred-btn" onclick="savePrediction(${match.id},this)">${ico('save',13)} ${CU?'Сохранить прогноз':'Войти и сохранить'}</button>
+    <button class="pred-btn" ${FBZActions.attrs("matches.save-prediction",[match.id])}>${ico('save',13)} ${CU?'Сохранить прогноз':'Войти и сохранить'}</button>
   </div>`;
 }
 
@@ -408,3 +408,20 @@ function renderPredResult(prediction,match){
   if(rightOutcome)return'<div class="pred-result close">Верный исход · 1 очко</div>';
   return'<div class="pred-result wrong">Прогноз не сыграл</div>';
 }
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "matches.retry-match":(event,element,[id])=>loadMD(id),
+  "matches.go-md":(event,element,[id])=>go('md',{mid:id}),
+  "matches.open-rate":(event,element,[id])=>openRate(id),
+  "matches.go-chat":(event,element,[mid])=>go('chat',{mid,title:'Чат матча'}),
+  "matches.load-home-m":()=>loadHomeM(),
+  "matches.set-league":(event,element,[league])=>setLeague(league,element),
+  "matches.load-more-matches":()=>loadMoreMatches(),
+  "matches.load-m":()=>loadM(true),
+  "matches.set-match-rating-segment":(event,element,[kind])=>setMatchRatingSegment(kind,element),
+  "matches.go-club":(event,element,[id])=>go('club',{id:id}),
+  "matches.copy-app-link":(event,element,[url])=>copyAppLink(("/match/"+url),'Ссылка на матч'),
+  "matches.go-player":(event,element,[id])=>go('player',{id:id}),
+  "matches.save-prediction":(event,element,[id])=>savePrediction(id,element)
+});

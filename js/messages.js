@@ -58,7 +58,7 @@
   }
 
   function errorState(message,action,label='Повторить'){
-    return`<div class="dm-empty"><span>${esc(message)}</span><button class="btn btn-g btn-sm" type="button" onclick="${action}">${esc(label)}</button></div>`;
+    return`<div class="dm-empty"><span>${esc(message)}</span><button class="btn btn-g btn-sm" type="button" ${action}>${esc(label)}</button></div>`;
   }
 
   function absoluteTime(value){
@@ -127,7 +127,7 @@
     const presentation=window.FBZDomain.ratingPresentation(score,Number.isInteger(score)?0:1);
     const title=`${rating.home_team_name||'Команда'} — ${rating.away_team_name||'Команда'}`;
     const result=rating.home_score===null||rating.home_score===undefined?'Матч':`${rating.home_score} : ${rating.away_score}`;
-    return`<button class="dm-rating-card" type="button" onclick="FBZMessages.close();go('md',{mid:${Number(rating.match_id)||0}})">
+    return`<button class="dm-rating-card" type="button" ${FBZActions.attrs("messages.open-match",[Number(rating.match_id)||0])}>
       <strong class="dm-rating-score" data-tone="${presentation.tone}" aria-label="Оценка ${presentation.label}">${presentation.label}</strong>
       <small>Оценка матча · ${esc(supporterLabel(rating.supporter_side))}</small>
       <b>${esc(title)}</b><span>${esc(result)} · Открыть матч →</span>
@@ -149,15 +149,15 @@
     const sender=message.sender||{};
     const name=sender.display_name||sender.username||'Болельщик';
     return`<article class="dm-message${own?' own':''}" data-message-id="${Number(message.id)}">
-      <div class="dm-message-avatar"><button type="button" onclick="FBZMessages.close();go('profile',{uid:${jsStr(message.sender_id)}})" aria-label="Профиль ${esc(name)}">${avatarMarkup(sender)}</button></div>
+      <div class="dm-message-avatar"><button type="button" ${FBZActions.attrs("messages.open-profile",[message.sender_id])} aria-label="Профиль ${esc(name)}">${avatarMarkup(sender)}</button></div>
       <div class="dm-bubble">
         <div class="dm-author">
-          <button type="button" onclick="FBZMessages.close();go('profile',{uid:${jsStr(message.sender_id)}})">@${esc(sender.username||'user')}</button>
+          <button type="button" ${FBZActions.attrs("messages.open-profile",[message.sender_id])}>@${esc(sender.username||'user')}</button>
           ${message.edited_at?'<small>ред.</small>':''}
           <time datetime="${esc(message.created_at)}">${esc(absoluteTime(message.created_at))}</time>
-          ${message.can_edit&&message.body?`<button class="dm-edit" type="button" onclick="FBZMessages.edit(${Number(message.id)})">Изменить</button>`:''}
+          ${message.can_edit&&message.body?`<button class="dm-edit" type="button" ${FBZActions.attrs("messages.edit",[Number(message.id)])}>Изменить</button>`:''}
         </div>
-        ${state.editingId===Number(message.id)?`<form class="dm-edit-form" onsubmit="FBZMessages.saveEdit(event,${Number(message.id)})"><label class="sr-only" for="dm-edit-${Number(message.id)}">Изменить сообщение</label><textarea id="dm-edit-${Number(message.id)}" maxlength="2000" rows="3" required>${esc(message.body)}</textarea><div><button class="btn btn-g btn-sm" type="button" onclick="FBZMessages.cancelEdit()">Отмена</button><button class="btn btn-l btn-sm" type="submit">Сохранить</button></div></form>`:message.body?`<div class="dm-text">${esc(message.body)}</div>`:''}
+        ${state.editingId===Number(message.id)?`<form class="dm-edit-form" ${FBZActions.attrs("messages.save-edit",[Number(message.id)],"submit")}><label class="sr-only" for="dm-edit-${Number(message.id)}">Изменить сообщение</label><textarea id="dm-edit-${Number(message.id)}" maxlength="2000" rows="3" required>${esc(message.body)}</textarea><div><button class="btn btn-g btn-sm" type="button" data-fbz-click="messages.cancel-edit">Отмена</button><button class="btn btn-l btn-sm" type="submit">Сохранить</button></div></form>`:message.body?`<div class="dm-text">${esc(message.body)}</div>`:''}
         ${mediaMarkup(message)}${ratingCard(message)}
       </div>
     </article>`;
@@ -181,7 +181,7 @@
     const editorFocused=editor===document.activeElement;
     if(!state.messages.length){host.innerHTML='<div class="dm-empty">Здесь пока нет сообщений.<br>Начните разговор или отправьте оценку матча.</div>';return;}
     let currentDay='';
-    const older=state.hasMore?`<div class="dm-history"><button class="btn btn-g btn-sm" type="button" onclick="FBZMessages.loadOlder()" ${state.loadingOlder?'disabled':''}>${state.loadingOlder?'Загружаем…':'Более ранние сообщения'}</button></div>`:'';
+    const older=state.hasMore?`<div class="dm-history"><button class="btn btn-g btn-sm" type="button" data-fbz-click="messages.load-older" ${state.loadingOlder?'disabled':''}>${state.loadingOlder?'Загружаем…':'Более ранние сообщения'}</button></div>`:'';
     host.innerHTML=older+state.messages.map(message=>{
       const label=dayLabel(message.created_at);
       const divider=label===currentDay?'':`<div class="dm-day"><span>${esc(label)}</span></div>`;
@@ -257,7 +257,7 @@
       if(version!==state.viewVersion||userId!==CU?.id)return;
       console.error('Direct chat error:',error);
       setComposer(false);el('directChatBack').hidden=false;
-      el('directChatBody').innerHTML=errorState('Не удалось открыть чат. Проверьте соединение и дружбу с пользователем.',`FBZMessages.openFriend(${jsStr(friendId)})`);
+      el('directChatBody').innerHTML=errorState('Не удалось открыть чат. Проверьте соединение и дружбу с пользователем.',FBZActions.attrs('messages.open-friend',[friendId]));
       setBusy('Чат временно недоступен',true);
     }
   }
@@ -287,11 +287,11 @@
     try{
       const friends=await acceptedFriends();
       if(version!==state.viewVersion||userId!==CU?.id)return;
-      if(!friends.length){host.innerHTML=errorState('Чтобы начать личный чат, сначала добавьте пользователя в друзья.',"FBZMessages.close();go('friends')",'Найти друзей');return;}
-      host.innerHTML=`<h2 class="dm-picker-title">${state.forwardRatingId?'Отправить оценку':'Выберите чат'}</h2><div class="dm-picker-list">${friends.map(user=>`<button class="dm-picker-item" type="button" onclick="FBZMessages.chooseFriend(${jsStr(user.id)})"><span class="dm-avatar">${avatarMarkup(user)}</span><span><b>${esc(user.display_name||user.username||'Болельщик')}</b><small>@${esc(user.username||'user')}</small></span><span>→</span></button>`).join('')}</div>`;
+      if(!friends.length){host.innerHTML=errorState('Чтобы начать личный чат, сначала добавьте пользователя в друзья.',FBZActions.attrs('messages.find-friends'),'Найти друзей');return;}
+      host.innerHTML=`<h2 class="dm-picker-title">${state.forwardRatingId?'Отправить оценку':'Выберите чат'}</h2><div class="dm-picker-list">${friends.map(user=>`<button class="dm-picker-item" type="button" ${FBZActions.attrs("messages.choose-friend",[user.id])}><span class="dm-avatar">${avatarMarkup(user)}</span><span><b>${esc(user.display_name||user.username||'Болельщик')}</b><small>@${esc(user.username||'user')}</small></span><span>→</span></button>`).join('')}</div>`;
     }catch(error){
       if(version!==state.viewVersion||userId!==CU?.id)return;
-      console.error('Friend picker error:',error);host.innerHTML=errorState('Не удалось загрузить список друзей.','FBZMessages.showPicker()');
+      console.error('Friend picker error:',error);host.innerHTML=errorState('Не удалось загрузить список друзей.',FBZActions.attrs('shell.messages-show-picker'));
     }
   }
 
@@ -421,7 +421,7 @@
 
   async function saveEdit(event,messageId){
     event.preventDefault();
-    const form=event.currentTarget,button=form.querySelector('[type="submit"]');
+    const form=event.target.closest('form'),button=form.querySelector('[type="submit"]');
     if(button.disabled)return;
     const body=form.querySelector('textarea').value.trim();
     if(!body||body.length>2000){toast('Введите сообщение от 1 до 2000 символов','err');return;}
@@ -446,3 +446,16 @@
   el('directChatInput').addEventListener('input',resizeComposer);
   window.FBZMessages=Object.freeze({attach,cancelEdit,chooseFriend,close,composerKeydown,edit,loadOlder,openFriend,pickFriend,resetSession,saveEdit,send,showPicker,toggleVoice});
 })();
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "messages.open-friend":(event,element,[id])=>FBZMessages.openFriend(id),
+  "messages.find-friends":()=>{FBZMessages.close();return go('friends');},
+  "messages.open-match":(event,element,[id])=>{FBZMessages.close();return go('md',{mid:id});},
+  "messages.open-profile":(event,element,[id])=>{FBZMessages.close();return go('profile',{uid:id});},
+  "messages.edit":(event,element,[id])=>FBZMessages.edit(id),
+  "messages.save-edit":(event,element,[id])=>FBZMessages.saveEdit(event,id),
+  "messages.cancel-edit":()=>FBZMessages.cancelEdit(),
+  "messages.load-older":()=>FBZMessages.loadOlder(),
+  "messages.choose-friend":(event,element,[userId])=>FBZMessages.chooseFriend(userId)
+});

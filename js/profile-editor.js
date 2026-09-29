@@ -7,14 +7,14 @@
     if(!CU){openAuth();return;}
     resetSession();
     const src=safeImageUrl(CU.avatar_url);
-    el('profileW').innerHTML=`<div class="profile-editor"><header><span class="section-kicker">Мой профиль</span><h1>Ваш футбольный профиль</h1><p>Так вас видят другие болельщики.</p></header><form onsubmit="FBZProfileEditor.save(event)">
-      <div class="profile-photo"><button class="profile-photo-button" type="button" onclick="document.getElementById('avFile').click()" aria-label="Выбрать фотографию профиля"><span id="avPreview">${src?`<img src="${src}" alt="">`:`<span class="phero-av ${avColor(CU.username)}">${esc((CU.username||'U')[0].toUpperCase())}</span>`}</span><span class="profile-photo-edit">${ico('photo',16)}</span></button><div><strong>Фото профиля</strong><p>JPG, PNG или WebP, до 5 МБ.<br>Сохраним квадратный аватар.</p></div><input id="avFile" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="FBZProfileEditor.preview(this)"></div>
+    el('profileW').innerHTML=`<div class="profile-editor"><header><span class="section-kicker">Мой профиль</span><h1>Ваш футбольный профиль</h1><p>Так вас видят другие болельщики.</p></header><form data-fbz-submit="profile-editor.profile-editor-save">
+      <div class="profile-photo"><button class="profile-photo-button" type="button" data-fbz-click="profile-editor.choose-avatar" aria-label="Выбрать фотографию профиля"><span id="avPreview">${src?`<img src="${src}" alt="">`:`<span class="phero-av ${avColor(CU.username)}">${esc((CU.username||'U')[0].toUpperCase())}</span>`}</span><span class="profile-photo-edit">${ico('photo',16)}</span></button><div><strong>Фото профиля</strong><p>JPG, PNG или WebP, до 5 МБ.<br>Сохраним квадратный аватар.</p></div><input id="avFile" type="file" accept="image/jpeg,image/png,image/webp" hidden data-fbz-change="profile-editor.profile-editor-preview"></div>
       <label for="ep_user">Никнейм</label><input class="input" id="ep_user" value="${esc(CU.username)}" minlength="3" maxlength="30" required autocomplete="nickname" aria-describedby="usernameHint"><p class="field-hint" id="usernameHint">3–30 символов: буквы, цифры и нижнее подчёркивание.</p>
       <label for="ep_email">Email</label><input class="input" id="ep_email" value="${esc(CU.email||'')}" readonly aria-describedby="emailHint"><p class="field-hint" id="emailHint">Доступен только вам.</p>
-      <label for="ep_bio">О себе <span>Необязательно</span></label><textarea class="input" id="ep_bio" rows="3" maxlength="120" placeholder="За кого болеете и что цените в футболе" oninput="FBZProfileEditor.updateCount()" aria-describedby="bioCount">${esc(CU.bio||'')}</textarea><p class="field-hint field-counter" id="bioCount">${String(CU.bio||'').length}/120</p>
-      <div class="profile-favorites-help"><b>Любимые клубы</b><p>Откройте клуб через поиск и добавьте его в избранное.</p><button class="text-action" type="button" onclick="openGlobalSearch()">Найти клуб →</button></div>
+      <label for="ep_bio">О себе <span>Необязательно</span></label><textarea class="input" id="ep_bio" rows="3" maxlength="120" placeholder="За кого болеете и что цените в футболе" data-fbz-input="profile-editor.profile-editor-update-count" aria-describedby="bioCount">${esc(CU.bio||'')}</textarea><p class="field-hint field-counter" id="bioCount">${String(CU.bio||'').length}/120</p>
+      <div class="profile-favorites-help"><b>Любимые клубы</b><p>Откройте клуб через поиск и добавьте его в избранное.</p><button class="text-action" type="button" data-fbz-click="shell.open-global-search">Найти клуб →</button></div>
       <p class="form-error" id="profileEditError" role="alert" hidden></p>
-      <div class="profile-editor-actions"><button class="btn btn-g" type="button" onclick="FBZProfileEditor.cancel()">Отмена</button><button class="btn btn-l" id="epSaveBtn" type="submit">Сохранить</button></div>
+      <div class="profile-editor-actions"><button class="btn btn-g" type="button" data-fbz-click="profile-editor.profile-editor-cancel">Отмена</button><button class="btn btn-l" id="epSaveBtn" type="submit">Сохранить</button></div>
     </form></div>`;
     el('ep_user').focus({preventScroll:true});
   }
@@ -72,3 +72,12 @@
   }
   window.FBZProfileEditor={open,preview,save,cancel,updateCount,resetSession};
 })();
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "profile-editor.profile-editor-save":(event)=>FBZProfileEditor.save(event),
+  "profile-editor.choose-avatar":()=>document.getElementById('avFile').click(),
+  "profile-editor.profile-editor-preview":(event,element)=>FBZProfileEditor.preview(element),
+  "profile-editor.profile-editor-update-count":()=>FBZProfileEditor.updateCount(),
+  "profile-editor.profile-editor-cancel":()=>FBZProfileEditor.cancel()
+});

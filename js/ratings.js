@@ -17,7 +17,7 @@ function isRatingCurrent(context){
 
 function setRatingLoading(loading){
   document.getElementById('rateOv').setAttribute('aria-busy',String(loading));
-  document.querySelectorAll('#rS1 input,.rate-star,#rS1 button[onclick="rNext()"],#rSave,#rDelete').forEach(control=>{control.disabled=loading;});
+  document.querySelectorAll('#rS1 input,.rate-star,#rS1 button[data-fbz-click="shell.r-next"],#rSave,#rDelete').forEach(control=>{control.disabled=loading;});
 }
 
 document.getElementById('rateOv')?.addEventListener('fbz:overlay-close',()=>{ratingContext=null;});
@@ -135,7 +135,7 @@ async function openRate(mid){
     if(!isRatingCurrent(context))return;
     console.error('Rating form error:',error);
     document.getElementById('rateOv').setAttribute('aria-busy','false');
-    document.getElementById('rMI').innerHTML=`<span role="status">Не удалось загрузить оценку.</span> <button class="btn btn-g btn-sm" type="button" onclick="openRate(${matchId})">Повторить</button>`;
+    document.getElementById('rMI').innerHTML=`<span role="status">Не удалось загрузить оценку.</span> <button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs("ratings.open-rate",[matchId])}>Повторить</button>`;
   }
 }
 
@@ -248,8 +248,8 @@ async function loadRatePlayers(match,context){
     return;
   }
   container.innerHTML=`<div class="rating-team-tabs" role="group" aria-label="Выберите команду">
-    <button class="on" type="button" aria-pressed="true" aria-controls="rating-squad-home" onclick="showRatingTeam('home',this)">${esc(match.home_team_name)}</button>
-    <button type="button" aria-pressed="false" aria-controls="rating-squad-away" onclick="showRatingTeam('away',this)">${esc(match.away_team_name)}</button>
+    <button class="on" type="button" aria-pressed="true" aria-controls="rating-squad-home" data-fbz-click="ratings.show-rating-team-home">${esc(match.home_team_name)}</button>
+    <button type="button" aria-pressed="false" aria-controls="rating-squad-away" data-fbz-click="ratings.show-rating-team-away">${esc(match.away_team_name)}</button>
   </div><div class="rating-squad-grid">${renderTeamSquad(match.home_team_name,homePlayers,'home')}${renderTeamSquad(match.away_team_name,awayPlayers,'away')}</div>`;
 }
 
@@ -290,7 +290,7 @@ function showRatingTeam(side,button){
 
 function renderPlayerRating(player){
   const number=player.shirt_number?`<small>${Number(player.shirt_number)}</small>`:'';
-  return`<button class="rating-player" id="rating-player-${Number(player.id)}" data-player-id="${Number(player.id)}" data-tone="neutral" type="button" onclick="openPlayerRating(${Number(player.id)})" aria-label="Оценить игрока ${esc(player.name)}">
+  return`<button class="rating-player" id="rating-player-${Number(player.id)}" data-player-id="${Number(player.id)}" data-tone="neutral" type="button" ${FBZActions.attrs("ratings.open-player-rating",[Number(player.id)])} aria-label="Оценить игрока ${esc(player.name)}">
     <span class="rating-player-score" aria-hidden="true">—</span>
     <span class="rating-player-best" aria-hidden="true">${ico('star',10)}</span>
     <span class="rating-player-avatar" aria-hidden="true">${esc(playerInitials(player.name))}${number}</span>
@@ -537,3 +537,11 @@ function refreshAfterRatingChange(matchId){
 window.__FOOTBAZED_RATINGS_READY__=true;
 window.openRate=openRate;
 window.selectSupporterSide=selectSupporterSide;
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "ratings.open-rate":(event,element,[id])=>openRate(id),
+  "ratings.show-rating-team-home":(event,element)=>showRatingTeam('home',element),
+  "ratings.show-rating-team-away":(event,element)=>showRatingTeam('away',element),
+  "ratings.open-player-rating":(event,element,[id])=>openPlayerRating(id)
+});

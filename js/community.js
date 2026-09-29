@@ -23,17 +23,17 @@
   }
   function card(user){
     const name=user.username||'Пользователь';
-    const id=jsStr(user.id);
+    const id=user.id;
     const rel=relation(user.id);
-    const action=(kind,label,icon='',extra='')=>`<button class="fbtn ${kind}" type="button" data-person="${esc(user.id)}" onclick="FBZCommunity.act('${kind}',${id},this)" ${extra}>${icon?ico(icon,16):''}${esc(label)}</button>`;
+    const action=(kind,label,icon='',extra='')=>`<button class="fbtn ${kind}" type="button" data-person="${esc(user.id)}" ${FBZActions.attrs("community.act",[kind,id])} ${extra}>${icon?ico(icon,16):''}${esc(label)}</button>`;
     let actions='';
     if(user.id===CU?.id)actions='<span class="community-self">Это вы</span>';
-    else if(rel?.status==='accepted')actions=`<button class="fbtn chat" type="button" onclick="openFriendChat(${id})" aria-label="Открыть чат с ${esc(name)}" title="Открыть чат">${ico('chat',18)}</button>${action('remove','','close','aria-label="Удалить из друзей" title="Удалить из друзей"')}`;
+    else if(rel?.status==='accepted')actions=`<button class="fbtn chat" type="button" ${FBZActions.attrs("community.open-friend-chat",[id])} aria-label="Открыть чат с ${esc(name)}" title="Открыть чат">${ico('chat',18)}</button>${action('remove','','close','aria-label="Удалить из друзей" title="Удалить из друзей"')}`;
     else if(rel?.status==='pending'&&rel.friend_id===CU?.id)actions=action('accept','Принять','check')+action('reject','','close','aria-label="Отклонить заявку" title="Отклонить заявку"');
     else if(rel?.status==='pending')actions=action('cancel','Отменить');
     else actions=action('add','Добавить','plus');
     const sub=rel?.status==='pending'?(rel.friend_id===CU?.id?'Хочет добавить вас в друзья':'Заявка отправлена'):`${Number(user.ratings_count)||0} оценок`;
-    return `<article class="friend-card"><a class="friend-profile" href="/profile/${encodeURIComponent(user.id)}" onclick="if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;event.preventDefault();go('profile',{uid:${id}})">${avatar(user)}<span class="fcard-info"><span class="fcard-name">${esc(name)}</span><span class="fcard-sub">@${esc(name)} · ${esc(sub)}</span></span></a><div class="fcard-action">${actions}</div></article>`;
+    return `<article class="friend-card"><a class="friend-profile" href="/profile/${encodeURIComponent(user.id)}" ${FBZActions.attrs("community.open-profile",[id])}>${avatar(user)}<span class="fcard-info"><span class="fcard-name">${esc(name)}</span><span class="fcard-sub">@${esc(name)} · ${esc(sub)}</span></span></a><div class="fcard-action">${actions}</div></article>`;
   }
   async function loadRelations(user){
     const [sent,received]=await Promise.all([
@@ -55,7 +55,7 @@
     if(!append){offset=0;target.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка сообщества</span></div>';}
     el('friendsMore').innerHTML='';
     target.setAttribute('aria-busy','true');
-    if(!user){target.innerHTML=state('Футбол интереснее вместе','Войдите, чтобы находить друзей, сравнивать оценки и обсуждать матчи.', '<button class="btn btn-l" type="button" onclick="openAuth()">Войти</button>');target.setAttribute('aria-busy','false');return;}
+    if(!user){target.innerHTML=state('Футбол интереснее вместе','Войдите, чтобы находить друзей, сравнивать оценки и обсуждать матчи.', '<button class="btn btn-l" type="button" data-fbz-click="shell.open-auth">Войти</button>');target.setAttribute('aria-busy','false');return;}
     try{
       const relations=await loadRelations(user);
       if(!active(token,user))return;
@@ -77,14 +77,14 @@
       if(users.length){if(append)target.insertAdjacentHTML('beforeend',users.map(card).join(''));else target.innerHTML=users.map(card).join('');}
       else if(!append){
         const messages={list:['Ваша футбольная компания','Найдите друзей по никнейму или пригласите их по ссылке.'],incoming:['Все заявки разобраны','Новые приглашения появятся здесь.'],outgoing:['Нет отправленных заявок','Найдите знакомых через поиск и добавьте их в друзья.'],suggest:['Вы уже знакомы','Новые болельщики появятся здесь. Попробуйте поиск по никнейму.']};
-        target.innerHTML=state(...messages[FT],FT==='list'?'<button class="btn btn-g" type="button" onclick="document.getElementById(\'friendSearch\').focus()">Найти друзей</button>':'');
+        target.innerHTML=state(...messages[FT],FT==='list'?'<button class="btn btn-g" type="button" data-fbz-click="community.focus-friend-search">Найти друзей</button>':'');
       }
-      el('friendsMore').innerHTML=hasMore?'<button class="btn btn-g" type="button" onclick="FBZCommunity.loadMore(this)">Показать ещё</button>':'';
+      el('friendsMore').innerHTML=hasMore?'<button class="btn btn-g" type="button" data-fbz-click="community.load-more">Показать ещё</button>':'';
       const count=relations.filter(item=>item.friend_id===user&&item.status==='pending').length;
       el('inBadge').textContent=String(count);el('inBadge').hidden=!count;
     }catch(error){
       if(!active(token,user))return;
-      const retry='<button class="btn btn-g" type="button" onclick="FBZCommunity.load()">Повторить</button>';
+      const retry='<button class="btn btn-g" type="button" data-fbz-click="community.load">Повторить</button>';
       if(append)el('friendsMore').innerHTML=retry;else target.innerHTML=state('Не удалось загрузить сообщество','Проверьте соединение и попробуйте ещё раз.',retry);
     }finally{if(active(token,user))target.setAttribute('aria-busy','false');}
   }
@@ -112,7 +112,7 @@
         target.innerHTML=`<div class="community-result-label" role="status">${users.length?'Результаты поиска':'Ничего не найдено'}</div>`+(users.length?users.map(card).join(''):state('Попробуйте другой никнейм','Проверьте написание или введите первые несколько букв.'));
       }catch(error){
         if(token!==searchVersion||CU?.id!==user||CP!=='friends')return;
-        target.innerHTML=state('Поиск временно недоступен','Ваш запрос сохранён. Попробуйте ещё раз.','<button class="btn btn-g" type="button" onclick="FBZCommunity.search()">Повторить поиск</button>');
+        target.innerHTML=state('Поиск временно недоступен','Ваш запрос сохранён. Попробуйте ещё раз.','<button class="btn btn-g" type="button" data-fbz-click="community.search">Повторить поиск</button>');
       }
     },250);
   }
@@ -155,3 +155,14 @@
   function resetSession(){version++;searchVersion++;session++;clearTimeout(timer);relationships=[];pending.clear();el('friendsContent').innerHTML='';el('friendSearchRes').innerHTML='';el('friendSearch').value='';el('friendsBrowse').hidden=false;el('friendSearchRes').hidden=true;}
   window.FBZCommunity={load,loadMore,changeTab,search,act,invite,resetSession};
 })();
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "community.act":(event,element,[kind,userId])=>FBZCommunity.act(kind,userId,element),
+  "community.open-friend-chat":(event,element,[userId])=>openFriendChat(userId),
+  "community.open-profile":(event,element,[id])=>{if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;event.preventDefault();return go('profile',{uid:id});},
+  "community.focus-friend-search":()=>document.getElementById('friendSearch').focus(),
+  "community.load-more":(event,element)=>FBZCommunity.loadMore(element),
+  "community.load":()=>FBZCommunity.load(),
+  "community.search":()=>FBZCommunity.search()
+});

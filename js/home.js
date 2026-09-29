@@ -15,13 +15,13 @@
     const streak=root.activeProfileStreak(user);
     const streakDays=new Intl.PluralRules('ru-RU').select(streak);
     target.innerHTML=`
-      <button class="home-overview-item" type="button" onclick="goOwnProfile()">
+      <button class="home-overview-item" type="button" data-fbz-click="shell.go-own-profile">
         <span>${root.ico('star',17)} Оценки</span><strong>${ratings.toLocaleString('ru-RU')}</strong><small>ваша история матчей</small>
       </button>
-      <button class="home-overview-item" type="button" onclick="goOwnProfile()">
+      <button class="home-overview-item" type="button" data-fbz-click="shell.go-own-profile">
         <span>${root.ico('chart',17)} Средняя</span><strong class="rating-ink" data-tone="${root.FBZDomain.ratingTone(ratings?average:null)}">${Number.isFinite(average)&&ratings?average.toFixed(1):'—'}</strong><small>${ratings?'по вашим оценкам':'появится после оценки'}</small>
       </button>
-      <button class="home-overview-item" type="button" onclick="goOwnProfile()">
+      <button class="home-overview-item" type="button" data-fbz-click="shell.go-own-profile">
         <span>${root.ico('fire',17)} Серия</span><strong>${streak||'—'}</strong><small>${streak?`${streak} ${{one:'день',few:'дня',many:'дней',other:'дня'}[streakDays]} подряд`:'начните с одного матча'}</small>
       </button>`;
   }
@@ -31,10 +31,10 @@
     if(!target)return;
     const clubs=Array.isArray(user?.favorite_clubs)?user.favorite_clubs.slice(0,6):[];
     if(clubs.length){
-      target.innerHTML=`<div class="home-team-list">${clubs.map(club=>`<button type="button" onclick="go('club',{id:${Number(club.id)}})">${root.FBZMedia.visual({entity:club,kind:'club',className:'home-club-mark'})}<span>${root.esc(club.short_name||club.name)}</span></button>`).join('')}</div><p>Откройте клуб, чтобы посмотреть его состав и календарь.</p><button class="text-action" type="button" onclick="openGlobalSearch()">Добавить клуб →</button>`;
+      target.innerHTML=`<div class="home-team-list">${clubs.map(club=>`<button type="button" ${FBZActions.attrs("home.go-club",[Number(club.id)])}>${root.FBZMedia.visual({entity:club,kind:'club',className:'home-club-mark'})}<span>${root.esc(club.short_name||club.name)}</span></button>`).join('')}</div><p>Откройте клуб, чтобы посмотреть его состав и календарь.</p><button class="text-action" type="button" data-fbz-click="shell.open-global-search">Добавить клуб →</button>`;
       return;
     }
-    target.innerHTML=`<div class="home-club-empty">${root.ico('football',21)}<strong>Клубы пока не выбраны</strong><p>Добавьте любимые клубы в избранное, чтобы быстро открывать их составы и матчи.</p><button class="btn btn-g btn-sm" type="button" onclick="openGlobalSearch()">Найти клуб</button></div>`;
+    target.innerHTML=`<div class="home-club-empty">${root.ico('football',21)}<strong>Клубы пока не выбраны</strong><p>Добавьте любимые клубы в избранное, чтобы быстро открывать их составы и матчи.</p><button class="btn btn-g btn-sm" type="button" data-fbz-click="shell.open-global-search">Найти клуб</button></div>`;
   }
 
   function spotlight(items){
@@ -47,7 +47,7 @@
       ||matches.find(item=>item.status==='finished')
       ||matches[0];
     if(!match){
-      target.innerHTML=`<div class="home-spotlight-empty"><span class="section-kicker">Матч в фокусе</span><strong>Футбольный календарь готовится</strong><p>Когда появятся встречи, здесь будет главное событие для вас.</p><button class="btn btn-g" type="button" onclick="go('matches')">Открыть календарь</button></div>`;
+      target.innerHTML=`<div class="home-spotlight-empty"><span class="section-kicker">Матч в фокусе</span><strong>Футбольный календарь готовится</strong><p>Когда появятся встречи, здесь будет главное событие для вас.</p><button class="btn btn-g" type="button" data-fbz-click="shell.go-matches">Открыть календарь</button></div>`;
       return;
     }
     const id=Number(match.id);
@@ -67,7 +67,7 @@
           <div class="home-spotlight-team"><span class="home-spotlight-mark" aria-hidden="true">${root.esc(mark(homeName))}</span><strong>${root.esc(homeName)}</strong><b>${root.esc(match.home_score??'—')}</b></div>
           <div class="home-spotlight-team"><span class="home-spotlight-mark" aria-hidden="true">${root.esc(mark(awayName))}</span><strong>${root.esc(awayName)}</strong><b>${root.esc(match.away_score??'—')}</b></div>
         </div>
-        <div class="home-spotlight-actions"><button class="home-spotlight-primary" type="button" onclick="go('md',{mid:${id}})">Открыть матч <span aria-hidden="true">↗</span></button><button class="home-spotlight-secondary" type="button" onclick="go('matches')">Весь календарь</button></div>
+        <div class="home-spotlight-actions"><button class="home-spotlight-primary" type="button" ${FBZActions.attrs("home.go-md",[id])}>Открыть матч <span aria-hidden="true">↗</span></button><button class="home-spotlight-secondary" type="button" data-fbz-click="shell.go-matches">Весь календарь</button></div>
       </div>
       <div class="home-spotlight-art" aria-hidden="true"><div class="home-spotlight-field"><span class="home-spotlight-art-mark">${root.esc(mark(homeName))}</span><span class="home-spotlight-art-cross">×</span><span class="home-spotlight-art-mark">${root.esc(mark(awayName))}</span></div><span class="home-spotlight-art-caption">ИГРА БОЛЕЛЬЩИКОВ</span></div>
     </article>`;
@@ -76,11 +76,11 @@
   function pendingMatch(match){
     const date=new Date(match.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
     return`<article class="home-pending-match">
-      <button type="button" onclick="go('md',{mid:${Number(match.id)}})">
+      <button type="button" ${FBZActions.attrs("home.go-md",[Number(match.id)])}>
         <span class="home-pending-meta">${root.esc(match.league_name)} · ${root.esc(date)}</span>
         <strong><span>${root.esc(match.home_team_name)}</span><b>${root.esc(match.home_score??'—')} : ${root.esc(match.away_score??'—')}</b><span>${root.esc(match.away_team_name)}</span></strong>
       </button>
-      <button class="home-pending-rate" type="button" onclick="openRate(${Number(match.id)})">${root.ico('star',15)} Оценить</button>
+      <button class="home-pending-rate" type="button" ${FBZActions.attrs("home.open-rate",[Number(match.id)])}>${root.ico('star',15)} Оценить</button>
     </article>`;
   }
 
@@ -105,7 +105,7 @@
     }catch(error){
       if(version!==requestVersion)return;
       console.warn('Home dashboard load error:',error);
-      target.innerHTML='<div class="home-priority-empty"><div><strong>Не удалось загрузить рекомендации</strong><p>Остальные разделы продолжают работать.</p></div><button class="btn btn-g btn-sm" type="button" onclick="FBZHome.reload()">Повторить</button></div>';
+      target.innerHTML='<div class="home-priority-empty"><div><strong>Не удалось загрузить рекомендации</strong><p>Остальные разделы продолжают работать.</p></div><button class="btn btn-g btn-sm" type="button" data-fbz-click="home.home-reload">Повторить</button></div>';
     }
   }
 
@@ -131,3 +131,11 @@
 
   root.FBZHome=Object.freeze({reload,sync,spotlight});
 })(window);
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "home.go-club":(event,element,[id])=>go('club',{id:id}),
+  "home.go-md":(event,element,[id])=>go('md',{mid:id}),
+  "home.open-rate":(event,element,[id])=>openRate(id),
+  "home.home-reload":()=>FBZHome.reload()
+});

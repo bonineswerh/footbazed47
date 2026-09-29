@@ -47,12 +47,12 @@
 
   function clubButton(id,name,side){
     if(!id)return`<span class="feed-team ${side}">${esc(name)}</span>`;
-    return`<button class="feed-team ${side}" type="button" onclick="go('club',{id:${Number(id)}})">${esc(name)}</button>`;
+    return`<button class="feed-team ${side}" type="button" ${FBZActions.attrs("feed.go-club",[Number(id)])}>${esc(name)}</button>`;
   }
 
   function playerHighlights(items){
     if(!Array.isArray(items)||!items.length)return'';
-    return`<div class="feed-players" aria-label="Оценки игроков">${items.map(player=>{const presentation=window.FBZDomain.ratingPresentation(player.rating,1);return`<button type="button" data-tone="${presentation.tone}" onclick="go('player',{id:${Number(player.player_id)}})"><span>${player.is_best_player?'★':'●'}</span><b>${esc(player.name)}</b><strong>${presentation.value}</strong></button>`;}).join('')}</div>`;
+    return`<div class="feed-players" aria-label="Оценки игроков">${items.map(player=>{const presentation=window.FBZDomain.ratingPresentation(player.rating,1);return`<button type="button" data-tone="${presentation.tone}" ${FBZActions.attrs("feed.go-player",[Number(player.player_id)])}><span>${player.is_best_player?'★':'●'}</span><b>${esc(player.name)}</b><strong>${presentation.value}</strong></button>`;}).join('')}</div>`;
   }
 
   function renderFeedItem(item){
@@ -60,7 +60,7 @@
     const rating=window.FBZDomain.ratingPresentation(item.match_rating);
     return`<article class="feed-entry" data-rating-id="${Number(item.rating_id)}">
       <header class="feed-entry-head">
-        <button class="feed-author" type="button" onclick="go('profile',{uid:${jsStr(item.user_id)}})">
+        <button class="feed-author" type="button" ${FBZActions.attrs("app.go-profile",[item.user_id])}>
           ${avatar(item)}
           <span><strong>${esc(displayName(item))}</strong><small>@${esc(item.user?.username||'user')}</small></span>
         </button>
@@ -70,7 +70,7 @@
         <div class="feed-match-meta"><span>${esc(item.match?.league_name||'Футбол')}</span><time>${new Date(item.match?.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</time></div>
         <div class="feed-scoreline">
           ${clubButton(item.match?.home_club_id,item.match?.home_team_name,'home')}
-          <button class="feed-score" type="button" onclick="go('md',{mid:${Number(item.match_id)}})" aria-label="Открыть матч"><span>${esc(score(item.match||{}))}</span><small>Матч →</small></button>
+          <button class="feed-score" type="button" ${FBZActions.attrs("feed.go-md",[Number(item.match_id)])} aria-label="Открыть матч"><span>${esc(score(item.match||{}))}</span><small>Матч →</small></button>
           ${clubButton(item.match?.away_club_id,item.match?.away_team_name,'away')}
         </div>
       </div>
@@ -81,10 +81,10 @@
       ${item.comment?`<blockquote>${esc(item.comment)}</blockquote>`:''}
       ${playerHighlights(item.player_highlights)}
       <footer class="feed-actions">
-        <button class="feed-action like-action${item.liked_by_me?' on':''}" type="button" ${own?'disabled title="Свою запись нельзя оценить"':`onclick="FBZFeed.toggleLike(${Number(item.rating_id)},this)"`} aria-pressed="${item.liked_by_me?'true':'false'}">${ico('heart',16)}<span>${Number(item.like_count)||0}</span><small>Нравится</small></button>
-        <button class="feed-action" type="button" onclick="FBZFeed.toggleComments(${Number(item.rating_id)},this)" aria-expanded="false" aria-controls="feed-comments-${Number(item.rating_id)}" aria-label="Обсудить оценку">${ico('chat',16)}<span data-comment-count>${Number(item.comment_count)||0}</span><small>Обсудить</small></button>
-        <button class="feed-action" type="button" onclick="forwardRating(${Number(item.rating_id)})" aria-label="Отправить оценку другу">${ico('send',16)}<small>Отправить</small></button>
-        ${own?`<button class="feed-action feed-edit" type="button" onclick="openRate(${Number(item.match_id)})" aria-label="Изменить оценку" title="Изменить оценку">${ico('edit',15)}<small>Изменить</small></button>`:''}
+        <button class="feed-action like-action${item.liked_by_me?' on':''}" type="button" ${own?'disabled title="Свою запись нельзя оценить"':FBZActions.attrs('feed.toggle-like',[Number(item.rating_id)])} aria-pressed="${item.liked_by_me?'true':'false'}">${ico('heart',16)}<span>${Number(item.like_count)||0}</span><small>Нравится</small></button>
+        <button class="feed-action" type="button" ${FBZActions.attrs("feed.toggle-comments",[Number(item.rating_id)])} aria-expanded="false" aria-controls="feed-comments-${Number(item.rating_id)}" aria-label="Обсудить оценку">${ico('chat',16)}<span data-comment-count>${Number(item.comment_count)||0}</span><small>Обсудить</small></button>
+        <button class="feed-action" type="button" ${FBZActions.attrs("feed.forward-rating",[Number(item.rating_id)])} aria-label="Отправить оценку другу">${ico('send',16)}<small>Отправить</small></button>
+        ${own?`<button class="feed-action feed-edit" type="button" ${FBZActions.attrs("feed.open-rate",[Number(item.match_id)])} aria-label="Изменить оценку" title="Изменить оценку">${ico('edit',15)}<small>Изменить</small></button>`:''}
       </footer>
       <div class="feed-comments" id="feed-comments-${Number(item.rating_id)}" aria-live="polite"></div>
     </article>`;
@@ -95,10 +95,10 @@
   }
 
   function emptyState(){
-    if((scope==='friends'||scope==='mine')&&!CU)return`<div class="feed-empty"><strong>Войди в профиль</strong><span>Этот раздел доступен авторизованным пользователям.</span><button class="btn btn-l" type="button" onclick="openAuth()">Войти</button></div>`;
-    if(scope==='friends')return`<div class="feed-empty"><strong>Лента друзей пока пуста</strong><span>Найди знакомых в сообществе и следи за их футбольными оценками.</span><button class="btn btn-g" type="button" onclick="go('friends')">Найти друзей</button></div>`;
-    if(scope==='mine')return`<div class="feed-empty"><strong>У тебя ещё нет публичных оценок</strong><span>Оцени завершённый матч, и запись появится здесь.</span><button class="btn btn-l" type="button" onclick="go('matches')">Открыть матчи</button></div>`;
-    return`<div class="feed-empty"><strong>Лента пока пуста</strong><span>Первые публичные оценки появятся здесь.</span><button class="btn btn-l" type="button" onclick="go('matches')">Открыть матчи</button></div>`;
+    if((scope==='friends'||scope==='mine')&&!CU)return`<div class="feed-empty"><strong>Войди в профиль</strong><span>Этот раздел доступен авторизованным пользователям.</span><button class="btn btn-l" type="button" data-fbz-click="shell.open-auth">Войти</button></div>`;
+    if(scope==='friends')return`<div class="feed-empty"><strong>Лента друзей пока пуста</strong><span>Найди знакомых в сообществе и следи за их футбольными оценками.</span><button class="btn btn-g" type="button" data-fbz-click="shell.go-friends">Найти друзей</button></div>`;
+    if(scope==='mine')return`<div class="feed-empty"><strong>У тебя ещё нет публичных оценок</strong><span>Оцени завершённый матч, и запись появится здесь.</span><button class="btn btn-l" type="button" data-fbz-click="shell.go-matches">Открыть матчи</button></div>`;
+    return`<div class="feed-empty"><strong>Лента пока пуста</strong><span>Первые публичные оценки появятся здесь.</span><button class="btn btn-l" type="button" data-fbz-click="shell.go-matches">Открыть матчи</button></div>`;
   }
 
   function scopeLabel(){return{all:'Все оценки',friends:'Оценки друзей',popular:'Популярное сейчас',mine:'Мои публикации'}[scope];}
@@ -106,7 +106,7 @@
   function renderMore(){
     const target=document.getElementById('feedMore');
     if(!target)return;
-    target.innerHTML=hasMore?'<button class="feed-more-button" type="button" onclick="FBZFeed.loadMore()">Показать ещё</button>':'';
+    target.innerHTML=hasMore?'<button class="feed-more-button" type="button" data-fbz-click="feed.load-more">Показать ещё</button>':'';
   }
 
   async function load(options={}){
@@ -148,9 +148,9 @@
     }catch(error){
       console.error('Feed error:',error);
       if(version!==requestVersion)return;
-      if(!append)target.innerHTML='<div class="feed-empty"><strong>Не удалось обновить ленту</strong><span>Проверь соединение и повтори попытку.</span><button class="btn btn-g" type="button" onclick="FBZFeed.load()">Повторить</button></div>';
+      if(!append)target.innerHTML='<div class="feed-empty"><strong>Не удалось обновить ленту</strong><span>Проверь соединение и повтори попытку.</span><button class="btn btn-g" type="button" data-fbz-click="feed.load">Повторить</button></div>';
       renderMore();
-      if(append)document.getElementById('feedMore').innerHTML='<div class="feed-page-error" role="status"><span>Не удалось загрузить следующие оценки</span><button class="feed-more-button" type="button" onclick="FBZFeed.loadMore()">Повторить</button></div>';
+      if(append)document.getElementById('feedMore').innerHTML='<div class="feed-page-error" role="status"><span>Не удалось загрузить следующие оценки</span><button class="feed-more-button" type="button" data-fbz-click="feed.load-more">Повторить</button></div>';
     }finally{if(version===requestVersion){loadingMore=false;target.setAttribute('aria-busy','false');}}
   }
 
@@ -214,13 +214,13 @@
   function commentMarkup(comment,ratingId){
     return`<div class="feed-comment" data-comment-id="${Number(comment.id)}">
       ${commentAvatar(comment)}
-      <div><div class="feed-comment-head"><button type="button" onclick="go('profile',{uid:${jsStr(comment.user_id)}})">@${esc(comment.user?.username||'user')}</button><time datetime="${esc(comment.created_at)}">${new Date(comment.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</time>${comment.edited_at?'<small>ред.</small>':''}${comment.can_edit?`<button class="comment-edit" type="button" onclick="FBZFeed.editComment(${Number(ratingId)},${Number(comment.id)})">Изменить</button>`:''}${comment.can_delete?`<button class="comment-delete" type="button" onclick="FBZFeed.deleteComment(${Number(ratingId)},${Number(comment.id)},this)" aria-label="Удалить комментарий" title="Удалить">×</button>`:''}</div><p>${esc(comment.comment)}</p></div>
+      <div><div class="feed-comment-head"><button type="button" ${FBZActions.attrs("app.go-profile",[comment.user_id])}>@${esc(comment.user?.username||'user')}</button><time datetime="${esc(comment.created_at)}">${new Date(comment.created_at).toLocaleDateString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</time>${comment.edited_at?'<small>ред.</small>':''}${comment.can_edit?`<button class="comment-edit" type="button" ${FBZActions.attrs("feed.edit-comment",[Number(ratingId),Number(comment.id)])}>Изменить</button>`:''}${comment.can_delete?`<button class="comment-delete" type="button" ${FBZActions.attrs("feed.delete-comment",[Number(ratingId),Number(comment.id)])} aria-label="Удалить комментарий" title="Удалить">×</button>`:''}</div><p>${esc(comment.comment)}</p></div>
     </div>`;
   }
 
   function commentComposer(ratingId){
-    if(!CU)return'<button class="comment-signin" type="button" onclick="openAuth()">Войти, чтобы комментировать</button>';
-    return`<form class="comment-form" onsubmit="FBZFeed.addComment(event,${Number(ratingId)})"><label class="sr-only" for="comment-${Number(ratingId)}">Комментарий</label><input id="comment-${Number(ratingId)}" maxlength="1000" autocomplete="off" placeholder="Написать комментарий"><button type="submit" aria-label="Отправить" title="Отправить">${ico('send',16)}</button></form>`;
+    if(!CU)return'<button class="comment-signin" type="button" data-fbz-click="shell.open-auth">Войти, чтобы комментировать</button>';
+    return`<form class="comment-form" ${FBZActions.attrs("feed.add-comment",[Number(ratingId)],"submit")}><label class="sr-only" for="comment-${Number(ratingId)}">Комментарий</label><input id="comment-${Number(ratingId)}" maxlength="1000" autocomplete="off" placeholder="Написать комментарий"><button type="submit" aria-label="Отправить" title="Отправить">${ico('send',16)}</button></form>`;
   }
 
   function renderComments(ratingId,comments){
@@ -250,7 +250,7 @@
     }catch(error){
       if(commentRequests.get(id)!==request||request.version!==viewVersion||request.userId!==CU?.id)return;
       console.error('Comments error:',error);
-      target.innerHTML='<button class="comments-retry" type="button" onclick="FBZFeed.toggleComments('+id+');FBZFeed.toggleComments('+id+')">Не удалось загрузить · повторить</button>';
+      target.innerHTML=`<button class="comments-retry" type="button" ${FBZActions.attrs('feed.retry-comments',[id])}>Не удалось загрузить · повторить</button>`;
     }
   }
 
@@ -267,7 +267,7 @@
   async function addComment(event,ratingId){
     event.preventDefault();
     if(!CU){openAuth();return;}
-    const form=event.currentTarget;
+    const form=event.target.closest('form');
     const input=form.querySelector('input');
     const button=form.querySelector('button');
     if(button.disabled)return;
@@ -320,7 +320,7 @@
     if(!comment)return;
     const host=document.querySelector(`[data-rating-id="${Number(ratingId)}"] [data-comment-id="${Number(commentId)}"] p`);
     if(!host)return;
-    host.outerHTML=`<form class="comment-edit-form" onsubmit="FBZFeed.saveCommentEdit(event,${Number(ratingId)},${Number(commentId)})"><label class="sr-only" for="edit-comment-${Number(commentId)}">Изменить комментарий</label><textarea id="edit-comment-${Number(commentId)}" maxlength="1000" rows="3" required>${esc(comment.comment)}</textarea><div><button class="btn btn-g btn-sm" type="button" onclick="FBZFeed.cancelCommentEdit(${Number(ratingId)})">Отмена</button><button class="btn btn-l btn-sm" type="submit">Сохранить</button></div></form>`;
+    host.outerHTML=`<form class="comment-edit-form" ${FBZActions.attrs("feed.save-comment-edit",[Number(ratingId),Number(commentId)],"submit")}><label class="sr-only" for="edit-comment-${Number(commentId)}">Изменить комментарий</label><textarea id="edit-comment-${Number(commentId)}" maxlength="1000" rows="3" required>${esc(comment.comment)}</textarea><div><button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs("feed.cancel-comment-edit",[Number(ratingId)])}>Отмена</button><button class="btn btn-l btn-sm" type="submit">Сохранить</button></div></form>`;
     document.getElementById(`edit-comment-${Number(commentId)}`)?.focus({preventScroll:true});
   }
 
@@ -328,7 +328,7 @@
 
   async function saveCommentEdit(event,ratingId,commentId){
     event.preventDefault();
-    const form=event.currentTarget,button=form.querySelector('[type="submit"]');
+    const form=event.target.closest('form'),button=form.querySelector('[type="submit"]');
     if(button.disabled)return;
     const updated=form.querySelector('textarea').value.trim();
     if(!updated||updated.length>1000){toast('Введите комментарий от 1 до 1000 символов','err');return;}
@@ -349,9 +349,9 @@
     const rating=window.FBZDomain.ratingPresentation(item.match_rating);
     return`<article class="home-feed-card" data-tone="${rating.tone}">
       <header>${avatar(item,'home-feed-avatar')}<span><strong>${esc(displayName(item))}</strong><small>${esc(relativeDate(item.created_at))}</small></span><b aria-label="Оценка ${rating.label}">${rating.label}</b></header>
-      <button class="home-feed-match" type="button" onclick="go('md',{mid:${Number(item.match_id)}})"><small>${esc(item.match?.league_name||'')}</small><strong>${esc(item.match?.home_team_name)} <span>${esc(score(item.match||{}))}</span> ${esc(item.match?.away_team_name)}</strong></button>
+      <button class="home-feed-match" type="button" ${FBZActions.attrs("feed.go-md",[Number(item.match_id)])}><small>${esc(item.match?.league_name||'')}</small><strong>${esc(item.match?.home_team_name)} <span>${esc(score(item.match||{}))}</span> ${esc(item.match?.away_team_name)}</strong></button>
       ${item.comment?`<p>${esc(item.comment)}</p>`:''}
-      <footer><span>${ico('heart',13)} ${Number(item.like_count)||0}</span><button type="button" onclick="go('feed',{ratingId:${Number(item.rating_id)}})">Открыть в ленте →</button></footer>
+      <footer><span>${ico('heart',13)} ${Number(item.like_count)||0}</span><button type="button" ${FBZActions.attrs("feed.go-feed",[Number(item.rating_id)])}>Открыть в ленте →</button></footer>
     </article>`;
   }
 
@@ -387,3 +387,23 @@
 
   window.FBZFeed={addComment,cancelCommentEdit,deleteComment,editComment,focusRating,load,loadHome,loadMore,open,resetSession,saveCommentEdit,setScope,toggleComments,toggleLike};
 })();
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "feed.toggle-like":(event,element,[id])=>FBZFeed.toggleLike(id,element),
+  "feed.retry-comments":(event,element,[id])=>{FBZFeed.toggleComments(id);return FBZFeed.toggleComments(id);},
+  "feed.go-club":(event,element,[id])=>go('club',{id:id}),
+  "feed.go-player":(event,element,[id])=>go('player',{id:id}),
+  "feed.go-md":(event,element,[id])=>go('md',{mid:id}),
+  "feed.toggle-comments":(event,element,[id])=>FBZFeed.toggleComments(id,element),
+  "feed.forward-rating":(event,element,[id])=>forwardRating(id),
+  "feed.open-rate":(event,element,[id])=>openRate(id),
+  "feed.load-more":()=>FBZFeed.loadMore(),
+  "feed.load":()=>FBZFeed.load(),
+  "feed.edit-comment":(event,element,[ratingId,commentId])=>FBZFeed.editComment(ratingId,commentId),
+  "feed.delete-comment":(event,element,[ratingId,commentId])=>FBZFeed.deleteComment(ratingId,commentId,element),
+  "feed.add-comment":(event,element,[id])=>FBZFeed.addComment(event,id),
+  "feed.save-comment-edit":(event,element,[ratingId,commentId])=>FBZFeed.saveCommentEdit(event,ratingId,commentId),
+  "feed.cancel-comment-edit":(event,element,[id])=>FBZFeed.cancelCommentEdit(id),
+  "feed.go-feed":(event,element,[id])=>go('feed',{ratingId:id})
+});

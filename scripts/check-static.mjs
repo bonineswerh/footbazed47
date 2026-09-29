@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import {createHash} from 'node:crypto';
+import {Script} from 'node:vm';
 
 const root=path.resolve(import.meta.dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
@@ -22,6 +23,14 @@ for(const resource of resources){
 
 const frontendFiles=['app.js',...fs.readdirSync(path.join(root,'js')).filter(file=>file.endsWith('.js')).map(file=>`js/${file}`)];
 const frontend=frontendFiles.map(file=>fs.readFileSync(path.join(root,file),'utf8')).join('\n');
+for(const file of ['index.html','admin.html',...frontendFiles]){
+  const source=fs.readFileSync(path.join(root,file),'utf8');
+  if(file.endsWith('.js'))try{new Script(source,{filename:file});}catch(error){errors.push(`Invalid JavaScript: ${error.message}`);}
+  if(/\bon(?:click|input|change|submit|keydown|keyup|keypress|error|load|focus|blur|mouseover|pointerdown)\s*=\s*["']/iu.test(source))errors.push(`Inline event handler is forbidden: ${file}`);
+  if(/\beval\s*\(|\bnew\s+Function\s*\(/u.test(source))errors.push(`Executable strings are forbidden: ${file}`);
+  if(file.endsWith('.html')&&/<script\b(?![^>]*\bsrc=)[^>]*>/iu.test(source))errors.push(`Inline scripts are forbidden: ${file}`);
+}
+if(html.indexOf('src="js/actions.js')>html.indexOf('src="js/home.js'))errors.push('Action dispatcher must load before its consumers');
 const feedFrontend=fs.readFileSync(path.join(root,'js','feed.js'),'utf8');
 if(/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/i.test(frontend))errors.push('Service-role material must not appear in frontend files');
 for(const match of frontend.matchAll(/eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g)){
@@ -88,7 +97,7 @@ for(const pattern of forbiddenWrites){
   if(pattern.test(frontend))errors.push(`Direct rating write found: ${pattern}`);
 }
 
-const requiredScripts=['js/session-hint.js','js/domain.js','js/media.js','js/data.js','js/seo.js','js/performance.js','app.js','js/auth.js','js/rating-loader.js','js/matches.js'];
+const requiredScripts=['js/session-hint.js','js/domain.js','js/media.js','js/data.js','js/seo.js','js/performance.js','js/actions.js','js/shell-actions.js','app.js','js/auth.js','js/rating-loader.js','js/matches.js'];
 for(const script of requiredScripts){
   if(!html.includes(`src="${script}?`))errors.push(`Required script is not versioned in index.html: ${script}`);
 }
@@ -114,6 +123,7 @@ const vercelConfig=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf
 if(vercelConfig.outputDirectory!=='dist')errors.push('Vercel must publish only the isolated dist directory');
 const securityHeaders=(vercelConfig.headers||[]).flatMap(item=>item.headers||[]);
 const csp=securityHeaders.find(item=>item.key==='Content-Security-Policy')?.value||'';
+if(!/(?:^|;)\s*script-src 'self'\s*(?:;|$)/u.test(csp)||!/(?:^|;)\s*script-src-attr 'none'\s*(?:;|$)/u.test(csp))errors.push('CSP must reject inline scripts, event handlers and eval');
 const permissions=securityHeaders.find(item=>item.key==='Permissions-Policy')?.value||'';
 if(!/media-src[^;]*https:\/\/\*\.supabase\.co/u.test(csp))errors.push('CSP must allow private Supabase chat media');
 if(!permissions.includes('microphone=(self)'))errors.push('Voice messages require a same-origin microphone policy');

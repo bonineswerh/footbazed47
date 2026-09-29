@@ -34,20 +34,20 @@
 
   <!-- HEADER -->
   <header class="header" id="mainNav">
-    <button class="logo" type="button" onclick="go('home')" aria-label="FOOTBAZED — главная">FOOT<span>BAZED</span></button>
+    <button class="logo" type="button" data-fbz-click="shell.go-home" aria-label="FOOTBAZED — главная">FOOT<span>BAZED</span></button>
     <nav class="nav-center" aria-label="Основная навигация">
-      <button type="button" class="nav-link active" aria-current="page" onclick="go('home')">Главная</button>
-      <button type="button" class="nav-link" onclick="go('matches')">Матчи</button>
-      <button type="button" class="nav-link" onclick="go('feed')">Лента</button>
-      <button type="button" class="nav-link" onclick="go('leaderboard')">Обзор</button>
-      <button type="button" class="nav-link" onclick="go('friends')">Друзья</button>
+      <button type="button" class="nav-link active" aria-current="page" data-fbz-click="shell.go-home">Главная</button>
+      <button type="button" class="nav-link" data-fbz-click="shell.go-matches">Матчи</button>
+      <button type="button" class="nav-link" data-fbz-click="shell.go-feed">Лента</button>
+      <button type="button" class="nav-link" data-fbz-click="shell.go-leaderboard">Обзор</button>
+      <button type="button" class="nav-link" data-fbz-click="shell.go-friends">Друзья</button>
     </nav>
     <div class="header-actions">
-      <button class="header-icon-button global-search-trigger" id="globalSearchBtn" type="button" onclick="openGlobalSearch()" aria-label="Поиск" title="Поиск">
+      <button class="header-icon-button global-search-trigger" id="globalSearchBtn" type="button" data-fbz-click="shell.open-global-search" aria-label="Поиск" title="Поиск">
         <span data-i="search"></span>
       </button>
       <div class="nav-right" id="navRight">
-        <button class="nbtn nbtn-lime" onclick="openAuth()">Войти</button>
+        <button class="nbtn nbtn-lime" data-fbz-click="shell.open-auth">Войти</button>
       </div>
     </div>
   </header>
@@ -56,8 +56,8 @@
   <div class="notif-panel" id="notifPanel" role="region" aria-label="Уведомления" aria-hidden="true">
     <div class="notif-header">
       <h3 id="notifTitle">Уведомления</h3>
-      <button class="notif-mark" id="notifMarkAll" type="button" onclick="markAllRead()">Прочитать все</button>
-      <button class="notif-close" type="button" onclick="closeNotif(true)" aria-label="Закрыть уведомления">×</button>
+      <button class="notif-mark" id="notifMarkAll" type="button" data-fbz-click="shell.mark-all-read">Прочитать все</button>
+      <button class="notif-close" type="button" data-fbz-click="shell.close-notif" aria-label="Закрыть уведомления">×</button>
     </div>
     <div class="notif-list" id="notifList">
       <div style="padding:20px;text-align:center;color:var(--text3)">Нет уведомлений</div>
@@ -74,7 +74,7 @@
         <h1>У каждого матча<br>своё впечатление.</h1>
         <p>Сохраните его. Оценивайте матчи и игроков, собирайте свою футбольную историю и обсуждайте игру с друзьями.</p>
         <div class="hero-btns" id="heroBtns">
-          <button class="btn btn-l" onclick="openRegister()">Начать свой дневник</button><button class="btn btn-g" onclick="go('matches')">Посмотреть матчи</button>
+          <button class="btn btn-l" data-fbz-click="shell.open-register">Начать свой дневник</button><button class="btn btn-g" data-fbz-click="shell.go-matches">Посмотреть матчи</button>
         </div>
         <div class="hero-stats">
           <div class="hstat">
@@ -107,8 +107,8 @@
           <p id="homeDashboardLead">Собираем ваши матчи и оценки.</p>
         </div>
         <div class="home-dashboard-actions">
-          <button class="btn btn-l" type="button" onclick="go('matches')"><span data-i="football"></span> Матчи</button>
-          <button class="btn btn-g" type="button" onclick="goOwnProfile()"><span data-i="users"></span> Профиль</button>
+          <button class="btn btn-l" type="button" data-fbz-click="shell.go-matches"><span data-i="football"></span> Матчи</button>
+          <button class="btn btn-g" type="button" data-fbz-click="shell.go-own-profile"><span data-i="users"></span> Профиль</button>
         </div>
       </div>
       <div id="homeMatchSpotlight" class="home-spotlight-slot" aria-live="polite">
@@ -123,7 +123,7 @@
         <section class="home-priority-panel" aria-labelledby="homePriorityTitle">
           <div class="home-panel-head">
             <div><span class="section-kicker">Следующий шаг</span><h2 id="homePriorityTitle">Нужно оценить</h2></div>
-            <button class="home-sec-link" type="button" onclick="go('matches')">Все матчи →</button>
+            <button class="home-sec-link" type="button" data-fbz-click="shell.go-matches">Все матчи →</button>
           </div>
           <div id="homePendingRatings" aria-live="polite"><div class="loading compact"><div class="spin"></div></div></div>
         </section>
@@ -140,7 +140,7 @@
     <section class="home-section">
       <div class="home-sec-hd">
         <div><span class="section-kicker">Календарь</span><h2>Сейчас и скоро</h2></div>
-        <button class="home-sec-link" type="button" onclick="go('matches')">Все матчи →</button>
+        <button class="home-sec-link" type="button" data-fbz-click="shell.go-matches">Все матчи →</button>
       </div>
       <div class="grid3" id="homeM"></div>
     </section>
@@ -150,7 +150,7 @@
     <section class="home-section">
       <div class="home-sec-hd">
         <div><span class="section-kicker">Сообщество</span><h2>Свежие оценки</h2></div>
-        <button class="home-sec-link" type="button" onclick="go('feed')">Вся лента →</button>
+        <button class="home-sec-link" type="button" data-fbz-click="shell.go-feed">Вся лента →</button>
       </div>
       <div class="grid3" id="homeF"></div>
     </section>
@@ -162,17 +162,17 @@
       <h1 class="page-title">Матчи</h1>
       
       <div class="filters" id="mf">
-        <button class="btn btn-l btn-sm" aria-pressed="true" onclick="setMF('all',this)">Все</button>
-        <button class="btn btn-g btn-sm" aria-pressed="false" onclick="setMF('live',this)">LIVE</button>
-        <button class="btn btn-g btn-sm" aria-pressed="false" onclick="setMF('finished',this)">Завершённые</button>
-        <button class="btn btn-g btn-sm" aria-pressed="false" onclick="setMF('scheduled',this)">Предстоящие</button>
+        <button class="btn btn-l btn-sm" aria-pressed="true" data-fbz-click="shell.set-mf-all">Все</button>
+        <button class="btn btn-g btn-sm" aria-pressed="false" data-fbz-click="shell.set-mf-live">LIVE</button>
+        <button class="btn btn-g btn-sm" aria-pressed="false" data-fbz-click="shell.set-mf-finished">Завершённые</button>
+        <button class="btn btn-g btn-sm" aria-pressed="false" data-fbz-click="shell.set-mf-scheduled">Предстоящие</button>
       </div>
       
       <label class="sr-only" for="msearch">Поиск по названию команды</label>
-      <input class="input search-input" type="search" placeholder="Поиск по команде" autocomplete="off" oninput="filterM()" id="msearch">
+      <input class="input search-input" type="search" placeholder="Поиск по команде" autocomplete="off" data-fbz-input="shell.filter-m" id="msearch">
       
       <div class="league-tabs" id="leagueTabs">
-        <button class="league-tab on" onclick="setLeague('all',this)">Все лиги</button>
+        <button class="league-tab on" data-fbz-click="shell.set-league-all">Все лиги</button>
       </div>
       
       <div id="matchG"></div>
@@ -190,10 +190,10 @@
         <div class="feed-context" id="feedMeta" aria-live="polite"></div>
       </header>
       <div class="feed-filters" id="feedT" role="group" aria-label="Фильтр ленты">
-        <button class="feed-filter on" type="button" aria-pressed="true" onclick="FBZFeed.setScope('all',this)">Все</button>
-        <button class="feed-filter" type="button" aria-pressed="false" onclick="FBZFeed.setScope('friends',this)">Друзья</button>
-        <button class="feed-filter" type="button" aria-pressed="false" onclick="FBZFeed.setScope('popular',this)">Популярное</button>
-        <button class="feed-filter" type="button" aria-pressed="false" onclick="FBZFeed.setScope('mine',this)">Мои</button>
+        <button class="feed-filter on" type="button" aria-pressed="true" data-fbz-click="shell.feed-set-scope-all">Все</button>
+        <button class="feed-filter" type="button" aria-pressed="false" data-fbz-click="shell.feed-set-scope-friends">Друзья</button>
+        <button class="feed-filter" type="button" aria-pressed="false" data-fbz-click="shell.feed-set-scope-popular">Популярное</button>
+        <button class="feed-filter" type="button" aria-pressed="false" data-fbz-click="shell.feed-set-scope-mine">Мои</button>
       </div>
       <div class="feed-stream" id="feedG"></div>
       <div class="feed-more" id="feedMore"></div>
@@ -210,15 +210,15 @@
     <div class="matches-page community-page">
       <header class="community-header">
         <div><span class="section-kicker">Ваша футбольная компания</span><h1 class="page-title">Друзья и сообщество</h1><p>Обсуждайте матчи, делитесь оценками и находите свой круг.</p></div>
-        <button class="btn btn-g" type="button" onclick="inviteFriend()"><span data-i="link"></span>Пригласить друга</button>
+        <button class="btn btn-g" type="button" data-fbz-click="shell.invite-friend"><span data-i="link"></span>Пригласить друга</button>
       </header>
-      <div class="community-search"><span data-i="search"></span><label class="sr-only" for="friendSearch">Найти пользователей</label><input class="input" type="search" placeholder="Найти по никнейму" autocomplete="off" maxlength="80" oninput="searchFriends()" id="friendSearch"></div>
+      <div class="community-search"><span data-i="search"></span><label class="sr-only" for="friendSearch">Найти пользователей</label><input class="input" type="search" placeholder="Найти по никнейму" autocomplete="off" maxlength="80" data-fbz-input="shell.search-friends" id="friendSearch"></div>
       <div id="friendsBrowse">
         <div class="community-tabs" role="group" aria-label="Раздел сообщества">
-          <button class="ftab2 on" data-tab="list" type="button" aria-pressed="true" onclick="setFTab('list')">Мои друзья</button>
-          <button class="ftab2" data-tab="incoming" type="button" aria-pressed="false" onclick="setFTab('incoming')">Входящие <span id="inBadge" class="community-badge" hidden>0</span></button>
-          <button class="ftab2" data-tab="outgoing" type="button" aria-pressed="false" onclick="setFTab('outgoing')">Исходящие</button>
-          <button class="ftab2" data-tab="suggest" type="button" aria-pressed="false" onclick="setFTab('suggest')">Найти друзей</button>
+          <button class="ftab2 on" data-tab="list" type="button" aria-pressed="true" data-fbz-click="shell.set-ftab-list">Мои друзья</button>
+          <button class="ftab2" data-tab="incoming" type="button" aria-pressed="false" data-fbz-click="shell.set-ftab-incoming">Входящие <span id="inBadge" class="community-badge" hidden>0</span></button>
+          <button class="ftab2" data-tab="outgoing" type="button" aria-pressed="false" data-fbz-click="shell.set-ftab-outgoing">Исходящие</button>
+          <button class="ftab2" data-tab="suggest" type="button" aria-pressed="false" data-fbz-click="shell.set-ftab-suggest">Найти друзей</button>
         </div>
         <div id="friendsContent" aria-live="polite"></div>
         <div id="friendsMore" class="community-more"></div>
@@ -237,7 +237,7 @@
   <!-- MATCH DETAIL -->
   <div class="page" id="page-md">
     <div class="matches-page">
-      <button class="btn btn-g btn-sm" onclick="goBack()" style="margin-bottom:16px;">← Назад</button>
+      <button class="btn btn-g btn-sm" data-fbz-click="shell.go-back" style="margin-bottom:16px;">← Назад</button>
       <div id="mdC"></div>
     </div>
   </div>
@@ -245,7 +245,7 @@
   <!-- CLUB -->
   <div class="page" id="page-club">
     <div class="entity-page">
-      <button class="entity-back" type="button" onclick="goBack()" aria-label="Назад">← <span>Назад</span></button>
+      <button class="entity-back" type="button" data-fbz-click="shell.go-back" aria-label="Назад">← <span>Назад</span></button>
       <div id="clubC"></div>
     </div>
   </div>
@@ -253,7 +253,7 @@
   <!-- PLAYER -->
   <div class="page" id="page-player">
     <div class="entity-page">
-      <button class="entity-back" type="button" onclick="goBack()" aria-label="Назад">← <span>Назад</span></button>
+      <button class="entity-back" type="button" data-fbz-click="shell.go-back" aria-label="Назад">← <span>Назад</span></button>
       <div id="playerC"></div>
     </div>
   </div>
@@ -261,7 +261,7 @@
   <!-- COMPETITION -->
   <div class="page" id="page-competition">
     <div class="entity-page">
-      <button class="entity-back" type="button" onclick="goBack()" aria-label="Назад">← <span>Назад</span></button>
+      <button class="entity-back" type="button" data-fbz-click="shell.go-back" aria-label="Назад">← <span>Назад</span></button>
       <div id="competitionC"></div>
     </div>
   </div>
@@ -270,7 +270,7 @@
   <div class="page" id="page-chat">
     <div class="match-chat">
       <div class="match-chat-header">
-        <button class="btn btn-g btn-sm" onclick="goBack()">← Назад</button>
+        <button class="btn btn-g btn-sm" data-fbz-click="shell.go-back">← Назад</button>
         <h2 style="font-size:18px;" id="chatTitle">Чат матча</h2>
       </div>
       <div class="match-chat-body" id="chatBody" aria-live="polite"></div>
@@ -293,7 +293,7 @@
         </div>
         <div class="admin-head-actions">
           <span class="admin-health" id="adminHealth"><i></i><span>Проверяем систему</span></span>
-          <button class="admin-icon-button" type="button" onclick="FBZAdmin.refresh()" aria-label="Обновить данные" title="Обновить">
+          <button class="admin-icon-button" type="button" data-fbz-click="shell.admin-refresh" aria-label="Обновить данные" title="Обновить">
             <span data-i="refresh"></span>
           </button>
         </div>
@@ -309,17 +309,17 @@
 
       <div class="admin-layout">
         <nav class="admin-nav" aria-label="Разделы админ-панели">
-          <button class="admin-nav-item on" type="button" data-admin-view="overview" onclick="FBZAdmin.showView('overview',this)"><span data-i="dashboard"></span><span>Обзор</span></button>
-          <button class="admin-nav-item" type="button" data-admin-view="sync" onclick="FBZAdmin.showView('sync',this)"><span data-i="sync"></span><span>Синхронизация</span></button>
-          <button class="admin-nav-item" type="button" data-admin-view="matches" onclick="FBZAdmin.showView('matches',this)"><span data-i="calendar"></span><span>Матчи</span></button>
-          <button class="admin-nav-item" type="button" data-admin-view="maintenance" onclick="FBZAdmin.showView('maintenance',this)"><span data-i="shield"></span><span>Очистка</span></button>
+          <button class="admin-nav-item on" type="button" data-admin-view="overview" data-fbz-click="shell.admin-show-view-overview"><span data-i="dashboard"></span><span>Обзор</span></button>
+          <button class="admin-nav-item" type="button" data-admin-view="sync" data-fbz-click="shell.admin-show-view-sync"><span data-i="sync"></span><span>Синхронизация</span></button>
+          <button class="admin-nav-item" type="button" data-admin-view="matches" data-fbz-click="shell.admin-show-view-matches"><span data-i="calendar"></span><span>Матчи</span></button>
+          <button class="admin-nav-item" type="button" data-admin-view="maintenance" data-fbz-click="shell.admin-show-view-maintenance"><span data-i="shield"></span><span>Очистка</span></button>
         </nav>
 
         <main class="admin-workspace">
           <section class="admin-view on" id="admin-view-overview">
             <div class="admin-section-head">
               <div><h2>Состояние продукта</h2><p>Ключевые данные и последние изменения в каталоге</p></div>
-              <button class="admin-text-button" type="button" onclick="FBZAdmin.showView('sync')">Обновить данные <span>→</span></button>
+              <button class="admin-text-button" type="button" data-fbz-click="shell.admin-open-sync">Обновить данные <span>→</span></button>
             </div>
             <div class="admin-panel admin-table-panel">
               <div class="admin-panel-head"><h3>Последние матчи</h3><span id="adminUpdatedAt">—</span></div>
@@ -352,9 +352,9 @@
                   <label><span>Конец периода</span><input type="date" id="adminDateTo"></label>
                 </div>
                 <div class="admin-sync-actions">
-                  <button class="btn btn-l" type="button" id="adminSyncMatches" onclick="FBZAdmin.sync('matches')"><span data-i="download"></span> Матчи</button>
-                  <button class="btn btn-g" type="button" id="adminSyncSquads" onclick="FBZAdmin.sync('squads')"><span data-i="users"></span> Составы</button>
-                  <button class="admin-icon-button" type="button" onclick="FBZAdmin.testConnection()" aria-label="Проверить API" title="Проверить API"><span data-i="pulse"></span></button>
+                  <button class="btn btn-l" type="button" id="adminSyncMatches" data-fbz-click="shell.admin-sync-matches"><span data-i="download"></span> Матчи</button>
+                  <button class="btn btn-g" type="button" id="adminSyncSquads" data-fbz-click="shell.admin-sync-squads"><span data-i="users"></span> Составы</button>
+                  <button class="admin-icon-button" type="button" data-fbz-click="shell.admin-test-connection" aria-label="Проверить API" title="Проверить API"><span data-i="pulse"></span></button>
                 </div>
               </section>
 
@@ -370,7 +370,7 @@
               <div class="admin-panel-head"><h3>Хранилище профилей</h3><span>Без доступа к ключам в браузере</span></div>
               <div class="admin-maintenance-row">
                 <div><b>Legacy-аватары</b><span id="adminLegacyAvatarCount">Проверяем...</span></div>
-                <button class="btn btn-g" type="button" id="adminMigrateAvatars" onclick="FBZAdmin.migrateLegacyAvatars()" disabled><span data-i="save"></span> Перенести в Storage</button>
+                <button class="btn btn-g" type="button" id="adminMigrateAvatars" data-fbz-click="shell.admin-migrate-legacy-avatars" disabled><span data-i="save"></span> Перенести в Storage</button>
               </div>
             </section>
           </section>
@@ -378,7 +378,7 @@
           <section class="admin-view" id="admin-view-matches">
             <div class="admin-section-head">
               <div><h2>Матчи</h2><p>Проверка дат, статусов и итогового счета</p></div>
-              <label class="admin-search"><span data-i="search"></span><input type="search" id="adminMatchSearch" placeholder="Команда или лига" oninput="FBZAdmin.filterMatches()"></label>
+              <label class="admin-search"><span data-i="search"></span><input type="search" id="adminMatchSearch" placeholder="Команда или лига" data-fbz-input="shell.admin-filter-matches"></label>
             </div>
             <div class="admin-panel admin-table-panel">
               <div class="admin-match-list" id="adminMatchesList"></div>
@@ -391,14 +391,14 @@
             </div>
             <section class="admin-panel admin-danger-panel">
               <div class="admin-panel-head"><h3>Замена тестового каталога</h3><span>С резервной копией</span></div>
-              <div class="admin-danger-copy"><p>Сначала подготовьте матчи за последние 30 дней и ближайшие две недели, клубы и составы шести турниров. Подготовка занимает около двух минут. Если загрузка не удастся, текущие данные сохранятся.</p><button class="btn btn-g" type="button" id="adminPrepareCatalog" onclick="FBZAdmin.prepareCatalog()">Подготовить новый каталог</button><p id="adminCatalogProgress" role="status" aria-live="polite"></p></div>
+              <div class="admin-danger-copy"><p>Сначала подготовьте матчи за последние 30 дней и ближайшие две недели, клубы и составы шести турниров. Подготовка занимает около двух минут. Если загрузка не удастся, текущие данные сохранятся.</p><button class="btn btn-g" type="button" id="adminPrepareCatalog" data-fbz-click="shell.admin-prepare-catalog">Подготовить новый каталог</button><p id="adminCatalogProgress" role="status" aria-live="polite"></p></div>
               <div class="admin-danger-copy"><strong>Пользователи и их аккаунты не удаляются.</strong><p>Удаляются выбранные матчи, игроки или оценки вместе с зависимыми данными. Действие выполняет защищённая серверная функция и записывает результат в журнал администратора.</p></div>
-              <label class="admin-danger-confirm"><span>Введите контрольную фразу</span><input type="text" id="adminCleanupConfirm" autocomplete="off" spellcheck="false" placeholder="DELETE FOOTBAZED DATA" oninput="FBZAdmin.updateCleanupState()"></label>
+              <label class="admin-danger-confirm"><span>Введите контрольную фразу</span><input type="text" id="adminCleanupConfirm" autocomplete="off" spellcheck="false" placeholder="DELETE FOOTBAZED DATA" data-fbz-input="shell.admin-update-cleanup-state"></label>
               <div class="admin-danger-actions">
-                <button class="btn btn-danger admin-cleanup-action" type="button" onclick="FBZAdmin.cleanup('ratings')" disabled>Удалить оценки</button>
-                <button class="btn btn-danger admin-cleanup-action" type="button" onclick="FBZAdmin.cleanup('players')" disabled>Удалить игроков</button>
-                <button class="btn btn-danger admin-cleanup-action" type="button" onclick="FBZAdmin.cleanup('matches')" disabled>Удалить матчи</button>
-                <button class="btn btn-danger admin-cleanup-action all" type="button" onclick="FBZAdmin.cleanup('all')" disabled>Заменить всё тестовое</button>
+                <button class="btn btn-danger admin-cleanup-action" type="button" data-fbz-click="shell.admin-cleanup-ratings" disabled>Удалить оценки</button>
+                <button class="btn btn-danger admin-cleanup-action" type="button" data-fbz-click="shell.admin-cleanup-players" disabled>Удалить игроков</button>
+                <button class="btn btn-danger admin-cleanup-action" type="button" data-fbz-click="shell.admin-cleanup-matches" disabled>Удалить матчи</button>
+                <button class="btn btn-danger admin-cleanup-action all" type="button" data-fbz-click="shell.admin-cleanup-all" disabled>Заменить всё тестовое</button>
               </div>
               <div class="admin-cleanup-result" id="adminCleanupResult" role="status" aria-live="polite"></div>
             </section>
@@ -439,9 +439,9 @@
         <label class="sr-only" for="loginPass">Пароль</label>
         <input class="input" type="password" placeholder="Пароль" id="loginPass" autocomplete="current-password">
         <div class="auth-e" id="loginErr" role="status" aria-live="polite"></div>
-        <button class="btn btn-l" style="width:100%" onclick="doLogin()" id="loginBtn">Войти</button>
-        <p class="auth-alt"><button type="button" onclick="switchToRecovery()">Забыли пароль?</button></p>
-        <p class="auth-alt">Нет аккаунта? <button type="button" onclick="switchToRegister()">Зарегистрироваться</button></p>
+        <button class="btn btn-l" style="width:100%" data-fbz-click="shell.do-login" id="loginBtn">Войти</button>
+        <p class="auth-alt"><button type="button" data-fbz-click="shell.switch-to-recovery">Забыли пароль?</button></p>
+        <p class="auth-alt">Нет аккаунта? <button type="button" data-fbz-click="shell.switch-to-register">Зарегистрироваться</button></p>
       </div>
 
       <div class="auth-step" id="authRecovery">
@@ -450,9 +450,9 @@
         <label class="sr-only" for="recoveryEmail">Email</label>
         <input class="input" type="email" placeholder="Email" id="recoveryEmail" autocomplete="email" inputmode="email">
         <div class="auth-e" id="recoveryErr" role="status" aria-live="polite"></div>
-        <button class="btn btn-l" style="width:100%" onclick="sendPasswordRecovery()" id="recoveryBtn">Отправить ссылку</button>
+        <button class="btn btn-l" style="width:100%" data-fbz-click="shell.send-password-recovery" id="recoveryBtn">Отправить ссылку</button>
         <p class="auth-note" id="recoveryNote">Письмо придёт, если аккаунт с таким email существует</p>
-        <p class="auth-alt"><button type="button" onclick="switchToLogin()">Вернуться ко входу</button></p>
+        <p class="auth-alt"><button type="button" data-fbz-click="shell.switch-to-login">Вернуться ко входу</button></p>
       </div>
 
       <div class="auth-step" id="authNewPassword">
@@ -463,7 +463,7 @@
         <label class="sr-only" for="newPasswordConfirm">Повторите пароль</label>
         <input class="input" type="password" placeholder="Повторите пароль" id="newPasswordConfirm" minlength="8" autocomplete="new-password">
         <div class="auth-e" id="newPasswordErr" role="status" aria-live="polite"></div>
-        <button class="btn btn-l" style="width:100%" onclick="updateRecoveredPassword()" id="newPasswordBtn">Сохранить пароль</button>
+        <button class="btn btn-l" style="width:100%" data-fbz-click="shell.update-recovered-password" id="newPasswordBtn">Сохранить пароль</button>
       </div>
 
       <!-- REGISTER STEP 1: Email -->
@@ -473,9 +473,9 @@
         <label class="sr-only" for="authEmail">Email</label>
         <input class="input" type="email" placeholder="example@mail.ru" id="authEmail" autocomplete="email" inputmode="email">
         <div class="auth-e" id="authE" role="status" aria-live="polite"></div>
-        <button class="btn btn-l" style="width:100%" onclick="sendOTP()" id="authSendBtn">Отправить код →</button>
+        <button class="btn btn-l" style="width:100%" data-fbz-click="shell.send-otp" id="authSendBtn">Отправить код →</button>
         <p class="auth-note">На почту придёт 6-значный код</p>
-        <p class="auth-alt">Уже есть аккаунт? <button type="button" onclick="switchToLogin()">Войти</button></p>
+        <p class="auth-alt">Уже есть аккаунт? <button type="button" data-fbz-click="shell.switch-to-login">Войти</button></p>
       </div>
       
       <!-- REGISTER STEP 2: OTP Code -->
@@ -486,8 +486,8 @@
         <label class="sr-only" for="authCode">Код подтверждения</label>
         <input class="input" type="text" placeholder="6-значный код" id="authCode" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
         <div class="auth-e" id="authE2" role="status" aria-live="polite"></div>
-        <button class="btn btn-l" style="width:100%" onclick="verifyOTP()" id="authVerifyBtn">Подтвердить</button>
-        <button class="btn btn-g" style="width:100%;margin-top:8px;" onclick="showAuthStep(1)">Изменить email</button>
+        <button class="btn btn-l" style="width:100%" data-fbz-click="shell.verify-otp" id="authVerifyBtn">Подтвердить</button>
+        <button class="btn btn-g" style="width:100%;margin-top:8px;" data-fbz-click="shell.show-auth-step">Изменить email</button>
       </div>
       
       <!-- REGISTER STEP 3: Profile + Password -->
@@ -501,10 +501,10 @@
         <input class="input" placeholder="О себе" id="rB" maxlength="100">
         <p class="auth-step-note">Любимые клубы можно выбрать после регистрации через поиск или страницу клуба.</p>
         <div class="auth-e" id="authE3" role="status" aria-live="polite"></div>
-        <button class="btn btn-l" style="width:100%" onclick="saveProfile()" id="profileSaveBtn">Создать аккаунт →</button>
+        <button class="btn btn-l" style="width:100%" data-fbz-click="shell.save-profile" id="profileSaveBtn">Создать аккаунт →</button>
       </div>
       
-      <button class="btn btn-g" style="width:100%;margin-top:16px;" onclick="closeAuth()">Закрыть</button>
+      <button class="btn btn-g" style="width:100%;margin-top:16px;" data-fbz-click="shell.close-auth">Закрыть</button>
     </div>
   </div>
 
@@ -516,7 +516,7 @@
           <span class="rate-eyebrow">Ваше мнение</span>
           <h2 id="rateTitle">Оценить матч</h2>
         </div>
-        <button class="rate-close" type="button" onclick="closeRate()" aria-label="Закрыть окно оценки">×</button>
+        <button class="rate-close" type="button" data-fbz-click="shell.close-rate" aria-label="Закрыть окно оценки">×</button>
       </div>
       
       <div class="rate-steps" aria-label="Прогресс оценки">
@@ -530,9 +530,9 @@
           <legend>С чьей позиции вы оцениваете матч?</legend>
           <p>Так оценки болельщиков обеих команд и нейтральных зрителей можно сравнить честно.</p>
           <div class="rating-supporter-options">
-            <label><input type="radio" name="ratingSupporterSide" value="home" onchange="selectSupporterSide(this.value)"><span><i data-i="shield"></i><b id="rSupportHome">Первая команда</b><small>Болею за хозяев</small></span></label>
-            <label><input type="radio" name="ratingSupporterSide" value="neutral" onchange="selectSupporterSide(this.value)"><span><i data-i="football"></i><b>Нейтральный зритель</b><small>Смотрю без клубной стороны</small></span></label>
-            <label><input type="radio" name="ratingSupporterSide" value="away" onchange="selectSupporterSide(this.value)"><span><i data-i="shield"></i><b id="rSupportAway">Вторая команда</b><small>Болею за гостей</small></span></label>
+            <label><input type="radio" name="ratingSupporterSide" value="home" data-fbz-change="shell.select-supporter-side"><span><i data-i="shield"></i><b id="rSupportHome">Первая команда</b><small>Болею за хозяев</small></span></label>
+            <label><input type="radio" name="ratingSupporterSide" value="neutral" data-fbz-change="shell.select-supporter-side"><span><i data-i="football"></i><b>Нейтральный зритель</b><small>Смотрю без клубной стороны</small></span></label>
+            <label><input type="radio" name="ratingSupporterSide" value="away" data-fbz-change="shell.select-supporter-side"><span><i data-i="shield"></i><b id="rSupportAway">Вторая команда</b><small>Болею за гостей</small></span></label>
           </div>
         </fieldset>
         <section class="rate-score-panel" aria-labelledby="rateScorePrompt">
@@ -550,8 +550,8 @@
         </label>
         
         <div class="rating-actions rating-actions-primary">
-          <button class="btn btn-g" type="button" onclick="closeRate()">Отмена</button>
-          <button class="btn btn-l" type="button" onclick="rNext()">Продолжить <span aria-hidden="true">→</span></button>
+          <button class="btn btn-g" type="button" data-fbz-click="shell.close-rate">Отмена</button>
+          <button class="btn btn-l" type="button" data-fbz-click="shell.r-next">Продолжить <span aria-hidden="true">→</span></button>
         </div>
       </div>
       
@@ -565,7 +565,7 @@
         <aside class="player-rating-editor" id="playerRatingEditor" hidden aria-labelledby="playerRatingName">
           <div class="player-rating-editor-head">
             <span>Оценка игрока</span>
-            <button type="button" onclick="closePlayerRatingEditor()" aria-label="Закрыть оценку игрока">×</button>
+            <button type="button" data-fbz-click="shell.close-player-rating-editor" aria-label="Закрыть оценку игрока">×</button>
           </div>
           <div class="player-rating-person">
             <span class="player-rating-initials" id="playerRatingInitials" aria-hidden="true">—</span>
@@ -574,26 +574,26 @@
           </div>
           <div class="player-rating-label" id="playerRatingLabel" aria-live="polite">Передвиньте ползунок</div>
           <label class="sr-only" for="playerRatingRange">Оценка игрока от 1 до 10</label>
-          <input class="player-rating-range" id="playerRatingRange" type="range" min="1" max="10" step="1" value="5" data-tone="neutral" oninput="setActivePlayerScore(this.value)">
+          <input class="player-rating-range" id="playerRatingRange" type="range" min="1" max="10" step="1" value="5" data-tone="neutral" data-fbz-input="shell.set-active-player-score">
           <div class="player-rating-scale" aria-hidden="true"><span>1</span><span>5</span><span>10</span></div>
           <div class="player-rating-editor-actions">
-            <button class="player-rating-clear" type="button" onclick="clearActivePlayerRating()">Сбросить</button>
-            <button class="player-best-button" id="playerBestButton" type="button" onclick="toggleActiveBest()" aria-pressed="false" disabled><span data-i="star"></span> Лучший игрок</button>
-            <button class="player-rating-done" type="button" onclick="closePlayerRatingEditor()">Готово</button>
+            <button class="player-rating-clear" type="button" data-fbz-click="shell.clear-active-player-rating">Сбросить</button>
+            <button class="player-best-button" id="playerBestButton" type="button" data-fbz-click="shell.toggle-active-best" aria-pressed="false" disabled><span data-i="star"></span> Лучший игрок</button>
+            <button class="player-rating-done" type="button" data-fbz-click="shell.close-player-rating-editor">Готово</button>
           </div>
         </aside>
         
         <label class="sr-only" for="rCmt">Комментарий к матчу</label>
         <div class="rating-comment-field">
           <div class="rating-comment-heading"><span>Отзыв о матче</span><small>Необязательно</small></div>
-          <textarea class="input" placeholder="Что запомнилось в игре?" id="rCmt" rows="4" maxlength="1000" oninput="updateRatingCommentCount()"></textarea>
+          <textarea class="input" placeholder="Что запомнилось в игре?" id="rCmt" rows="4" maxlength="1000" data-fbz-input="shell.update-rating-comment-count"></textarea>
           <div class="rating-comment-meta"><span>Пишите по существу и уважайте других</span><span id="rCmtCount">0/1000</span></div>
         </div>
         
-        <button class="btn btn-danger-soft rating-delete" type="button" onclick="requestDeleteRating()" id="rDelete" hidden>Удалить мою оценку</button>
+        <button class="btn btn-danger-soft rating-delete" type="button" data-fbz-click="shell.request-delete-rating" id="rDelete" hidden>Удалить мою оценку</button>
         <div class="rating-actions">
-          <button class="btn btn-g" type="button" onclick="rBack()"><span aria-hidden="true">←</span> Назад</button>
-          <button class="btn btn-l" type="button" onclick="saveRating()" id="rSave">Сохранить</button>
+          <button class="btn btn-g" type="button" data-fbz-click="shell.r-back"><span aria-hidden="true">←</span> Назад</button>
+          <button class="btn btn-l" type="button" data-fbz-click="shell.save-rating" id="rSave">Сохранить</button>
         </div>
       </div>
     </div>
@@ -607,7 +607,7 @@
         <span class="global-search-icon" data-i="search"></span>
         <label class="sr-only" for="globalSearchInput">Матч, команда или пользователь</label>
         <input id="globalSearchInput" type="search" placeholder="Клуб, игрок, матч или пользователь" autocomplete="off" maxlength="80" aria-controls="globalSearchResults">
-        <button class="global-search-close" type="button" onclick="FBZSearch.close()" aria-label="Закрыть поиск">×</button>
+        <button class="global-search-close" type="button" data-fbz-click="shell.search-close" aria-label="Закрыть поиск">×</button>
       </div>
       <div class="global-search-results" id="globalSearchResults" aria-live="polite"></div>
     </div>
@@ -619,8 +619,8 @@
       <h2 id="confirmTitle">Подтвердите действие</h2>
       <p id="confirmMessage"></p>
       <div class="confirm-actions">
-        <button class="btn btn-g" type="button" onclick="FBZConfirm.close()">Отмена</button>
-        <button class="btn btn-danger" type="button" id="confirmAction" onclick="FBZConfirm.run()">Продолжить</button>
+        <button class="btn btn-g" type="button" data-fbz-click="shell.confirm-close">Отмена</button>
+        <button class="btn btn-danger" type="button" id="confirmAction" data-fbz-click="shell.confirm-run">Продолжить</button>
       </div>
     </div>
   </div>
@@ -631,9 +631,9 @@
       <h2 id="shareTitle">Карточка профиля</h2>
       <canvas id="shareCanvas" role="img" aria-label="Карточка FOOTBAZED"></canvas>
       <div class="share-actions">
-        <button class="btn btn-l" onclick="downloadShare()"><span data-i="download"></span>Скачать PNG</button>
-        <button class="btn btn-g" onclick="copyShare()"><span data-i="copy"></span>Копировать</button>
-        <button class="btn btn-g" onclick="closeShare()">Закрыть</button>
+        <button class="btn btn-l" data-fbz-click="shell.download-share"><span data-i="download"></span>Скачать PNG</button>
+        <button class="btn btn-g" data-fbz-click="shell.copy-share"><span data-i="copy"></span>Копировать</button>
+        <button class="btn btn-g" data-fbz-click="shell.close-share">Закрыть</button>
       </div>
     </div>
   </div>
@@ -646,7 +646,7 @@
           <h2 id="settingsTitle">Настройки</h2>
           <p>Внешний вид и технические данные профиля</p>
         </div>
-        <button class="icon-btn" onclick="closeSettings()" aria-label="Закрыть">×</button>
+        <button class="icon-btn" data-fbz-click="shell.close-settings" aria-label="Закрыть">×</button>
       </div>
 
       <fieldset class="settings-group">
@@ -670,25 +670,25 @@
 
       <div class="settings-tech">
         <div class="settings-tech-title">Профиль</div>
-        <div class="tech-row"><span>ID аккаунта</span><button id="techUserId" onclick="copyTechValue('techUserId')">—</button></div>
-        <div class="tech-row"><span>Email</span><button id="techEmail" onclick="copyTechValue('techEmail')">—</button></div>
-        <div class="tech-row"><span>Ссылка</span><button id="techProfileUrl" onclick="copyTechValue('techProfileUrl')">—</button></div>
-        <div class="tech-row"><span>Роль</span><button id="techRole" onclick="copyTechValue('techRole')">—</button></div>
+        <div class="tech-row"><span>ID аккаунта</span><button id="techUserId" data-fbz-click="shell.copy-tech-value-tech-user-id">—</button></div>
+        <div class="tech-row"><span>Email</span><button id="techEmail" data-fbz-click="shell.copy-tech-value-tech-email">—</button></div>
+        <div class="tech-row"><span>Ссылка</span><button id="techProfileUrl" data-fbz-click="shell.copy-tech-value-tech-profile-url">—</button></div>
+        <div class="tech-row"><span>Роль</span><button id="techRole" data-fbz-click="shell.copy-tech-value-tech-role">—</button></div>
       </div>
 
       <div class="settings-actions">
-        <button class="btn btn-g" onclick="closeSettings()">Отмена</button>
-        <button class="btn btn-l" onclick="saveAppearanceSettings()">Сохранить</button>
+        <button class="btn btn-g" data-fbz-click="shell.close-settings">Отмена</button>
+        <button class="btn btn-l" data-fbz-click="shell.save-appearance-settings">Сохранить</button>
       </div>
     </div>
   </div>
 
   <!-- ADMIN MATCH EDITOR -->
   <div class="overlay" id="adminMatchOv" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="adminMatchTitle" data-close-backdrop="true" tabindex="-1">
-    <form class="admin-match-editor" onsubmit="FBZAdmin.saveMatch(event)">
+    <form class="admin-match-editor" data-fbz-submit="shell.admin-save-match">
       <div class="settings-head">
         <div><span class="admin-eyebrow">РУЧНАЯ ПРОВЕРКА</span><h2 id="adminMatchTitle">Матч</h2><p id="adminMatchLeague">—</p></div>
-        <button class="icon-btn" type="button" onclick="FBZAdmin.closeEditor()" aria-label="Закрыть">×</button>
+        <button class="icon-btn" type="button" data-fbz-click="shell.admin-close-editor" aria-label="Закрыть">×</button>
       </div>
       <input type="hidden" id="adminEditMatchId">
       <label class="admin-edit-field"><span>Дата и время</span><input type="datetime-local" id="adminEditMatchDate" required></label>
@@ -698,7 +698,7 @@
         <b>:</b>
         <label><span id="adminEditAwayName">Гости</span><input type="number" id="adminEditAwayScore" min="0" max="99" inputmode="numeric"></label>
       </div>
-      <div class="settings-actions"><button class="btn btn-g" type="button" onclick="FBZAdmin.closeEditor()">Отмена</button><button class="btn btn-l" type="submit" id="adminMatchSave">Сохранить</button></div>
+      <div class="settings-actions"><button class="btn btn-g" type="button" data-fbz-click="shell.admin-close-editor">Отмена</button><button class="btn btn-l" type="submit" id="adminMatchSave">Сохранить</button></div>
     </form>
   </div>
 
@@ -706,21 +706,21 @@
   <div class="overlay" id="directChatOv" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="directChatTitle" data-close-backdrop="false" tabindex="-1">
     <section class="dm-shell">
       <header class="dm-head">
-        <button class="dm-back" id="directChatBack" type="button" onclick="FBZMessages?.showPicker()" aria-label="Назад к друзьям" hidden>‹</button>
+        <button class="dm-back" id="directChatBack" type="button" data-fbz-click="shell.messages-show-picker" aria-label="Назад к друзьям" hidden>‹</button>
         <button class="dm-person" id="directChatPerson" type="button" disabled>
           <span class="dm-avatar" id="directChatAvatar">F</span>
           <span><b id="directChatTitle">Сообщения</b><small id="directChatSubtitle">Личный чат</small></span>
         </button>
-        <button class="icon-btn" type="button" onclick="FBZMessages?.close()" aria-label="Закрыть">×</button>
+        <button class="icon-btn" type="button" data-fbz-click="shell.messages-close" aria-label="Закрыть">×</button>
       </header>
       <div class="dm-body" id="directChatBody" aria-live="polite"></div>
       <div class="dm-upload-state" id="directChatUploadState" role="status" hidden></div>
-      <form class="dm-composer" id="directChatComposer" onsubmit="FBZMessages?.send(event)" hidden>
-        <input id="directChatMedia" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" onchange="FBZMessages?.attach(this.files?.[0])" hidden>
-        <button class="dm-tool" type="button" onclick="document.getElementById('directChatMedia').click()" aria-label="Прикрепить фото или видео" title="Фото или видео"><span data-i="photo"></span></button>
+      <form class="dm-composer" id="directChatComposer" data-fbz-submit="shell.messages-send" hidden>
+        <input id="directChatMedia" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" data-fbz-change="shell.messages-attach" hidden>
+        <button class="dm-tool" type="button" data-fbz-click="shell.attach-media" aria-label="Прикрепить фото или видео" title="Фото или видео"><span data-i="photo"></span></button>
         <label class="sr-only" for="directChatInput">Сообщение</label>
-        <textarea id="directChatInput" rows="1" maxlength="2000" placeholder="Сообщение" onkeydown="FBZMessages?.composerKeydown(event)"></textarea>
-        <button class="dm-tool" id="directChatVoice" type="button" onclick="FBZMessages?.toggleVoice()" aria-label="Записать голосовое сообщение" title="Голосовое сообщение"><span class="dm-mic">●</span></button>
+        <textarea id="directChatInput" rows="1" maxlength="2000" placeholder="Сообщение" data-fbz-keydown="shell.messages-composer-keydown"></textarea>
+        <button class="dm-tool" id="directChatVoice" type="button" data-fbz-click="shell.messages-toggle-voice" aria-label="Записать голосовое сообщение" title="Голосовое сообщение"><span class="dm-mic">●</span></button>
         <button class="dm-send" id="directChatSend" type="submit" aria-label="Отправить"><span data-i="send"></span></button>
       </form>
     </section>
@@ -728,23 +728,23 @@
 
   <!-- MOBILE NAV -->
   <nav class="mob-nav" aria-label="Мобильная навигация">
-    <button type="button" class="mob-nav-item active" aria-current="page" id="mn-home" onclick="go('home')">
+    <button type="button" class="mob-nav-item active" aria-current="page" id="mn-home" data-fbz-click="shell.go-home">
       <span class="mob-nav-icon" data-i="home"></span>
       Главная
     </button>
-    <button type="button" class="mob-nav-item" id="mn-matches" onclick="go('matches')">
+    <button type="button" class="mob-nav-item" id="mn-matches" data-fbz-click="shell.go-matches">
       <span class="mob-nav-icon" data-i="football"></span>
       Матчи
     </button>
-    <button type="button" class="mob-nav-item" id="mn-feed" onclick="go('feed')">
+    <button type="button" class="mob-nav-item" id="mn-feed" data-fbz-click="shell.go-feed">
       <span class="mob-nav-icon" data-i="feed"></span>
       Лента
     </button>
-    <button type="button" class="mob-nav-item" id="mn-leaderboard" onclick="go('leaderboard')">
+    <button type="button" class="mob-nav-item" id="mn-leaderboard" data-fbz-click="shell.go-leaderboard">
       <span class="mob-nav-icon" data-i="trophy"></span>
       Обзор
     </button>
-    <button type="button" class="mob-nav-item" id="mn-profile" onclick="goOwnProfile()">
+    <button type="button" class="mob-nav-item" id="mn-profile" data-fbz-click="shell.go-own-profile">
       <span class="mob-nav-icon" data-i="users"></span>
       Профиль
     </button>
@@ -757,18 +757,20 @@
   <script src="js/domain.js?v=57"></script>
   <script src="js/appearance.js?v=40"></script>
   <script src="js/performance.js?v=1"></script>
-  <script src="js/core.js?v=53"></script>
+  <script src="js/core.js?v=54"></script>
   <script src="js/media.js?v=4"></script>
   <script src="js/seo.js?v=4"></script>
   <script src="js/data.js?v=47"></script>
   <script src="js/overlays.js?v=42"></script>
   <script src="js/confirm.js?v=42"></script>
-  <script src="js/home.js?v=7"></script>
+  <script src="js/actions.js?v=1"></script>
+  <script src="js/shell-actions.js?v=1"></script>
+  <script src="js/home.js?v=8"></script>
   <script src="js/feature-loader.js?v=1"></script>
-  <script src="app.js?v=61"></script>
+  <script src="app.js?v=62"></script>
   <script src="js/auth.js?v=45"></script>
-  <script src="js/rating-loader.js?v=6"></script>
-  <script src="js/matches.js?v=58"></script>
+  <script src="js/rating-loader.js?v=7"></script>
+  <script src="js/matches.js?v=59"></script>
   <script src="js/account.js?v=41"></script>
 </body>
 </html>

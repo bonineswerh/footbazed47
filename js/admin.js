@@ -90,7 +90,7 @@
       <div class="admin-match-teams"><span>${esc(match.home_team_name)}</span><span>${esc(match.away_team_name)}</span></div>
       <div class="admin-match-score">${score(match)}</div>
       <span class="admin-status ${esc(match.status || 'scheduled')}">${esc(STATUS_LABELS[match.status] || match.status || '—')}</span>
-      <button class="admin-row-action" type="button" onclick="FBZAdmin.openEditor(${Number(match.id)})" aria-label="Редактировать матч" title="Редактировать">${ico('edit',15)}</button>
+      <button class="admin-row-action" type="button" ${FBZActions.attrs("admin.admin-open-editor",[Number(match.id)])} aria-label="Редактировать матч" title="Редактировать">${ico('edit',15)}</button>
     </article>`;
   }
 
@@ -175,7 +175,7 @@
       setHealth('Требуется внимание', 'bad');
       addActivity(error.message, 'bad');
       const host = document.getElementById('adminRecentMatches');
-      if (host) host.innerHTML = `<div class="admin-error-state"><b>Не удалось загрузить админ-панель</b><span>${esc(error.message)}</span><button type="button" onclick="FBZAdmin.refresh(true)">Повторить</button></div>`;
+      if (host) host.innerHTML = `<div class="admin-error-state"><b>Не удалось загрузить админ-панель</b><span>${esc(error.message)}</span><button type="button" data-fbz-click="admin.admin-refresh">Повторить</button></div>`;
     } finally {
       state.loading = false;
     }
@@ -436,3 +436,9 @@
 
   window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog};
 })();
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "admin.admin-open-editor":(event,element,[id])=>FBZAdmin.openEditor(id),
+  "admin.admin-refresh":()=>FBZAdmin.refresh(true)
+});

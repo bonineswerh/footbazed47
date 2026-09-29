@@ -10,6 +10,10 @@ const get=async path=>{
 const home=await get('/');
 assert.equal(home.response.status,200);
 for(const header of ['content-security-policy','x-content-type-options','x-frame-options'])assert.ok(home.response.headers.get(header),`Missing ${header}`);
+const policy=home.response.headers.get('content-security-policy');
+assert.match(policy,/(?:^|;)\s*script-src 'self'\s*(?:;|$)/);
+assert.match(policy,/(?:^|;)\s*script-src-attr 'none'\s*(?:;|$)/);
+assert.ok(!/\son\w+=/i.test(home.body),'Initial HTML must not contain inline handlers');
 const map=await get('/sitemap.xml');
 assert.equal(map.response.status,200);
 assert.ok(map.body.includes('/discover</loc>'));

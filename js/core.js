@@ -57,15 +57,6 @@
     }[ch]));
   };
 
-  // Safe for a JavaScript string embedded in a double-quoted HTML attribute.
-  window.jsStr=function(value){
-    return JSON.stringify(String(value??''))
-      .replace(/&/g,'\\u0026')
-      .replace(/</g,'\\u003c')
-      .replace(/>/g,'\\u003e')
-      .replace(/"/g,'&quot;');
-  };
-
   window.safeImageUrl=function(value){
     const url=String(value||'').trim();
     if(!url)return'';

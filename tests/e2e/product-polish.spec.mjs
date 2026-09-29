@@ -1,5 +1,5 @@
 import {expect,test} from '@playwright/test';
-import axe from 'axe-core';
+
 import {installSupabaseMock} from './mock-supabase.mjs';
 
 const own='3615141a-7700-46b8-9ba5-e4f4450537fc';
@@ -117,7 +117,7 @@ for(const theme of ['dark','light']){
       await page.addInitScript(value=>localStorage.setItem('fbz_appearance',JSON.stringify(value)),{theme,accent});
       await page.goto(`/profile/${own}?__e2e=1`);
       await expect(page.locator('.profile-diary')).toBeVisible();
-      await page.addScriptTag({content:axe.source});
+      await page.addScriptTag({url: "/node_modules/axe-core/axe.min.js"});
       const violations=await page.evaluate(async()=>{
         const result=await axe.run(document.querySelector('#profileW'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}});
         return result.violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}));

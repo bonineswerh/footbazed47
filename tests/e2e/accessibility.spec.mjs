@@ -1,5 +1,5 @@
 import {expect,test} from '@playwright/test';
-import axe from 'axe-core';
+
 import {installSupabaseMock} from './mock-supabase.mjs';
 
 async function prepare(page){
@@ -17,7 +17,7 @@ async function prepare(page){
 }
 
 async function expectNoSignificantWcagViolations(page,contextSelector=null){
-  await page.addScriptTag({content:axe.source});
+  await page.addScriptTag({url: "/node_modules/axe-core/axe.min.js"});
   const violations=await page.evaluate(async selector=>{
     const context=selector?document.querySelector(selector):document;
     const result=await window.axe.run(context,{

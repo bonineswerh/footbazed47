@@ -6,6 +6,11 @@ import publicConfig from '../api/config.js';
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const port=Number(process.env.PORT)||4173;
+const securityHeaders=Object.fromEntries(JSON.parse(readFileSync(resolve(root,'vercel.json'),'utf8')).headers.find(rule=>rule.source==='/(.*)').headers.map(({key,value})=>[key,value]));
+// This server binds only to HTTP loopback, with no TLS listener. Keep all script
+// restrictions; transport upgrades belong to the HTTPS production deployment.
+delete securityHeaders['Strict-Transport-Security'];
+securityHeaders['Content-Security-Policy']=securityHeaders['Content-Security-Policy'].replace(/;\s*upgrade-insecure-requests\b/u,'');
 const demo=process.argv.includes('--demo');
 if(demo&&(port!==4174||process.env.PORT!=='4174'||publicConfig.isCI(process.env)||process.env.VERCEL||process.env.VERCEL_ENV)){
   throw new Error('Demo requires PORT=4174 on a local machine outside CI and Vercel.');
@@ -17,6 +22,8 @@ function runtimeConfig(){
 }
 
 const server=createServer((request,response)=>{
+  // Exercise production script restrictions in local development and browser tests.
+  for(const [key,value] of Object.entries(securityHeaders))response.setHeader(key,value);
   let pathname;
   let url;
   try{url=new URL(request.url,'http://localhost');pathname=decodeURIComponent(url.pathname);}

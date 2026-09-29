@@ -60,19 +60,19 @@ window.addEventListener('fbz:session-change',()=>{
 function ensureFeatureModule(options){return window.FBZFeatures.load(options);}
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=45',script:'js/admin.js?v=46',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=45',script:'js/admin.js?v=47',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=56',script:'js/entities.js?v=56',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=56',script:'js/entities.js?v=57',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=57',script:'js/feed.js?v=55',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=57',script:'js/feed.js?v=56',ready:()=>window.FBZFeed});
 }
 function ensureMessagesModule(){
-  return ensureFeatureModule({key:'messages',styleId:'messageStyles',style:'css/messages.css?v=6',script:'js/messages.js?v=5',ready:()=>window.FBZMessages});
+  return ensureFeatureModule({key:'messages',styleId:'messageStyles',style:'css/messages.css?v=6',script:'js/messages.js?v=6',ready:()=>window.FBZMessages});
 }
 function ensureSearchModule(){
-  return ensureFeatureModule({key:'search',script:'js/search.js?v=56',ready:()=>window.FBZSearch});
+  return ensureFeatureModule({key:'search',script:'js/search.js?v=57',ready:()=>window.FBZSearch});
 }
 
 function openGlobalSearch(){
@@ -178,26 +178,26 @@ function renderNav(){
     const cls=avColor(n);
     const safeAvatar=safeImageUrl(CU.avatar_url);
     const navAv=safeAvatar?`<img src="${safeAvatar}" style="width:32px;height:32px;border-radius:8px;object-fit:cover" alt="">`:`<div class="nav-av ${cls}">${esc(n[0].toUpperCase())}</div>`;
-    const adminItem=CU.is_admin?`<button type="button" role="menuitem" onclick="FBZAccount.close();go('admin')">${ico('dashboard',17)}<span><b>Админ-панель</b><small>Управление платформой</small></span></button>`:'';
+    const adminItem=CU.is_admin?`<button type="button" role="menuitem" data-fbz-click="app.account-go-admin">${ico('dashboard',17)}<span><b>Админ-панель</b><small>Управление платформой</small></span></button>`:'';
     nr.innerHTML=`
-      <button class="notif-btn header-icon-button" id="notifBtn" type="button" onclick="toggleNotif()" aria-label="Уведомления" aria-controls="notifPanel" aria-expanded="false">${ico('bell',18)}<span class="notif-badge" id="notifBadge"></span></button>
-      <button class="header-icon-button header-settings" type="button" onclick="openSettings()" aria-label="Настройки" title="Настройки">${ico('settings',18)}</button>
+      <button class="notif-btn header-icon-button" id="notifBtn" type="button" data-fbz-click="app.toggle-notif" aria-label="Уведомления" aria-controls="notifPanel" aria-expanded="false">${ico('bell',18)}<span class="notif-badge" id="notifBadge"></span></button>
+      <button class="header-icon-button header-settings" type="button" data-fbz-click="app.open-settings" aria-label="Настройки" title="Настройки">${ico('settings',18)}</button>
       <div class="account-shell">
-        <button class="account-trigger" id="accountBtn" type="button" onclick="toggleAccountMenu()" aria-haspopup="menu" aria-expanded="false" aria-controls="accountMenu">${navAv}<span class="nav-uname">${safeName}</span>${ico('chevron',14)}</button>
+        <button class="account-trigger" id="accountBtn" type="button" data-fbz-click="app.toggle-account-menu" aria-haspopup="menu" aria-expanded="false" aria-controls="accountMenu">${navAv}<span class="nav-uname">${safeName}</span>${ico('chevron',14)}</button>
         <div class="account-menu" id="accountMenu" role="menu" aria-hidden="true">
           <div class="account-menu-head">${navAv}<div><b>${safeName}</b><small>${esc(CU.email||'')}</small></div></div>
           <div class="account-menu-items">
-            <button type="button" role="menuitem" onclick="FBZAccount.close();go('profile')">${ico('users',17)}<span><b>Мой профиль</b><small>Оценки и статистика</small></span></button>
+            <button type="button" role="menuitem" data-fbz-click="app.account-go-profile">${ico('users',17)}<span><b>Мой профиль</b><small>Оценки и статистика</small></span></button>
             ${adminItem}
-            <button type="button" role="menuitem" onclick="FBZAccount.close();openSettings()">${ico('settings',17)}<span><b>Настройки</b><small>Тема и данные аккаунта</small></span></button>
+            <button type="button" role="menuitem" data-fbz-click="app.account-open-settings">${ico('settings',17)}<span><b>Настройки</b><small>Тема и данные аккаунта</small></span></button>
           </div>
-          <button class="account-logout" type="button" role="menuitem" onclick="FBZAccount.close();doLogout()">${ico('logout',17)}<span>Выйти</span></button>
+          <button class="account-logout" type="button" role="menuitem" data-fbz-click="app.account-do-logout">${ico('logout',17)}<span>Выйти</span></button>
         </div>
       </div>`;
-    if(hb)hb.innerHTML=`<button class="btn btn-l" onclick="go('matches')">Смотреть матчи →</button>`;
+    if(hb)hb.innerHTML=`<button class="btn btn-l" data-fbz-click="shell.go-matches">Смотреть матчи →</button>`;
   }else{
-    nr.innerHTML=`<button class="nbtn nbtn-lime" onclick="openAuth()">Войти</button>`;
-    if(hb)hb.innerHTML=`<button class="btn btn-l" onclick="openRegister()">Начать свой дневник</button><button class="btn btn-g" onclick="go('matches')">Посмотреть матчи</button>`;
+    nr.innerHTML=`<button class="nbtn nbtn-lime" data-fbz-click="shell.open-auth">Войти</button>`;
+    if(hb)hb.innerHTML=`<button class="btn btn-l" data-fbz-click="shell.open-register">Начать свой дневник</button><button class="btn btn-g" data-fbz-click="shell.go-matches">Посмотреть матчи</button>`;
   }
   window.FBZHome?.sync(CU);
 }
@@ -218,7 +218,7 @@ function go(p,d){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   page.classList.add('on');
   document.querySelectorAll('.nav-link').forEach(l=>{l.classList.remove('active');l.removeAttribute('aria-current');});
-  const lk=document.querySelector(`.nav-link[onclick*="'${p}'"]`);
+  const lk=document.querySelector(`.nav-link[data-fbz-click="shell.go-${p}"]`);
   if(lk){lk.classList.add('active');lk.setAttribute('aria-current','page');}
   CP=p;window.scrollTo({top:0,behavior:'instant'});closeNotif();window.FBZAccount?.close();
   page.setAttribute('tabindex','-1');
@@ -336,9 +336,9 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=2',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=3',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
-  }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" onclick="loadLB()">Повторить</button></div>';}
+  }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" data-fbz-click="app.load-lb">Повторить</button></div>';}
 }
 // ─── PROFILE ───
 function activeProfileStreak(user){
@@ -363,7 +363,7 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=3',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=4',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 function ensureExploreModule(){return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=3',script:'js/explore.js?v=2',ready:()=>window.FBZExplore});}
 async function loadProfile(uid){
@@ -373,7 +373,7 @@ async function loadProfile(uid){
   try{
     const profile=await ensureProfileModule();
     if(CP==='profile'&&routeVersion===route&&CU?.id===user)return profile.mount(uid);
-  }catch(error){if(CP==='profile'&&routeVersion===route)target.innerHTML='<div class="empty-state"><strong>Не удалось открыть профиль</strong><button class="btn btn-g" onclick="loadProfile(viewUID)">Повторить</button></div>';}
+  }catch(error){if(CP==='profile'&&routeVersion===route)target.innerHTML='<div class="empty-state"><strong>Не удалось открыть профиль</strong><button class="btn btn-g" data-fbz-click="app.load-profile">Повторить</button></div>';}
 }
 function addFriendFromProfile(fid){return window.FBZProfile?.mutateFriendship(fid,false);}
 function acceptFriendFromProfile(fid){return window.FBZProfile?.mutateFriendship(fid,true);}
@@ -389,19 +389,19 @@ async function expStats(c,a,u){
 function editProfile(){
   profileVersion++;
   const user=CU?.id,route=routeVersion,profile=profileVersion;
-  ensureFeatureModule({key:'profile-editor',styleId:'profileEditorCss',style:'css/profile-editor.css?v=2',script:'js/profile-editor.js?v=1',ready:()=>window.FBZProfileEditor})
+  ensureFeatureModule({key:'profile-editor',styleId:'profileEditorCss',style:'css/profile-editor.css?v=2',script:'js/profile-editor.js?v=2',ready:()=>window.FBZProfileEditor})
     .then(editor=>{if(CP==='profile'&&user&&CU?.id===user&&routeVersion===route&&profileVersion===profile)editor.open();}).catch(()=>{});
 }
 
 // ─── COMMUNITY LOADER ───
 function ensureCommunityModule(){
-  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=2',script:'js/community.js?v=1',ready:()=>window.FBZCommunity});
+  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=2',script:'js/community.js?v=2',ready:()=>window.FBZCommunity});
 }
 function loadFriendsTab(tab){
   FT=tab;
   document.getElementById('friendsContent').innerHTML='<div class="loading"><div class="spin"></div></div>';
   return ensureCommunityModule().then(community=>{if(CP==='friends')return community.load(tab);}).catch(()=>{
-    if(CP==='friends')document.getElementById('friendsContent').innerHTML='<div class="empty-state">Не удалось загрузить сообщество<button class="btn btn-g" onclick="loadFriendsTab(FT)">Повторить</button></div>';
+    if(CP==='friends')document.getElementById('friendsContent').innerHTML='<div class="empty-state">Не удалось загрузить сообщество<button class="btn btn-g" data-fbz-click="app.load-friends-tab">Повторить</button></div>';
   });
 }
 function searchFriends(){ensureCommunityModule().then(community=>community.search()).catch(()=>{});}
@@ -415,7 +415,7 @@ async function handleInvite(code){
 }
 
 // ─── NOTIFICATIONS LOADER ───
-function ensureNotificationsModule(){return ensureFeatureModule({key:'notifications',styleId:'notificationsCss',style:'css/notifications.css?v=2',script:'js/notifications.js?v=1',ready:()=>window.FBZNotifications});}
+function ensureNotificationsModule(){return ensureFeatureModule({key:'notifications',styleId:'notificationsCss',style:'css/notifications.css?v=2',script:'js/notifications.js?v=2',ready:()=>window.FBZNotifications});}
 function loadNotifications(){if(!CU)return;return ensureNotificationsModule().then(notifications=>notifications.load()).catch(()=>{});}
 function toggleNotif(){ensureNotificationsModule().then(notifications=>notifications.toggle()).catch(()=>{});}
 function closeNotif(returnFocus=false){window.FBZNotifications?.close(returnFocus);}
@@ -434,12 +434,12 @@ async function loadChat(mid){
     if(error)throw error;
     if(!msgs?.length){body.innerHTML='<div class="empty-state"><strong>Начните обсуждение</strong><p>Что запомнилось в этом матче?</p></div>';return;}
     body.innerHTML=msgs.map(m=>`<div class="cmsg ${m.user_id===CU?.id?'own':''}" data-message-id="${Number(m.id)}">
-      <div class="cmsg-auth"><button type="button" onclick="go('profile',{uid:${jsStr(m.user_id)}})">@${esc(m.user?.username||'user')}</button></div>
+      <div class="cmsg-auth"><button type="button" ${FBZActions.attrs("app.go-profile",[m.user_id])}>@${esc(m.user?.username||'user')}</button></div>
       <div class="cmsg-text">${esc(m.message)}</div>
-      <div class="cmsg-meta"><time datetime="${esc(m.created_at)}">${new Date(m.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</time>${m.edited_at?'<span>ред.</span>':''}${m.can_edit?`<button type="button" onclick="editChatMessage(${Number(m.id)})">Изменить</button>`:''}</div>
+      <div class="cmsg-meta"><time datetime="${esc(m.created_at)}">${new Date(m.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</time>${m.edited_at?'<span>ред.</span>':''}${m.can_edit?`<button type="button" ${FBZActions.attrs("app.edit-chat-message",[Number(m.id)])}>Изменить</button>`:''}</div>
     </div>`).join('');
     body.scrollTop=body.scrollHeight;
-  }catch(error){if(current())body.innerHTML='<div class="empty-state"><strong>Не удалось загрузить обсуждение</strong><button class="btn btn-g" onclick="loadChat(chatMID)">Повторить</button></div>';}
+  }catch(error){if(current())body.innerHTML='<div class="empty-state"><strong>Не удалось загрузить обсуждение</strong><button class="btn btn-g" data-fbz-click="app.load-chat">Повторить</button></div>';}
 }
 async function sendChat(){
   if(!CU){openAuth();return;}
@@ -571,3 +571,20 @@ window.addEventListener('scroll',()=>{
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
 else init();
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "app.account-go-admin":()=>{FBZAccount.close();return go('admin');},
+  "app.toggle-notif":()=>toggleNotif(),
+  "app.open-settings":()=>openSettings(),
+  "app.toggle-account-menu":()=>toggleAccountMenu(),
+  "app.account-go-profile":()=>{FBZAccount.close();return go('profile');},
+  "app.account-open-settings":()=>{FBZAccount.close();return openSettings();},
+  "app.account-do-logout":()=>{FBZAccount.close();return doLogout();},
+  "app.load-lb":()=>loadLB(),
+  "app.load-profile":()=>loadProfile(viewUID),
+  "app.load-friends-tab":()=>loadFriendsTab(FT),
+  "app.go-profile":(event,element,[userId])=>go('profile',{uid:userId}),
+  "app.edit-chat-message":(event,element,[id])=>editChatMessage(id),
+  "app.load-chat":()=>loadChat(chatMID)
+});

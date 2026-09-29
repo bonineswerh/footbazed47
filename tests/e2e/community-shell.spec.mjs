@@ -1,5 +1,5 @@
 import {expect,test} from '@playwright/test';
-import axe from 'axe-core';
+
 import {installSupabaseMock} from './mock-supabase.mjs';
 
 const own='3615141a-7700-46b8-9ba5-e4f4450537fc';
@@ -12,7 +12,7 @@ test.beforeEach(async({page})=>{
 test.afterEach(async({page})=>expect(errors.get(page)).toEqual([]));
 
 async function accessible(page,selector){
-  await page.addScriptTag({content:axe.source});
+  await page.addScriptTag({url: "/node_modules/axe-core/axe.min.js"});
   const violations=await page.evaluate(async selector=>{
     const result=await window.axe.run(document.querySelector(selector),{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}});
     return result.violations.filter(item=>['serious','critical'].includes(item.impact)).map(item=>({id:item.id,targets:item.nodes.map(node=>node.target)}));
@@ -37,7 +37,7 @@ for(const {width,theme} of [{width:320,theme:'dark'},{width:390,theme:'light'},{
     await page.keyboard.press('Escape');
     await expect(page.locator('#notifBtn')).toBeFocused();
     await page.evaluate(()=>goOwnProfile());
-    await page.locator('button[onclick="editProfile()"]').click();
+    await page.locator('button[data-fbz-click="profile.edit-profile"]').click();
     await expect(page.getByRole('textbox',{name:'Никнейм'})).toBeFocused();
     await accessible(page,'#profileW');
     await page.screenshot({path:testInfo.outputPath('profile-editor.png'),fullPage:true});
@@ -99,7 +99,7 @@ test('неудачная отметка уведомлений не сбрасы
 
 test('ошибка сохранения профиля сохраняет введённое и допускает повтор',async({page})=>{
   await page.goto(`/profile/${own}?__e2e=1`);
-  await page.locator('button[onclick="editProfile()"]').click();
+  await page.locator('button[data-fbz-click="profile.edit-profile"]').click();
   await page.evaluate(()=>{
     const original=sb.from.bind(sb);let fail=true;
     sb.from=table=>{
@@ -121,7 +121,7 @@ test('ошибка сохранения профиля сохраняет вве
 
 test('позднее сохранение профиля не возвращает пользователя с другого экрана',async({page})=>{
   await page.goto(`/profile/${own}?__e2e=1`);
-  await page.locator('button[onclick="editProfile()"]').click();
+  await page.locator('button[data-fbz-click="profile.edit-profile"]').click();
   await page.evaluate(()=>{
     const original=sb.from.bind(sb);window.profileWrites=0;
     sb.from=table=>{

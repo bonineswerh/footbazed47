@@ -69,7 +69,7 @@
       console.error('Global search error:',error);
       currentResults=[];
       document.getElementById('globalSearchResults').setAttribute('aria-busy','false');
-      document.getElementById('globalSearchResults').innerHTML='<div class="search-state"><strong>Поиск временно недоступен</strong><button class="btn btn-g btn-sm" type="button" onclick="FBZSearch.retry()">Повторить</button></div>';
+      document.getElementById('globalSearchResults').innerHTML='<div class="search-state"><strong>Поиск временно недоступен</strong><button class="btn btn-g btn-sm" type="button" data-fbz-click="search.search-retry">Повторить</button></div>';
     }
   }
 
@@ -98,7 +98,7 @@
     target.setAttribute('aria-busy','false');
     if(recent.length){
       currentResults=[];
-      target.innerHTML=`<div class="search-section-title"><span>Недавние</span><button type="button" onclick="FBZSearch.clearRecent()">Очистить</button></div><div class="search-recent">${recent.map(query=>`<button type="button" onclick="FBZSearch.useRecent(${jsStr(query)})">${ico('search',14)}<span>${esc(query)}</span></button>`).join('')}</div>`;
+      target.innerHTML=`<div class="search-section-title"><span>Недавние</span><button type="button" data-fbz-click="search.search-clear-recent">Очистить</button></div><div class="search-recent">${recent.map(query=>`<button type="button" ${FBZActions.attrs("search.search-use-recent",[query])}>${ico('search',14)}<span>${esc(query)}</span></button>`).join('')}</div>`;
       return;
     }
     const featured=typeof featuredMatches==='function'&&Array.isArray(matchCatalog)?featuredMatches(matchCatalog).slice(0,4):[];
@@ -142,7 +142,7 @@
     const title=item.entity_type==='match'?String(item.title||'').replaceAll(' вЂ” ',' — '):item.title;
     const rawMeta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='player'?positionLabel(item.meta):(item.meta||resultLabel(item.entity_type)));
     const meta=rawMeta&&rawMeta!==subtitle?rawMeta:'';
-    return`<button class="search-result" id="global-search-option-${index}" type="button" role="option" aria-selected="false" data-index="${index}" onclick="FBZSearch.select(${index})"><span class="search-result-icon">${ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(title)}</strong><small>${esc(subtitle)}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
+    return`<button class="search-result" id="global-search-option-${index}" type="button" role="option" aria-selected="false" data-index="${index}" ${FBZActions.attrs("search.search-select",[index])}><span class="search-result-icon">${ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(title)}</strong><small>${esc(subtitle)}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
   }
 
   function renderResults(results,query){
@@ -221,3 +221,11 @@
 
   window.FBZSearch={clearRecent,close,init,open,resetSession,retry,select,useRecent};
 })();
+
+// Explicit action bindings; parameters are JSON data, never executable code.
+FBZActions.register({
+  "search.search-retry":()=>FBZSearch.retry(),
+  "search.search-clear-recent":()=>FBZSearch.clearRecent(),
+  "search.search-use-recent":(event,element,[query])=>FBZSearch.useRecent(query),
+  "search.search-select":(event,element,[index])=>FBZSearch.select(index)
+});
