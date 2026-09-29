@@ -359,19 +359,24 @@ async function loadPrediction(matchId,container){
 
 async function savePrediction(matchId,button){
   if(!CU){openAuth();return;}
+  if(button.disabled)return;
   const container=button.closest('.pred-wrap');
-  const home=Number.parseInt(container.querySelector('.pred-input[data-side="home"]').value,10);
-  const away=Number.parseInt(container.querySelector('.pred-input[data-side="away"]').value,10);
+  const inputValue=side=>{const value=container.querySelector('.pred-input[data-side="'+side+'"]').value.trim();return value===''?NaN:Number(value);};
+  const home=inputValue('home'),away=inputValue('away');
   if(!Number.isInteger(home)||!Number.isInteger(away)||home<0||away<0||home>20||away>20){toast('Введите корректный счёт','err');return;}
+  const viewer=CU.id,version=routeVersion;
+  const current=()=>CU?.id===viewer&&routeVersion===version&&button.isConnected;
   button.disabled=true;
   button.textContent='Сохраняем...';
   try{
-    const{error}=await sb.from('predictions').upsert({user_id:CU.id,match_id:matchId,home_pred:home,away_pred:away},{onConflict:'user_id,match_id'});
+    const{error}=await sb.from('predictions').upsert({user_id:viewer,match_id:matchId,home_pred:home,away_pred:away},{onConflict:'user_id,match_id'});
+    if(!current())return;
     if(error)throw error;
     button.innerHTML=ico('save',13)+' Прогноз сохранён';
     toast('Прогноз сохранён','ok');
   }catch(error){
-    console.error('Prediction save error:',error);
+    if(!current())return;
+    console.warn('Prediction save failed');
     button.textContent='Повторить';
     toast('Не удалось сохранить прогноз','err');
   }finally{

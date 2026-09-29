@@ -247,9 +247,9 @@ async function loadRatePlayers(match,context){
     container.innerHTML='<div class="empty-state compact"><strong>Составы пока недоступны</strong><span>Оценку матча и комментарий всё равно можно сохранить.</span></div>';
     return;
   }
-  container.innerHTML=`<div class="rating-team-tabs" role="tablist" aria-label="Выберите команду">
-    <button class="on" type="button" role="tab" aria-selected="true" onclick="showRatingTeam('home',this)">${esc(match.home_team_name)}</button>
-    <button type="button" role="tab" aria-selected="false" onclick="showRatingTeam('away',this)">${esc(match.away_team_name)}</button>
+  container.innerHTML=`<div class="rating-team-tabs" role="group" aria-label="Выберите команду">
+    <button class="on" type="button" aria-pressed="true" aria-controls="rating-squad-home" onclick="showRatingTeam('home',this)">${esc(match.home_team_name)}</button>
+    <button type="button" aria-pressed="false" aria-controls="rating-squad-away" onclick="showRatingTeam('away',this)">${esc(match.away_team_name)}</button>
   </div><div class="rating-squad-grid">${renderTeamSquad(match.home_team_name,homePlayers,'home')}${renderTeamSquad(match.away_team_name,awayPlayers,'away')}</div>`;
 }
 
@@ -264,12 +264,12 @@ function findPlayersForTeam(players,matchTeamName){
 }
 
 function renderTeamSquad(teamName,players,side){
-  if(!players.length)return'';
+  if(!players.length)return`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(teamName)}"><div class="rating-roster-empty"><strong>${esc(teamName)}</strong><p>Состав команды пока недоступен.</p><span>Можно оценить матч и игроков другой команды. Отсутствующие данные не считаются нулевой оценкой.</span></div></section>`;
   const groups={gk:[],def:[],mid:[],att:[],other:[]};
   [...players]
     .sort((a,b)=>(POSITION_ORDER[a.position]||99)-(POSITION_ORDER[b.position]||99)||String(a.name).localeCompare(String(b.name),'ru'))
     .forEach(player=>groups[POSITION_GROUP[player.position]||'other'].push(player));
-  let html=`<section class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(teamName)}"><header class="rating-team-head"><div><span>${side==='home'?'Хозяева':'Гости'}</span><h3>${esc(teamName)}</h3></div><small>${players.length} игроков</small></header><div class="rating-pitch">`;
+  let html=`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(teamName)}"><header class="rating-team-head"><div><span>${side==='home'?'Хозяева':'Гости'}</span><h3>${esc(teamName)}</h3></div><small>${FBZDomain.countLabel(players.length,{one:'игрок',few:'игрока',many:'игроков'})}</small></header><div class="rating-pitch">`;
   ['att','mid','def','gk','other'].forEach(group=>{
     if(!groups[group].length)return;
     const label=POSITION_LABEL[group];
@@ -283,7 +283,7 @@ function showRatingTeam(side,button){
   document.querySelectorAll('.rating-team-tabs button').forEach(tab=>{
     const selected=tab===button;
     tab.classList.toggle('on',selected);
-    tab.setAttribute('aria-selected',String(selected));
+    tab.setAttribute('aria-pressed',String(selected));
   });
   closePlayerRatingEditor(false);
 }
@@ -334,12 +334,13 @@ function updatePlayerRatingEditor(score){
   const best=document.getElementById('playerBestButton');
   if(!value||!range)return;
   const tone=window.FBZDomain.ratingTone(score);
-  const hasScore=Number.isInteger(Number(score));
+  const hasScore=Number.isInteger(score)&&score>=1&&score<=10;
   value.textContent=hasScore?`${score}/10`:'—';
   value.dataset.tone=tone;
   label.textContent=hasScore?RATING_LABELS[score]:'Передвиньте ползунок';
   range.style.setProperty('--rating-progress',hasScore?`${((score-1)/9)*100}%`:'0%');
   range.dataset.tone=tone;
+  range.setAttribute('aria-valuetext',hasScore?`${score} из 10 — ${RATING_LABELS[score]}`:'Оценка не выбрана. Начальное положение — 5 из 10.');
   best.disabled=!hasScore;
   best.classList.toggle('on',Number(rBest)===Number(rActivePlayer));
   best.setAttribute('aria-pressed',String(Number(rBest)===Number(rActivePlayer)));

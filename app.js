@@ -57,60 +57,13 @@ window.addEventListener('fbz:session-change',()=>{
   ['profileW','chatBody','mdC','clubC','playerC','competitionC'].forEach(id=>document.getElementById(id)?.replaceChildren());
   if(CP!=='home')go('home');
 });
-const featureModulePromises=new Map();
-
-function ensureFeatureModule({key,styleId,style,script,ready}){
-  if(ready())return Promise.resolve(ready());
-  if(featureModulePromises.has(key))return featureModulePromises.get(key);
-
-  const stylesheet=style?new Promise((resolve,reject)=>{
-    const existing=document.getElementById(styleId);
-    if(existing){
-      if(existing.dataset.loaded==='true')resolve();
-      else{
-        existing.addEventListener('load',resolve,{once:true});
-        existing.addEventListener('error',()=>reject(new Error(`${key}_styles_failed`)),{once:true});
-      }
-      return;
-    }
-    const link=document.createElement('link');
-    link.id=styleId;
-    link.rel='stylesheet';
-    link.href=style;
-    link.addEventListener('load',()=>{link.dataset.loaded='true';resolve();},{once:true});
-    link.addEventListener('error',()=>reject(new Error(`${key}_styles_failed`)),{once:true});
-    document.head.append(link);
-  }):Promise.resolve();
-
-  const module=new Promise((resolve,reject)=>{
-    const element=document.createElement('script');
-    element.src=script;
-    element.async=true;
-    element.addEventListener('load',()=>{
-      if(ready())resolve(ready());
-      else reject(new Error(`${key}_module_missing`));
-    },{once:true});
-    element.addEventListener('error',()=>reject(new Error(`${key}_module_failed`)),{once:true});
-    document.body.append(element);
-  });
-
-  const promise=Promise.all([stylesheet,module])
-    .then(([,feature])=>feature)
-    .catch(error=>{
-      featureModulePromises.delete(key);
-      console.warn(`${key} module load error:`,error);
-      toast('Не удалось загрузить раздел','err');
-      throw error;
-    });
-  featureModulePromises.set(key,promise);
-  return promise;
-}
+function ensureFeatureModule(options){return window.FBZFeatures.load(options);}
 
 function ensureAdminModule(){
   return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=45',script:'js/admin.js?v=46',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=55',script:'js/entities.js?v=55',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=56',script:'js/entities.js?v=56',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
   return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=57',script:'js/feed.js?v=55',ready:()=>window.FBZFeed});
@@ -156,6 +109,7 @@ function avColor(str){let h=0;for(let c of(str||'x'))h=(h<<5)-h+c.charCodeAt(0);
 
 async function init(){
   window.FBZAppearance?.init();
+  document.getElementById('skipContent')?.addEventListener('click',event=>{event.preventDefault();const page=document.querySelector('.page.on');page?.setAttribute('tabindex','-1');page?.focus();});
   if(!Number.isInteger(history.state?.fbzIndex))history.replaceState({...history.state,fbzIndex:0},'',location.href);
   document.addEventListener('keydown',event=>{
     if(event.defaultPrevented||!(event.ctrlKey||event.metaKey)||event.key.toLocaleLowerCase('en-US')!=='k')return;
@@ -280,12 +234,22 @@ function go(p,d){
   else if(p==='leaderboard')loadLB();
   else if(p==='profile'){viewUID=d?.uid||CU?.id;loadProfile(viewUID);}
   else if(p==='md'){mdID=d?.mid;loadMD(d?.mid);}
-  else if(p==='club')ensureEntitiesModule().then(entities=>{if(CP==='club')entities.loadClub(d?.id);}).catch(()=>{});
-  else if(p==='player')ensureEntitiesModule().then(entities=>{if(CP==='player')entities.loadPlayer(d?.id);}).catch(()=>{});
-  else if(p==='competition')ensureEntitiesModule().then(entities=>{if(CP==='competition')entities.loadCompetition(d?.id);}).catch(()=>{});
+  else if(['club','player','competition'].includes(p))loadEntityRoute(p,d?.id);
   else if(p==='chat'){chatMID=d?.mid;document.getElementById('chatTitle').textContent=d?.title||'Чат';loadChat(d?.mid);}
   else if(p==='friends')loadFriendsTab(FT);
   else if(p==='admin')ensureAdminModule().then(admin=>{if(CP==='admin')admin.mount();}).catch(()=>{});
+}
+function loadEntityRoute(page,id){
+  const version=routeVersion,target=document.getElementById(`${page}C`);
+  target.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка раздела</span></div>';
+  ensureEntitiesModule().then(entities=>{
+    if(version!==routeVersion||CP!==page)return;
+    entities[{club:'loadClub',player:'loadPlayer',competition:'loadCompetition'}[page]](id);
+  }).catch(()=>{
+    if(version!==routeVersion||CP!==page)return;
+    target.innerHTML='<div class="empty-state"><strong>Не удалось загрузить раздел</strong><p>Проверьте соединение и повторите попытку.</p><button class="btn btn-g" type="button">Повторить</button></div>';
+    target.querySelector('button').onclick=()=>loadEntityRoute(page,id);
+  });
 }
 function goBack(){
   if(Number(history.state?.fbzIndex)>0){history.back();return;}
@@ -372,7 +336,7 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=1',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=2',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
   }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" onclick="loadLB()">Повторить</button></div>';}
 }
@@ -399,9 +363,9 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=2',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=3',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
-function ensureExploreModule(){return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=2',script:'js/explore.js?v=1',ready:()=>window.FBZExplore});}
+function ensureExploreModule(){return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=3',script:'js/explore.js?v=2',ready:()=>window.FBZExplore});}
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
   const target=document.getElementById('profileW');

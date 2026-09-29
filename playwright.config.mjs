@@ -13,7 +13,7 @@ export default defineConfig({
   fullyParallel:false,
   forbidOnly:Boolean(process.env.CI),
   retries:process.env.CI?2:0,
-  workers:process.env.CI?1:undefined,
+  workers:process.env.CI?1:2,
   reporter:[['list'],['html',{open:'never',outputFolder:resolve(artifactsRoot,'playwright-report')}]],
   use:{
     baseURL:'http://127.0.0.1:4173',
@@ -28,5 +28,9 @@ export default defineConfig({
     reuseExistingServer:!process.env.CI,
     timeout:30_000
   },
-  projects:[{name:'chromium',use:{browserName:'chromium'}}]
+  projects:[
+    {name:'chromium',use:{browserName:'chromium'}},
+    {name:'firefox',testMatch:'compatibility.spec.mjs',use:{browserName:'firefox'}},
+    {name:'webkit',testMatch:'compatibility.spec.mjs',use:{browserName:'webkit'}}
+  ]
 });

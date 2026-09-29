@@ -22,11 +22,6 @@
     return data;
   }
 
-  async function getLeaderboard(metric='likes'){
-    const normalized=metric==='ratings'?'ratings':'likes';
-    return rpc('get_leaderboard',{p_metric:normalized,p_limit:50},`leaderboard:${normalized}`,60_000);
-  }
-
   async function getProfilePage(userId,{force=false}={}){
     const key=`profile:${userId}`;
     if(force)cache.delete(key);
@@ -70,5 +65,5 @@
     invalidate();
   }
 
-  root.FBZData=Object.freeze({getLeaderboard,getMatchesPage,getProfilePage,getProfileDiary,getFootballStatistics,invalidate,setSessionUser});
+  root.FBZData=Object.freeze({getMatchesPage,getProfilePage,getProfileDiary,getFootballStatistics,invalidate,setSessionUser});
 })(window);

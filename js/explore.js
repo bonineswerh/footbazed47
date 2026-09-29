@@ -12,6 +12,7 @@
         ${diary?field('min_rating','Оценка от','number','min="1" max="10" step="1" placeholder="1"')+field('max_rating','Оценка до','number','min="1" max="10" step="1" placeholder="10"')+field('home_score','Голы хозяев','number','min="0" max="99" step="1" placeholder="Любые"')+field('away_score','Голы гостей','number','min="0" max="99" step="1" placeholder="Любые"'):select('min_votes','Минимум оценок','<option value="1">От 1 оценки</option><option value="5">От 5 оценок</option><option value="10">От 10 оценок</option><option value="25">От 25 оценок</option>')+select('sort','Порядок','<option value="average">По средней оценке</option><option value="votes">По числу оценок</option><option value="recent">По дате матча</option>')}
       </div><p>Период относится к дате матча.</p></details>
       <div class="explore-filter-footer"><span class="explore-filter-caption">Все матчи</span><button class="text-action" type="reset">Сбросить фильтры</button></div>
+      <p class="explore-validation" id="${id}-validation" role="status" hidden></p>
     </form>`;
   }
   function read(form){return Object.fromEntries([...new FormData(form)].filter(([,v])=>String(v).trim()).map(([k,v])=>[k,String(v).trim()]));}
@@ -19,16 +20,35 @@
     const f=read(form),from=form.elements.namedItem('from'),max=form.elements.namedItem('max_rating');
     from.setCustomValidity(f.from&&f.to&&f.from>f.to?'Начало периода должно быть раньше его окончания':'');
     max?.setCustomValidity(f.min_rating&&f.max_rating&&Number(f.min_rating)>Number(f.max_rating)?'Верхняя оценка должна быть не меньше нижней':'');
-    return form.checkValidity();
+    const invalid=[...form.elements].filter(field=>field.willValidate&&!field.validity.valid);
+    for(const field of form.elements){
+      if(!field.willValidate)continue;
+      field.setAttribute('aria-invalid',String(invalid.includes(field)));
+      if(invalid.includes(field))field.setAttribute('aria-describedby',`${form.id}-validation`);
+      else field.removeAttribute('aria-describedby');
+    }
+    const message=form.querySelector('.explore-validation');
+    message.hidden=!invalid.length;
+    message.textContent=invalid[0]?.validationMessage||'';
+    return !invalid.length;
   }
-  function bind(form,onChange,onInvalidate=()=>{}){
+  function activeCount(form){return Object.entries(read(form)).filter(([k,v])=>!(k==='sort'&&v==='average')&&!(k==='min_votes'&&v==='1')).length;}
+  function sync(form){
+    const count=activeCount(form);
+    form.querySelector('.explore-active-count').textContent=count?String(count):'';
+    form.querySelector('.explore-filter-caption').textContent=count?'Фильтров: '+count:'Без ограничений';
+    form.querySelector('[type="reset"]').disabled=!count;
+  }
+  function bind(form,onChange,onInvalidate=()=>{},onInvalid=()=>{}){
     let timer;
-    const run=()=>{clearTimeout(timer);if(valid(form))onChange(read(form));else form.reportValidity();};
-    form.addEventListener('input',event=>{onInvalidate();clearTimeout(timer);timer=setTimeout(run,event.target.name==='query'?250:350);});
-    form.addEventListener('change',event=>{if(event.target.tagName==='SELECT'){onInvalidate();run();}});
-    form.addEventListener('submit',event=>{event.preventDefault();run();});
-    form.addEventListener('reset',()=>{clearTimeout(timer);onInvalidate();timer=setTimeout(run,0);});
-    return ()=>clearTimeout(timer);
+    const controller=new AbortController(),options={signal:controller.signal};
+    const run=()=>{clearTimeout(timer);sync(form);if(valid(form))onChange(read(form));else onInvalid();};
+    form.addEventListener('input',event=>{sync(form);onInvalidate();clearTimeout(timer);timer=setTimeout(run,event.target.name==='query'?250:350);},options);
+    form.addEventListener('change',event=>{if(event.target.tagName==='SELECT'){onInvalidate();run();}},options);
+    form.addEventListener('submit',event=>{event.preventDefault();run();},options);
+    form.addEventListener('reset',()=>{clearTimeout(timer);onInvalidate();timer=setTimeout(run,0);},options);
+    sync(form);
+    return ()=>{clearTimeout(timer);controller.abort();};
   }
   function populate(form,data){
     for(const [name,key,label] of [['league','leagues','Все турниры'],['team','teams','Все команды']]){
@@ -36,10 +56,7 @@
       const values=[...new Set([...(data[key]||[]),...(value?[value]:[])])].sort((a,b)=>a.localeCompare(b,'ru'));
       select.innerHTML=`<option value="">${label}</option>`+values.map(v=>`<option value="${escape(v)}">${escape(v)}</option>`).join('');select.value=value;
     }
-    const f=read(form),count=Object.entries(f).filter(([k,v])=>!(k==='sort'&&v==='average')&&!(k==='min_votes'&&v==='1')).length;
-    form.querySelector('.explore-active-count').textContent=count?String(count):'';
-    form.querySelector('.explore-filter-caption').textContent=count?'Фильтров: '+count:'Без ограничений';
-    form.querySelector('[type="reset"]').disabled=!count;
+    sync(form);
   }
-  root.FBZExplore=Object.freeze({filters,read,bind,populate});
+  root.FBZExplore=Object.freeze({filters,read,bind,populate,activeCount});
 })(window);

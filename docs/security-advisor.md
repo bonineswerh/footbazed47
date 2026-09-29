@@ -1,8 +1,8 @@
 # Supabase Advisor triage
 
-Last reviewed: 2026-09-24, read-only inspection of the hosted project. The local `enforce_direct_message_friendship` migration has NOT been applied there.
+Latest follow-up: 2026-09-29, read-only. Hosted migration history and the current `edit_direct_message` definition confirm the friendship fix is applied. Security Advisor additionally reports two INFO findings for deliberately inaccessible private staging/backup tables. The leaked-password warning remains. See [the current audit](audit-2026-09-29.md). Counts and deployment notes below are a historical snapshot, not the current state.
 
-## Current result
+## Historical result — 2026-09-24
 
 - 68 security findings in five categories: 12 anonymous table exposures, 18 authenticated table exposures, 8 anonymous SECURITY DEFINER signatures, 29 authenticated SECURITY DEFINER signatures, and 1 unresolved Auth setting.
 - 48 performance findings: all are `unused_index` observations. No performance ERROR/WARN categories were returned.

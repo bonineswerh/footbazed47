@@ -4,20 +4,8 @@
   let loading=null;
 
   function loadRatings(){
-    if(root.__FOOTBAZED_RATINGS_READY__)return Promise.resolve();
     if(loading)return loading;
-    loading=new Promise((resolve,reject)=>{
-      const script=document.createElement('script');
-      script.src='js/ratings.js?v=53';
-      script.async=true;
-      script.dataset.feature='ratings';
-      script.onload=resolve;
-      script.onerror=()=>{
-        loading=null;
-        reject(new Error('ratings_load_failed'));
-      };
-      document.head.appendChild(script);
-    });
+    loading=root.FBZFeatures.load({key:'ratings',script:'js/ratings.js?v=54',ready:()=>root.__FOOTBAZED_RATINGS_READY__}).catch(error=>{loading=null;throw error;});
     return loading;
   }
 

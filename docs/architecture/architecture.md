@@ -2,13 +2,14 @@
 
 ## Runtime
 
-FOOTBAZED остаётся статическим History API SPA на HTML, CSS и обычном JavaScript. Supabase предоставляет Auth, Postgres, RLS и RPC. Vercel обслуживает статику, runtime-конфигурацию, sitemap и защищённую admin function.
+FOOTBAZED остаётся History API SPA на HTML, CSS и обычном JavaScript. Supabase предоставляет Auth, Postgres, RLS и RPC. Vercel обслуживает статику, runtime-конфигурацию, sitemap, первоначальные публичные metadata и защищённую admin function.
 
-Публичные маршруты `/club/:id`, `/player/:id`, `/competition/:id`, `/match/:id` и `/profile/:id` переписываются на `index.html`. Локальный E2E-сервер обязан повторять эти rewrite-правила.
+Маршруты `/club/:id`, `/player/:id`, `/competition/:id`, `/match/:id` и `/profile/:id` обслуживает `api/page.js`, заполняя metadata в собранном `dist/index.html`. Общие правила находятся в `js/seo.js`. Только публичные футбольные сущности читаются с publishable key; профиль/чат получают неперсональный noindex shell без общего кэша. Это не полный SSR. Локальный E2E-сервер отдаёт оболочку для тех же путей; серверный HTML отдельно проверяется unit-тестами и `scripts/smoke-public.mjs` после публикации.
 
 ## Границы модулей
 
 - `app.js`: shell и маршрутизация.
+- `js/feature-loader.js`: общий загрузчик ленивых JS/CSS, таймауты и повтор после ошибок; готовый namespace не заменяет готовность стилей.
 - `js/auth.js`: сессия и профиль.
 - `js/entities.js`: клубы, игроки, турниры.
 - `js/media.js`: единственная клиентская точка разрешения domain media и fallback UI.

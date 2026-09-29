@@ -13,6 +13,8 @@ test('sitemap includes public entity routes and escapes XML',()=>{
   assert.match(xml,/\/player\/5290<\/loc>/u);
   assert.match(xml,/\/competition\/7<\/loc>/u);
   assert.match(xml,/\/match\/101<\/loc>/u);
+  assert.match(xml,/\/discover<\/loc>/u);
+  assert.doesNotMatch(xml,/\/leaderboard/u);
   assert.match(xml,/<lastmod>2026-08-10<\/lastmod>/u);
   assert.doesNotMatch(xml,/undefined|null/u);
 });

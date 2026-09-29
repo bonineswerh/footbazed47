@@ -23,7 +23,7 @@ function buildSitemap({clubs=[],players=[],competitions=[],matches=[]}={}){
   const urls=[
     entry('/',{changefreq:'daily',priority:'1.0'}),
     entry('/matches',{changefreq:'hourly',priority:'0.9'}),
-    entry('/leaderboard',{changefreq:'daily',priority:'0.6'}),
+    entry('/discover',{changefreq:'daily',priority:'0.6'}),
     ...clubs.filter(item=>Number.isFinite(Number(item.id))).map(item=>entry(`/club/${Number(item.id)}`,{lastmod:validDate(item.updated_at),changefreq:'daily',priority:'0.8'})),
     ...players.filter(item=>Number.isFinite(Number(item.id))).map(item=>entry(`/player/${Number(item.id)}`,{lastmod:validDate(item.created_at),changefreq:'weekly',priority:'0.7'})),
     ...competitions.filter(item=>Number.isFinite(Number(item.id))).map(item=>entry(`/competition/${Number(item.id)}`,{lastmod:validDate(item.updated_at),changefreq:'daily',priority:'0.7'})),

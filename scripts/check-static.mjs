@@ -92,7 +92,7 @@ const requiredScripts=['js/session-hint.js','js/domain.js','js/media.js','js/dat
 for(const script of requiredScripts){
   if(!html.includes(`src="${script}?`))errors.push(`Required script is not versioned in index.html: ${script}`);
 }
-if(!frontend.includes("script.src='js/ratings.js?v="))errors.push('Rating loader must reference a versioned ratings module');
+if(!/script(?:\.src\s*=|:)\s*['"]js\/ratings\.js\?v=\d+/u.test(frontend))errors.push('Rating loader must reference a versioned ratings module');
 
 const vercelIgnorePath=path.join(root,'.vercelignore');
 if(!fs.existsSync(vercelIgnorePath)){

@@ -13,4 +13,14 @@
 .statistics-page .explore-search{padding:0;align-self:end;border:1px solid var(--b2);border-radius:6px;padding-inline:12px;min-height:44px;background:var(--bg2)}
 .statistics-page .explore-advanced[open]{grid-column:1/-1}
 .statistics-page .explore-filter-footer{justify-content:flex-end}
+.explore-validation{grid-column:1/-1;color:var(--danger);font-size:var(--type-small);line-height:1.5;padding-top:var(--space-2)}
+.explore-validation[hidden]{display:none}
+.explore-filters [aria-invalid="true"]{border-color:var(--danger)}
+.explore-filters .input{font-size:1rem}
+.explore-advanced summary,.explore-filter-footer button{min-height:44px}
+.collection-error{flex-wrap:wrap}
+.statistics-summary{min-height:112px;background:var(--bg3)}
+.statistics-summary:empty{border-style:dashed}
+.statistics-list:empty{display:none}
+.statistics-row:focus-visible{outline-offset:-3px}
 @media(max-width:620px){.statistics-page .explore-filters{grid-template-columns:minmax(0,1fr);gap:12px}.statistics-page .explore-filter-footer{justify-content:space-between}}

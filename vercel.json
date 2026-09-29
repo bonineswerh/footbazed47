@@ -2,35 +2,103 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "dist",
   "functions": {
-    "api/admin.js": { "maxDuration": 60 },
-    "api/sitemap.js": { "maxDuration": 10 }
+    "api/admin.js": {
+      "maxDuration": 60
+    },
+    "api/sitemap.js": {
+      "maxDuration": 10
+    },
+    "api/page.js": {
+      "maxDuration": 10,
+      "includeFiles": "dist/index.html"
+    }
   },
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/club/:id", "destination": "/index.html" },
-    { "source": "/player/:id", "destination": "/index.html" },
-    { "source": "/competition/:id", "destination": "/index.html" },
-    { "source": "/league/:id", "destination": "/index.html" },
-    { "source": "/profile/:id", "destination": "/index.html" },
-    { "source": "/match/:id", "destination": "/index.html" },
-    { "source": "/match/:id/chat", "destination": "/index.html" },
-    { "source": "/matches", "destination": "/index.html" },
-    { "source": "/feed", "destination": "/index.html" },
-    { "source": "/leaderboard", "destination": "/index.html" },
-    { "source": "/discover", "destination": "/index.html" },
-    { "source": "/friends", "destination": "/index.html" },
-    { "source": "/admin", "destination": "/index.html" }
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/club/:id",
+      "destination": "/api/page?path=/club/:id"
+    },
+    {
+      "source": "/player/:id",
+      "destination": "/api/page?path=/player/:id"
+    },
+    {
+      "source": "/competition/:id",
+      "destination": "/api/page?path=/competition/:id"
+    },
+    {
+      "source": "/league/:id",
+      "destination": "/api/page?path=/league/:id"
+    },
+    {
+      "source": "/profile/:id",
+      "destination": "/api/page?path=/profile/:id"
+    },
+    {
+      "source": "/match/:id",
+      "destination": "/api/page?path=/match/:id"
+    },
+    {
+      "source": "/match/:id/chat",
+      "destination": "/api/page?path=/match/:id/chat"
+    },
+    {
+      "source": "/matches",
+      "destination": "/api/page?path=/matches"
+    },
+    {
+      "source": "/feed",
+      "destination": "/api/page?path=/feed"
+    },
+    {
+      "source": "/leaderboard",
+      "destination": "/api/page?path=/leaderboard"
+    },
+    {
+      "source": "/discover",
+      "destination": "/api/page?path=/discover"
+    },
+    {
+      "source": "/friends",
+      "destination": "/api/page?path=/friends"
+    },
+    {
+      "source": "/admin",
+      "destination": "/api/page?path=/admin"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(self), geolocation=(), payment=()" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" }
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(self), geolocation=(), payment=()"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
       ]
     }
   ]

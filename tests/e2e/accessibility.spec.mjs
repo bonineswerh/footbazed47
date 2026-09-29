@@ -16,7 +16,7 @@ async function prepare(page){
   }));
 }
 
-async function expectNoSeriousWcagViolations(page,contextSelector=null){
+async function expectNoSignificantWcagViolations(page,contextSelector=null){
   await page.addScriptTag({content:axe.source});
   const violations=await page.evaluate(async selector=>{
     const context=selector?document.querySelector(selector):document;
@@ -24,7 +24,7 @@ async function expectNoSeriousWcagViolations(page,contextSelector=null){
       runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}
     });
     return result.violations
-      .filter(item=>item.impact==='critical'||item.impact==='serious')
+      .filter(item=>['critical','serious','moderate'].includes(item.impact))
       .map(item=>({
         id:item.id,
         impact:item.impact,
@@ -50,7 +50,7 @@ for(const scenario of [
   {name:'home light desktop',url:'/?__e2e=1#home',ready:'#homeDashboardTitle',viewport:{width:1280,height:720},theme:'light'},
   {name:'feed light mobile',url:'/?__e2e=1#feed',ready:'.feed-entry',viewport:{width:390,height:844},theme:'light'}
 ]){
-  test(`${scenario.name} has no serious WCAG AA violations`,async({page})=>{
+  test(`${scenario.name} has no moderate, serious or critical WCAG AA violations`,async({page})=>{
     await page.setViewportSize(scenario.viewport);
     if(scenario.theme){
       await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),scenario.theme);
@@ -58,7 +58,7 @@ for(const scenario of [
     await prepare(page);
     await page.goto(scenario.url);
     await expect(page.locator(scenario.ready).first()).toBeVisible();
-    await expectNoSeriousWcagViolations(page);
+    await expectNoSignificantWcagViolations(page);
   });
 }
 
@@ -68,14 +68,14 @@ for(const scenario of [
   {name:'settings dark desktop',theme:'dark',target:'#settingsOv',open:page=>page.evaluate(()=>openSettings())},
   {name:'settings light desktop',theme:'light',target:'#settingsOv',open:page=>page.evaluate(()=>openSettings())}
 ]){
-  test(`${scenario.name} has no serious WCAG AA violations`,async({page})=>{
+  test(`${scenario.name} has no moderate, serious or critical WCAG AA violations`,async({page})=>{
     await page.setViewportSize({width:1280,height:720});
     await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),scenario.theme);
     await prepare(page);
     await page.goto('/?__e2e=1#home');
     await scenario.open(page);
     await expect(page.locator(scenario.target)).toBeVisible();
-    await expectNoSeriousWcagViolations(page,scenario.target);
+    await expectNoSignificantWcagViolations(page,scenario.target);
   });
 }
 
@@ -87,7 +87,7 @@ test('матч в фокусе сохраняет контраст при сме
       await page.addInitScript(({theme,accent})=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent})),{theme,accent});
       await page.goto('/?__e2e=1#home');
       await expect(page.locator('#homeMatchSpotlight .home-spotlight')).toBeVisible();
-      await expectNoSeriousWcagViolations(page,'#homeMatchSpotlight');
+      await expectNoSignificantWcagViolations(page,'#homeMatchSpotlight');
     }
   }
 });
@@ -96,7 +96,7 @@ for(const scenario of [
   {name:'rating field mobile',viewport:{width:390,height:844}},
   {name:'rating field light desktop',viewport:{width:1280,height:720},theme:'light'}
 ]){
-  test(`${scenario.name} has no serious WCAG AA violations`,async({page})=>{
+  test(`${scenario.name} has no moderate, serious or critical WCAG AA violations`,async({page})=>{
     await page.setViewportSize(scenario.viewport);
     if(scenario.theme){
       await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),scenario.theme);
@@ -107,6 +107,6 @@ for(const scenario of [
     await page.getByRole('button',{name:/Продолжить/}).click();
     await page.locator('#rating-player-5292').click();
     await expect(page.locator('#playerRatingEditor')).toBeVisible();
-    await expectNoSeriousWcagViolations(page,'#rateOv');
+    await expectNoSignificantWcagViolations(page,'#rateOv');
   });
 }

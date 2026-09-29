@@ -1,4 +1,8 @@
-(function(root){
+(function(root,factory){
+  const api=factory(root,root?.FBZMedia||(typeof module==='object'?require('./media.js'):null));
+  if(root)root.FBZSEO=api;
+  if(typeof module==='object'&&module.exports)module.exports=api;
+})(typeof window==='undefined'?null:window,function(root,media){
   'use strict';
 
   const origin='https://footbazed47.vercel.app';
@@ -32,6 +36,7 @@
     const cleanPath=String(path||'/').startsWith('/')?String(path||'/'):`/${path}`;
     const canonical=`${origin}${cleanPath}`;
     const cleanDescription=String(description||defaults.description).slice(0,220);
+    if(!root)return {title,description:cleanDescription,path:cleanPath,canonical,image:absoluteImage(image),type,index,structuredData};
     document.title=title;
     meta('meta[name="description"]','content',cleanDescription);
     meta('meta[name="robots"]','content',index?'index,follow':'noindex,nofollow');
@@ -48,42 +53,42 @@
   }
 
   function setStatic(page){
-    apply(staticPages[page]||{title:`${page==='profile'?'Профиль':page==='club'?'Клуб':page==='player'?'Игрок':page==='competition'?'Турнир':'Матч'} — FOOTBAZED`,index:false});
+    return apply(staticPages[page]||{title:`${page==='profile'?'Профиль':page==='club'?'Клуб':page==='player'?'Игрок':page==='competition'?'Турнир':'Матч'} — FOOTBAZED`,index:false});
   }
 
   function club(value){
     const club=value||{};
     const description=[club.area_name,club.venue,club.founded?`основан в ${club.founded} году`:null].filter(Boolean).join(' · ');
-    apply({
+    return apply({
       title:`${club.name||'Клуб'} — FOOTBAZED`,
       description:`${club.name||'Футбольный клуб'} в FOOTBAZED${description?`: ${description}`:''}. Состав, матчи и оценки игроков.`,
       path:`/club/${Number(club.id)}`,
-      image:window.FBZMedia?.resolveAsset(club.media,'club_logo')?.url,
+      image:media?.resolveAsset(club.media,'club_logo')?.url,
       type:'profile',
-      structuredData:{'@type':'SportsTeam',name:club.name,url:`${origin}/club/${Number(club.id)}`,logo:absoluteImage(window.FBZMedia?.resolveAsset(club.media,'club_logo')?.url),sport:'Football',location:club.area_name||undefined}
+      structuredData:{'@type':'SportsTeam',name:club.name,url:`${origin}/club/${Number(club.id)}`,logo:media?.resolveAsset(club.media,'club_logo')?.url,sport:'Football',location:club.area_name||undefined}
     });
   }
 
   function player(value){
     const player=value||{};
     const club=player.club;
-    apply({
+    return apply({
       title:`${player.name||'Игрок'} — FOOTBAZED`,
       description:`${player.name||'Футболист'}${player.position?` · ${player.position}`:''}${club?.name?` · ${club.name}`:''}. Оценки болельщиков и матчи в FOOTBAZED.`,
       path:`/player/${Number(player.id)}`,
-      image:window.FBZMedia?.resolveAsset(player.media,'player_photo')?.url||window.FBZMedia?.resolveAsset(club?.media,'club_logo')?.url,
+      image:media?.resolveAsset(player.media,'player_photo')?.url||media?.resolveAsset(club?.media,'club_logo')?.url,
       type:'profile',
-      structuredData:{'@type':'Person',name:player.name,url:`${origin}/player/${Number(player.id)}`,image:absoluteImage(window.FBZMedia?.resolveAsset(player.media,'player_photo')?.url),jobTitle:'Football player',affiliation:club?{'@type':'SportsTeam',name:club.name,url:`${origin}/club/${Number(club.id)}`}:undefined}
+      structuredData:{'@type':'Person',name:player.name,url:`${origin}/player/${Number(player.id)}`,image:media?.resolveAsset(player.media,'player_photo')?.url,jobTitle:'Football player',affiliation:club?{'@type':'SportsTeam',name:club.name,url:`${origin}/club/${Number(club.id)}`}:undefined}
     });
   }
 
   function competition(value){
     const item=value||{};
-    apply({
+    return apply({
       title:`${item.name||'Турнир'} — FOOTBAZED`,
       description:`${item.name||'Футбольный турнир'} в FOOTBAZED. Клубы, матчи и оценки болельщиков.`,
       path:`/competition/${Number(item.id)}`,
-      image:window.FBZMedia?.resolveAsset(item.media,'competition_logo')?.url,
+      image:media?.resolveAsset(item.media,'competition_logo')?.url,
       structuredData:{'@type':'SportsOrganization',name:item.name,url:`${origin}/competition/${Number(item.id)}`,sport:'Football'}
     });
   }
@@ -91,7 +96,7 @@
   function match(value){
     const match=value||{};
     const name=`${match.home_team_name||'Команда'} — ${match.away_team_name||'Команда'}`;
-    apply({
+    return apply({
       title:`${name} — FOOTBAZED`,
       description:`${name}${match.league_name?` · ${match.league_name}`:''}. Оценки матча, игроков и мнение сообщества FOOTBAZED.`,
       path:`/match/${Number(match.id)}`,
@@ -103,7 +108,7 @@
   function profile(value){
     const user=value||{};
     const name=user.display_name||user.username||'Профиль';
-    apply({
+    return apply({
       title:`${name} — FOOTBAZED`,
       description:`Футбольный профиль ${name}: оценки матчей, средний балл и активность в FOOTBAZED.`,
       path:`/profile/${encodeURIComponent(user.id||'')}`,
@@ -114,5 +119,5 @@
     });
   }
 
-  root.FBZSEO=Object.freeze({apply,club,competition,match,player,profile,setStatic});
-})(window);
+  return Object.freeze({apply,club,competition,match,player,profile,setStatic});
+});

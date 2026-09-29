@@ -12,6 +12,8 @@
     const version=++s.version;s.loading=true;diaryControls();
     const list=document.getElementById('diaryList');list.setAttribute('aria-busy','true');
     document.getElementById('diaryError').innerHTML='';
+    document.getElementById('diaryCount').textContent='';
+    document.getElementById('diaryPage').textContent='Загрузка…';
     list.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка истории</span></div>';
     try{
       const data=await root.FBZData.getProfileDiary(s.uid,{filters:s.filters,cursor:s.cursors[s.index],limit:8});
@@ -23,17 +25,22 @@
         const score=root.FBZDomain.ratingPresentation(r.match_rating),date=new Date(r.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
         const result=r.home_score!==null&&r.away_score!==null?`<span class="diary-scoreline">${Number(r.home_score)} : ${Number(r.away_score)}</span> · `:'';
         return `<button class="rh-row" type="button" onclick="go('md',{mid:${Number(r.match_id)}})"><div><div class="rh-m">${esc(r.home_team_name)} — ${esc(r.away_team_name)}</div><div class="rh-l">${result}${esc(r.league_name)} · ${esc(date)}${r.is_public?'':' · Только вам'}</div></div><div class="rh-r"><div class="rh-v" data-tone="${score.tone}">${score.value}<span class="score-denominator">/10</span></div></div></button>`;
-      }).join(''):'<div class="empty-state"><strong>Оценок по этим условиям нет</strong><p>Измените поиск или сбросьте фильтры.</p></div>';
+      }).join(''):(root.FBZExplore.activeCount(document.getElementById('diaryFilters'))?'<div class="empty-state"><strong>Оценок по этим условиям нет</strong><p>Измените поиск или сбросьте фильтры.</p></div>':'<div class="empty-state"><strong>История оценок пока пуста</strong><p>Здесь появятся оценки просмотренных матчей.</p><button class="btn btn-g" type="button" onclick="go(\'matches\')">Найти матч</button></div>');
       document.getElementById('diaryCount').textContent=root.FBZDomain.countLabel(Number(data.total),{one:'оценка',few:'оценки',many:'оценок'});
       document.getElementById('diaryPage').textContent=items.length?`${s.index*8+1}–${s.index*8+items.length} из ${Number(data.total)}`:'Нет записей';
-    }catch(error){if(diaryCurrent(s)&&version===s.version){document.getElementById('diaryError').innerHTML='<div class="collection-error"><span>Не удалось загрузить историю</span><button class="btn btn-g btn-sm" onclick="FBZProfile.retryDiary()">Повторить</button></div>';if(list.querySelector('.loading'))list.innerHTML='';}}
+    }catch(error){if(diaryCurrent(s)&&version===s.version){s.hasMore=false;document.getElementById('diaryPage').textContent='';document.getElementById('diaryError').innerHTML='<div class="collection-error" role="status"><span>Не удалось загрузить историю</span><button class="btn btn-g btn-sm" onclick="FBZProfile.retryDiary()">Повторить</button></div>';list.innerHTML='';}}
     finally{if(diaryCurrent(s)&&version===s.version){s.loading=false;list.setAttribute('aria-busy','false');diaryControls();}}
   }
   function changeDiaryPage(direction){if(!diary||diary.loading)return;if(direction>0&&diary.hasMore){diary.cursors[++diary.index]=diary.next;}else if(direction<0&&diary.index>0){diary.index--;}else return;loadDiary();}
   function mountDiary(uid){
     disposeDiary?.();diary={uid,user:CU?.id,route:routeVersion,profile:profileVersion,filters:{},cursors:[null],index:0,version:0,loading:false,hasMore:false};
     const s=diary;
-    disposeDiary=root.FBZExplore.bind(document.getElementById('diaryFilters'),filters=>{if(!diaryCurrent(s))return;s.filters=filters;s.index=0;s.cursors=[null];loadDiary();},()=>{if(diaryCurrent(s)){s.version++;s.loading=true;s.hasMore=false;diaryControls();}});
+    disposeDiary=root.FBZExplore.bind(document.getElementById('diaryFilters'),filters=>{if(!diaryCurrent(s))return;s.filters=filters;s.index=0;s.cursors=[null];loadDiary();},()=>{if(diaryCurrent(s)){s.version++;s.loading=true;s.hasMore=false;diaryControls();}},()=>{
+      if(!diaryCurrent(s))return;
+      s.loading=false;s.index=0;s.hasMore=false;diaryControls();
+      const list=document.getElementById('diaryList');list.replaceChildren();list.setAttribute('aria-busy','false');
+      for(const id of ['diaryCount','diaryPage','diaryError'])document.getElementById(id).replaceChildren();
+    });
     return loadDiary();
   }
 function renderProfileInsights(ratings,matchMap){
