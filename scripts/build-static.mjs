@@ -10,8 +10,7 @@ const publicFiles=[
   'app.js',
   'styles.css',
   'admin.css',
-  'robots.txt',
-  'sitemap.xml'
+  'robots.txt'
 ];
 const publicDirectories=['assets','css','js'];
 
@@ -27,6 +26,9 @@ for(const relativePath of [...publicFiles,...publicDirectories]){
 const forbidden=new Set(['supabase','tests','scripts','docs','types','node_modules','.env','.git']);
 const leaked=readdirSync(output).filter(name=>forbidden.has(name));
 if(leaked.length)throw new Error(`Internal paths leaked into static output: ${leaked.join(', ')}`);
+// Vercel's filesystem route wins over rewrites. A static sitemap would hide
+// the dynamic catalogue served by /api/sitemap at /sitemap.xml.
+if(existsSync(path.join(output,'sitemap.xml')))throw new Error('Static sitemap shadows the dynamic sitemap rewrite');
 
 const outputHtml=readFileSync(path.join(output,'index.html'),'utf8');
 const resources=[...outputHtml.matchAll(/\s(?:src|href)="([^"]+)"/g)].map(match=>match[1]);
