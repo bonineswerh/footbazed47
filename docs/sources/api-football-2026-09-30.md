@@ -10,3 +10,9 @@
 - `media_assets` остаётся единственным источником public football images; любые будущие API candidates создаются `unknown`. Нет automated verified, внешних image requests, Storage caching/rehosting или новых CSP origins в этом выпуске. Concrete rights/policy review требуется до public media activation.
 
 Полный план identity, player rosters, staging и rollback: [план перехода](../api-football-transition-2026-09-30.md).
+
+## Последующее подключение эмблем по запросу владельца
+
+Диагностический выпуск выше — исходный этап. В следующем выпуске разрешён отдельный идентификационный показ club logos API-Football из `/teams?league=<id>&season=<year>`. `/teams` читается только сервером; изображения загружаются напрямую с `https://media.api-sports.io/football/teams/<id>.png` без API key. В официальном разделе Data/Logos/images указаны идентификационные/описательные цели и отсутствие расхода API-квоты на изображения. Это не передача универсальной лицензии: статус `identification` отличается от `verified`. Никакого автоматического подтверждения прав, фотографий или Storage rehosting. Условия проверены 30.09.2026: https://www.api-football.com/terms.
+
+Конкретная схема и обратимость подключения: [media architecture](../media/media-architecture.md#api-football-подключение-эмблем-30092026).

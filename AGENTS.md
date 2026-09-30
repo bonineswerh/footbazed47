@@ -16,7 +16,7 @@
 - Навигация — History API с индексируемыми путями `/club/<id>`, `/player/<id>`, `/match/<id>`, `/profile/<uuid>` и статическими разделами. Старые hash-маршруты остаются только для обратной совместимости; маршрутизацией управляют `go`, `syncRoute` и `applyRouteFromLocation` в `app.js`.
 - Данные, Auth и PostgreSQL — Supabase через `@supabase/supabase-js@2`.
 - Серверная часть — CommonJS Vercel Functions: `api/config.js` для публичной runtime-конфигурации, `api/admin.js` для привилегированных действий и `api/sitemap.js` для динамического sitemap.
-- Рабочий источник футбольного каталога — football-data.org через `api/admin.js`. API-Football подключён отдельно только для защищённой диагностики аккаунта/покрытия; импорт из него пока не включён.
+- Рабочий источник футбольного каталога — football-data.org через `api/admin.js`. API-Football используется для защищённой диагностики и отдельного staged подключения эмблем существующих клубов; импорт матчей/игроков пока не включён.
 - Production — Vercel из GitHub-ветки `main`.
 - Тесты — встроенный `node:test`, pgTAP и Playwright Test с Axe. Требуется Node.js 22+.
 - Менеджер зависимостей — pnpm: изменяя зависимости, обновляй и коммить `pnpm-lock.yaml`; не добавляй параллельный `package-lock.json`.
@@ -251,8 +251,8 @@
 - Не обращайся из клиента к `chat_messages`, `direct_conversations`, `direct_messages` или messaging RPC: домен закрыт.
 - Не разрешай клиенту создавать/удалять notifications или менять в них что-либо кроме `read`.
 - Не раскрывай `users.email`, `users.is_admin` или `users.invite_code` через общий public select; служебные счётчики выдавай только в уже разрешённом read-only наборе полей и никогда не разрешай клиенту их изменять.
-- Футбольные изображения всегда optional. Используй только `FBZMedia` и связанные `media_assets` со статусом `verified`; не выводи deprecated `crest_url`/`photo_url`, `unknown`, `restricted` или `disabled` assets.
-- Наличие URL у provider не подтверждает право использования. Новая интеграция media сначала документируется в `docs/sources/`, сохраняет provenance и остаётся выключенной до проверки конкретных прав.
+- Футбольные изображения всегда optional. Используй только `FBZMedia` и связанные `media_assets`: `verified` или узкий `identification` для API-Football club_logo на точном `media.api-sports.io/football/teams/<id>.png`. Второй статус обозначает использование для идентификации клуба по запросу владельца, не подтверждённую лицензию. `unknown`, `restricted`, `disabled`, deprecated `crest_url`/`photo_url` не показываются.
+- Наличие provider URL не подтверждает лицензию. Не превращай `identification` в `verified`, не подключай этим путём фото игроков, hero imagery или rehosting. Provenance/terms и контроль отключения сохраняются. Пакеты эмблем требуют серверного preview/apply; internal IDs/legacy external_id неизменны. `club_provider_ids` и `club_emblem_batches` доступны только service_role. Для media на матчевой странице используется один bounded `get_club_marks` (96 IDs), optional fallback после 1.5 s.
 - Не используй `live_chat_messages`, `support_tickets` и `referee_ratings` для новых функций: они не участвуют в текущих пользовательских сценариях и требуют отдельного решения по типам identity, grants и RLS.
 - Сохраняй восстановленные baseline-миграции и проверяй, что чистая БД по-прежнему полностью разворачивается только из репозитория.
 - Не обходи `api/admin.js` прямыми service-role запросами из браузера.

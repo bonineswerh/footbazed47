@@ -4,6 +4,7 @@
 
 const https = require('https');
 const {createApiFootballClient} = require('../server/football/api-football');
+const {prepareClubEmblems} = require('../server/football/club-emblems');
 
 const LEAGUES = Object.freeze({
   PL: 'Premier League',
@@ -553,6 +554,22 @@ module.exports = async function handler(req, res) {
     }
     if (action === 'api_football_competition') {
       return sendJson(res,200,await createApiFootballClient({requestBudget:1}).competitionStatus(body.league,body.season));
+    }
+    if (action === 'prepare_club_emblems') {
+      const league=requireLeague(body.league);
+      const [clubsResponse,mappingsResponse]=await Promise.all([
+        supabase('/rest/v1/clubs?select=id,name,short_name,external_id,area_name&limit=500'),
+        supabase('/rest/v1/club_provider_ids?provider=eq.api-football&select=club_id,external_id&limit=500')
+      ]);
+      const prepared=await prepareClubEmblems(createApiFootballClient({requestBudget:1}),league,body.season,parseJson(clubsResponse.raw,[]),parseJson(mappingsResponse.raw,[]));
+      if (!prepared.items.length) return sendJson(res,200,{...prepared,batch:null,matched:0});
+      const staged=await supabase('/rest/v1/rpc/admin_stage_club_emblems',{method:'POST',body:{p_items:prepared.items,p_league:league,p_season:body.season,p_actor:administrator.id}});
+      return sendJson(res,200,{...prepared,...parseJson(staged.raw,{})});
+    }
+    if (action === 'apply_club_emblems' || action === 'rollback_club_emblems') {
+      if (!validBatch(body.batch)) return sendJson(res,400,{error:'Invalid emblem batch'});
+      const response=await supabase(`/rest/v1/rpc/admin_${action}`,{method:'POST',body:{p_batch:body.batch,p_actor:administrator.id}});
+      return sendJson(res,200,parseJson(response.raw,{}));
     }
     if (action === 'prepare_catalog') {
       const result=await prepareCatalog(body);

@@ -139,6 +139,77 @@ export type Database = {
           },
         ]
       }
+      club_emblem_batches: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          items: Json
+          league: string
+          result: Json
+          season: number
+          status: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          items: Json
+          league: string
+          result?: Json
+          season: number
+          status?: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          items?: Json
+          league?: string
+          result?: Json
+          season?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      club_provider_ids: {
+        Row: {
+          club_id: number
+          country: string
+          created_at: string
+          external_id: number
+          provider: string
+          provider_name: string
+        }
+        Insert: {
+          club_id: number
+          country: string
+          created_at?: string
+          external_id: number
+          provider: string
+          provider_name: string
+        }
+        Update: {
+          club_id?: number
+          country?: string
+          created_at?: string
+          external_id?: number
+          provider?: string
+          provider_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_provider_ids_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clubs: {
         Row: {
           area_name: string | null
@@ -1003,6 +1074,10 @@ export type Database = {
         Args: { p_comment: string; p_rating_id: number }
         Returns: Json
       }
+      admin_apply_club_emblems: {
+        Args: { p_actor: string; p_batch: string }
+        Returns: Json
+      }
       admin_apply_prepared_catalog: {
         Args: { p_batch: string; p_confirmation: string }
         Returns: Json
@@ -1011,8 +1086,21 @@ export type Database = {
         Args: { p_confirmation: string; p_scope: string }
         Returns: Json
       }
+      admin_rollback_club_emblems: {
+        Args: { p_actor: string; p_batch: string }
+        Returns: Json
+      }
       admin_stage_catalog: {
         Args: { p_batch: string; p_league: string; p_payload: Json }
+        Returns: Json
+      }
+      admin_stage_club_emblems: {
+        Args: {
+          p_actor: string
+          p_items: Json
+          p_league: string
+          p_season: number
+        }
         Returns: Json
       }
       are_friends: {
@@ -1045,6 +1133,7 @@ export type Database = {
         Args: { p_comment: string; p_comment_id: number }
         Returns: Json
       }
+      get_club_marks: { Args: { p_ids: number[] }; Returns: Json }
       get_club_page: { Args: { p_club_id: number }; Returns: Json }
       get_competition_page: {
         Args: { p_competition_id: number }
@@ -1156,6 +1245,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_displayable_media_asset: {
+        Args: { p_asset: Database["public"]["Tables"]["media_assets"]["Row"] }
+        Returns: boolean
+      }
       is_my_favorite_club: { Args: { p_club_id: number }; Returns: boolean }
       is_user_visible: { Args: { p_user_id: string }; Returns: boolean }
       record_rating_streak: { Args: never; Returns: undefined }

@@ -51,6 +51,8 @@ jobs:
         run: |
           cp types/database.ts /tmp/database.ts
           supabase gen types typescript --local --schema public > types/database.ts
+          node scripts/normalize-database-types.mjs /tmp/database.ts
+          node scripts/normalize-database-types.mjs types/database.ts
           diff -u /tmp/database.ts types/database.ts
       - if: ${{ !cancelled() && steps.reset.outcome == 'success' }}
         run: supabase db lint --local --level error

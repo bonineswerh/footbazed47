@@ -25,7 +25,9 @@ function api({admin=true,authStatus=200,apiFootballKey='football-api-test-placeh
   const env={SUPABASE_URL:'https://database.example.test',SUPABASE_SERVICE_ROLE_KEY:'server-only-test-key',FOOTBALL_DATA_API_KEY:'provider-test-key',API_FOOTBALL_KEY:apiFootballKey};
   const providerContext={module:{exports:{}},require:name=>{assert.equal(name,'node:https');return https;},process:{env},Buffer,URL,setTimeout,clearTimeout};
   vm.runInNewContext(readFileSync(join(__dirname,'../server/football/api-football.js'),'utf8'),providerContext);
-  const context={module:{exports:{}},require:name=>{if(name==='../server/football/api-football')return providerContext.module.exports;assert.equal(name,'https');return https;},process:{env},Buffer,URL,URLSearchParams,console:{error(){}}};
+  const emblemContext={module:{exports:{}},require:name=>{assert.equal(name,'./api-football');return providerContext.module.exports;}};
+  vm.runInNewContext(readFileSync(join(__dirname,'../server/football/club-emblems.js'),'utf8'),emblemContext);
+  const context={module:{exports:{}},require:name=>{if(name==='../server/football/api-football')return providerContext.module.exports;if(name==='../server/football/club-emblems')return emblemContext.module.exports;assert.equal(name,'https');return https;},process:{env},Buffer,URL,URLSearchParams,console:{error(){}}};
   vm.runInNewContext(readFileSync(join(__dirname,'../api/admin.js'),'utf8'),context);
   return {calls,async send(body,{method='POST',authorization='Bearer user-test-token',raw=false}={}){
     const headers={};let result;
@@ -71,6 +73,18 @@ test('API-Football configuration metadata makes no upstream call and invalid sea
   assert.equal(app.calls.some(c=>c.url.includes('api-sports.io')),false);
   const missing=api({apiFootballKey:''});const result=await missing.send({action:'api_football_status'});
   assert.equal(result.status,503);assert.equal(result.body.code,'provider_not_configured');
+});
+
+test('emblem preparation writes only the reviewed batch and apply accepts only a batch UUID',async()=>{
+  const app=api({route:call=>call.url.includes('/clubs?')?{data:[{id:31,external_id:65,name:'Manchester City FC',short_name:'Man City',area_name:'England'}]}:call.url.includes('/club_provider_ids?')?{data:[]}:call.url.includes('api-sports.io')?{data:{errors:[],results:1,paging:{current:1,total:1},response:[{team:{id:50,name:'Manchester City',country:'England',logo:'https://media.api-sports.io/football/teams/50.png'}}]}}:{data:{batch:'12345678-1234-4123-8123-123456789012'}}});
+  const prepared=await app.send({action:'prepare_club_emblems',league:'PL',season:2024});assert.equal(prepared.status,200);
+  assert.equal(app.calls.filter(c=>c.url.includes('api-sports.io')).length,1);
+  assert.equal(app.calls.filter(c=>c.method==='POST').length,1);
+  const stage=app.calls.find(c=>c.url.includes('/rpc/admin_stage_club_emblems'));assert.equal(stage.body.p_items[0].provider_id,50);assert.equal(stage.body.p_actor,'12000000-0000-0000-0000-000000000001');
+  for(const batch of ['',31,'http://evil.test'])assert.equal((await app.send({action:'apply_club_emblems',batch})).status,400);
+  await app.send({action:'apply_club_emblems',batch:prepared.body.batch});
+  assert.equal(app.calls.filter(c=>c.url.includes('api-sports.io')).length,1);assert.equal(app.calls.at(-1).body.p_batch,prepared.body.batch);
+  const denied=api({admin:false});assert.equal((await denied.send({action:'prepare_club_emblems',league:'PL',season:2024})).status,403);assert.equal(denied.calls.some(c=>c.url.includes('api-sports.io')),false);
 });
 test('admin rejects unknown methods/actions and malformed or oversized parsed request bodies',async()=>{
   const app=api();assert.equal((await app.send({}, {method:'DELETE'})).status,405);
