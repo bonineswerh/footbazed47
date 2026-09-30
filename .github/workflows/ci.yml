@@ -16,7 +16,7 @@ jobs:
     # Preinstalled browser dependencies avoid slow or unavailable apt mirrors.
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
-      options: --init --ipc=host
+      options: --user 1001 --init --ipc=host
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
