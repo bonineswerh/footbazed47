@@ -12,6 +12,11 @@ jobs:
   application:
     name: Static, unit and E2E
     runs-on: ubuntu-latest
+    # Keep this version aligned with @playwright/test in package.json.
+    # Preinstalled browser dependencies avoid slow or unavailable apt mirrors.
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --init --ipc=host
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +29,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
-      - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:e2e
 
   database:

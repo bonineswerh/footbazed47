@@ -18,6 +18,9 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await page.goto('/match/101?__e2e=1');
   await page.locator('.md-primary-action').click();
   await expect(page.locator('#matchRatingRange')).toBeEnabled();
+  await expect(page.locator('#matchRatingRange')).toBeVisible();
+  await page.locator('#matchRatingRange').focus();
+  await expect(page.locator('#matchRatingRange')).toBeFocused();
   await page.locator('#matchRatingRange').press('Home');
   await expect(page.locator('#rScoreDisp')).toHaveText('1/10');
   await page.locator('#matchRatingRange').press('End');

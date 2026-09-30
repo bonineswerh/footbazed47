@@ -26,6 +26,9 @@ test('explicit club aliases resolve catalogue naming differences without weakeni
     assert.equal(matchClubEmblems([team(200+index,remote,country)],[candidate]).items[0]?.club_id,candidate.id);
     assert.equal(matchClubEmblems([team(200+index,remote,'Other country')],[candidate]).items.length,0);
   });
+  for(const [local,remote,country]of [['TSG 1899 Hoffenheim','1899 Hoffenheim','Germany'],['SV 07 Elversberg','SV Elversberg','Germany'],['1. FC Köln','FC Koln','Germany'],['ES Troyes AC','Estac Troyes','France']]){
+    assert.equal(matchClubEmblems([team(999,remote,country)],[{...club,name:local,short_name:null,area_name:country}]).items.length,1);
+  }
   const monaco={...club,name:'AS Monaco FC',short_name:null,area_name:'Monaco'};
   assert.equal(matchClubEmblems([team(91,'Monaco','France')],[monaco]).items.length,1);
   assert.equal(matchClubEmblems([team(91,'Monaco','Italy')],[monaco]).items.length,0);
