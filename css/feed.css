@@ -20,13 +20,12 @@
 .feed-avatar img,.comment-avatar img,.home-feed-avatar img{width:100%;height:100%;object-fit:cover}
 .feed-match{padding:18px 18px 20px;border-bottom:1px solid var(--b1);background:color-mix(in srgb,var(--bg3) 84%,transparent)}
 .feed-match-meta{display:flex;justify-content:space-between;gap:12px;margin-bottom:16px;color:var(--text3);font-size:var(--type-meta);font-weight:700;text-transform:uppercase}
-.feed-scoreline{display:grid;grid-template-columns:minmax(0,1fr) 94px minmax(0,1fr);align-items:center;gap:12px}
+.feed-scoreline{display:grid;grid-template-columns:minmax(0,1fr) minmax(94px,max-content) minmax(0,1fr);align-items:center;gap:12px}
 .feed-team{min-width:0;padding:5px 0;border:0;background:transparent;color:var(--snow);font-size:var(--type-small);font-weight:700;line-height:1.35;cursor:pointer;overflow-wrap:anywhere}
 button.feed-team:hover{color:var(--accent2)}
 .feed-team.home{text-align:right}.feed-team.away{text-align:left}
-.feed-score{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:58px;padding:5px;border:1px solid var(--b2);border-radius:7px;background:var(--bg2);color:var(--snow);cursor:pointer;transition:border-color .18s,background .18s}
-.feed-score:hover{border-color:var(--b3);background:var(--bg4)}
-.feed-score span{font-family:'Bebas Neue',sans-serif;font-size:24px;line-height:1;letter-spacing:0}.feed-score small{margin-top:5px;color:var(--text3);font-size:var(--type-meta);font-weight:700;text-transform:uppercase}
+.feed-score{display:flex;align-items:center;justify-content:center;min-width:64px;min-height:64px;padding:5px;border:0;border-radius:6px;background:transparent;color:var(--snow);cursor:pointer}
+.feed-score:hover .mc-score-num{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em;text-decoration-color:var(--text3)}
 .feed-verdict{display:flex;align-items:center;gap:16px;padding:17px 18px 13px}
 .feed-rating{display:flex;align-items:flex-end;gap:3px;color:var(--snow)}
 .feed-rating strong{min-width:26px;font-family:'Bebas Neue',sans-serif;font-size:40px;font-weight:400;line-height:.9;letter-spacing:0;text-align:right}
@@ -93,15 +92,14 @@ button.feed-team:hover{color:var(--accent2)}
   .feed-filters{overflow-x:auto}.feed-filter{flex:0 0 auto;min-width:88px}
   .feed-entry-head{padding:9px 12px}
   .feed-match{padding:15px 12px 17px}
-  .feed-scoreline{grid-template-columns:minmax(0,1fr) 74px minmax(0,1fr);gap:7px}
-  .feed-team{font-size:var(--type-small)}.feed-score{min-height:52px}.feed-score span{font-size:21px}
+  .feed-scoreline{grid-template-columns:minmax(0,1fr) minmax(74px,max-content) minmax(0,1fr);gap:7px}
+  .feed-team{font-size:var(--type-small)}.feed-score{min-height:58px}
   .feed-verdict{padding:14px 13px 11px}.feed-entry blockquote{margin:2px 13px 13px}.feed-players{padding:0 13px 13px}
   .feed-action{padding:0 8px}.feed-action small{display:none}
   .feed-comments:not(:empty){padding:0 12px 12px}
 }
 
 :root[data-theme="light"] .feed-entry{box-shadow:0 7px 22px rgba(22,34,28,.055)}
-:root[data-theme="light"] .feed-match{background:var(--bg3)}
 :root[data-theme="light"] .feed-filter.on{background:var(--bg4)}
 :root[data-theme="light"] .feed-comments:not(:empty){background:color-mix(in srgb,var(--bg3) 72%,white)}
 
@@ -115,11 +113,6 @@ button.feed-team:hover{color:var(--accent2)}
 /* Match posts echo the score-led presentation used in the calendar. */
 .feed-entry,.home-feed-card{border-radius:10px}
 .feed-entry::before,.home-feed-card::before{content:"";display:block;height:3px;background:var(--grad)}
-.feed-match{background:radial-gradient(circle at 50% 12%,var(--accent3),transparent 68%),var(--bg3)}
-.feed-score{min-height:64px;border-color:color-mix(in srgb,var(--accent) 24%,var(--b2));border-radius:8px;background:color-mix(in srgb,var(--bg2) 88%,var(--accent3))}
-.feed-score span{font-size:29px}
 .feed-score:focus-visible,.feed-team:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .feed-rating strong{font-size:44px}
 .home-feed-match{background:radial-gradient(circle at 72% 6%,var(--accent3),transparent 75%),var(--bg3)}
-@media(max-width:620px){.feed-score{min-height:58px}.feed-score span{font-size:25px}}
-:root[data-theme="light"] .feed-match{background:radial-gradient(circle at 50% 12%,var(--accent3),transparent 68%),var(--bg3)}

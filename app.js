@@ -66,7 +66,7 @@ function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=56',script:'js/entities.js?v=57',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=57',script:'js/feed.js?v=56',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=58',script:'js/feed.js?v=57',ready:()=>window.FBZFeed});
 }
 function ensureMessagesModule(){
   return ensureFeatureModule({key:'messages',styleId:'messageStyles',style:'css/messages.css?v=6',script:'js/messages.js?v=6',ready:()=>window.FBZMessages});
