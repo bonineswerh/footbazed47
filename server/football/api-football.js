@@ -120,10 +120,13 @@ function createApiFootballClient({apiKey = process.env.API_FOOTBALL_KEY, transpo
               const denied=keys.some(key=>['token','key','access','plan'].includes(key));
               return finish(new FootballProviderError(limited?'provider_rate_limit':denied?'provider_access_denied':'provider_api_error',limited?429:502,quota));
             }
-            if (!isObject(payload.paging) || !Number.isInteger(payload.paging.current) || payload.paging.current<1 || !Number.isInteger(payload.paging.total) || payload.paging.total<1 || payload.paging.current>payload.paging.total || !Number.isInteger(payload.results) || payload.results<0) return finish(new FootballProviderError('provider_invalid_response',502,quota));
             if (url.pathname==='/status') {
-              if (!isObject(payload.response) || payload.results!==1 || payload.paging.total!==1) return finish(new FootballProviderError('provider_invalid_response',502,quota));
-            } else if (!Array.isArray(payload.response) || payload.response.length!==payload.results || payload.response.some(item=>!isObject(item))) return finish(new FootballProviderError('provider_invalid_response',502,quota));
+              // Account metadata is an object, not a paginated collection. The
+              // provider reports zero results and may omit its paging wrapper.
+              if (!isObject(payload.response) || ![0,1].includes(payload.results) || (payload.paging!==undefined && (!isObject(payload.paging) || payload.paging.current!==1 || payload.paging.total!==1))) return finish(new FootballProviderError('provider_invalid_response',502,quota));
+              return finish(null,{items:payload.response,paging:{current:1,total:1},quota,requests});
+            }
+            if (!isObject(payload.paging) || !Number.isInteger(payload.paging.current) || payload.paging.current<1 || !Number.isInteger(payload.paging.total) || payload.paging.total<1 || payload.paging.current>payload.paging.total || !Number.isInteger(payload.results) || payload.results<0 || !Array.isArray(payload.response) || payload.response.length!==payload.results || payload.response.some(item=>!isObject(item))) return finish(new FootballProviderError('provider_invalid_response',502,quota));
             finish(null,{items:payload.response,paging:{current:payload.paging.current,total:payload.paging.total},quota,requests});
           });
         });

@@ -49,6 +49,15 @@ test('account diagnostics discard personal fields, arbitrary plan text and upstr
   }
 });
 
+test('account metadata accepts the provider zero-result status wrapper without weakening collection validation',async()=>{
+  for(const paging of [undefined,{current:1,total:1}]){
+    const {client}=mockClient(()=>({payload:{errors:[],results:0,paging,response:account}}));
+    const result=await client.accountStatus();assert.equal(result.plan,'Free');assert.equal(result.dailyLimit,100);
+  }
+  const broken=mockClient(()=>({payload:{errors:[],results:0,response:account}}));
+  await rejects(broken.client.get('/leagues',{id:39}),'provider_invalid_response');
+});
+
 test('HTTP and API-level errors do not leak body text and never retry authentication or rate limits',async()=>{
   for(const [status,code]of [[401,'provider_access_denied'],[403,'provider_access_denied'],[429,'provider_rate_limit'],[302,'provider_http_error'],[204,'provider_http_error']]){
     const {client,calls}=mockClient(()=>({status,raw:'private-token'}),{retries:1});await rejects(client.get('/status'),code);assert.equal(calls.length,1);
