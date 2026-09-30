@@ -43,4 +43,8 @@
 .admin-emblem-grid>div{display:flex;align-items:center;gap:10px;min-width:0;color:var(--text2);font-size:var(--type-small)}
 .admin-emblem-grid>div>span:last-child{min-width:0;overflow-wrap:anywhere}
 .admin-emblem-mark{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:6px;font-size:14px}
+.admin-emblem-skipped{grid-column:1/-1;margin-top:8px;padding:12px 14px;border:1px solid var(--b2);border-radius:8px;color:var(--text2);font-size:var(--type-small);line-height:1.6}
+.admin-emblem-skipped summary{cursor:pointer;min-height:44px;padding:8px 0;box-sizing:border-box;font-weight:650;color:var(--snow)}
+.admin-emblem-skipped ul{margin:12px 0 0;padding-left:20px;columns:2 240px;column-gap:24px}
+.admin-emblem-skipped li{break-inside:avoid;margin-bottom:5px;overflow-wrap:anywhere}
 .admin-view.on{animation:none}

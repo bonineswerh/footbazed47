@@ -12,21 +12,26 @@ const aliases=Object.freeze([
   ['manchesterunited','manunited'],['manchestercity','mancity'],
   ['brighton','brightonhove','brightonhovealbion'],['nottinghamforest','nottingham'],
   ['tottenham','tottenhamhotspur'],['newcastle','newcastleunited'],
+  ['ipswich','ipswichtown'],['leeds','leedsunited'],
   ['barcelona','barca'],['parissaintgermain','psg'],['atleticomadrid','clubatleticodemadrid'],
   ['athleticclub','athleticbilbao'],['realbetis','realbetisbalompie'],['celtavigo','celtadevigo','celta'],
   ['sevilla','sevillafc'],['osasuna','caosasuna'],['realvalladolid','realvalladolidde'],
   ['inter','internazionale','internazionalemilano'],['acmilan','milan'],['asroma','roma'],
   ['lazio','sslazio'],['napoli','sscnapoli'],['atalanta','atalantabc'],['torino','torinofc'],
+  ['como','como1907'],
   ['bayerleverkusen','bayer04leverkusen','leverkusen'],['bayernmunchen','bayernmunich','bayern'],
   ['borussiadortmund','dortmund'],['borussiamonchengladbach','borussiamgladbach','gladbach'],
-  ['mainz05','mainz','1fsvmainz05'],['fcstpauli','stpauli'],['heidenheim','1fcheidenheim1846'],
+  ['mainz05','mainz','fsvmainz05','1fsvmainz05'],['fcstpauli','stpauli'],['heidenheim','1fcheidenheim1846'],
+  ['werderbremen','svwerderbremen'],['hoffenheim','tsg1899hoffenheim'],
   ['eintrachtfrankfurt','frankfurt'],['unionberlin','1fcunionberlin'],['vflwolfsburg','wolfsburg'],
   ['vfbstuttgart','vfbstuttgart1893','stuttgart'],
   ['olympiquemarseille','olympiquedemarseille','marseille'],['olympiquelyonnais','lyon'],
   ['paris','parisfc'],['staderennes','staderennais1901','rennes'],['stadebrestois29','brest'],
   ['lille','lilleosc'],['lehavre','lehavreac'],['saintetienne','asse'],
+  ['angers','angerssco'],['psv','psveindhoven'],['slovanbratislava','skslovanbratislava'],
   ['sporting','sportingcp','sportingclubedeportugal'],['bodoglimt'],
-  ['clubbrugge','clubbruggekv'],['redbullsalzburg','rbsalzburg','salzburg']
+  ['clubbrugge','clubbruggekv'],['redbullsalzburg','rbsalzburg','salzburg'],
+  ['lask','lasklinz'],['aek','aekathens','paeaek']
 ]);
 function nameKey(value){
   const name=normalizedName(value);
@@ -35,6 +40,12 @@ function nameKey(value){
 function countryKey(value){
   const key=normalizedName(value);
   return ({germany:'germany',deutschland:'germany',espana:'spain',italia:'italy'})[key]||key;
+}
+function sameCountry(club,team){
+  const local=countryKey(club.area_name),remote=countryKey(team.country);
+  if(local===remote)return true;
+  // AS Monaco is classified by its home country in one catalogue and its league country in the other.
+  return local==='monaco'&&remote==='france'&&nameKey(club.name)==='monaco'&&nameKey(team.name)==='monaco';
 }
 
 function matchClubEmblems(providerItems,clubs,mappings=[]){
@@ -45,7 +56,7 @@ function matchClubEmblems(providerItems,clubs,mappings=[]){
     if(!team||!Number.isSafeInteger(team.id)||team.id<=0||typeof team.name!=='string'||!team.name.trim()||team.name.length>160||typeof team.country!=='string'||!team.country.trim()||team.country.length>100||typeof team.logo!=='string'||team.logo!==`https://media.api-sports.io/football/teams/${team.id}.png`||seen.has(team.id))throw new FootballProviderError('provider_invalid_teams');
     seen.add(team.id);
     const mapped=mappings.find(m=>Number(m.external_id)===team.id);
-    const candidates=clubs.filter(club=>countryKey(club.area_name)===countryKey(team.country)&&
+    const candidates=clubs.filter(club=>sameCountry(club,team)&&
       [club.name,club.short_name].some(name=>nameKey(name)===nameKey(team.name)));
     const club=mapped?clubs.find(c=>Number(c.id)===Number(mapped.club_id)):candidates.length===1?candidates[0]:null;
     const conflicting=club&&mappings.some(m=>Number(m.club_id)===Number(club.id)&&Number(m.external_id)!==team.id);

@@ -60,7 +60,7 @@ window.addEventListener('fbz:session-change',()=>{
 function ensureFeatureModule(options){return window.FBZFeatures.load(options);}
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=47',script:'js/admin.js?v=49',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=48',script:'js/admin.js?v=50',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=57',script:'js/entities.js?v=58',ready:()=>window.FBZEntities});

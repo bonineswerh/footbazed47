@@ -220,7 +220,9 @@
         emblemBatch=data.batch||null;
         const items=Array.isArray(data.items)?data.items:[];
         result.textContent=`${data.league} · ${data.season}/${String(Number(data.season)+1).slice(-2)}: подготовлено ${items.length} из ${Number(data.received)||0}. Пропущено: ${Array.isArray(data.skipped)?data.skipped.length:0}. ${quotaText(data.quota)}`;
-        document.getElementById('adminEmblemsPreview').innerHTML=items.map(item=>`<div>${FBZMedia.visual({entity:{name:item.club_name,media:{asset_type:'club_logo',usage_status:'identification',source_provider:'api-football',url:item.source_url}},kind:'club',className:'admin-emblem-mark'})}<span>${esc(item.club_name)}</span></div>`).join('');
+        const skipped=Array.isArray(data.skipped)?data.skipped:[];
+        const reasons={no_match:'нет точного совпадения',ambiguous:'несколько похожих клубов',mapping_conflict:'конфликт идентификаторов'};
+        document.getElementById('adminEmblemsPreview').innerHTML=items.map(item=>`<div>${FBZMedia.visual({entity:{name:item.club_name,media:{asset_type:'club_logo',usage_status:'identification',source_provider:'api-football',url:item.source_url}},kind:'club',className:'admin-emblem-mark'})}<span>${esc(item.club_name)}</span></div>`).join('')+(skipped.length?`<details class="admin-emblem-skipped"><summary>Пропущенные клубы: ${skipped.length}</summary><ul>${skipped.map(item=>`<li>${esc(item.providerName)} — ${esc(reasons[item.reason]||'не подключён')}</li>`).join('')}</ul></details>`:'');
       }else{
         if(!emblemBatch)return;
         result.textContent=kind==='apply'?'Подключаем эмблемы…':'Восстанавливаем предыдущие эмблемы…';

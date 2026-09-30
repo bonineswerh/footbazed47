@@ -19,6 +19,18 @@ test('country, ambiguous names and provider mapping conflicts are never guessed'
 test('malformed teams, repeated IDs, arbitrary URLs and redirects cannot become assets',()=>{
   for(const rows of [[],[team(),team()],[team(-1)],[{team:{...team().team,logo:'https://evil.test/50.png'}}],[{team:{...team().team,logo:'https://media.api-sports.io/football/teams/50.png?token=private'}}],[team(50,'')]])assert.throws(()=>matchClubEmblems(rows,[club]),error=>error.code==='provider_invalid_teams');
 });
+test('explicit club aliases resolve catalogue naming differences without weakening country checks',()=>{
+  const variants=[['Ipswich Town FC','Ipswich','England'],['Leeds United FC','Leeds','England'],['Como 1907','Como','Italy'],['1. FSV Mainz 05','FSV Mainz 05','Germany'],['SV Werder Bremen','Werder Bremen','Germany'],['TSG 1899 Hoffenheim','Hoffenheim','Germany'],['Angers SCO','Angers','France'],['PSV','PSV Eindhoven','Netherlands'],['ŠK Slovan Bratislava','Slovan Bratislava','Slovakia'],['LASK Linz','LASK','Austria'],['PAE AEK','AEK Athens','Greece']];
+  variants.forEach(([local,remote,country],index)=>{
+    const candidate={...club,id:100+index,name:local,short_name:null,area_name:country};
+    assert.equal(matchClubEmblems([team(200+index,remote,country)],[candidate]).items[0]?.club_id,candidate.id);
+    assert.equal(matchClubEmblems([team(200+index,remote,'Other country')],[candidate]).items.length,0);
+  });
+  const monaco={...club,name:'AS Monaco FC',short_name:null,area_name:'Monaco'};
+  assert.equal(matchClubEmblems([team(91,'Monaco','France')],[monaco]).items.length,1);
+  assert.equal(matchClubEmblems([team(91,'Monaco','Italy')],[monaco]).items.length,0);
+  assert.equal(matchClubEmblems([team(50,'Manchester City','France')],[{...club,area_name:'Monaco'}]).items.length,0);
+});
 test('emblems use one bounded catalogue call and preserve quotas and skipped candidates',async()=>{
   const calls=[];
   const result=await prepareClubEmblems({collection:async(...args)=>{calls.push(args);return{items:[team(),team(99,'Unmapped FC')],quota:{dailyRemaining:98}};}},'PL',2024,[club],[]);

@@ -14,6 +14,10 @@ for(const theme of ['dark','light'])test(`эмблемы API-Football в кал�
   expect(await page.locator('#matchG .mc-score-mark img').first().evaluate(img=>img.naturalWidth)).toBeGreaterThan(0);
   await page.locator('#matchG .mc-score-link').filter({hasText:'Manchester City FC'}).click();
   await expect(page).toHaveURL(/\/match\/101/);await expect(page.locator('.md-team-mark img')).toHaveCount(2);
+  for(const mark of await page.locator('.md-team-mark.has-image').all()){
+    await expect(mark).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
+    await expect(mark).toHaveCSS('background-image','none');
+  }
   await page.getByRole('button',{name:'Лента',exact:true}).first().click();
   await expect(page.locator('.feed-club-mark img').first()).toBeVisible();
   await page.locator('.feed-score').first().click();await expect(page).toHaveURL(/\/match\/101/);
