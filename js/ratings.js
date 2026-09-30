@@ -474,19 +474,9 @@ async function saveRating(){
     if(error)throw error;
     if(CU?.id!==context.userId)return;
     if(data)Object.assign(CU,{ratings_count:data.ratings_count,avg_rating:data.avg_rating,streak:data.streak,streak_date:data.streak_date});
-    const savedRatingId=Number(data?.rating_id)||null;
     const current=isRatingCurrent(context);
     if(current){toast(wasExisting?'Оценка обновлена':'Оценка сохранена','ok');closeRate();}
     refreshAfterRatingChange(context.matchId);
-    if(current&&savedRatingId&&!wasExisting){
-      setTimeout(()=>{if(CU?.id!==context.userId||location.href!==context.route||document.querySelector('.overlay.on'))return;window.FBZConfirm?.open({
-        title:'Оценка сохранена',
-        message:'Можно сразу отправить карточку оценки другу в личный чат.',
-        confirmText:'Отправить другу',
-        tone:'neutral',
-        onConfirm:()=>{forwardRating(savedRatingId);return true;}
-      });},250);
-    }
   }catch(error){
     console.error('Rating save error:',error);
     if(isRatingCurrent(context))toast(ratingErrorMessage(error),'err');

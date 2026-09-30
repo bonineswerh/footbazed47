@@ -39,3 +39,31 @@ test('browser policy disables microphone, media playback and realtime transport'
   expect(response.headers()['content-security-policy']).toContain("media-src 'none'");
   expect(response.headers()['content-security-policy']).not.toContain('wss:');
 });
+
+test('saving a new rating does not offer a retired forwarding action',async({page})=>{
+  const errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.goto('/match/101?__e2e=1');
+  await expect(page.locator('.md-primary-action')).toBeVisible();
+  await page.evaluate(()=>{
+    const from=sb.from.bind(sb);
+    sb.from=table=>{
+      const query=from(table);
+      if(table==='ratings')query.maybeSingle=()=>Promise.resolve({data:null,error:null});
+      return query;
+    };
+  });
+  await page.locator('.md-primary-action').click();
+  await expect(page.locator('#rateTitle')).toHaveText('Оценить матч');
+  await page.locator('.rating-supporter-options label').filter({has:page.locator('input[value="neutral"]')}).click();
+  await page.locator('.rate-star').nth(8).click();
+  await page.getByRole('button',{name:/Продолжить/}).click();
+  await page.clock.install();
+  await page.locator('#rSave').click();
+  await expect(page.locator('#rateOv')).toBeHidden();
+  await page.clock.runFor(600);
+  await expect(page.locator('#confirmOv')).toBeHidden();
+  await expect(page.getByRole('button',{name:'Отправить другу'})).toHaveCount(0);
+  expect((await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastRating())).p_match_rating).toBe(9);
+  expect(errors).toEqual([]);
+});

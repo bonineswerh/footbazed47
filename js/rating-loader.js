@@ -5,7 +5,7 @@
 
   function loadRatings(){
     if(loading)return loading;
-    loading=root.FBZFeatures.load({key:'ratings',script:'js/ratings.js?v=55',ready:()=>root.__FOOTBAZED_RATINGS_READY__}).catch(error=>{loading=null;throw error;});
+    loading=root.FBZFeatures.load({key:'ratings',script:'js/ratings.js?v=56',ready:()=>root.__FOOTBAZED_RATINGS_READY__}).catch(error=>{loading=null;throw error;});
     return loading;
   }
 

@@ -32,7 +32,7 @@ for(const file of ['index.html','admin.html',...frontendFiles]){
 }
 if(html.indexOf('src="js/actions.js')>html.indexOf('src="js/home.js'))errors.push('Action dispatcher must load before its consumers');
 const feedFrontend=fs.readFileSync(path.join(root,'js','feed.js'),'utf8');
-if(/FBZMessages|ensureMessagesModule|directChatOv|page-chat|getUserMedia|MediaRecorder|rpc\(['"](?:get_direct_messages|send_direct_message|send_match_chat_message)/u.test(frontend+'\n'+html))errors.push('Messaging is retired; client surfaces must not return');
+if(/FBZMessages|ensureMessagesModule|forwardRating|directChatOv|page-chat|getUserMedia|MediaRecorder|rpc\(['"](?:get_direct_messages|send_direct_message|send_match_chat_message)/u.test(frontend+'\n'+html))errors.push('Messaging is retired; client surfaces must not return');
 for(const retired of ['js/messages.js','css/messages.css'])if(fs.existsSync(path.join(root,retired)))errors.push(`Retired asset must not be published: ${retired}`);
 if(/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/i.test(frontend))errors.push('Service-role material must not appear in frontend files');
 for(const match of frontend.matchAll(/eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g)){
