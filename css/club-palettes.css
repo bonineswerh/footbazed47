@@ -42,3 +42,10 @@ body .feed-match{background:linear-gradient(100deg,color-mix(in srgb,var(--club-
 .mcard .mcard-gradient,.md-hero::before{background:linear-gradient(90deg,var(--club-home),var(--club-home-secondary) 48%,var(--club-away-secondary) 52%,var(--club-away));opacity:.8}
 .mc-score-team:first-child .mc-score-mark{background:linear-gradient(145deg,color-mix(in srgb,var(--club-home) 40%,var(--bg2)),color-mix(in srgb,var(--club-home-secondary) 40%,var(--bg2)))}
 .mc-score-team:last-child .mc-score-mark{background:linear-gradient(215deg,color-mix(in srgb,var(--club-away) 40%,var(--bg2)),color-mix(in srgb,var(--club-away-secondary) 40%,var(--bg2)))}
+body :is(.mcard,.md-hero,.home-spotlight) :is(.mc-score-mark,.md-team-mark,.home-spotlight-mark,.home-spotlight-art-mark).has-image{background:transparent;border-color:transparent;box-shadow:none}
+.feed-club-mark{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:6px;font-size:12px;line-height:1}
+body .feed-team{display:flex;align-items:center;gap:8px;min-width:0}
+body .feed-team>span:last-child{min-width:0;overflow-wrap:anywhere}
+body .feed-team.away{justify-content:flex-end}
+body .feed-team.away>span:first-child{order:2}
+@media(max-width:400px){.feed-club-mark{width:26px;height:26px}body .feed-team{gap:5px}}

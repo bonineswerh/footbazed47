@@ -36,3 +36,10 @@ test('media providers are explicit and disabled until registered',async()=>{
   media.registerProvider({id,resolve:request=>({request,usage_status:'unknown'})});
   assert.equal((await media.resolveFromProvider(id,{kind:'club'})).usage_status,'unknown');
 });
+
+test('API-Football identification is explicit, limited to exact club logo URLs and never claims a verified license',()=>{
+  const asset={asset_type:'club_logo',usage_status:'identification',source_provider:'api-football',url:'https://media.api-sports.io/football/teams/50.png'};
+  assert.equal(media.resolveAsset(asset,'club_logo').usageStatus,'identification');
+  for(const change of [{asset_type:'player_photo'},{source_provider:'other'},{url:'http://media.api-sports.io/football/teams/50.png'},{url:'https://media.api-sports.io.evil.test/football/teams/50.png'},{url:'https://media.api-sports.io/football/teams/50.png?key=private'},{storage_url:asset.url},{usage_status:'disabled'}])assert.equal(media.resolveAsset({...asset,...change},'club_logo'),null);
+  assert.match(media.visual({entity:{name:'Club',media:asset},kind:'club'}),/referrerpolicy="no-referrer"/);
+});

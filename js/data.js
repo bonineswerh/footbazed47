@@ -36,13 +36,33 @@
     const normalizedOffset=Math.max(Number(offset)||0,0);
     const key=`matches:${normalizedStatus}:${normalizedLeague}:${normalizedQuery}:${normalizedLimit}:${normalizedOffset}`;
     if(force)cache.delete(key);
-    return rpc('get_matches_page',{
+    const page=await rpc('get_matches_page',{
       p_status:normalizedStatus,
       p_league:normalizedLeague,
       p_query:normalizedQuery,
       p_limit:normalizedLimit,
       p_offset:normalizedOffset
     },key,30_000);
+    await enrichMatchMedia(page?.items||[],{force});
+    return page;
+  }
+
+  async function enrichMatchMedia(matches,{force=false}={}){
+    const ids=[...new Set(matches.flatMap(match=>[match.home_club_id,match.away_club_id]).map(Number).filter(id=>Number.isSafeInteger(id)&&id>0))].slice(0,96).sort((a,b)=>a-b);
+    if(!ids.length)return matches;
+    const key=`club-marks:${ids.join(',')}`;
+    if(force)cache.delete(key);
+    let timer;
+    try{
+      const clubs=await Promise.race([rpc('get_club_marks',{p_ids:ids},key,60_000),new Promise(resolve=>{timer=setTimeout(()=>resolve(null),1500);})]);
+      if(!Array.isArray(clubs))return matches;
+      const byId=new Map(clubs.map(club=>[Number(club.id),club]));
+      for(const match of matches){match.home_club=byId.get(Number(match.home_club_id))||null;match.away_club=byId.get(Number(match.away_club_id))||null;}
+    }catch(error){
+      if(error.name==='AbortError')throw error;
+      // Optional media must never prevent opening a match or rating.
+    }finally{clearTimeout(timer);}
+    return matches;
   }
 
   function invalidate(prefix=''){
@@ -65,5 +85,5 @@
     invalidate();
   }
 
-  root.FBZData=Object.freeze({getMatchesPage,getProfilePage,getProfileDiary,getFootballStatistics,invalidate,setSessionUser});
+  root.FBZData=Object.freeze({getMatchesPage,getProfilePage,getProfileDiary,getFootballStatistics,enrichMatchMedia,invalidate,setSessionUser});
 })(window);

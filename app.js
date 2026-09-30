@@ -60,13 +60,13 @@ window.addEventListener('fbz:session-change',()=>{
 function ensureFeatureModule(options){return window.FBZFeatures.load(options);}
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=46',script:'js/admin.js?v=48',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=47',script:'js/admin.js?v=49',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=56',script:'js/entities.js?v=57',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=57',script:'js/entities.js?v=58',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=58',script:'js/feed.js?v=58',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=58',script:'js/feed.js?v=59',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
   return ensureFeatureModule({key:'search',script:'js/search.js?v=57',ready:()=>window.FBZSearch});

@@ -1,6 +1,14 @@
 import {expect,test} from '@playwright/test';
 import {installSupabaseMock} from './mock-supabase.mjs';
 
+test('отложенный фокус диалога не забирает фокус у выбранной шкалы оценки',async({page})=>{
+  await page.goto('/match/101?__e2e=1');
+  await page.locator('.md-primary-action').click();await expect(page.locator('#rateOv')).toBeVisible();await expect(page.locator('#matchRatingRange')).toBeEnabled();
+  await page.clock.install();
+  await page.evaluate(()=>{FBZOverlay.close('rateOv');FBZOverlay.open('rateOv','.rate-close');document.getElementById('matchRatingRange').focus();});
+  await page.clock.runFor(100);await expect(page.locator('#matchRatingRange')).toBeFocused();
+});
+
 test.beforeEach(async({page})=>{await installSupabaseMock(page);});
 
 test('failed feature CSS can be retried without duplicate JavaScript',async({page})=>{

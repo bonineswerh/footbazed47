@@ -36,3 +36,11 @@
 .admin-provider-coverage dt{color:var(--text2)}
 .admin-provider-coverage dd{margin:0;font-weight:650}
 @media(max-width:760px){.admin-provider-form,.admin-provider-coverage{grid-template-columns:1fr}.admin-provider-actions .btn{width:100%}}
+.admin-emblem-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--b2)}
+.admin-emblem-section h4{font-size:var(--type-body);font-weight:650;margin-bottom:8px}
+.admin-emblem-section a{color:var(--accent2);text-decoration:underline;text-underline-offset:3px}
+.admin-emblem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px}
+.admin-emblem-grid>div{display:flex;align-items:center;gap:10px;min-width:0;color:var(--text2);font-size:var(--type-small)}
+.admin-emblem-grid>div>span:last-child{min-width:0;overflow-wrap:anywhere}
+.admin-emblem-mark{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:6px;font-size:14px}
+.admin-view.on{animation:none}

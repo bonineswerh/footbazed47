@@ -187,3 +187,5 @@
 :root[data-theme="light"] .entity-hero{background:var(--surface-raised)}
 :root[data-theme="light"] .entity-hero::before{background:linear-gradient(110deg,var(--accent4),transparent 48%)}
 :root[data-theme="light"] .entity-section,:root[data-theme="light"] .squad-group{box-shadow:var(--shadow-card)}
+.entity-media-credit{margin:18px 0 0;color:var(--text3);font-size:var(--type-small);line-height:1.5}
+.entity-media-credit a{color:var(--text2);text-decoration:underline;text-underline-offset:3px}

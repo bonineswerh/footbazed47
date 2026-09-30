@@ -64,12 +64,12 @@
         <p class="home-spotlight-league">${root.esc(match.league_name||'Футбол')} <span>·</span> ${root.esc(dateLabel)}</p>
         <h2 class="home-spotlight-title">${finished?'Матч, который стоит обсудить':live?'Игра идёт прямо сейчас':'Впереди большая игра'}</h2>
         <div class="home-spotlight-score" role="group" aria-label="${root.esc(homeName)} ${root.esc(match.home_score??'без счёта')}, ${root.esc(awayName)} ${root.esc(match.away_score??'без счёта')}">
-          <div class="home-spotlight-team"><span class="home-spotlight-mark" aria-hidden="true">${root.esc(mark(homeName))}</span><strong>${root.esc(homeName)}</strong><b>${root.esc(match.home_score??'—')}</b></div>
-          <div class="home-spotlight-team"><span class="home-spotlight-mark" aria-hidden="true">${root.esc(mark(awayName))}</span><strong>${root.esc(awayName)}</strong><b>${root.esc(match.away_score??'—')}</b></div>
+          <div class="home-spotlight-team">${root.matchClubMark(match,'home','home-spotlight-mark','eager')}<strong>${root.esc(homeName)}</strong><b>${root.esc(match.home_score??'—')}</b></div>
+          <div class="home-spotlight-team">${root.matchClubMark(match,'away','home-spotlight-mark','eager')}<strong>${root.esc(awayName)}</strong><b>${root.esc(match.away_score??'—')}</b></div>
         </div>
         <div class="home-spotlight-actions"><button class="home-spotlight-primary" type="button" ${FBZActions.attrs("home.go-md",[id])}>Открыть матч <span aria-hidden="true">↗</span></button><button class="home-spotlight-secondary" type="button" data-fbz-click="shell.go-matches">Весь календарь</button></div>
       </div>
-      <div class="home-spotlight-art" aria-hidden="true"><div class="home-spotlight-field"><span class="home-spotlight-art-mark">${root.esc(mark(homeName))}</span><span class="home-spotlight-art-cross">×</span><span class="home-spotlight-art-mark">${root.esc(mark(awayName))}</span></div><span class="home-spotlight-art-caption">ИГРА БОЛЕЛЬЩИКОВ</span></div>
+      <div class="home-spotlight-art" aria-hidden="true"><div class="home-spotlight-field">${root.matchClubMark(match,'home','home-spotlight-art-mark','eager')}<span class="home-spotlight-art-cross">×</span>${root.matchClubMark(match,'away','home-spotlight-art-mark','eager')}</div><span class="home-spotlight-art-caption">ИГРА БОЛЕЛЬЩИКОВ</span></div>
     </article>`;
   }
 

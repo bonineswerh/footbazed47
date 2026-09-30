@@ -10,6 +10,7 @@
     activities: []
   };
   let apiFootballBusy=false,apiFootballConfigured=false;
+  let emblemBatch=null,emblemApplied=false;
   let catalogBatch=null,catalogReady=false;
   const STATUS_LABELS = {
     scheduled: 'Запланирован', live: 'LIVE', finished: 'Завершен',
@@ -171,15 +172,26 @@
         <button type="submit" class="btn btn-g" id="adminProviderCoverageCheck" disabled>Проверить покрытие</button>
       </form>
       <div id="adminProviderCoverage" class="admin-provider-result" role="status" aria-live="polite"></div>
-      <p class="admin-provider-copy">Покрытие — сведения каталога API. Доступ к матчам и составам выбранного сезона проверяется при подготовке пилота. Импорт ещё не включён.</p>
+      <p class="admin-provider-copy">Покрытие — сведения каталога API. Импорт матчей и игроков из этого источника ещё не включён.</p>
+      <div class="admin-emblem-section">
+        <h4>Эмблемы клубов</h4>
+        <p class="admin-provider-copy">Подготовьте эмблемы для турнира и сезона, выбранных выше. Один запрос к API. Публикация сохраняет существующие клубы, матчи и оценки. Неоднозначные совпадения пропускаются.</p>
+        <div class="admin-provider-actions"><button type="button" class="btn btn-g" id="adminEmblemsPrepare" data-fbz-click="admin.emblems-prepare" disabled>Подготовить эмблемы</button><button type="button" class="btn btn-l" id="adminEmblemsApply" data-fbz-click="admin.emblems-apply" disabled>Опубликовать эмблемы</button><button type="button" class="btn btn-g" id="adminEmblemsUndo" data-fbz-click="admin.emblems-undo" hidden>Отменить подключение</button></div>
+        <div id="adminEmblemsResult" class="admin-provider-result" role="status" aria-live="polite"></div>
+        <div id="adminEmblemsPreview" class="admin-emblem-grid" aria-label="Подготовленные эмблемы"></div>
+        <p class="admin-provider-copy">Эмблемы используются для обозначения клубов. Источник — API-Football / API-Sports; подтверждённая лицензия не заявляется. <a href="https://www.api-football.com/terms" target="_blank" rel="noopener noreferrer">Условия источника</a></p>
+      </div>
     </section>`);
   }
 
   function providerControls(){
-    for(const id of ['adminProviderCheck','adminProviderCoverageCheck']){
+    for(const id of ['adminProviderCheck','adminProviderCoverageCheck','adminEmblemsPrepare']){
       const button=document.getElementById(id);
       if(button)button.disabled=apiFootballBusy || !apiFootballConfigured;
     }
+    const apply=document.getElementById('adminEmblemsApply'),undo=document.getElementById('adminEmblemsUndo');
+    if(apply)apply.disabled=apiFootballBusy||!emblemBatch||emblemApplied;
+    if(undo){undo.hidden=!emblemApplied;undo.disabled=apiFootballBusy;}
     document.getElementById('adminApiFootballPanel')?.setAttribute('aria-busy',String(apiFootballBusy));
   }
 
@@ -193,6 +205,34 @@
   function quotaText(quota){
     const format=value=>value==null?'не сообщён':Number(value).toLocaleString('ru-RU');
     return `Остаток за день: ${format(quota?.dailyRemaining)} · за минуту: ${format(quota?.minuteRemaining)}`;
+  }
+
+  async function clubEmblems(kind){
+    if(apiFootballBusy||!apiFootballConfigured)return;
+    const result=document.getElementById('adminEmblemsResult');
+    apiFootballBusy=true;providerControls();
+    try{
+      if(kind==='prepare'){
+        emblemBatch=null;emblemApplied=false;document.getElementById('adminEmblemsPreview').replaceChildren();
+        result.textContent='Получаем эмблемы и проверяем совпадения клубов…';
+        const form=document.getElementById('adminProviderForm');
+        const data=await request('prepare_club_emblems',{league:form.elements.league.value,season:Number(form.elements.season.value)});
+        emblemBatch=data.batch||null;
+        const items=Array.isArray(data.items)?data.items:[];
+        result.textContent=`${data.league} · ${data.season}/${String(Number(data.season)+1).slice(-2)}: подготовлено ${items.length} из ${Number(data.received)||0}. Пропущено: ${Array.isArray(data.skipped)?data.skipped.length:0}. ${quotaText(data.quota)}`;
+        document.getElementById('adminEmblemsPreview').innerHTML=items.map(item=>`<div>${FBZMedia.visual({entity:{name:item.club_name,media:{asset_type:'club_logo',usage_status:'identification',source_provider:'api-football',url:item.source_url}},kind:'club',className:'admin-emblem-mark'})}<span>${esc(item.club_name)}</span></div>`).join('');
+      }else{
+        if(!emblemBatch)return;
+        result.textContent=kind==='apply'?'Подключаем эмблемы…':'Восстанавливаем предыдущие эмблемы…';
+        const data=await request(kind==='apply'?'apply_club_emblems':'rollback_club_emblems',{batch:emblemBatch});
+        emblemApplied=kind==='apply';
+        result.textContent=emblemApplied?`Подключено эмблем: ${Number(data.applied)||0}. Они доступны в календаре, ленте и на страницах клубов.`:`Восстановлено клубов: ${Number(data.restored)||0}.`;
+        if(!emblemApplied)emblemBatch=null;
+        FBZData.invalidate();clearAppCache();
+        addActivity(result.textContent);
+      }
+    }catch(error){result.textContent=error.message;}
+    finally{apiFootballBusy=false;providerControls();}
   }
 
   async function inspectProvider(kind,event){
@@ -496,13 +536,16 @@
     }
   }
 
-  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider};
+  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems};
 })();
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
   "admin.provider-status":()=>FBZAdmin.inspectProvider('status'),
   "admin.provider-competition":event=>FBZAdmin.inspectProvider('competition',event),
+  "admin.emblems-prepare":()=>FBZAdmin.clubEmblems('prepare'),
+  "admin.emblems-apply":()=>FBZAdmin.clubEmblems('apply'),
+  "admin.emblems-undo":()=>FBZAdmin.clubEmblems('undo'),
   "admin.admin-open-editor":(event,element,[id])=>FBZAdmin.openEditor(id),
   "admin.admin-refresh":()=>FBZAdmin.refresh(true)
 });

@@ -62,7 +62,10 @@
     if(!asset||typeof asset!=='object')return null;
     const status=String(asset.usage_status||'').toLocaleLowerCase('en-US');
     const type=String(asset.asset_type||'').toLocaleLowerCase('en-US');
-    if(status!=='verified'||(expectedType&&type!==expectedType))return null;
+    const identification=status==='identification'&&type==='club_logo'&&asset.source_provider==='api-football'
+      &&/^https:\/\/media\.api-sports\.io\/football\/teams\/[1-9][0-9]*\.png$/u.test(String(asset.url||asset.source_url||''))
+      &&!asset.storage_url&&!asset.storage_key;
+    if((status!=='verified'&&!identification)||(expectedType&&type!==expectedType))return null;
     const url=safeHttpsUrl(asset.url||asset.storage_url||asset.source_url);
     if(!url)return null;
     return Object.freeze({
@@ -73,20 +76,20 @@
       attribution:String(asset.attribution||''),
       licenseName:String(asset.license_name||''),
       licenseUrl:safeHttpsUrl(asset.license_url),
-      usageStatus:'verified'
+      usageStatus:status
     });
   }
 
-  function visual({entity={},kind='other',className='entity-mark',alt='',loading='lazy'}={}){
+  function visual({entity={},kind='other',className='entity-mark',alt='',loading='lazy',fallbackText=''}={}){
     const expectedType=assetTypes[kind]||assetTypes.other;
     const resolved=resolveAsset(entity.media,expectedType);
     const classes=`fbz-media ${className}${resolved?' has-image':' is-fallback'}`;
     const [primary,secondary]=palette(entity);
     const label=kind==='player'?`Фото ${entity.name||'игрока'} отсутствует`:`Логотип ${entity.name||'не добавлен'}`;
     if(resolved){
-      return `<span class="${escapeHtml(classes)}" style="--media-primary:${primary};--media-secondary:${secondary}" data-media-initials="${escapeHtml(initials(entity.name))}" data-media-label="${escapeHtml(label)}"><img data-fbz-media src="${escapeHtml(resolved.url)}" alt="${escapeHtml(alt)}" loading="${loading==='eager'?'eager':'lazy'}" decoding="async"></span>`;
+      return `<span class="${escapeHtml(classes)}" style="--media-primary:${primary};--media-secondary:${secondary}" data-media-initials="${escapeHtml(fallbackText||initials(entity.name))}" data-media-label="${escapeHtml(label)}"><img data-fbz-media src="${escapeHtml(resolved.url)}" alt="${escapeHtml(alt)}" loading="${loading==='eager'?'eager':'lazy'}" decoding="async" referrerpolicy="no-referrer"></span>`;
     }
-    return `<span class="${escapeHtml(classes)}" style="--media-primary:${primary};--media-secondary:${secondary}" role="img" aria-label="${escapeHtml(label)}"><span>${escapeHtml(initials(entity.name))}</span></span>`;
+    return `<span class="${escapeHtml(classes)}" style="--media-primary:${primary};--media-secondary:${secondary}" role="img" aria-label="${escapeHtml(label)}"><span>${escapeHtml(fallbackText||initials(entity.name))}</span></span>`;
   }
 
   root?.document?.addEventListener('error',event=>{

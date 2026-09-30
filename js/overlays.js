@@ -21,7 +21,7 @@
     overlay.setAttribute('aria-hidden','false');
     document.body.classList.add('modal-open');
     requestAnimationFrame(()=>setTimeout(()=>{
-      if(activeOverlay!==overlay)return;
+      if(activeOverlay!==overlay||overlay.contains(document.activeElement))return;
       const target=(focusSelector&&overlay.querySelector(focusSelector))||focusableElements(overlay)[0]||overlay;
       target.focus({preventScroll:true});
     },30));

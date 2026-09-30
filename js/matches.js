@@ -31,6 +31,11 @@ function teamMonogram(name){
   return`${source[0][0]}${source[1][0]}`.toLocaleUpperCase('ru-RU');
 }
 
+function matchClubMark(match,side,className,loading='lazy'){
+  const name=match[`${side}_team_name`]||'Клуб';
+  return window.FBZMedia.visual({entity:{...match[`${side}_club`],name},kind:'club',className,loading,fallbackText:teamMonogram(name)});
+}
+
 function matchRatingSegmentLabel(segment,match){
   return{all:'Все зрители',home:`Болельщики ${match.home_team_name}`,away:`Болельщики ${match.away_team_name}`,neutral:'Нейтральные зрители'}[segment]||'Все зрители';
 }
@@ -92,9 +97,9 @@ function renderMCard(match){
         <div class="mc-tags">${derby?`<span class="tag t-derby">${ico('fire',12)} Дерби</span>`:''}<span class="tag ${statusClass}">${esc(statusLabel)}</span></div>
       </div>
       <button class="mc-score-block mc-score-link" type="button" aria-label="Открыть матч: ${esc(match.home_team_name)} против ${esc(match.away_team_name)}" ${FBZActions.attrs("matches.go-md",[match.id])}>
-        <span class="mc-score-team"><span class="mc-score-mark" aria-hidden="true">${esc(teamMonogram(match.home_team_name))}</span><span class="mc-score-name">${esc(match.home_team_name)}</span></span>
+        <span class="mc-score-team">${matchClubMark(match,'home','mc-score-mark')}<span class="mc-score-name">${esc(match.home_team_name)}</span></span>
         <span class="mc-score-result"><span class="mc-score-num">${esc(match.home_score??'—')}<span class="mc-score-separator">:</span>${esc(match.away_score??'—')}</span><span class="mc-score-vs">${match.status==='scheduled'?'НЕТ СЧЁТА':'СЧЁТ'}</span></span>
-        <span class="mc-score-team"><span class="mc-score-mark" aria-hidden="true">${esc(teamMonogram(match.away_team_name))}</span><span class="mc-score-name">${esc(match.away_team_name)}</span></span>
+        <span class="mc-score-team">${matchClubMark(match,'away','mc-score-mark')}<span class="mc-score-name">${esc(match.away_team_name)}</span></span>
       </button>
       <div class="mc-bottom">
         <span class="mc-meta-date">${ico('calendar',12)} ${fmtDate(match.match_date)}</span>
@@ -266,6 +271,8 @@ async function loadMD(id){
     if(insightsError)throw insightsError;
     if(ownRatingError)throw ownRatingError;
     if(!match){target.innerHTML='<div class="empty-state"><strong>Матч не найден</strong></div>';return;}
+    await window.FBZData.enrichMatchMedia([match]);
+    if(!isCurrent())return;
 
     const userIds=[...new Set((ratings||[]).map(rating=>rating.user_id))];
     const{data:users}=userIds.length
@@ -309,9 +316,9 @@ async function loadMD(id){
       <section class="md-hero" style="${FBZDomain.matchPaletteStyle(match)}">
         <div class="md-lg"><span>${esc(match.league_name)}</span><b class="md-status md-status-${esc(match.status)}">${esc(statusLabel)}</b></div>
         <div class="md-sl">
-          <div class="md-team"><span class="md-team-mark" aria-hidden="true">${esc(teamMonogram(match.home_team_name))}</span>${match.home_club_id?`<button class="md-tname md-club-link" type="button" ${FBZActions.attrs("matches.go-club",[Number(match.home_club_id)])}>${esc(match.home_team_name)}</button>`:`<div class="md-tname">${esc(match.home_team_name)}</div>`}<div class="md-score">${esc(match.home_score??'—')}</div></div>
+          <div class="md-team">${matchClubMark(match,'home','md-team-mark','eager')}${match.home_club_id?`<button class="md-tname md-club-link" type="button" ${FBZActions.attrs("matches.go-club",[Number(match.home_club_id)])}>${esc(match.home_team_name)}</button>`:`<div class="md-tname">${esc(match.home_team_name)}</div>`}<div class="md-score">${esc(match.home_score??'—')}</div></div>
           <div class="md-vs">VS</div>
-          <div class="md-team"><span class="md-team-mark" aria-hidden="true">${esc(teamMonogram(match.away_team_name))}</span>${match.away_club_id?`<button class="md-tname md-club-link" type="button" ${FBZActions.attrs("matches.go-club",[Number(match.away_club_id)])}>${esc(match.away_team_name)}</button>`:`<div class="md-tname">${esc(match.away_team_name)}</div>`}<div class="md-score">${esc(match.away_score??'—')}</div></div>
+          <div class="md-team">${matchClubMark(match,'away','md-team-mark','eager')}${match.away_club_id?`<button class="md-tname md-club-link" type="button" ${FBZActions.attrs("matches.go-club",[Number(match.away_club_id)])}>${esc(match.away_team_name)}</button>`:`<div class="md-tname">${esc(match.away_team_name)}</div>`}<div class="md-score">${esc(match.away_score??'—')}</div></div>
         </div>
         <div class="md-meta">${ico('calendar',12)} ${new Date(match.match_date).toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}${competitionMeta?`<span>·</span>${esc(competitionMeta)}`:''}</div>
         ${communityMarkup}

@@ -300,6 +300,7 @@ export async function installSupabaseMock(page,overrides={}){
         return promiseResult(false);
       }
       if(name==='get_club_page')return promiseResult(Number(args.p_club_id)===24?structuredClone(state.club):null);
+      if(name==='get_club_marks')return promiseResult((state.clubMarks||[]).filter(club=>args.p_ids.includes(Number(club.id))).map(club=>structuredClone(club)));
       if(name==='get_player_page')return promiseResult(Number(args.p_player_id)===5290?structuredClone(state.player):null);
       if(name==='get_competition_page')return promiseResult(Number(args.p_competition_id)===7?structuredClone(state.competition):null);
       if(name==='get_match_insights'){

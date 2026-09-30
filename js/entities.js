@@ -202,6 +202,7 @@
         <button class="entity-tab" id="club-tab-matches" data-tab="matches" role="tab" aria-controls="clubBody" aria-selected="false" tabindex="-1" type="button" data-fbz-click="entities.set-club-tab-matches-2">Матчи <span>${Number(stats.match_count)||0}</span></button>
       </div>
       <div class="entity-body" id="clubBody" role="tabpanel" aria-labelledby="club-tab-overview" tabindex="0"></div>
+      ${FBZMedia.resolveAsset(club.media,'club_logo')?.sourceProvider==='api-football'?'<p class="entity-media-credit">Эмблема клуба · <a href="https://www.api-football.com/terms" target="_blank" rel="noopener noreferrer">API-Football / API-Sports</a></p>':''}
     </article>`;
   }
 

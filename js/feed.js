@@ -45,9 +45,10 @@
     return`${match.home_score} : ${match.away_score}`;
   }
 
-  function clubButton(id,name,side){
-    if(!id)return`<span class="feed-team ${side}">${esc(name)}</span>`;
-    return`<button class="feed-team ${side}" type="button" ${FBZActions.attrs("feed.go-club",[Number(id)])}>${esc(name)}</button>`;
+  function clubButton(id,name,side,match){
+    const mark=`<span aria-hidden="true">${matchClubMark(match||{},side,'feed-club-mark')}</span><span>${esc(name)}</span>`;
+    if(!id)return`<span class="feed-team ${side}">${mark}</span>`;
+    return`<button class="feed-team ${side}" type="button" ${FBZActions.attrs("feed.go-club",[Number(id)])}>${mark}</button>`;
   }
 
   function playerHighlights(items){
@@ -69,9 +70,9 @@
       <div class="feed-match" style="${FBZDomain.matchPaletteStyle(item.match||{})}">
         <div class="feed-match-meta"><span>${esc(item.match?.league_name||'Футбол')}</span><time>${new Date(item.match?.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</time></div>
         <div class="feed-scoreline">
-          ${clubButton(item.match?.home_club_id,item.match?.home_team_name,'home')}
+          ${clubButton(item.match?.home_club_id,item.match?.home_team_name,'home',item.match)}
           <button class="feed-score" type="button" ${FBZActions.attrs("feed.go-md",[Number(item.match_id)])} aria-label="Открыть матч: ${esc(item.match?.home_team_name||'Хозяева')} против ${esc(item.match?.away_team_name||'Гости')}, счёт ${esc(score(item.match||{}))}"><span class="mc-score-num">${esc(item.match?.home_score??'—')}<span class="mc-score-separator">:</span>${esc(item.match?.away_score??'—')}</span></button>
-          ${clubButton(item.match?.away_club_id,item.match?.away_team_name,'away')}
+          ${clubButton(item.match?.away_club_id,item.match?.away_team_name,'away',item.match)}
         </div>
       </div>
       <div class="feed-verdict" data-tone="${rating.tone}" aria-label="Оценка матча ${rating.label}">
@@ -130,6 +131,8 @@
       if(error)throw error;
       if(version!==requestVersion)return;
       const pageItems=Array.isArray(data?.items)?data.items:[];
+      await window.FBZData.enrichMatchMedia(pageItems.map(item=>item.match).filter(Boolean));
+      if(version!==requestVersion)return;
       const items=pageItems.filter(item=>{
         const id=Number(item.rating_id);
         if(!Number.isFinite(id)||seenRatings.has(id))return false;

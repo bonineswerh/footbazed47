@@ -9,7 +9,7 @@ const authSource=readFileSync(require.resolve('../js/auth.js'),'utf8');
 
 function dataHarness(rpc){
   const window={sb:{rpc},FBZDomain:require('../js/domain.js')};
-  vm.runInNewContext(dataSource,{window,structuredClone});
+  vm.runInNewContext(dataSource,{window,structuredClone,setTimeout,clearTimeout});
   return window.FBZData;
 }
 
@@ -67,6 +67,17 @@ test('token refresh keeps a valid session cache and callers cannot mutate cached
   data.setSessionUser('owner');
   assert.equal((await data.getProfilePage('owner')).profile.id,'1');
   assert.equal(calls,1);
+});
+
+test('optional club marks load in one bounded batch and failures preserve the match data',async()=>{
+  const calls=[];
+  const data=dataHarness(async(name,args)=>{calls.push({name,args});return{data:[{id:1,name:'Home',media:{url:'logo'}}]};});
+  const matches=Array.from({length:48},(_,i)=>({id:i,home_club_id:1,away_club_id:i+2}));
+  await data.enrichMatchMedia(matches);
+  assert.equal(calls.length,1);assert.equal(calls[0].name,'get_club_marks');assert.equal(calls[0].args.p_ids.length,49);
+  assert.equal(matches[0].home_club.id,1);await data.enrichMatchMedia(matches);assert.equal(calls.length,1);
+  const failed=dataHarness(async()=>({error:{message:'unavailable'}}));
+  const plain=[{id:101,home_club_id:1,away_club_id:2}];await failed.enrichMatchMedia(plain);assert.equal(plain[0].id,101);
 });
 
 function authHarness(){
