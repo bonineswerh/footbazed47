@@ -6,9 +6,10 @@ const {join}=require('node:path');
 const {EventEmitter}=require('node:events');
 const vm=require('node:vm');
 
-function api({admin=true,authStatus=200,route=()=>({data:{}})}={}){
+function api({admin=true,authStatus=200,apiFootballKey='football-api-test-placeholder',route=()=>({data:{}})}={}){
   const calls=[];
   const https={request(url,options,callback){
+    url=String(url);
     const request=new EventEmitter();let body;
     request.setTimeout=()=>{};request.write=value=>{body=value;};request.destroy=error=>request.emit('error',error);
     request.end=()=>queueMicrotask(()=>{
@@ -21,7 +22,10 @@ function api({admin=true,authStatus=200,route=()=>({data:{}})}={}){
     });
     return request;
   }};
-  const context={module:{exports:{}},require:name=>{assert.equal(name,'https');return https;},process:{env:{SUPABASE_URL:'https://database.example.test',SUPABASE_SERVICE_ROLE_KEY:'server-only-test-key',FOOTBALL_DATA_API_KEY:'provider-test-key'}},Buffer,URL,URLSearchParams,console:{error(){}}};
+  const env={SUPABASE_URL:'https://database.example.test',SUPABASE_SERVICE_ROLE_KEY:'server-only-test-key',FOOTBALL_DATA_API_KEY:'provider-test-key',API_FOOTBALL_KEY:apiFootballKey};
+  const providerContext={module:{exports:{}},require:name=>{assert.equal(name,'node:https');return https;},process:{env},Buffer,URL,setTimeout,clearTimeout};
+  vm.runInNewContext(readFileSync(join(__dirname,'../server/football/api-football.js'),'utf8'),providerContext);
+  const context={module:{exports:{}},require:name=>{if(name==='../server/football/api-football')return providerContext.module.exports;assert.equal(name,'https');return https;},process:{env},Buffer,URL,URLSearchParams,console:{error(){}}};
   vm.runInNewContext(readFileSync(join(__dirname,'../api/admin.js'),'utf8'),context);
   return {calls,async send(body,{method='POST',authorization='Bearer user-test-token',raw=false}={}){
     const headers={};let result;
@@ -43,6 +47,30 @@ test('admin reads verify the bearer token and protected database role independen
   assert.equal(app.calls[0].headers.Authorization,'Bearer user-test-token');
   assert.match(app.calls[1].url,/select=id,is_admin/);
   assert.equal(app.calls[1].headers.Authorization,'Bearer server-only-test-key');
+});
+
+test('API-Football diagnostics require administrator identity and never import catalogue rows',async()=>{
+  const data={errors:[],results:1,paging:{current:1,total:1},response:{account:{email:'private@example.test'},subscription:{plan:'Free',active:true},requests:{current:3,limit_day:100}}};
+  for(const scenario of [{authorization:''},{authStatus:401},{admin:false}]){
+    const app=api(scenario);assert.equal((await app.send({action:'api_football_status'},scenario)).status,403);
+    assert.equal(app.calls.some(c=>c.url.includes('api-sports.io')),false);
+  }
+  const app=api({route:()=>({data})}),result=await app.send({action:'api_football_status'});
+  assert.equal(result.status,200);assert.equal(result.body.plan,'Free');assert.equal(result.body.dailyRemaining,97);
+  const provider=app.calls.find(c=>c.url.includes('api-sports.io'));
+  assert.equal(provider.headers['x-apisports-key'],'football-api-test-placeholder');
+  assert.equal(provider.url,'https://v3.football.api-sports.io/status');
+  assert.equal(app.calls.some(c=>c.method!=='GET'),false);
+  assert.doesNotMatch(JSON.stringify(result),/private@|football-api-test-placeholder|account|limit_day/);
+});
+
+test('API-Football configuration metadata makes no upstream call and invalid season cannot reach provider',async()=>{
+  const app=api(),overview=await app.send(undefined,{method:'GET'});
+  assert.equal(overview.body.apiFootballConfigured,true);assert.equal(app.calls.some(c=>c.url.includes('api-sports.io')),false);
+  for(const body of [{league:'OTHER',season:2024},{league:'PL',season:'2024'},{league:'PL',season:1800}])assert.equal((await app.send({action:'api_football_competition',...body})).status,400);
+  assert.equal(app.calls.some(c=>c.url.includes('api-sports.io')),false);
+  const missing=api({apiFootballKey:''});const result=await missing.send({action:'api_football_status'});
+  assert.equal(result.status,503);assert.equal(result.body.code,'provider_not_configured');
 });
 test('admin rejects unknown methods/actions and malformed or oversized parsed request bodies',async()=>{
   const app=api();assert.equal((await app.send({}, {method:'DELETE'})).status,405);

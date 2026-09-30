@@ -9,6 +9,7 @@
     matches: [],
     activities: []
   };
+  let apiFootballBusy=false,apiFootballConfigured=false;
   let catalogBatch=null,catalogReady=false;
   const STATUS_LABELS = {
     scheduled: 'Запланирован', live: 'LIVE', finished: 'Завершен',
@@ -42,11 +43,12 @@
         403:'У аккаунта нет доступа к админ-панели.',
         404:'Запись больше не найдена. Обновите список.',
         413:'Запрос слишком большой. Уменьшите объём операции.',
-        429:'Достигнут лимит football-data.org. Подождите минуту и продолжите.',
+        429:'Достигнут лимит поставщика данных. Повторите проверку позже.',
         502:'Не удалось получить корректные футбольные данные. Попробуйте позже.',
         503:'Сервис администрирования временно недоступен.'
       })[response.status] || 'Не удалось выполнить операцию. Попробуйте ещё раз.';
-      throw new Error(translated);
+      const providerMessages={provider_not_configured:'Секрет API-Football не настроен в этом окружении.',provider_access_denied:'API-Football отклонил доступ. Проверьте состояние ключа и подписки в кабинете поставщика.',provider_rate_limit:'Достигнут лимит API-Football. Проверьте квоту в кабинете поставщика.',provider_timeout:'API-Football не ответил вовремя. Повторите проверку позже.',provider_api_error:'API-Football не принял запрос. Проверьте доступность выбранного сезона на вашем тарифе.'};
+      throw new Error(providerMessages[payload.code] || translated);
     }
     return payload;
   }
@@ -155,6 +157,64 @@
     if (button) button.disabled = state.syncing || state.legacyAvatars === 0;
   }
 
+  function renderProviderPanel(){
+    const host=document.getElementById('admin-view-sync');
+    if(!host || document.getElementById('adminApiFootballPanel'))return;
+    host.insertAdjacentHTML('afterbegin',`<section class="admin-panel admin-provider-panel" id="adminApiFootballPanel" aria-labelledby="adminProviderTitle">
+      <div class="admin-panel-head"><h3 id="adminProviderTitle">API-Football</h3><span id="adminProviderConfigured" class="admin-api-state">Проверяем настройки</span></div>
+      <p class="admin-provider-copy">Новое подключение начинается с проверки тарифа и покрытия. Каждая проверка выполняет один запрос к поставщику.</p>
+      <div class="admin-provider-actions"><button type="button" class="btn btn-l" id="adminProviderCheck" data-fbz-click="admin.provider-status" disabled>Проверить подключение</button></div>
+      <div id="adminProviderAccount" class="admin-provider-result" role="status" aria-live="polite"></div>
+      <form id="adminProviderForm" class="admin-provider-form" data-fbz-submit="admin.provider-competition">
+        <label class="admin-edit-field"><span>Турнир</span><select name="league"><option value="PL">Premier League</option><option value="PD">La Liga</option><option value="BL1">Bundesliga</option><option value="SA">Serie A</option><option value="FL1">Ligue 1</option><option value="CL">Champions League</option></select></label>
+        <label class="admin-edit-field"><span>Год начала сезона</span><input name="season" type="number" min="1990" max="${new Date().getUTCFullYear()+1}" step="1" value="${new Date().getUTCFullYear()}" required></label>
+        <button type="submit" class="btn btn-g" id="adminProviderCoverageCheck" disabled>Проверить покрытие</button>
+      </form>
+      <div id="adminProviderCoverage" class="admin-provider-result" role="status" aria-live="polite"></div>
+      <p class="admin-provider-copy">Покрытие — сведения каталога API. Доступ к матчам и составам выбранного сезона проверяется при подготовке пилота. Импорт ещё не включён.</p>
+    </section>`);
+  }
+
+  function providerControls(){
+    for(const id of ['adminProviderCheck','adminProviderCoverageCheck']){
+      const button=document.getElementById(id);
+      if(button)button.disabled=apiFootballBusy || !apiFootballConfigured;
+    }
+    document.getElementById('adminApiFootballPanel')?.setAttribute('aria-busy',String(apiFootballBusy));
+  }
+
+  function setProviderConfigured(configured){
+    apiFootballConfigured=configured;
+    const badge=document.getElementById('adminProviderConfigured');
+    if(badge){badge.textContent=configured?'Секрет настроен':'Секрет не настроен';badge.className='admin-api-state '+(configured?'ok':'bad');}
+    providerControls();
+  }
+
+  function quotaText(quota){
+    const format=value=>value==null?'не сообщён':Number(value).toLocaleString('ru-RU');
+    return `Остаток за день: ${format(quota?.dailyRemaining)} · за минуту: ${format(quota?.minuteRemaining)}`;
+  }
+
+  async function inspectProvider(kind,event){
+    event?.preventDefault();
+    if(apiFootballBusy || !apiFootballConfigured)return;
+    const account=kind==='status',host=document.getElementById(account?'adminProviderAccount':'adminProviderCoverage');
+    const form=document.getElementById('adminProviderForm');
+    if(!account && !form.reportValidity())return;
+    apiFootballBusy=true;providerControls();host.textContent='Проверяем API-Football…';
+    try{
+      const data=await request(account?'api_football_status':'api_football_competition',account?{}:{league:form.elements.league.value,season:Number(form.elements.season.value)});
+      if(account){
+        host.innerHTML=`<strong>${data.active?'Подключение работает':'Подписка не активна'} · ${esc(data.plan)}</strong><span>Запросов за день: ${Number(data.dailyUsed).toLocaleString('ru-RU')} из ${Number(data.dailyLimit).toLocaleString('ru-RU')}. Осталось: ${Number(data.dailyRemaining).toLocaleString('ru-RU')}.</span><span>${esc(quotaText(data.quota))}</span>`;
+      }else if(!data.available){host.textContent='Для этого турнира и сезона в каталоге API нет данных. Попробуйте другой год.';}
+      else{
+        const flag=value=>value===true?'Есть':value===false?'Нет':'Неизвестно';
+        host.innerHTML=`<strong>${esc(data.name)} · ${Number(data.season)}/${String(Number(data.season)+1).slice(-2)}</strong><dl class="admin-provider-coverage">${[['Игроки','players'],['Составы на матч','lineups'],['События','events'],['Статистика игроков','playerStatistics']].map(([label,key])=>`<div><dt>${label}</dt><dd>${flag(data.coverage?.[key])}</dd></div>`).join('')}</dl><span>${esc(quotaText(data.quota))}</span>`;
+      }
+    }catch(error){host.textContent=error.message;}
+    finally{apiFootballBusy=false;providerControls();}
+  }
+
   async function refresh(force = false){
     if (state.loading || (!force && state.loaded)) return;
     state.loading = true;
@@ -166,10 +226,11 @@
       renderMetrics(data.counts);
       renderMatches();
       setApiState(Boolean(data.footballApiConfigured));
+      setProviderConfigured(Boolean(data.apiFootballConfigured));
       setLegacyAvatarState(data.counts?.legacyAvatars);
       const updated = document.getElementById('adminUpdatedAt');
       if (updated) updated.textContent = `Обновлено ${formatDate(data.checkedAt)}`;
-      setHealth('Все системы доступны', 'ok');
+      setHealth('База данных доступна', 'ok');
     } catch (error) {
       console.error('Admin overview error:', error);
       setHealth('Требуется внимание', 'bad');
@@ -183,6 +244,7 @@
 
   function mount(){
     if (!CU?.is_admin) return;
+    renderProviderPanel();
     const from = document.getElementById('adminDateFrom');
     const to = document.getElementById('adminDateTo');
     if (from && !from.value) from.value = new Date().toISOString().slice(0,10);
@@ -434,11 +496,13 @@
     }
   }
 
-  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog};
+  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider};
 })();
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "admin.provider-status":()=>FBZAdmin.inspectProvider('status'),
+  "admin.provider-competition":event=>FBZAdmin.inspectProvider('competition',event),
   "admin.admin-open-editor":(event,element,[id])=>FBZAdmin.openEditor(id),
   "admin.admin-refresh":()=>FBZAdmin.refresh(true)
 });

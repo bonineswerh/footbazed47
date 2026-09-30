@@ -16,7 +16,7 @@
 - Навигация — History API с индексируемыми путями `/club/<id>`, `/player/<id>`, `/match/<id>`, `/profile/<uuid>` и статическими разделами. Старые hash-маршруты остаются только для обратной совместимости; маршрутизацией управляют `go`, `syncRoute` и `applyRouteFromLocation` в `app.js`.
 - Данные, Auth и PostgreSQL — Supabase через `@supabase/supabase-js@2`.
 - Серверная часть — CommonJS Vercel Functions: `api/config.js` для публичной runtime-конфигурации, `api/admin.js` для привилегированных действий и `api/sitemap.js` для динамического sitemap.
-- Внешние футбольные данные — football-data.org, доступный только из `api/admin.js`.
+- Рабочий источник футбольного каталога — football-data.org через `api/admin.js`. API-Football подключён отдельно только для защищённой диагностики аккаунта/покрытия; импорт из него пока не включён.
 - Production — Vercel из GitHub-ветки `main`.
 - Тесты — встроенный `node:test`, pgTAP и Playwright Test с Axe. Требуется Node.js 22+.
 - Менеджер зависимостей — pnpm: изменяя зависимости, обновляй и коммить `pnpm-lock.yaml`; не добавляй параллельный `package-lock.json`.
@@ -44,6 +44,7 @@
 - `js/auth.js`, `js/ratings.js`, `js/matches.js`, `js/entities.js`, `js/feed.js`, `js/search.js`, `js/admin.js` — владельцы своих доменов. `js/rating-loader.js` сохраняет глобальную оболочку `openRate()` и лениво подключает `js/ratings.js` вместе с `css/ratings.css`, затем вызывает `FBZRatings.open()`. Реализация не заменяет оболочку: повтор после ошибки CSS обязан снова проходить через loader. Не возвращай эти модули в критический путь главной страницы.
 - `js/appearance.js`, `js/overlays.js`, `js/confirm.js`, `js/account.js` — общие UI-механизмы.
 - `api/admin.js` и `api/sitemap.js` — доверенные серверные границы с `service_role`; ключ никогда не передаётся клиенту.
+- `server/football/api-football.js` — CommonJS provider client без собственного HTTP endpoint: fixed origin/allowlist, bounded timeout/body/pagination/request budget, quota reserve и безопасные ошибки. `API_FOOTBALL_KEY` используется только на сервере. GET overview сообщает лишь configured; реальный API вызывается только отдельной admin-командой. Unit/E2E не расходуют настоящую квоту.
 - `supabase/migrations/` — полная последовательная история production-схемы, воспроизводимая на пустой локальной БД.
 - `types/database.ts` — генерируемый Supabase-контракт. Не редактируй вручную; CI сравнивает его с чистой БД после всех миграций.
 - `tests/domain.test.js` — unit-тесты чистой логики.
@@ -83,6 +84,7 @@
 - Ошибки 500 не должны раскрывать детали базы, ключи, SQL или upstream response. Подробности допустимы только в server log.
 - football-data.org вызывается только сервером. Не передавай `FOOTBALL_DATA_API_KEY` в клиент и не вызывай внешний API напрямую из браузера.
 - Синхронизация должна быть идемпотентной: внешние сущности связываются по `external_id`, игроки — по существующему уникальному контракту, upsert не должен создавать дубликаты.
+- Existing `external_id` относится к football-data.org; не записывай туда API-Football IDs. До нового импорта нужны FK provider mappings, collision review и совместимый historical roster contract. Legacy prepared-catalog apply очищает данные и не подходит для перехода провайдера. План: `docs/api-football-transition-2026-09-30.md`.
 
 ## 7. Supabase и Data API
 

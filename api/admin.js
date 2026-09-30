@@ -3,6 +3,7 @@
 // and FOOTBALL_DATA_API_KEY (or FOOTBALL_API_KEY) for football-data.org sync.
 
 const https = require('https');
+const {createApiFootballClient} = require('../server/football/api-football');
 
 const LEAGUES = Object.freeze({
   PL: 'Premier League',
@@ -156,6 +157,7 @@ async function getOverview() {
     counts: { matches, players, ratings, users, predictions, upcoming, legacyAvatars },
     recentMatches: parseJson(recentResponse.raw, []),
     footballApiConfigured: Boolean(process.env.FOOTBALL_DATA_API_KEY || process.env.FOOTBALL_API_KEY),
+    apiFootballConfigured: Boolean(process.env.API_FOOTBALL_KEY),
     checkedAt: new Date().toISOString()
   };
 }
@@ -546,6 +548,12 @@ module.exports = async function handler(req, res) {
 
     const body = await readBody(req);
     const action = String(body.action || '');
+    if (action === 'api_football_status') {
+      return sendJson(res,200,await createApiFootballClient({requestBudget:1}).accountStatus());
+    }
+    if (action === 'api_football_competition') {
+      return sendJson(res,200,await createApiFootballClient({requestBudget:1}).competitionStatus(body.league,body.season));
+    }
     if (action === 'prepare_catalog') {
       const result=await prepareCatalog(body);
       await recordAdminAction(administrator.id,action,{targetType:'league',targetId:result.league,metadata:{batch:result.batch,matches:result.matches,players:result.players}});
@@ -592,6 +600,6 @@ module.exports = async function handler(req, res) {
     const safeStatus = [400, 403, 404, 413, 429, 502, 503].includes(status) ? status : 500;
     const messages = {400:'Invalid administrative request',403:'Administrator access required',404:'Record not found',413:'Request body is too large',429:'Upstream rate limit reached',502:'Football data service is unavailable',503:'Administrative service is not configured',500:'Administrative service is unavailable'};
     const message = messages[safeStatus];
-    return sendJson(res, safeStatus, { error: message });
+    return sendJson(res, safeStatus, { error: message, ...(error.name==='FootballProviderError'?{code:error.code}: {}) });
   }
 };
