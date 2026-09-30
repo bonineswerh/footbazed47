@@ -252,37 +252,6 @@ test('дружба меняется только после успешного �
   await expect(page.locator('.friend-card').filter({hasText:'natasha'})).toBeVisible();
 });
 
-test('личный чат друга сохраняет автора, время и отметку редактирования',async({page})=>{
-  await page.goto('/?__e2e=1#friends');
-  await page.getByRole('button',{name:/Входящие/}).click();
-  const incoming=page.locator('.friend-card').filter({hasText:'natasha'});
-  await incoming.getByRole('button',{name:/Принять/}).click();
-  await page.getByRole('button',{name:'Мои друзья'}).click();
-
-  const friend=page.locator('.friend-card').filter({hasText:'natasha'});
-  await friend.getByRole('button',{name:/Открыть чат/}).click();
-  await expect(page.locator('#directChatOv')).toHaveClass(/on/u);
-  await expect(page.locator('#directChatTitle')).toHaveText('Natasha');
-
-  await page.evaluate(()=>forwardRating(501));
-  await page.locator('.dm-picker-item').filter({hasText:'natasha'}).click();
-  const sharedRating=page.locator('.dm-rating-card');
-  await expect(sharedRating).toContainText('10/10');
-  await expect(sharedRating.locator('.dm-rating-score')).toHaveAttribute('data-tone','elite');
-
-  await page.locator('#directChatInput').fill('Проверяем личный чат');
-  await page.locator('#directChatSend').click();
-  const message=page.locator('.dm-message').last();
-  await expect(message).toContainText('@bazed');
-  await expect(message.locator('time')).not.toBeEmpty();
-
-  await message.getByRole('button',{name:'Изменить'}).click();
-  await message.getByRole('textbox',{name:'Изменить сообщение'}).fill('Исправленное сообщение');
-  await message.getByRole('button',{name:'Сохранить',exact:true}).click();
-  await expect(page.locator('.dm-message').last()).toContainText('Исправленное сообщение');
-  await expect(page.locator('.dm-message').last()).toContainText('ред.');
-});
-
 test('матчи фильтруются серверным RPC без загрузки полного календаря',async({page})=>{
   await page.goto('/?__e2e=1#matches');
   await expect(page.locator('.match-results-summary')).toContainText('Показано 2 из 2');

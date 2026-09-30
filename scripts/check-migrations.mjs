@@ -117,3 +117,9 @@ for(const contract of [
 assert(!/insert\s+into\s+public\.media_assets[\s\S]*https?:\/\//u.test(mediaSql),'Migration must not import unverified production artwork');
 
 console.log(`Migration checks passed: ${files.length} files`);
+
+const retirement=files.find(file=>file.endsWith('_retire_messaging_access.sql'));
+assert(retirement,'Missing messaging retirement migration');
+const retiredSql=(await readFile(resolve(migrationsDir,retirement),'utf8')).toLowerCase();
+for(const contract of ['revoke all on table public.chat_messages','public.get_match_chat_messages','public.send_match_chat_message','public.edit_match_chat_message','public.get_or_create_direct_conversation','public.get_direct_messages','public.send_direct_message','public.edit_direct_message','as restrictive','retired chat media is inaccessible','alter publication supabase_realtime drop table public.direct_messages'])assert(retiredSql.includes(contract),`Missing retirement control: ${contract}`);
+assert(!/^\s*(?:delete\s+from|truncate|drop\s+table)\b/m.test(retiredSql),'Retirement must retain the message archive');

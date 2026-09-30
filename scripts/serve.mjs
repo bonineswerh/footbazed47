@@ -41,10 +41,11 @@ const server=createServer((request,response)=>{
     response.end(request.method==='HEAD'?'':body);
     return;
   }
+  if(/^\/match\/[1-9]\d*\/chat\/?$/.test(pathname)){response.writeHead(410,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'}).end('<h1>Чаты закрыты</h1><a href="/matches">К матчам и рецензиям</a>');return;}
   const relative=pathname==='/'?'index.html':pathname.replace(/^\/+/, '');
   let file=resolve(root,relative);
   if(file!==root&&!file.startsWith(root+sep)){response.writeHead(403).end('Forbidden');return;}
-  if((!existsSync(file)||!statSync(file).isFile())&&/^\/(?:club|player|profile|competition|league)\/[^/]+\/?$|^\/match\/[^/]+(?:\/chat)?\/?$|^\/(?:matches|feed|leaderboard|discover|friends|admin)\/?$/u.test(pathname))file=resolve(root,'index.html');
+  if((!existsSync(file)||!statSync(file).isFile())&&/^\/(?:club|player|profile|competition|league)\/[^/]+\/?$|^\/match\/[^/]+\/?$|^\/(?:matches|feed|leaderboard|discover|friends|admin)\/?$/u.test(pathname))file=resolve(root,'index.html');
   if(!existsSync(file)||!statSync(file).isFile()){response.writeHead(404).end('Not found');return;}
   response.writeHead(200,{
     'Content-Type':types[extname(file).toLocaleLowerCase('en-US')]||'application/octet-stream',

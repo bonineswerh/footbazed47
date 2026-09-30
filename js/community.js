@@ -28,7 +28,7 @@
     const action=(kind,label,icon='',extra='')=>`<button class="fbtn ${kind}" type="button" data-person="${esc(user.id)}" ${FBZActions.attrs("community.act",[kind,id])} ${extra}>${icon?ico(icon,16):''}${esc(label)}</button>`;
     let actions='';
     if(user.id===CU?.id)actions='<span class="community-self">Это вы</span>';
-    else if(rel?.status==='accepted')actions=`<button class="fbtn chat" type="button" ${FBZActions.attrs("community.open-friend-chat",[id])} aria-label="Открыть чат с ${esc(name)}" title="Открыть чат">${ico('chat',18)}</button>${action('remove','','close','aria-label="Удалить из друзей" title="Удалить из друзей"')}`;
+    else if(rel?.status==='accepted')actions=`${action('remove','','close','aria-label="Удалить из друзей" title="Удалить из друзей"')}`;
     else if(rel?.status==='pending'&&rel.friend_id===CU?.id)actions=action('accept','Принять','check')+action('reject','','close','aria-label="Отклонить заявку" title="Отклонить заявку"');
     else if(rel?.status==='pending')actions=action('cancel','Отменить');
     else actions=action('add','Добавить','plus');
@@ -121,7 +121,7 @@
     if(!CU){openAuth();return;}
     if(pending.has(id))return;
     if(kind==='remove'){
-      FBZConfirm.open({title:'Удалить из друзей?',message:'Личный чат и его вложения станут недоступны. Вы сможете отправить новую заявку позже.',confirmText:'Удалить',onConfirm:()=>mutate(kind,id,button)});
+      FBZConfirm.open({title:'Удалить из друзей?',message:'Оценки этого пользователя больше не будут входить в ленту друзей. Вы сможете отправить новую заявку позже.',confirmText:'Удалить',onConfirm:()=>mutate(kind,id,button)});
       return;
     }
     await mutate(kind,id,button);
@@ -159,7 +159,6 @@
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
   "community.act":(event,element,[kind,userId])=>FBZCommunity.act(kind,userId,element),
-  "community.open-friend-chat":(event,element,[userId])=>openFriendChat(userId),
   "community.open-profile":(event,element,[id])=>{if(event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;event.preventDefault();return go('profile',{uid:id});},
   "community.focus-friend-search":()=>document.getElementById('friendSearch').focus(),
   "community.load-more":(event,element)=>FBZCommunity.loadMore(element),

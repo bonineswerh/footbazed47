@@ -32,6 +32,8 @@ for(const file of ['index.html','admin.html',...frontendFiles]){
 }
 if(html.indexOf('src="js/actions.js')>html.indexOf('src="js/home.js'))errors.push('Action dispatcher must load before its consumers');
 const feedFrontend=fs.readFileSync(path.join(root,'js','feed.js'),'utf8');
+if(/FBZMessages|ensureMessagesModule|directChatOv|page-chat|getUserMedia|MediaRecorder|rpc\(['"](?:get_direct_messages|send_direct_message|send_match_chat_message)/u.test(frontend+'\n'+html))errors.push('Messaging is retired; client surfaces must not return');
+for(const retired of ['js/messages.js','css/messages.css'])if(fs.existsSync(path.join(root,retired)))errors.push(`Retired asset must not be published: ${retired}`);
 if(/SUPABASE_SERVICE_ROLE_KEY|sb_secret_/i.test(frontend))errors.push('Service-role material must not appear in frontend files');
 for(const match of frontend.matchAll(/eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g)){
   try{
@@ -48,7 +50,6 @@ for(const feature of [
   {name:'admin',script:'js/admin.js',style:'admin.css'},
   {name:'entities',script:'js/entities.js',style:'css/entities.css'},
   {name:'feed',script:'js/feed.js',style:'css/feed.css'},
-  {name:'messages',script:'js/messages.js',style:'css/messages.css'},
   {name:'search',script:'js/search.js'}
 ]){
   if(html.includes(`src="${feature.script}?`)||(feature.style&&html.includes(`href="${feature.style}?`)))errors.push(`${feature.name} assets must not load eagerly`);
@@ -125,8 +126,8 @@ const securityHeaders=(vercelConfig.headers||[]).flatMap(item=>item.headers||[])
 const csp=securityHeaders.find(item=>item.key==='Content-Security-Policy')?.value||'';
 if(!/(?:^|;)\s*script-src 'self'\s*(?:;|$)/u.test(csp)||!/(?:^|;)\s*script-src-attr 'none'\s*(?:;|$)/u.test(csp))errors.push('CSP must reject inline scripts, event handlers and eval');
 const permissions=securityHeaders.find(item=>item.key==='Permissions-Policy')?.value||'';
-if(!/media-src[^;]*https:\/\/\*\.supabase\.co/u.test(csp))errors.push('CSP must allow private Supabase chat media');
-if(!permissions.includes('microphone=(self)'))errors.push('Voice messages require a same-origin microphone policy');
+if(!csp.includes("media-src 'none'"))errors.push('Retired chat media must not be allowed by CSP');
+if(!permissions.includes('microphone=()'))errors.push('Microphone access must be disabled');
 const rewriteSources=new Set((vercelConfig.rewrites||[]).map(item=>item.source));
 for(const route of ['/club/:id','/player/:id','/competition/:id','/profile/:id','/match/:id']){
   if(!rewriteSources.has(route))errors.push(`Missing SPA rewrite for ${route}`);

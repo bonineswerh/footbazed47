@@ -139,7 +139,7 @@ async function loadProfile(uid){
     let friendBtn='';
     if(!isMe&&CU){
       const fr=payload.friendship;
-      if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.7;cursor:default">${ico('users',13)} В друзьях</button><button class="btn btn-l btn-sm" type="button" ${FBZActions.attrs("profile.open-friend-chat",[uid])}>${ico('chat',13)} Чат</button>`;
+      if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.7;cursor:default">${ico('users',13)} В друзьях</button>`;
       else if(fr?.status==='pending'&&fr.direction==='outgoing')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.6;cursor:default">⏳ Заявка отправлена</button>`;
       else if(fr?.status==='pending')friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" ${FBZActions.attrs("profile.accept-friend-from-profile",[uid])}>${ico('users',13)} Принять заявку</button>`;
       else friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" ${FBZActions.attrs("profile.add-friend-from-profile",[uid])}>${ico('users',13)} Добавить в друзья</button>`;
@@ -221,7 +221,6 @@ FBZActions.register({
   "profile.diary-next":()=>FBZProfile.diaryPage(1),
   "profile.go-md":(event,element,[id])=>go('md',{mid:id}),
   "profile.retry-diary":()=>FBZProfile.retryDiary(),
-  "profile.open-friend-chat":(event,element,[userId])=>openFriendChat(userId),
   "profile.accept-friend-from-profile":(event,element,[userId])=>acceptFriendFromProfile(userId),
   "profile.add-friend-from-profile":(event,element,[userId])=>addFriendFromProfile(userId),
   "profile.edit-profile":()=>editProfile(),

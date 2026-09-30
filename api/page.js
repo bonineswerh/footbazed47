@@ -37,7 +37,8 @@ function renderDocument(html,metadata){
 
 async function resolvePage(route,config,request=fetch){
   if(route.kind==='missing')return {status:404,metadata:seo.apply({title:'Страница не найдена — FOOTBAZED',path:route.path,index:false})};
-  if(route.kind==='profile'||route.chat)return {status:200,metadata:seo.apply({title:route.chat?'Обсуждение матча — FOOTBAZED':'Профиль — FOOTBAZED',path:route.path,index:false})};
+  if(route.chat)return {status:410,metadata:seo.apply({title:'Чаты закрыты — FOOTBAZED',description:'Обсуждайте футбол в комментариях к рецензиям. Перейдите к матчу, чтобы посмотреть оценки болельщиков.',path:route.path,index:false})};
+  if(route.kind==='profile')return {status:200,metadata:seo.apply({title:'Профиль — FOOTBAZED',path:route.path,index:false})};
   if(!route.id)return {status:200,metadata:seo.setStatic(route.kind)};
   if(config.error)throw new Error('public_config_unavailable');
   const [table,select]=entities[route.kind];

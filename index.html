@@ -24,9 +24,9 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=58">
+  <link rel="stylesheet" href="styles.css?v=59">
   <link rel="stylesheet" href="css/match-editorial.css?v=2">
-  <link rel="stylesheet" href="css/typography.css?v=3">
+  <link rel="stylesheet" href="css/typography.css?v=4">
   <link rel="stylesheet" href="css/club-palettes.css?v=3">
 </head>
 <body>
@@ -263,22 +263,6 @@
     <div class="entity-page">
       <button class="entity-back" type="button" data-fbz-click="shell.go-back" aria-label="Назад">← <span>Назад</span></button>
       <div id="competitionC"></div>
-    </div>
-  </div>
-
-  <!-- CHAT -->
-  <div class="page" id="page-chat">
-    <div class="match-chat">
-      <div class="match-chat-header">
-        <button class="btn btn-g btn-sm" data-fbz-click="shell.go-back">← Назад</button>
-        <h2 style="font-size:18px;" id="chatTitle">Чат матча</h2>
-      </div>
-      <div class="match-chat-body" id="chatBody" aria-live="polite"></div>
-      <div class="match-chat-composer">
-        <label class="sr-only" for="chatI">Сообщение</label>
-        <input class="input" placeholder="Напиши сообщение..." id="chatI" maxlength="1000" autocomplete="off">
-        <button class="btn btn-l" id="chatS" aria-label="Отправить сообщение" title="Отправить"><span data-i="send"></span></button>
-      </div>
     </div>
   </div>
 
@@ -702,30 +686,6 @@
     </form>
   </div>
 
-  <!-- DIRECT MESSAGES -->
-  <div class="overlay" id="directChatOv" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="directChatTitle" data-close-backdrop="false" tabindex="-1">
-    <section class="dm-shell">
-      <header class="dm-head">
-        <button class="dm-back" id="directChatBack" type="button" data-fbz-click="shell.messages-show-picker" aria-label="Назад к друзьям" hidden>‹</button>
-        <button class="dm-person" id="directChatPerson" type="button" disabled>
-          <span class="dm-avatar" id="directChatAvatar">F</span>
-          <span><b id="directChatTitle">Сообщения</b><small id="directChatSubtitle">Личный чат</small></span>
-        </button>
-        <button class="icon-btn" type="button" data-fbz-click="shell.messages-close" aria-label="Закрыть">×</button>
-      </header>
-      <div class="dm-body" id="directChatBody" aria-live="polite"></div>
-      <div class="dm-upload-state" id="directChatUploadState" role="status" hidden></div>
-      <form class="dm-composer" id="directChatComposer" data-fbz-submit="shell.messages-send" hidden>
-        <input id="directChatMedia" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" data-fbz-change="shell.messages-attach" hidden>
-        <button class="dm-tool" type="button" data-fbz-click="shell.attach-media" aria-label="Прикрепить фото или видео" title="Фото или видео"><span data-i="photo"></span></button>
-        <label class="sr-only" for="directChatInput">Сообщение</label>
-        <textarea id="directChatInput" rows="1" maxlength="2000" placeholder="Сообщение" data-fbz-keydown="shell.messages-composer-keydown"></textarea>
-        <button class="dm-tool" id="directChatVoice" type="button" data-fbz-click="shell.messages-toggle-voice" aria-label="Записать голосовое сообщение" title="Голосовое сообщение"><span class="dm-mic">●</span></button>
-        <button class="dm-send" id="directChatSend" type="submit" aria-label="Отправить"><span data-i="send"></span></button>
-      </form>
-    </section>
-  </div>
-
   <!-- MOBILE NAV -->
   <nav class="mob-nav" aria-label="Мобильная навигация">
     <button type="button" class="mob-nav-item active" aria-current="page" id="mn-home" data-fbz-click="shell.go-home">
@@ -764,13 +724,13 @@
   <script src="js/overlays.js?v=42"></script>
   <script src="js/confirm.js?v=42"></script>
   <script src="js/actions.js?v=1"></script>
-  <script src="js/shell-actions.js?v=1"></script>
+  <script src="js/shell-actions.js?v=2"></script>
   <script src="js/home.js?v=8"></script>
   <script src="js/feature-loader.js?v=1"></script>
-  <script src="app.js?v=63"></script>
-  <script src="js/auth.js?v=45"></script>
+  <script src="app.js?v=64"></script>
+  <script src="js/auth.js?v=46"></script>
   <script src="js/rating-loader.js?v=7"></script>
-  <script src="js/matches.js?v=59"></script>
+  <script src="js/matches.js?v=60"></script>
   <script src="js/account.js?v=41"></script>
 </body>
 </html>

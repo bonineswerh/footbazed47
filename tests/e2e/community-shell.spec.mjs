@@ -189,36 +189,3 @@ test('счётчик уведомлений учитывает записи вн
   await expect(page.locator('#notifBadge')).toHaveText('25');
   await expect(page.locator('.notif-item')).toHaveCount(2);
 });
-
-test('обсуждение матча повторяет загрузку, блокирует двойную отправку и редактирует текст',async({page})=>{
-  await page.goto('/match/101?__e2e=1');
-  await expect(page.locator('.md-hero')).toBeVisible();
-  await page.evaluate(()=>{
-    const original=sb.rpc.bind(sb);let fail=true;
-    const messages=[{id:990,user_id:CU.id,message:'Исходное сообщение',created_at:'2026-09-24T12:00:00Z',user:{username:'bazed'},can_edit:true}];
-    window.chatWrites=0;
-    sb.rpc=(name,args)=>{
-      if(name==='get_match_chat_messages'){if(fail){fail=false;return Promise.resolve({error:{message:'offline'}});}return Promise.resolve({data:messages,error:null});}
-      if(name==='send_match_chat_message'){window.chatWrites++;return new Promise(resolve=>{window.finishChat=()=>{messages.push({...messages[0],id:991,message:args.p_message});resolve({error:null});};});}
-      if(name==='edit_match_chat_message'){const message=messages.find(row=>row.id===args.p_message_id);message.message=args.p_message;message.edited_at=new Date().toISOString();return Promise.resolve({error:null});}
-      return original(name,args);
-    };
-    go('chat',{mid:101,title:'Real Madrid — Manchester City'});
-  });
-  await expect(page.locator('#chatBody')).toContainText('Не удалось загрузить');
-  await page.getByRole('button',{name:'Повторить',exact:true}).click();
-  await expect(page.locator('.cmsg')).toHaveCount(1);
-  await page.locator('#chatI').fill('Новый комментарий');
-  await page.locator('#chatS').click();
-  await page.locator('#chatI').press('Enter');
-  expect(await page.evaluate(()=>window.chatWrites)).toBe(1);
-  await page.locator('#chatI').fill('Следующий черновик');
-  await page.evaluate(()=>window.finishChat());
-  await expect(page.locator('.cmsg')).toHaveCount(2);
-  await expect(page.locator('#chatI')).toHaveValue('Следующий черновик');
-  await page.locator('.cmsg').last().getByRole('button',{name:'Изменить'}).click();
-  await page.getByRole('textbox',{name:'Изменить сообщение'}).fill('Исправленный комментарий');
-  await page.getByRole('button',{name:'Сохранить',exact:true}).click();
-  await expect(page.locator('.cmsg').last()).toContainText('Исправленный комментарий');
-  await expect(page.locator('.cmsg').last()).toContainText('ред.');
-});

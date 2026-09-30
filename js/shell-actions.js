@@ -81,11 +81,4 @@ FBZActions.register({
   "shell.save-appearance-settings":()=>saveAppearanceSettings(),
   "shell.admin-save-match":(event)=>FBZAdmin.saveMatch(event),
   "shell.admin-close-editor":()=>FBZAdmin.closeEditor(),
-  "shell.messages-show-picker":()=>FBZMessages?.showPicker(),
-  "shell.messages-close":()=>FBZMessages?.close(),
-  "shell.messages-send":(event)=>FBZMessages?.send(event),
-  "shell.messages-attach":(event,element)=>FBZMessages?.attach(element.files?.[0]),
-  "shell.attach-media":()=>document.getElementById('directChatMedia').click(),
-  "shell.messages-composer-keydown":(event)=>FBZMessages?.composerKeydown(event),
-  "shell.messages-toggle-voice":()=>FBZMessages?.toggleVoice()
 });

@@ -7,6 +7,13 @@ const seo=require('../js/seo.js');
 const config={supabaseUrl:'https://public.example.test',supabaseKey:'sb_publishable_test'};
 const html=readFileSync(require.resolve('../index.html'),'utf8');
 
+test('retired match chat returns 410 without accessing user data',async()=>{
+  const result=await resolvePage(routeFromPath('/match/101/chat'),config,()=>{throw Error('No lookup allowed');});
+  assert.equal(result.status,410);
+  assert.equal(result.metadata.index,false);
+  assert.match(result.metadata.title,/Чаты закрыты/);
+});
+
 test('server and client share entity metadata without inventing photos or logos',async()=>{
   for(const [kind,value] of Object.entries({club:{id:24,name:'Real Madrid CF'},player:{id:5292,name:'Jude Bellingham'},competition:{id:7,name:'Champions League'},match:{id:101,home_team_name:'Real Madrid',away_team_name:'Man City',match_date:'2026-09-29T18:00:00Z'}})){
     let request;

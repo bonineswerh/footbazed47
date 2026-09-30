@@ -80,7 +80,6 @@ function authHarness(){
     CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}},
     window:{
       FBZData:{setSessionUser:id=>calls.push(['data',id])},
-      FBZMessages:{resetSession:()=>calls.push(['messages'])},
       FBZFeed:{resetSession:()=>calls.push(['feed'])},
       FBZSearch:{resetSession:()=>calls.push(['search'])},
       clearAppCache:()=>calls.push(['cache']),
@@ -100,7 +99,7 @@ test('login clears the previous identity before loading and runs domain reset ho
   const harness=authHarness();
   const pending=harness.context.onLogin({id:'new',email:'local@example.test'});
   assert.equal(harness.context.CU,null);
-  assert.deepEqual(harness.calls.map(call=>call[0]),['data','messages','feed','search','cache','event']);
+  assert.deepEqual(harness.calls.map(call=>call[0]),['data','feed','search','cache','event']);
   harness.complete({data:{id:'new',username:'new'}});
   assert.equal(await pending,true);
   assert.equal(harness.context.CU.id,'new');

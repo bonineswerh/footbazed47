@@ -89,25 +89,12 @@ select is(
 );
 
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
-select ok(
-  (public.get_or_create_direct_conversation('10000000-0000-0000-0000-000000000002')->>'id')::bigint > 0,
-  'accepted friends create one private conversation through RPC'
-);
-select ok(
-  (public.send_direct_message((select id from public.direct_conversations limit 1), 'First private message', null, null, null)->>'id')::bigint > 0,
-  'conversation member sends a private text message'
-);
-select ok(
-  public.edit_direct_message((select id from public.direct_messages order by id desc limit 1), 'Edited private message')->>'edited_at' is not null,
-  'message author edits a private message with an edited timestamp'
-);
+select throws_ok($$select public.get_or_create_direct_conversation('10000000-0000-0000-0000-000000000002')$$, '42501', 'permission denied for function get_or_create_direct_conversation', 'get_or_create_direct_conversation is retired even for friends');
+select throws_ok($$select public.send_direct_message(980001, 'Retired message')$$, '42501', 'permission denied for function send_direct_message', 'send_direct_message is retired even for friends');
+select throws_ok($$select public.edit_direct_message(981001, 'Retired edit')$$, '42501', 'permission denied for function edit_direct_message', 'edit_direct_message is retired even for friends');
 
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
-select is(
-  public.get_direct_messages((select id from public.direct_conversations limit 1), 20, null)#>>'{items,0,body}',
-  'Edited private message',
-  'the other conversation member reads the edited message'
-);
+select throws_ok($$select public.get_direct_messages(980001,20,null)$$, '42501', 'permission denied for function get_direct_messages', 'get_direct_messages is retired even for friends');
 select is(
   (public.get_profile_comparison('10000000-0000-0000-0000-000000000001')->>'common_matches')::integer,
   1,
@@ -117,14 +104,8 @@ select ok(
   not has_table_privilege('authenticated', 'public.direct_messages', 'INSERT'),
   'direct messages cannot bypass the domain RPC'
 );
-select ok(
-  (public.send_match_chat_message(920001, 'Match chat message')->>'id')::integer > 0,
-  'authenticated user sends a match discussion message through RPC'
-);
-select ok(
-  public.edit_match_chat_message((public.get_match_chat_messages(920001, 80)#>>'{0,id}')::integer, 'Edited match chat')->>'edited_at' is not null,
-  'match discussion author can edit an own message'
-);
+select throws_ok($$select public.send_match_chat_message(920001,'Retired message')$$, '42501', 'permission denied for function send_match_chat_message', 'send_match_chat_message is retired even for friends');
+select throws_ok($$select public.edit_match_chat_message(977001,'Retired edit')$$, '42501', 'permission denied for function edit_match_chat_message', 'edit_match_chat_message is retired even for friends');
 
 reset role;
 select ok(

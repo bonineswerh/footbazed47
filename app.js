@@ -45,16 +45,16 @@ const DERBY=[{h:'Зенит',a:'Спартак'},{h:'Реал',a:'Барсело
 const AVCOLORS=['av-0','av-1','av-2','av-3','av-4','av-5','av-6','av-7'];
 let CU=null,CP='home';
 let MF='all',ML='all',FT='list';
-let chatMID=null,mdID=null,viewUID=null;
+let mdID=null,viewUID=null;
 let routeApplying=false;
-let routeVersion=0,profileVersion=0,leaderboardVersion=0,chatVersion=0,chatSending=false;
+let routeVersion=0,profileVersion=0,leaderboardVersion=0;
 window.addEventListener('fbz:session-change',()=>{
-  profileVersion++;leaderboardVersion++;chatVersion++;routeVersion++;
+  profileVersion++;leaderboardVersion++;routeVersion++;
   window.FBZCommunity?.resetSession();
   window.FBZNotifications?.resetSession();
   window.FBZProfileEditor?.resetSession();
   document.querySelectorAll('.overlay.on').forEach(overlay=>window.FBZOverlay?.close(overlay.id,false));
-  ['profileW','chatBody','mdC','clubC','playerC','competitionC'].forEach(id=>document.getElementById(id)?.replaceChildren());
+  ['profileW','mdC','clubC','playerC','competitionC'].forEach(id=>document.getElementById(id)?.replaceChildren());
   if(CP!=='home')go('home');
 });
 function ensureFeatureModule(options){return window.FBZFeatures.load(options);}
@@ -66,10 +66,7 @@ function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=56',script:'js/entities.js?v=57',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=58',script:'js/feed.js?v=57',ready:()=>window.FBZFeed});
-}
-function ensureMessagesModule(){
-  return ensureFeatureModule({key:'messages',styleId:'messageStyles',style:'css/messages.css?v=6',script:'js/messages.js?v=6',ready:()=>window.FBZMessages});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=58',script:'js/feed.js?v=58',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
   return ensureFeatureModule({key:'search',script:'js/search.js?v=57',ready:()=>window.FBZSearch});
@@ -81,15 +78,6 @@ function openGlobalSearch(){
     search.init();
     search.open();
   }).catch(()=>{});
-}
-
-function openFriendChat(friendId){
-  if(!CU){openAuth();return;}
-  ensureMessagesModule().then(messages=>messages.openFriend(friendId)).catch(()=>{});
-}
-function forwardRating(ratingId){
-  if(!CU){openAuth();return;}
-  ensureMessagesModule().then(messages=>messages.pickFriend(Number(ratingId))).catch(()=>{});
 }
 
 function scheduleHomeFeed(){
@@ -157,10 +145,6 @@ async function init(){
   });
   scheduleHomeFeed();
   setupReveal();injectIcons();
-  const chatS=document.getElementById('chatS');
-  const chatI=document.getElementById('chatI');
-  if(chatS)chatS.onclick=sendChat;
-  if(chatI)chatI.onkeypress=e=>{if(e.key==='Enter')sendChat();};
   window.addEventListener('hashchange',applyRouteFromLocation);
   window.addEventListener('popstate',applyRouteFromLocation);
   const inv=new URLSearchParams(window.location.search).get('invite');
@@ -235,7 +219,6 @@ function go(p,d){
   else if(p==='profile'){viewUID=d?.uid||CU?.id;loadProfile(viewUID);}
   else if(p==='md'){mdID=d?.mid;loadMD(d?.mid);}
   else if(['club','player','competition'].includes(p))loadEntityRoute(p,d?.id);
-  else if(p==='chat'){chatMID=d?.mid;document.getElementById('chatTitle').textContent=d?.title||'Чат';loadChat(d?.mid);}
   else if(p==='friends')loadFriendsTab(FT);
   else if(p==='admin')ensureAdminModule().then(admin=>{if(CP==='admin')admin.mount();}).catch(()=>{});
 }
@@ -253,7 +236,6 @@ function loadEntityRoute(page,id){
 }
 function goBack(){
   if(Number(history.state?.fbzIndex)>0){history.back();return;}
-  if(CP==='chat'&&chatMID){go('md',{mid:chatMID});return;}
   go(['md','club','player','competition'].includes(CP)?'matches':'home');
 }
 
@@ -264,7 +246,6 @@ function syncRoute(p,d){
   else if(p==='club'&&d?.id)path=`/club/${encodeURIComponent(d.id)}`;
   else if(p==='player'&&d?.id)path=`/player/${encodeURIComponent(d.id)}`;
   else if(p==='competition'&&d?.id)path=`/competition/${encodeURIComponent(d.id)}`;
-  else if(p==='chat'&&d?.mid)path=`/match/${encodeURIComponent(d.mid)}/chat`;
   else if(p==='leaderboard')path='/discover';
   else if(['matches','feed','friends','admin'].includes(p))path=`/${p}`;
   const next=`${path}${window.location.search}`;
@@ -289,7 +270,7 @@ function applyRouteFromLocation(){
   routeApplying=true;
   try{
     if(type==='profile'&&value)go('profile',{uid:value});
-    else if(type==='match'&&value&&section==='chat')go('chat',{mid:value,title:'Чат матча'});
+    else if(type==='match'&&/^[1-9]\d*$/.test(value)&&section==='chat'){history.replaceState(history.state,'',`/match/${value}${location.search}`);go('md',{mid:value});}
     else if(type==='match'&&value)go('md',{mid:value});
     else if(type==='club'&&value)go('club',{id:Number(value)});
     else if(type==='player'&&value)go('player',{id:Number(value)});
@@ -363,7 +344,7 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=4',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=5',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 function ensureExploreModule(){return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=3',script:'js/explore.js?v=2',ready:()=>window.FBZExplore});}
 async function loadProfile(uid){
@@ -395,7 +376,7 @@ function editProfile(){
 
 // ─── COMMUNITY LOADER ───
 function ensureCommunityModule(){
-  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=2',script:'js/community.js?v=2',ready:()=>window.FBZCommunity});
+  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=2',script:'js/community.js?v=3',ready:()=>window.FBZCommunity});
 }
 function loadFriendsTab(tab){
   FT=tab;
@@ -420,65 +401,6 @@ function loadNotifications(){if(!CU)return;return ensureNotificationsModule().th
 function toggleNotif(){ensureNotificationsModule().then(notifications=>notifications.toggle()).catch(()=>{});}
 function closeNotif(returnFocus=false){window.FBZNotifications?.close(returnFocus);}
 function markAllRead(){window.FBZNotifications?.markAll();}
-
-// ─── MATCH DISCUSSION ───
-async function loadChat(mid){
-  if(!mid)return;
-  const version=++chatVersion,user=CU?.id,route=routeVersion;
-  const current=()=>version===chatVersion&&user===CU?.id&&route===routeVersion&&CP==='chat'&&String(chatMID)===String(mid);
-  const body=document.getElementById('chatBody');
-  body.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обсуждения</span></div>';
-  try{
-    const{data:msgs,error}=await sb.rpc('get_match_chat_messages',{p_match_id:Number(mid),p_limit:80});
-    if(!current())return;
-    if(error)throw error;
-    if(!msgs?.length){body.innerHTML='<div class="empty-state"><strong>Начните обсуждение</strong><p>Что запомнилось в этом матче?</p></div>';return;}
-    body.innerHTML=msgs.map(m=>`<div class="cmsg ${m.user_id===CU?.id?'own':''}" data-message-id="${Number(m.id)}">
-      <div class="cmsg-auth"><button type="button" ${FBZActions.attrs("app.go-profile",[m.user_id])}>@${esc(m.user?.username||'user')}</button></div>
-      <div class="cmsg-text">${esc(m.message)}</div>
-      <div class="cmsg-meta"><time datetime="${esc(m.created_at)}">${new Date(m.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</time>${m.edited_at?'<span>ред.</span>':''}${m.can_edit?`<button type="button" ${FBZActions.attrs("app.edit-chat-message",[Number(m.id)])}>Изменить</button>`:''}</div>
-    </div>`).join('');
-    body.scrollTop=body.scrollHeight;
-  }catch(error){if(current())body.innerHTML='<div class="empty-state"><strong>Не удалось загрузить обсуждение</strong><button class="btn btn-g" data-fbz-click="app.load-chat">Повторить</button></div>';}
-}
-async function sendChat(){
-  if(!CU){openAuth();return;}
-  if(chatSending)return;
-  const inp=document.getElementById('chatI'),button=document.getElementById('chatS');
-  const msg=inp.value.trim();if(!msg)return;if(msg.length>1000){toast('Сообщение слишком длинное','err');return;}
-  const user=CU.id,mid=chatMID,route=routeVersion,original=inp.value;
-  const current=()=>CU?.id===user&&routeVersion===route&&CP==='chat'&&chatMID===mid;
-  chatSending=true;button.disabled=true;
-  try{
-    const{error}=await sb.rpc('send_match_chat_message',{p_match_id:Number(mid),p_message:msg});
-    if(error)throw error;
-    if(!current())return;
-    if(inp.value===original)inp.value='';
-    await loadChat(mid);
-  }catch(error){if(current())toast('Не удалось отправить сообщение. Текст сохранён.','err');}
-  finally{chatSending=false;button.disabled=false;}
-}
-function editChatMessage(messageId){
-  const message=document.querySelector(`.cmsg[data-message-id="${Number(messageId)}"]`);
-  if(!message||message.querySelector('form'))return;
-  const text=message.querySelector('.cmsg-text');text.hidden=true;
-  const form=document.createElement('form');form.className='match-chat-editor';
-  form.innerHTML=`<label class="sr-only" for="chat-edit-${Number(messageId)}">Изменить сообщение</label><textarea class="input" id="chat-edit-${Number(messageId)}" maxlength="1000" rows="3" required>${esc(text.textContent)}</textarea><div><button class="btn btn-g btn-sm" type="button">Отмена</button><button class="btn btn-l btn-sm" type="submit">Сохранить</button></div>`;
-  form.querySelector('[type="button"]').onclick=()=>{text.hidden=false;form.remove();message.querySelector('.cmsg-meta button')?.focus();};
-  const mid=chatMID,user=CU?.id,route=routeVersion;
-  form.onsubmit=async event=>{
-    event.preventDefault();const button=form.querySelector('[type="submit"]');if(button.disabled)return;
-    const updated=form.querySelector('textarea').value.trim();if(!updated||updated.length>1000)return;
-    button.disabled=true;
-    try{
-      const{error}=await sb.rpc('edit_match_chat_message',{p_message_id:Number(messageId),p_message:updated});
-      if(error)throw error;
-      if(CU?.id===user&&routeVersion===route&&chatMID===mid)await loadChat(mid);
-    }catch(error){if(form.isConnected)toast('Не удалось изменить сообщение. Текст сохранён.','err');}
-    finally{button.disabled=false;}
-  };
-  text.after(form);form.querySelector('textarea').focus();
-}
 
 // ─── SHARE CARD ───
 async function openShare(type,data){
@@ -585,6 +507,4 @@ FBZActions.register({
   "app.load-profile":()=>loadProfile(viewUID),
   "app.load-friends-tab":()=>loadFriendsTab(FT),
   "app.go-profile":(event,element,[userId])=>go('profile',{uid:userId}),
-  "app.edit-chat-message":(event,element,[id])=>editChatMessage(id),
-  "app.load-chat":()=>loadChat(chatMID)
 });

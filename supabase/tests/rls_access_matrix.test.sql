@@ -95,7 +95,7 @@ select is((select count(*)::integer from public.rating_comments where id = 97500
 select is((select count(*)::integer from public.rating_comments where id = 975002), 0, 'anon cannot read comments on a private rating');
 select is((select count(*)::integer from public.rating_likes where id = 974001), 1, 'anon reads likes on a public rating');
 select is((select count(*)::integer from public.rating_likes where id = 974002), 0, 'anon cannot read likes on a private rating');
-select is((public.get_match_chat_messages(950001, 80)#>>'{0,id}')::integer, 977001, 'anon reads public match chat through the bounded RPC');
+select throws_ok($$select public.get_match_chat_messages(950001,80)$$, '42501', 'permission denied for function get_match_chat_messages', 'anon cannot read retired chat');
 select ok(not has_table_privilege('anon', 'public.chat_messages', 'SELECT'), 'anon cannot bypass the match chat RPC');
 select ok(not has_table_privilege('authenticated', 'public.chat_messages', 'SELECT'), 'authenticated cannot bypass the match chat RPC');
 
@@ -154,7 +154,7 @@ select ok(not has_table_privilege('authenticated', 'public.favorite_clubs', 'INS
 select ok(not has_table_privilege('authenticated', 'public.chat_messages', 'UPDATE'), 'chat messages are not client-editable');
 select ok(not has_table_privilege('authenticated', 'public.chat_messages', 'DELETE'), 'chat messages are not client-deletable');
 select ok(not has_table_privilege('authenticated', 'public.chat_messages', 'INSERT'), 'match chat cannot be inserted directly');
-select ok(has_function_privilege('authenticated', 'public.send_match_chat_message(bigint,text)', 'EXECUTE'), 'authenticated user appends match chat through RPC');
+select ok(not has_function_privilege('authenticated', 'public.send_match_chat_message(bigint,text)', 'EXECUTE'), 'authenticated cannot append retired match chat');
 
 -- 50-51: prediction RLS permits owner writes and rejects identity spoofing.
 select lives_ok(

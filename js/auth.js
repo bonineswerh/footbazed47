@@ -9,7 +9,6 @@ let profileLoadPromise=null;
 
 function resetSessionData(userId){
   window.FBZData?.setSessionUser(userId);
-  window.FBZMessages?.resetSession();
   window.FBZFeed?.resetSession();
   window.FBZSearch?.resetSession();
   window.clearAppCache?.();

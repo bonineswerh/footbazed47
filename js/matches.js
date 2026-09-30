@@ -100,7 +100,6 @@ function renderMCard(match){
         <span class="mc-meta-date">${ico('calendar',12)} ${fmtDate(match.match_date)}</span>
         <div class="mc-acts">
           ${match.status==='finished'?`<button class="mbtn lime" ${FBZActions.attrs("matches.open-rate",[match.id])}>${ico('star',14)} Оценить</button>`:''}
-          <button class="mbtn" aria-label="Обсуждение матча" title="Обсуждение" ${FBZActions.attrs("matches.go-chat",[match.id])}>${ico('chat',14)}</button>
         </div>
       </div>
     </div>
@@ -320,7 +319,6 @@ async function loadMD(id){
       ${prediction}
       <div class="md-actions">
         ${match.status==='finished'?`<button class="btn btn-l md-primary-action" ${FBZActions.attrs("matches.open-rate",[match.id])}>${ico('star',16)} ${ownRating?'Изменить оценку':'Оценить матч'}</button>`:''}
-        <button class="btn btn-g" ${FBZActions.attrs("matches.go-chat",[match.id])}>${ico('chat',14)} Чат матча</button>
         <button class="btn btn-g" ${FBZActions.attrs("matches.copy-app-link",[match.id])}>${ico('link',14)} Ссылка</button>
       </div>
       ${ownRatingMarkup}
@@ -414,7 +412,6 @@ FBZActions.register({
   "matches.retry-match":(event,element,[id])=>loadMD(id),
   "matches.go-md":(event,element,[id])=>go('md',{mid:id}),
   "matches.open-rate":(event,element,[id])=>openRate(id),
-  "matches.go-chat":(event,element,[mid])=>go('chat',{mid,title:'Чат матча'}),
   "matches.load-home-m":()=>loadHomeM(),
   "matches.set-league":(event,element,[league])=>setLeague(league,element),
   "matches.load-more-matches":()=>loadMoreMatches(),
