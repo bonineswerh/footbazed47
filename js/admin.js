@@ -11,6 +11,7 @@
   };
   let apiFootballBusy=false,apiFootballConfigured=false;
   let emblemBatch=null,emblemApplied=false;
+  let lineupBatch=null;
   let catalogBatch=null,catalogReady=false;
   const STATUS_LABELS = {
     scheduled: 'Запланирован', live: 'LIVE', finished: 'Завершен',
@@ -49,6 +50,8 @@
         503:'Сервис администрирования временно недоступен.'
       })[response.status] || 'Не удалось выполнить операцию. Попробуйте ещё раз.';
       const providerMessages={provider_not_configured:'Секрет API-Football не настроен в этом окружении.',provider_access_denied:'API-Football отклонил доступ. Проверьте состояние ключа и подписки в кабинете поставщика.',provider_rate_limit:'Достигнут лимит API-Football. Проверьте квоту в кабинете поставщика.',provider_timeout:'API-Football не ответил вовремя. Повторите проверку позже.',provider_api_error:'API-Football не принял запрос. Проверьте доступность выбранного сезона на вашем тарифе.'};
+      providerMessages.provider_plan_restricted='Текущий тариф API-Football не предоставляет эти данные. Выберите доступный сезон или проверьте покрытие в кабинете поставщика. Это ограничение тарифа, а не ошибка ключа.';
+      Object.assign(providerMessages,{fixture_identity_not_found:'В API-Football нет однозначного совпадения с этой игрой. Состав не импортирован.',fixture_identity_ambiguous:'Найдено несколько похожих игр. Импорт остановлен до проверки идентификаторов.',fixture_club_mapping_missing:'Сначала сопоставьте обе команды с каталогом API-Football.',provider_lineups_unavailable:'Поставщик пока не отдаёт состав этого матча.',lineup_already_imported:'Исторический состав уже сохранён для этого матча.'});
       throw new Error(providerMessages[payload.code] || translated);
     }
     return payload;
@@ -172,7 +175,7 @@
         <button type="submit" class="btn btn-g" id="adminProviderCoverageCheck" disabled>Проверить покрытие</button>
       </form>
       <div id="adminProviderCoverage" class="admin-provider-result" role="status" aria-live="polite"></div>
-      <p class="admin-provider-copy">Покрытие — сведения каталога API. Импорт матчей и игроков из этого источника ещё не включён.</p>
+      <p class="admin-provider-copy">Доступ к составам зависит от турнира, сезона и тарифа поставщика.</p>
       <div class="admin-emblem-section">
         <h4>Эмблемы клубов</h4>
         <p class="admin-provider-copy">Подготовьте эмблемы для турнира и сезона, выбранных выше. Один запрос к API. Публикация сохраняет существующие клубы, матчи и оценки. Неоднозначные совпадения пропускаются.</p>
@@ -181,17 +184,32 @@
         <div id="adminEmblemsPreview" class="admin-emblem-grid" aria-label="Подготовленные эмблемы"></div>
         <p class="admin-provider-copy">Эмблемы используются для обозначения клубов. Источник — API-Football / API-Sports; подтверждённая лицензия не заявляется. <a href="https://www.api-football.com/terms" target="_blank" rel="noopener noreferrer">Условия источника</a></p>
       </div>
+      <div class="admin-emblem-section">
+        <h4>Исторический состав матча</h4>
+        <p class="admin-provider-copy">Стартовые 11, вышедшие на замену, минуты и события этой игры. Подготовка выполняет до четырёх запросов. Состав клуба не используется вместо состава матча.</p>
+        <form id="adminLineupForm" class="admin-provider-form" data-fbz-submit="admin.lineup-prepare">
+          <label class="admin-edit-field"><span>Завершённый матч</span><select name="match_id" id="adminLineupMatch" data-fbz-change="admin.lineup-reset" required><option value="">Выберите матч</option></select></label>
+          <button type="submit" class="btn btn-g" id="adminLineupPrepare" disabled>Подготовить состав</button>
+          <button type="button" class="btn btn-l" id="adminLineupApply" data-fbz-click="admin.lineup-apply" disabled>Опубликовать состав</button>
+        </form>
+        <div id="adminLineupResult" class="admin-provider-result" role="status" aria-live="polite"></div>
+        <div id="adminLineupPreview" class="admin-lineup-preview"></div>
+      </div>
     </section>`);
   }
 
   function providerControls(){
-    for(const id of ['adminProviderCheck','adminProviderCoverageCheck','adminEmblemsPrepare']){
+    for(const id of ['adminProviderCheck','adminProviderCoverageCheck','adminEmblemsPrepare','adminLineupPrepare']){
       const button=document.getElementById(id);
       if(button)button.disabled=apiFootballBusy || !apiFootballConfigured;
     }
     const apply=document.getElementById('adminEmblemsApply'),undo=document.getElementById('adminEmblemsUndo');
     if(apply)apply.disabled=apiFootballBusy||!emblemBatch||emblemApplied;
     if(undo){undo.hidden=!emblemApplied;undo.disabled=apiFootballBusy;}
+    const lineupApply=document.getElementById('adminLineupApply');
+    if(lineupApply)lineupApply.disabled=apiFootballBusy||!lineupBatch;
+    const lineupMatch=document.getElementById('adminLineupMatch');
+    if(lineupMatch)lineupMatch.disabled=apiFootballBusy;
     document.getElementById('adminApiFootballPanel')?.setAttribute('aria-busy',String(apiFootballBusy));
   }
 
@@ -206,6 +224,32 @@
     const format=value=>value==null?'не сообщён':Number(value).toLocaleString('ru-RU');
     return `Остаток за день: ${format(quota?.dailyRemaining)} · за минуту: ${format(quota?.minuteRemaining)}`;
   }
+
+  async function matchLineup(kind,event){
+    event?.preventDefault();
+    if(apiFootballBusy||!apiFootballConfigured)return;
+    const result=document.getElementById('adminLineupResult'),preview=document.getElementById('adminLineupPreview');
+    const matchId=Number(document.getElementById('adminLineupMatch').value);
+    if(kind==='prepare'&&(!Number.isSafeInteger(matchId)||matchId<1))return;
+    apiFootballBusy=true;providerControls();
+    try{
+      if(kind==='prepare'){
+        lineupBatch=null;preview.replaceChildren();result.textContent='Проверяем совпадение матча и получаем его состав…';
+        const data=await request('prepare_match_lineup',{match_id:matchId}),p=data.preview;
+        lineupBatch=data.batch||null;
+        const participants=p.players.filter(item=>item.participation!=='bench'),linked=participants.filter(item=>item.player_id!=null).length;
+        result.textContent=`Подтверждено участников: ${participants.length}. Сопоставлено профилей: ${linked}. ${quotaText(data.quota)}`;
+        preview.innerHTML=`<p>Схемы: ${esc(p.home_formation||'нет данных')} / ${esc(p.away_formation||'нет данных')}</p><ul>${participants.map(item=>`<li><span>${esc(item.name)}</span><small>${item.participation==='starter'?'Старт':'Замена'} · ${item.minutes_played==null?'Минуты неизвестны':Number(item.minutes_played)+' мин'}${item.player_id==null?' · Профиль не сопоставлен':''}</small></li>`).join('')}</ul>`;
+      }else if(lineupBatch){
+        result.textContent='Сохраняем исторический состав…';
+        const data=await request('apply_match_lineup',{batch:lineupBatch});
+        lineupBatch=null;result.textContent=`Состав матча #${Number(data.match_id)} опубликован. Ранее сохранённые оценки остались на месте.`;
+      }
+    }catch(error){result.textContent=error.message;}
+    finally{apiFootballBusy=false;providerControls();}
+  }
+
+  function resetLineup(){lineupBatch=null;document.getElementById('adminLineupPreview')?.replaceChildren();const result=document.getElementById('adminLineupResult');if(result)result.textContent='';providerControls();}
 
   async function clubEmblems(kind){
     if(apiFootballBusy||!apiFootballConfigured)return;
@@ -264,6 +308,8 @@
     try {
       const data = await request('overview');
       state.matches = data.recentMatches || [];
+      const lineupSelect=document.getElementById('adminLineupMatch');
+      if(lineupSelect)lineupSelect.innerHTML='<option value="">Выберите матч</option>'+state.matches.filter(m=>m.status==='finished').map(m=>`<option value="${Number(m.id)}">${esc(m.home_team_name)} — ${esc(m.away_team_name)} · ${esc(new Date(m.match_date).toLocaleDateString('ru-RU'))}</option>`).join('');
       state.loaded = true;
       renderMetrics(data.counts);
       renderMatches();
@@ -538,7 +584,7 @@
     }
   }
 
-  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems};
+  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup};
 })();
 
 // Explicit action bindings; parameters are JSON data, never executable code.
@@ -548,6 +594,9 @@ FBZActions.register({
   "admin.emblems-prepare":()=>FBZAdmin.clubEmblems('prepare'),
   "admin.emblems-apply":()=>FBZAdmin.clubEmblems('apply'),
   "admin.emblems-undo":()=>FBZAdmin.clubEmblems('undo'),
+  "admin.lineup-prepare":event=>FBZAdmin.matchLineup('prepare',event),
+  "admin.lineup-apply":()=>FBZAdmin.matchLineup('apply'),
+  "admin.lineup-reset":()=>FBZAdmin.resetLineup(),
   "admin.admin-open-editor":(event,element,[id])=>FBZAdmin.openEditor(id),
   "admin.admin-refresh":()=>FBZAdmin.refresh(true)
 });

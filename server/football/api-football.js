@@ -6,7 +6,10 @@ const PARAMETERS = Object.freeze({
   '/status': [],
   '/leagues': ['id', 'season'],
   '/teams': ['league', 'season', 'id'],
-  '/fixtures': ['league', 'season', 'from', 'to', 'id', 'page'],
+  '/fixtures': ['league', 'season', 'from', 'to', 'date', 'id', 'page'],
+  '/fixtures/lineups': ['fixture'],
+  '/fixtures/events': ['fixture'],
+  '/fixtures/players': ['fixture'],
   '/players': ['league', 'season', 'team', 'id', 'page'],
   '/players/squads': ['team', 'player']
 });
@@ -54,7 +57,7 @@ function requestUrl(endpoint, params) {
   for (const [key,value] of Object.entries(params)) {
     if (!PARAMETERS[endpoint].includes(key)) throw new FootballProviderError('invalid_provider_parameters',400);
     if (key==='season') requireSeason(value);
-    else if (key==='from' || key==='to') {
+    else if (key==='from' || key==='to' || key==='date') {
       if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0,10)!==value) throw new FootballProviderError('invalid_provider_parameters',400);
     } else requireId(value);
     url.searchParams.set(key,String(value));
@@ -117,8 +120,9 @@ function createApiFootballClient({apiKey = process.env.API_FOOTBALL_KEY, transpo
             if (Object.keys(payload.errors).length) {
               const keys=Object.keys(payload.errors).map(key=>key.toLowerCase());
               const limited=keys.some(key=>['requests','ratelimit','rate_limit'].includes(key));
-              const denied=keys.some(key=>['token','key','access','plan'].includes(key));
-              return finish(new FootballProviderError(limited?'provider_rate_limit':denied?'provider_access_denied':'provider_api_error',limited?429:502,quota));
+              const denied=keys.some(key=>['token','key','access'].includes(key));
+              const planRestricted=keys.includes('plan');
+              return finish(new FootballProviderError(limited?'provider_rate_limit':denied?'provider_access_denied':planRestricted?'provider_plan_restricted':'provider_api_error',limited?429:502,quota));
             }
             if (url.pathname==='/status') {
               // Account metadata is an object, not a paginated collection. The

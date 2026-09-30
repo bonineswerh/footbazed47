@@ -27,6 +27,11 @@ values (920001, 'Test League', 'Test Home FC', 'Test Away FC', now() - interval 
 insert into public.players (id, name, team, club_id) overriding system value
 values (930001, 'Valid Player', 'Test Home FC', 910001), (930002, 'Spoofed Player', 'Spoof FC', 910003);
 
+insert into public.player_provider_ids(provider,external_id,player_id) values('api-football',930001,930001);
+insert into public.match_lineups(match_id,fixture_id,home_club_id,away_club_id) values(920001,920001,910001,910002);
+insert into public.match_player_appearances(match_id,provider_player_id,player_id,club_id,name,participation)
+values(920001,930001,930001,910001,'Valid Player','starter');
+
 insert into public.ratings (user_id, match_id, match_rating)
 values ('10000000-0000-0000-0000-000000000001', 920001, 8);
 
@@ -35,7 +40,7 @@ values ('10000000-0000-0000-0000-000000000002', 920001, 7, now() - interval '1 m
 
 select lives_ok(
   $$insert into public.player_ratings (user_id, match_id, player_id, rating) values ('10000000-0000-0000-0000-000000000001', 920001, 930001, 8)$$,
-  'a player from either match club can be rated'
+  'a confirmed participant can be rated'
 );
 
 select throws_ok(

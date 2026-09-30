@@ -7,7 +7,6 @@ let rBest=null;
 let rExisting=false;
 let rActivePlayer=null;
 let rSupporterSide=null;
-const squadCache=new Map();
 const ratingPlayers=new Map();
 let ratingContext=null;
 
@@ -23,64 +22,11 @@ function setRatingLoading(loading){
 
 document.getElementById('rateOv')?.addEventListener('fbz:overlay-close',()=>{ratingContext=null;});
 
-const TEAM_MAP={
-  'man city':'Manchester City FC','man united':'Manchester United FC',
-  'arsenal':'Arsenal FC','chelsea':'Chelsea FC','liverpool':'Liverpool FC',
-  'tottenham':'Tottenham Hotspur FC','spurs':'Tottenham Hotspur FC',
-  'newcastle':'Newcastle United FC','aston villa':'Aston Villa FC',
-  'west ham':'West Ham United FC','brighton hove':'Brighton & Hove Albion FC',
-  'crystal palace':'Crystal Palace FC','bournemouth':'AFC Bournemouth',
-  'fulham':'Fulham FC','brentford':'Brentford FC','everton':'Everton FC',
-  'wolverhampton':'Wolverhampton Wanderers FC','wolves':'Wolverhampton Wanderers FC',
-  'nottingham':'Nottingham Forest FC','burnley':'Burnley FC',
-  'leeds united':'Leeds United FC','sunderland':'Sunderland AFC',
-  'barça':'FC Barcelona','barca':'FC Barcelona','barcelona':'FC Barcelona',
-  'real madrid':'Real Madrid CF','atleti':'Club Atlético de Madrid',
-  'atletico':'Club Atlético de Madrid','sevilla':'Sevilla FC',
-  'real betis':'Real Betis Balompié','betis':'Real Betis Balompié',
-  'real sociedad':'Real Sociedad de Fútbol','sociedad':'Real Sociedad de Fútbol',
-  'villarreal':'Villarreal CF','athletic':'Athletic Club','bilbao':'Athletic Club',
-  'valencia':'Valencia CF','getafe':'Getafe CF','girona':'Girona FC',
-  'alavés':'Deportivo Alavés','celta':'RC Celta de Vigo',
-  'mallorca':'RCD Mallorca','osasuna':'CA Osasuna',
-  'rayo vallecano':'Rayo Vallecano de Madrid','espanyol':'RCD Espanyol de Barcelona',
-  'elche':'Elche CF','levante':'Levante UD',
-  'bayern':'FC Bayern München','dortmund':'Borussia Dortmund',
-  'leverkusen':'Bayer 04 Leverkusen','leipzig':'RB Leipzig',
-  'frankfurt':'Eintracht Frankfurt','stuttgart':'VfB Stuttgart',
-  'freiburg':'SC Freiburg','wolfsburg':'VfL Wolfsburg',
-  "m'gladbach":'Borussia Mönchengladbach','gladbach':'Borussia Mönchengladbach',
-  'augsburg':'FC Augsburg','hoffenheim':'TSG 1899 Hoffenheim',
-  'mainz':'1. FSV Mainz 05','bremen':'SV Werder Bremen',
-  'union berlin':'1. FC Union Berlin','heidenheim':'1. FC Heidenheim 1846',
-  'st. pauli':'FC St. Pauli 1910','hsv':'Hamburger SV',
-  'inter':'FC Internazionale Milano','juventus':'Juventus FC','juve':'Juventus FC',
-  'milan':'AC Milan','napoli':'SSC Napoli','roma':'AS Roma','lazio':'SS Lazio',
-  'atalanta':'Atalanta BC','fiorentina':'ACF Fiorentina',
-  'bologna':'Bologna FC 1909','torino':'Torino FC',
-  'udinese':'Udinese Calcio','cagliari':'Cagliari Calcio',
-  'genoa':'Genoa CFC','lecce':'US Lecce','verona':'Hellas Verona FC',
-  'parma':'Parma Calcio 1913','como':'Como 1907',
-  'sassuolo':'US Sassuolo Calcio','cremonese':'US Cremonese',
-  'ac pisa':'AC Pisa 1909',
-  'psg':'Paris Saint-Germain FC','marseille':'Olympique de Marseille',
-  'olympique lyon':'Olympique Lyonnais','lyon':'Olympique Lyonnais',
-  'monaco':'AS Monaco FC','lille':'Lille OSC','nice':'OGC Nice',
-  'strasbourg':'RC Strasbourg Alsace','stade rennais':'Stade Rennais FC 1901',
-  'rennes':'Stade Rennais FC 1901','nantes':'FC Nantes',
-  'toulouse':'Toulouse FC','rc lens':'Racing Club de Lens','lens':'Racing Club de Lens',
-  'brest':'Stade Brestois 29','le havre':'Le Havre AC',
-  'auxerre':'AJ Auxerre','lorient':'FC Lorient',
-  'sporting cp':'Sporting Clube de Portugal','galatasaray':'Galatasaray SK',
-  'bodø/glimt':'FK Bodø/Glimt'
-};
-
 const POSITION_GROUP={
-  GK:'gk',Goalkeeper:'gk',CB:'def','Centre-Back':'def',LB:'def','Left-Back':'def',RB:'def','Right-Back':'def',Defence:'def',
+  G:'gk',D:'def',M:'mid',F:'att',GK:'gk',Goalkeeper:'gk',CB:'def','Centre-Back':'def',LB:'def','Left-Back':'def',RB:'def','Right-Back':'def',Defence:'def',
   DM:'mid','Defensive Midfield':'mid',CM:'mid','Central Midfield':'mid',AM:'mid','Attacking Midfield':'mid',LM:'mid','Left Midfield':'mid',RM:'mid','Right Midfield':'mid',Midfield:'mid',
   LW:'att','Left Winger':'att',RW:'att','Right Winger':'att',ST:'att','Centre-Forward':'att',Offence:'att'
 };
-const POSITION_ORDER={GK:1,Goalkeeper:1,CB:2,'Centre-Back':2,LB:3,'Left-Back':3,RB:4,'Right-Back':4,Defence:5,DM:6,'Defensive Midfield':6,CM:7,'Central Midfield':7,AM:8,'Attacking Midfield':8,LM:9,RM:10,Midfield:11,LW:12,'Left Winger':12,RW:13,'Right Winger':13,ST:14,'Centre-Forward':14,Offence:15};
 const POSITION_LABEL={gk:'Вратари',def:'Защита',mid:'Полузащита',att:'Атака',other:'Другие'};
 const RATING_LABELS=['','Ужасно','Плохо','Слабо','Ниже среднего','Средне','Неплохо','Хорошо','Отлично','Великолепно','Исключительно'];
 
@@ -98,7 +44,7 @@ async function openRatingForm(mid){
     const[{data:match,error:matchError},{data:existing,error:ratingError},{data:playerScores,error:playerError}]=await Promise.all([
       sb.from('matches').select('home_team_name,away_team_name,status').eq('id',matchId).single(),
       sb.from('ratings').select('match_rating,comment,is_public,supporter_side').eq('user_id',context.userId).eq('match_id',matchId).maybeSingle(),
-      sb.from('player_ratings').select('player_id,rating,is_best_player').eq('user_id',context.userId).eq('match_id',matchId)
+      sb.from('player_ratings').select('player_id,rating,is_best_player,player:players(name)').eq('user_id',context.userId).eq('match_id',matchId)
     ]);
     if(!isRatingCurrent(context))return;
     if(matchError)throw matchError;
@@ -122,6 +68,7 @@ async function openRatingForm(mid){
       updateRatingCommentCount();
     }
     context.match=match;
+    context.playerScores=playerScores||[];
     await loadRatePlayers(match,context);
     if(!isRatingCurrent(context))return;
     (playerScores||[]).forEach(item=>{
@@ -280,62 +227,54 @@ function rNext(){
 
 function closeRate(){ratingContext=null;window.FBZOverlay?.close('rateOv');}
 
-function mappedTeamName(name){
-  const normalized=String(name||'').toLocaleLowerCase('ru-RU').trim();
-  return TEAM_MAP[normalized]||name;
-}
-
 async function loadRatePlayers(match,context){
-  const requestedTeams=[mappedTeamName(match.home_team_name),match.home_team_name,mappedTeamName(match.away_team_name),match.away_team_name]
-    .filter(Boolean)
-    .filter((name,index,items)=>items.indexOf(name)===index);
-  const cacheKey=[...requestedTeams].sort().join('|');
-  let players=squadCache.get(cacheKey);
-  if(!players){
-    const{data,error}=await sb.from('players').select(PLAYER_FIELDS).in('team',requestedTeams).order('team').order('position').limit(160);
+  let lineup=null,failed=false;
+  try{
+    const{data,error}=await sb.rpc('get_match_lineup',{p_match_id:context.matchId});
     if(error)throw error;
-    players=data||[];
-    squadCache.set(cacheKey,players);
-  }
+    lineup=data;
+  }catch(error){console.error('Match lineup error:',error);failed=true;}
   if(!isRatingCurrent(context))return;
-  const homePlayers=findPlayersForTeam(players,match.home_team_name);
-  const awayPlayers=findPlayersForTeam(players,match.away_team_name);
   ratingPlayers.clear();
-  [...homePlayers,...awayPlayers].forEach(player=>ratingPlayers.set(Number(player.id),player));
+  const players=lineup?.available&&Array.isArray(lineup.players)?lineup.players.filter(p=>p.participation!=='bench'):[];
+  players.forEach(player=>{player.team=Number(player.club_id)===Number(lineup.home.club_id)?match.home_team_name:match.away_team_name;if(player.eligible&&Number.isSafeInteger(Number(player.id))&&Number(player.id)>0)ratingPlayers.set(Number(player.id),player);});
   const container=document.getElementById('rPlayers');
-  if(!homePlayers.length&&!awayPlayers.length){
-    container.innerHTML='<div class="empty-state compact"><strong>Составы пока недоступны</strong><span>Оценку матча и комментарий всё равно можно сохранить.</span></div>';
-    return;
+  if(!players.length){
+    container.innerHTML=`<div class="rating-roster-empty" role="status">${ico('football',22)}<strong>${failed?'Не удалось загрузить состав':'Состав этого матча пока недоступен'}</strong><p>Для оценки игроков нужно подтверждение их участия именно в этой игре.</p><span>Оценку матча и рецензию можно сохранить сейчас.</span>${failed?`<button type="button" class="btn btn-g btn-sm" data-fbz-click="ratings.retry-lineup">Повторить загрузку состава</button>`:''}</div>`;
+  }else{
+    container.innerHTML=`<p class="rating-lineup-note">${ico('check',14)} Состав на этот матч · ${lineup.provider==='api-football'?'API-Football':'подтверждённое участие'}</p><div class="rating-team-tabs" role="group" aria-label="Выберите команду">
+      <button class="on" type="button" aria-pressed="true" aria-controls="rating-squad-home" data-fbz-click="ratings.show-rating-team-home">${esc(match.home_team_name)}</button>
+      <button type="button" aria-pressed="false" aria-controls="rating-squad-away" data-fbz-click="ratings.show-rating-team-away">${esc(match.away_team_name)}</button>
+    </div><div class="rating-squad-grid">${renderTeamSquad(match.home_team_name,players.filter(p=>Number(p.club_id)===Number(lineup.home.club_id)),'home',lineup.home.formation)}${renderTeamSquad(match.away_team_name,players.filter(p=>Number(p.club_id)===Number(lineup.away.club_id)),'away',lineup.away.formation)}</div>`;
   }
-  container.innerHTML=`<div class="rating-team-tabs" role="group" aria-label="Выберите команду">
-    <button class="on" type="button" aria-pressed="true" aria-controls="rating-squad-home" data-fbz-click="ratings.show-rating-team-home">${esc(match.home_team_name)}</button>
-    <button type="button" aria-pressed="false" aria-controls="rating-squad-away" data-fbz-click="ratings.show-rating-team-away">${esc(match.away_team_name)}</button>
-  </div><div class="rating-squad-grid">${renderTeamSquad(match.home_team_name,homePlayers,'home')}${renderTeamSquad(match.away_team_name,awayPlayers,'away')}</div>`;
+  const legacy=context.playerScores.filter(item=>!ratingPlayers.has(Number(item.player_id)));
+  if(legacy.length)container.insertAdjacentHTML('beforeend',`<section class="rating-legacy"><h3>Ранее сохранённые оценки</h3><p>Участие этих игроков ещё не подтверждено. Ваши оценки сохранятся вместе с рецензией.</p><ul>${legacy.map(item=>`<li><span>${esc(item.player?.name||`Игрок №${Number(item.player_id)}`)}</span><strong data-tone="${FBZDomain.ratingTone(item.rating)}">${Number(item.rating)}/10</strong></li>`).join('')}</ul></section>`);
 }
 
-function findPlayersForTeam(players,matchTeamName){
-  const mapped=mappedTeamName(matchTeamName);
-  const normalizedMapped=String(mapped).toLocaleLowerCase('ru-RU');
-  const normalizedOriginal=String(matchTeamName).toLocaleLowerCase('ru-RU');
-  return players.filter(player=>{
-    const team=String(player.team||'').toLocaleLowerCase('ru-RU');
-    return team===normalizedMapped||team===normalizedOriginal;
-  });
+async function retryLineup(){
+  const context=ratingContext;
+  if(!isRatingCurrent(context)||context.saving||context.loadingLineup)return;
+  context.loadingLineup=true;
+  try{await loadRatePlayers(context.match,context);if(isRatingCurrent(context)){Object.keys(rPS).forEach(updatePlayerRatingVisual);syncBestPlayerVisuals();}}
+  finally{context.loadingLineup=false;}
 }
 
-function renderTeamSquad(teamName,players,side){
+function renderTeamSquad(teamName,players,side,formation){
   if(!players.length)return`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(teamName)}"><div class="rating-roster-empty"><strong>${esc(teamName)}</strong><p>Состав команды пока недоступен.</p><span>Можно оценить матч и игроков другой команды. Отсутствующие данные не считаются нулевой оценкой.</span></div></section>`;
-  const groups={gk:[],def:[],mid:[],att:[],other:[]};
-  [...players]
-    .sort((a,b)=>(POSITION_ORDER[a.position]||99)-(POSITION_ORDER[b.position]||99)||String(a.name).localeCompare(String(b.name),'ru'))
-    .forEach(player=>groups[POSITION_GROUP[player.position]||'other'].push(player));
-  let html=`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(teamName)}"><header class="rating-team-head"><div><span>${side==='home'?'Хозяева':'Гости'}</span><h3>${esc(teamName)}</h3></div><small>${FBZDomain.countLabel(players.length,{one:'игрок',few:'игрока',many:'игроков'})}</small></header><div class="rating-pitch">`;
-  ['att','mid','def','gk','other'].forEach(group=>{
-    if(!groups[group].length)return;
-    const label=POSITION_LABEL[group];
+  const starters=players.filter(p=>p.participation==='starter'),substitutes=players.filter(p=>p.participation==='substitute');
+  const groups={};
+  const onGrid=starters.length>0&&starters.every(p=>/^[1-6]:[1-5]$/u.test(p.grid||''));
+  starters.forEach(player=>{const key=onGrid?player.grid.split(':')[0]:POSITION_GROUP[player.position]||'other';(groups[key]??=[]).push(player);});
+  let html=`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(teamName)}"><header class="rating-team-head"><div><span>${side==='home'?'Хозяева':'Гости'} · Стартовый состав</span><h3>${esc(teamName)}</h3></div><small>${esc(formation||'Схема недоступна')}</small></header><div class="rating-pitch">`;
+  (onGrid?Object.keys(groups).sort((a,b)=>Number(b)-Number(a)):['att','mid','def','gk','other']).forEach(group=>{
+    if(!groups[group]?.length)return;
+    groups[group].sort((a,b)=>onGrid?Number(a.grid.split(':')[1])-Number(b.grid.split(':')[1]):String(a.name).localeCompare(String(b.name),'ru'));
+    const label=onGrid?`Линия ${group}`:POSITION_LABEL[group];
     html+=`<div class="rating-pitch-line rating-line-${group}" aria-label="${label}"><span class="rating-position">${label}</span><div class="rating-player-row" style="--player-count:${Math.min(groups[group].length,5)}">${groups[group].map(renderPlayerRating).join('')}</div></div>`;
   });
-  return html+'</div></section>';
+  html+='</div>';
+  if(substitutes.length)html+=`<section class="rating-substitutes"><h4>Вышли на замену</h4><div class="rating-player-row" style="--player-count:${Math.min(substitutes.length,3)}">${substitutes.map(renderPlayerRating).join('')}</div></section>`;
+  return html+'</section>';
 }
 
 function showRatingTeam(side,button){
@@ -349,13 +288,17 @@ function showRatingTeam(side,button){
 }
 
 function renderPlayerRating(player){
+  const eligible=player.eligible!==false&&Number(player.id)>0;
   const number=player.shirt_number?`<small>${Number(player.shirt_number)}</small>`:'';
-  return`<button class="rating-player" id="rating-player-${Number(player.id)}" data-player-id="${Number(player.id)}" data-tone="neutral" type="button" ${FBZActions.attrs("ratings.open-player-rating",[Number(player.id)])} aria-label="Оценить игрока ${esc(player.name)}">
+  const details=[player.minutes_played!=null?`${Number(player.minutes_played)} мин`:null,player.participation==='substitute'&&player.entered_minute!=null?`Вышел ${Number(player.entered_minute)}${player.entered_extra?'+'+Number(player.entered_extra):''}′`:null,player.goals>0?`Голы: ${Number(player.goals)}`:null,player.assists>0?`Передачи: ${Number(player.assists)}`:null,player.yellow_cards>0?'Жёлтая карточка':null,player.red_cards>0?'Красная карточка':null].filter(Boolean);
+  return`<button class="rating-player${eligible?'':' is-unlinked'}" ${eligible?`id="rating-player-${Number(player.id)}" data-player-id="${Number(player.id)}"`:''} data-tone="neutral" type="button" ${eligible?FBZActions.attrs("ratings.open-player-rating",[Number(player.id)]):'disabled'} aria-label="${eligible?'Оценить игрока':'Профиль ещё не сопоставлен:'} ${esc(player.name)}">
     <span class="rating-player-score" aria-hidden="true">—</span>
-    <span class="rating-player-best" aria-hidden="true">${ico('star',10)}</span>
-    <span class="rating-player-avatar" aria-hidden="true">${esc(playerInitials(player.name))}${number}</span>
+    <span class="rating-player-best" aria-hidden="true">${ico('star',12)} <b>MOTM</b></span>
+    <span class="rating-player-avatar" aria-hidden="true">${FBZMedia.visual({entity:player,kind:'player',className:'rating-player-portrait'})}${number}</span>
     <span class="rating-player-name">${esc(player.name)}</span>
-    <span class="rating-player-position">${esc(player.position||'—')}</span>
+    <span class="rating-player-position">${esc(POSITION_LABEL[POSITION_GROUP[player.position]]||({G:'Вратарь',D:'Защитник',M:'Полузащитник',F:'Нападающий'})[player.position]||player.position||'—')}</span>
+    ${details.length?`<span class="rating-player-events">${esc(details.join(' · '))}</span>`:''}
+    ${eligible?'':'<span class="rating-player-events">Оценивание пока недоступно</span>'}
   </button>`;
 }
 
@@ -491,7 +434,7 @@ function ratingErrorMessage(error){
     duplicate_player_rating:'Один игрок добавлен дважды',
     multiple_best_players:'Можно выбрать только одного лучшего игрока',
     player_not_found:'Один из игроков больше недоступен',
-    player_not_in_match:'Игрок не входит в состав одной из команд этого матча',
+    player_not_in_match:'Участие игрока в этом матче не подтверждено. Обновите состав и попробуйте снова.',
     supporter_side_required:'Выберите, за какую сторону вы болеете'
   };
   const key=Object.keys(messages).find(item=>message.includes(item));
@@ -593,6 +536,7 @@ FBZActions.register({
   "ratings.commit-match-score":(event,element)=>commitRailKey(event,element,selScore),
   "ratings.commit-player-score":(event,element)=>commitRailKey(event,element,setActivePlayerScore),
   "ratings.open-rate":(event,element,[id])=>window.openRate(id),
+  "ratings.retry-lineup":()=>retryLineup(),
   "ratings.show-rating-team-home":(event,element)=>showRatingTeam('home',element),
   "ratings.show-rating-team-away":(event,element)=>showRatingTeam('away',element),
   "ratings.open-player-rating":(event,element,[id])=>openPlayerRating(id)

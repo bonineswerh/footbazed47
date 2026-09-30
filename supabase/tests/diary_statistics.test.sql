@@ -19,6 +19,10 @@ select '13000000-0000-0000-0000-000000000001',960000+n,case when n<=9 then 9 els
 insert into public.ratings(user_id,match_id,match_rating,is_public,supporter_side)
 values('13000000-0000-0000-0000-000000000002',960001,1,true,'neutral');
 insert into public.players(id,name,team,club_id) overriding system value values(960001,'Diary Player','Diary Home',960001);
+insert into public.player_provider_ids(provider,external_id,player_id) values('api-football',960001,960001);
+insert into public.match_lineups(match_id,fixture_id,home_club_id,away_club_id) values(960003,960003,960001,960002);
+insert into public.match_player_appearances(match_id,provider_player_id,player_id,club_id,name,participation)
+values(960003,960001,960001,960001,'Diary Player','starter');
 insert into public.player_ratings(user_id,match_id,player_id,rating,is_best_player)
 values('13000000-0000-0000-0000-000000000001',960003,960001,9,false);
 

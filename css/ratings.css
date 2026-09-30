@@ -64,3 +64,38 @@
   .rating-player-best{top:6px;right:auto;left:30px}
 }
 @media(prefers-reduced-motion:reduce){.rating-rail,.rate-star{transition:none}}
+
+/* Confirmed fixture participants; the bench never doubles as a rating roster. */
+.rating-lineup-note{display:flex;align-items:center;gap:8px;margin:0 0 14px;color:var(--text3);font-size:12px;line-height:1.5}
+.rating-roster-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 20px;border:1px solid var(--b1);border-radius:10px;background:var(--bg2);text-align:center}
+.rating-roster-empty strong{font-size:17px;color:var(--snow)}
+.rating-roster-empty p,.rating-roster-empty span{max-width:440px;margin:0;color:var(--text3);font-size:14px;line-height:1.6}
+.rating-player-portrait{width:100%;height:100%;border-radius:inherit}
+.rating-player-portrait img{width:100%;height:100%;object-fit:cover}
+.rating-player-name{font-size:14px;line-height:1.35;font-weight:600}
+.rating-player-position{font-size:11px;line-height:1.5}
+.rating-player-events{display:block;margin-top:4px;color:var(--pitch-muted,var(--text3));font-size:11px;line-height:1.5}
+.rating-player.is-unlinked{cursor:default;opacity:.7;transform:none}
+.rating-player-best{top:24px;right:calc(50% - 36px);align-items:center;gap:3px;padding:3px 5px;border:1px solid #ad8934;border-radius:4px;background:#30281a;color:#ffe1a0}
+.rating-player-best b{font:600 9px/1 var(--font-ui);letter-spacing:.03em}
+.rating-substitutes{padding:18px 10px;border:1px solid var(--b1);border-top:0;border-radius:0 0 8px 8px;background:var(--bg2)}
+.rating-substitutes h4{margin:0 0 12px;color:var(--text3);font-size:12px;font-weight:600}
+.rating-substitutes .rating-player{color:var(--snow)}
+.rating-substitutes .rating-player-position,.rating-substitutes .rating-player-events{color:var(--text3)}
+.rating-legacy{margin-top:20px;padding:16px;border:1px solid var(--b1);border-radius:8px}
+.rating-legacy h3{margin:0;font-size:14px;color:var(--snow)}
+.rating-legacy p{margin:8px 0 12px;color:var(--text3);font-size:12px;line-height:1.6}
+.rating-legacy ul{margin:0;padding:0;list-style:none}
+.rating-legacy li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;font-size:14px}
+.rating-legacy strong{flex-shrink:0;font-variant-numeric:tabular-nums}
+.rating-legacy [data-tone="elite"]{color:var(--rating-elite)}
+.rating-legacy [data-tone="high"]{color:var(--rating-high)}
+.rating-legacy [data-tone="mid"]{color:var(--rating-mid)}
+.rating-legacy [data-tone="low"]{color:var(--rating-low)}
+@media(max-width:620px){
+  .rating-player-events{grid-column:2;grid-row:3;margin:2px 0 0;font-size:12px}
+  .rating-player-avatar,.rating-player-score{grid-row:1/4}
+  .rating-player-best{top:4px;left:19px;right:auto}
+  .rating-player-best b{display:none}
+  .rating-substitutes .rating-player-row{grid-template-columns:1fr}
+}

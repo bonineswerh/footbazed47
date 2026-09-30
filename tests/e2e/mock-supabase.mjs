@@ -98,6 +98,19 @@ export async function installSupabaseMock(page,overrides={}){
     }
 
     function rpc(name,args={}){
+      if(name==='get_match_lineup'){
+        if(state.lineupError)return promiseResult(null,{message:'lineup temporarily unavailable'});
+        if(Object.hasOwn(state,'lineup'))return promiseResult(structuredClone(state.lineup));
+        // Declared participation is a test fixture, independent of current club membership.
+        const homeIds=[5290,5291,5292,5293,5294,5295],awayIds=[6201,6202,6203,6204,6205,6206];
+        const makeSide=(ids,clubId)=>[...ids.map((playerId,i)=>({...structuredClone(state.players.find(p=>p.id===playerId)),
+          id:playerId,club_id:clubId,provider_player_id:playerId,eligible:true,participation:'starter',grid:['1:1','2:1','3:1','2:2','3:2','4:1'][i],
+          minutes_played:90,goals:i===5?1:0,assists:0,yellow_cards:0,red_cards:0})),
+          ...['2:3','2:4','3:3','4:2','4:3'].map((grid,i)=>({id:null,provider_player_id:clubId*1000+i,club_id:clubId,
+            name:`Fixture Starter ${i+7}`,participation:'starter',position:grid.startsWith('2')?'D':grid.startsWith('3')?'M':'F',grid,eligible:false,minutes_played:90}))];
+        return promiseResult({available:true,provider:'api-football',home:{club_id:24,formation:'4-3-3'},away:{club_id:31,formation:'4-3-3'},
+          players:[...makeSide(homeIds,24),...makeSide(awayIds,31)]});
+      }
       if(name==='get_profile_diary'){
         const f=args.p_filters||{},cursor=args.p_cursor,limit=args.p_limit||8;
         const visible=state.diary||state.feed.filter(r=>r.user_id===args.p_user_id).map(r=>({id:r.rating_id,user_id:r.user_id,match_id:r.match_id,match_rating:r.match_rating,is_public:true,created_at:r.created_at,...r.match}));
@@ -324,7 +337,7 @@ export async function installSupabaseMock(page,overrides={}){
       if(table==='friendships')return structuredClone(state.friendships);
       if(table==='notifications')return structuredClone(state.notifications);
       if(table==='players')return structuredClone(state.players);
-      if(table==='player_ratings')return structuredClone(state.playerRatings);
+      if(table==='player_ratings')return state.playerRatings.map(r=>({...structuredClone(r),player:{name:state.players.find(p=>p.id===r.player_id)?.name||'Legacy Player'}}));
       if(table==='rating_likes'||table==='rating_comments'||table==='predictions'||table==='chat_messages')return[];
       return[];
     }

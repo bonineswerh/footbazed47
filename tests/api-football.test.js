@@ -62,7 +62,7 @@ test('HTTP and API-level errors do not leak body text and never retry authentica
   for(const [status,code]of [[401,'provider_access_denied'],[403,'provider_access_denied'],[429,'provider_rate_limit'],[302,'provider_http_error'],[204,'provider_http_error']]){
     const {client,calls}=mockClient(()=>({status,raw:'private-token'}),{retries:1});await rejects(client.get('/status'),code);assert.equal(calls.length,1);
   }
-  for(const [errors,code]of [[{token:'private-token'},'provider_access_denied'],[{requests:'private-token'},'provider_rate_limit'],[{season:'private-token'},'provider_api_error'],[['private-token'],'provider_api_error']]){
+  for(const [errors,code]of [[{token:'private-token'},'provider_access_denied'],[{plan:'private-token'},'provider_plan_restricted'],[{requests:'private-token'},'provider_rate_limit'],[{season:'private-token'},'provider_api_error'],[['private-token'],'provider_api_error']]){
     const {client}=mockClient(()=>({payload:{...envelope(),errors}}));await rejects(client.get('/leagues',{id:39}),code);
   }
 });

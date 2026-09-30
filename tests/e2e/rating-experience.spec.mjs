@@ -3,6 +3,31 @@ import {installSupabaseMock} from './mock-supabase.mjs';
 
 test.beforeEach(async({page})=>{await installSupabaseMock(page);});
 
+test('unavailable historical lineup preserves existing player scores while allowing review edits',async({page})=>{
+  await installSupabaseMock(page,{lineup:{available:false,players:[]}});
+  await page.goto('/match/101?__e2e=1');await page.locator('.md-primary-action').click();
+  await page.getByRole('button',{name:/Продолжить/}).click();
+  await expect(page.locator('#rPlayers')).toContainText('Состав этого матча пока недоступен');
+  await expect(page.locator('.rating-player')).toHaveCount(0);
+  await expect(page.locator('.rating-legacy')).toContainText('Thibaut Courtois');
+  await page.locator('#rCmt').fill('Edited review with legacy scores');await page.locator('#rSave').click();
+  const payload=await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastRating());
+  expect(payload.p_player_ratings).toEqual([{player_id:5290,rating:9,is_best_player:true},{player_id:5292,rating:8,is_best_player:false}]);
+  expect(payload.p_comment).toBe('Edited review with legacy scores');
+});
+
+test('lineup read failure offers retry without disabling match ratings or querying the club squad',async({page})=>{
+  await installSupabaseMock(page,{lineupError:true});
+  await page.goto('/match/101?__e2e=1');await page.locator('.md-primary-action').click();
+  await page.getByRole('button',{name:/Продолжить/}).click();
+  await expect(page.getByRole('button',{name:'Повторить загрузку состава'})).toBeVisible();
+  await expect(page.locator('#rSave')).toBeEnabled();
+  await page.getByRole('button',{name:'Повторить загрузку состава'}).click();
+  await expect(page.locator('.rating-legacy li')).toHaveCount(2);
+  await page.locator('#rSave').click();
+  expect((await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastRating())).p_player_ratings).toHaveLength(2);
+});
+
 test('rating CSS can be retried without bypassing the loader or duplicating JavaScript',async({page})=>{
   let styles=0,scripts=0;
   await page.route('**/css/ratings.css*',route=>++styles===1?route.abort():route.continue());

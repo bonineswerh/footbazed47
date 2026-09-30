@@ -58,6 +58,13 @@ jobs:
           node scripts/normalize-database-types.mjs /tmp/database.ts
           node scripts/normalize-database-types.mjs types/database.ts
           diff -u /tmp/database.ts types/database.ts
+      - name: Retain generated schema contract
+        if: ${{ always() && steps.reset.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-contract
+          path: types/database.ts
+          retention-days: 7
       - if: ${{ !cancelled() && steps.reset.outcome == 'success' }}
         run: supabase db lint --local --level error
       # The CLI installs its privileged lint extension before the test session

@@ -34,6 +34,11 @@ values
 insert into public.players (id, name, team, club_id) overriding system value
 values (960001, 'RLS Player', 'RLS Home FC', 940001);
 
+insert into public.player_provider_ids(provider,external_id,player_id) values('api-football',960001,960001);
+insert into public.match_lineups(match_id,fixture_id,home_club_id,away_club_id) values(950001,950001,940001,940002);
+insert into public.match_player_appearances(match_id,provider_player_id,player_id,club_id,name,participation)
+values(950001,960001,960001,940001,'RLS Player','starter');
+
 insert into public.competitions (id, code, name) overriding system value
 values (945001, 'RL', 'RLS League');
 

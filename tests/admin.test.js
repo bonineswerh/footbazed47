@@ -27,7 +27,9 @@ function api({admin=true,authStatus=200,apiFootballKey='football-api-test-placeh
   vm.runInNewContext(readFileSync(join(__dirname,'../server/football/api-football.js'),'utf8'),providerContext);
   const emblemContext={module:{exports:{}},require:name=>{assert.equal(name,'./api-football');return providerContext.module.exports;}};
   vm.runInNewContext(readFileSync(join(__dirname,'../server/football/club-emblems.js'),'utf8'),emblemContext);
-  const context={module:{exports:{}},require:name=>{if(name==='../server/football/api-football')return providerContext.module.exports;if(name==='../server/football/club-emblems')return emblemContext.module.exports;assert.equal(name,'https');return https;},process:{env},Buffer,URL,URLSearchParams,console:{error(){}}};
+  const lineupContext={module:{exports:{}},require:name=>{assert.equal(name,'./api-football');return providerContext.module.exports;}};
+  vm.runInNewContext(readFileSync(join(__dirname,'../server/football/match-lineups.js'),'utf8'),lineupContext);
+  const context={module:{exports:{}},require:name=>{if(name==='../server/football/api-football')return providerContext.module.exports;if(name==='../server/football/club-emblems')return emblemContext.module.exports;if(name==='../server/football/match-lineups')return lineupContext.module.exports;assert.equal(name,'https');return https;},process:{env},Buffer,URL,URLSearchParams,console:{error(){}}};
   vm.runInNewContext(readFileSync(join(__dirname,'../api/admin.js'),'utf8'),context);
   return {calls,async send(body,{method='POST',authorization='Bearer user-test-token',raw=false}={}){
     const headers={};let result;
@@ -85,6 +87,27 @@ test('emblem preparation writes only the reviewed batch and apply accepts only a
   await app.send({action:'apply_club_emblems',batch:prepared.body.batch});
   assert.equal(app.calls.filter(c=>c.url.includes('api-sports.io')).length,1);assert.equal(app.calls.at(-1).body.p_batch,prepared.body.batch);
   const denied=api({admin:false});assert.equal((await denied.send({action:'prepare_club_emblems',league:'PL',season:2024})).status,403);assert.equal(denied.calls.some(c=>c.url.includes('api-sports.io')),false);
+});
+test('historical lineup actions reject missing admin, invalid IDs and forged payloads before provider calls',async()=>{
+  const denied=api({admin:false});assert.equal((await denied.send({action:'prepare_match_lineup',match_id:1})).status,403);
+  assert.equal(denied.calls.some(c=>c.url.includes('api-sports.io')),false);
+  const app=api();
+  for(const match_id of [null,-1,'1',1.5])assert.equal((await app.send({action:'prepare_match_lineup',match_id})).status,400);
+  for(const batch of ['',1,'https://untrusted.test'])assert.equal((await app.send({action:'apply_match_lineup',batch})).status,400);
+  const batch='16000000-0000-4000-8000-000000000001';
+  await app.send({action:'apply_match_lineup',batch,payload:{fixture_id:9999},actor:'forged'});
+  assert.deepEqual(app.calls.at(-1).body,{p_batch:batch,p_actor:'12000000-0000-0000-0000-000000000001'});
+  assert.equal(app.calls.some(c=>c.url.includes('api-sports.io')),false);
+});
+test('unsupported API-Football season stops lineup import and returns a plan error without upstream text',async()=>{
+  const app=api({route:call=>call.url.includes('/matches?')?{data:[{id:1,status:'finished',league_code:'PL',season:'2026',match_date:'2026-09-01T19:00:00Z',home_club_id:24,away_club_id:31}]}:
+    call.url.includes('/club_provider_ids?')?{data:[{club_id:24,external_id:541},{club_id:31,external_id:50}]}:
+    {data:{errors:{plan:'secret upstream detail'},results:0,paging:{current:1,total:1},response:[]}}});
+  const result=await app.send({action:'prepare_match_lineup',match_id:1});
+  assert.equal(result.status,502);assert.equal(result.body.code,'provider_plan_restricted');
+  assert.doesNotMatch(JSON.stringify(result),/secret upstream|football-api-test-placeholder/);
+  assert.equal(app.calls.filter(c=>c.url.includes('api-sports.io')).length,1);
+  assert.equal(app.calls.some(c=>c.url.includes('/rpc/admin_stage_match_lineup')),false);
 });
 test('admin rejects unknown methods/actions and malformed or oversized parsed request bodies',async()=>{
   const app=api();assert.equal((await app.send({}, {method:'DELETE'})).status,405);

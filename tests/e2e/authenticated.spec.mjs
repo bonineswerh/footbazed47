@@ -214,7 +214,8 @@ test('оценка матча использует поле игроков и с
   await page.getByRole('button',{name:/Продолжить/}).click();
 
   await expect(page.locator('.rating-squad')).toHaveCount(2);
-  await expect(page.locator('.rating-player')).toHaveCount(12);
+  await expect(page.locator('.rating-player')).toHaveCount(22);
+  await expect(page.locator('.rating-player:enabled')).toHaveCount(12);
   await page.locator('#rating-player-5292').click();
   await expect(page.locator('#playerRatingName')).toHaveText('Jude Bellingham');
   await expect(page.locator('#playerRatingRange')).toHaveValue('8');

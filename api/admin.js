@@ -5,6 +5,7 @@
 const https = require('https');
 const {createApiFootballClient} = require('../server/football/api-football');
 const {prepareClubEmblems} = require('../server/football/club-emblems');
+const {prepareMatchLineup} = require('../server/football/match-lineups');
 
 const LEAGUES = Object.freeze({
   PL: 'Premier League',
@@ -565,6 +566,28 @@ module.exports = async function handler(req, res) {
       if (!prepared.items.length) return sendJson(res,200,{...prepared,batch:null,matched:0});
       const staged=await supabase('/rest/v1/rpc/admin_stage_club_emblems',{method:'POST',body:{p_items:prepared.items,p_league:league,p_season:body.season,p_actor:administrator.id}});
       return sendJson(res,200,{...prepared,...parseJson(staged.raw,{})});
+    }
+    if (action === 'prepare_match_lineup') {
+      if (!Number.isSafeInteger(body.match_id)||body.match_id<1) return sendJson(res,400,{error:'invalid_match_id'});
+      const response=await supabase(`/rest/v1/matches?id=eq.${body.match_id}&select=id,status,league_code,season,match_date,home_club_id,away_club_id,api_fixture_id&limit=1`);
+      const match=parseJson(response.raw,[])[0];
+      if (!match) return sendJson(res,404,{error:'match_not_found'});
+      if (match.status!=='finished') return sendJson(res,400,{error:'match_not_finished'});
+      const clubIds=[Number(match.home_club_id),Number(match.away_club_id)];
+      if (clubIds.some(id=>!Number.isSafeInteger(id)||id<1)) return sendJson(res,400,{error:'fixture_identity_unavailable'});
+      const clubs=await supabase(`/rest/v1/club_provider_ids?provider=eq.api-football&club_id=in.(${clubIds.join(',')})&select=club_id,external_id&limit=2`);
+      const prepared=await prepareMatchLineup(createApiFootballClient({requestBudget:4}),match,parseJson(clubs.raw,[]),async ids=>{
+        if(ids.length>60||ids.some(id=>!Number.isSafeInteger(id)||id<1))throw new Error('invalid_provider_player_ids');
+        const mapped=await supabase(`/rest/v1/player_provider_ids?provider=eq.api-football&external_id=in.(${ids.join(',')})&select=player_id,external_id&limit=60`);
+        return parseJson(mapped.raw,[]);
+      });
+      const staged=await supabase('/rest/v1/rpc/admin_stage_match_lineup',{method:'POST',body:{p_match_id:match.id,p_payload:prepared.payload,p_actor:administrator.id}});
+      return sendJson(res,200,{...parseJson(staged.raw,{}),preview:prepared.payload,quota:prepared.quota});
+    }
+    if (action === 'apply_match_lineup') {
+      if (!validBatch(body.batch)) return sendJson(res,400,{error:'invalid_lineup_batch'});
+      const response=await supabase('/rest/v1/rpc/admin_apply_match_lineup',{method:'POST',body:{p_batch:body.batch,p_actor:administrator.id}});
+      return sendJson(res,200,parseJson(response.raw,{}));
     }
     if (action === 'apply_club_emblems' || action === 'rollback_club_emblems') {
       if (!validBatch(body.batch)) return sendJson(res,400,{error:'Invalid emblem batch'});
