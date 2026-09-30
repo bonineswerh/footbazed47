@@ -17,6 +17,11 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await expect(page.locator('.player-hero h1')).toHaveText('Thibaut Courtois');
   await page.goto('/match/101?__e2e=1');
   await page.locator('.md-primary-action').click();
+  await expect(page.locator('#matchRatingRange')).toBeEnabled();
+  await page.locator('#matchRatingRange').press('End');
+  await page.locator('#matchRatingRange').press('ArrowLeft');
+  await expect(page.locator('#rScoreDisp')).toHaveText('9/10');
+  await expect(page.locator('#matchRatingRange')).toHaveAttribute('aria-valuetext','9 из 10 — Великолепно');
   await page.getByRole('button',{name:/Продолжить/}).click();
   await page.locator('#rating-player-5292').click();
   await page.locator('#playerRatingRange').press('End');

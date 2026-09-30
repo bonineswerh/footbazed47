@@ -50,6 +50,7 @@ for(const feature of [
   {name:'admin',script:'js/admin.js',style:'admin.css'},
   {name:'entities',script:'js/entities.js',style:'css/entities.css'},
   {name:'feed',script:'js/feed.js',style:'css/feed.css'},
+  {name:'ratings',script:'js/ratings.js',style:'css/ratings.css'},
   {name:'search',script:'js/search.js'}
 ]){
   if(html.includes(`src="${feature.script}?`)||(feature.style&&html.includes(`href="${feature.style}?`)))errors.push(`${feature.name} assets must not load eagerly`);

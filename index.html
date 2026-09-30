@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=59">
+  <link rel="stylesheet" href="styles.css?v=60">
   <link rel="stylesheet" href="css/match-editorial.css?v=2">
   <link rel="stylesheet" href="css/typography.css?v=4">
   <link rel="stylesheet" href="css/club-palettes.css?v=3">
@@ -510,6 +510,19 @@
       
       <div id="rS1">
         <div class="rate-match-context" id="rMI">Матч</div>
+        <section class="rate-score-panel" aria-labelledby="rateScorePrompt">
+          <span class="rate-score-prompt" id="rateScorePrompt">Насколько вам понравился матч?</span>
+          <div class="rate-score" id="rScoreDisp" data-tone="neutral">—</div>
+          <div class="rate-label" id="rScoreLabel" aria-live="polite">Выберите оценку</div>
+          <label class="sr-only" for="matchRatingRange">Оценка матча от 1 до 10</label>
+          <input class="rating-rail" id="matchRatingRange" type="range" min="1" max="10" step="1" value="5" data-tone="neutral" data-fbz-input="ratings.select-match-score" data-fbz-click="ratings.select-match-score" data-fbz-keydown="ratings.commit-match-score" aria-describedby="matchRatingHint">
+          <div class="rating-rail-labels" aria-hidden="true"><span>1 · Не понравился</span><span>10 · Исключительный</span></div>
+          <div class="rate-stars" id="starsR" data-tone="neutral" role="group" aria-label="Оценка матча от 1 до 10"></div>
+          <div class="rating-rail-footer">
+            <p class="rating-rail-hint" id="matchRatingHint">Передвиньте ползунок или выберите число</p>
+            <button class="rating-score-clear" id="matchRatingClear" type="button" data-fbz-click="ratings.clear-match-score" aria-label="Сбросить оценку матча" disabled>Сбросить</button>
+          </div>
+        </section>
         <fieldset class="rating-supporter-choice">
           <legend>С чьей позиции вы оцениваете матч?</legend>
           <p>Так оценки болельщиков обеих команд и нейтральных зрителей можно сравнить честно.</p>
@@ -519,13 +532,6 @@
             <label><input type="radio" name="ratingSupporterSide" value="away" data-fbz-change="shell.select-supporter-side"><span><i data-i="shield"></i><b id="rSupportAway">Вторая команда</b><small>Болею за гостей</small></span></label>
           </div>
         </fieldset>
-        <section class="rate-score-panel" aria-labelledby="rateScorePrompt">
-          <span class="rate-score-prompt" id="rateScorePrompt">Насколько вам понравился матч?</span>
-          <div class="rate-score" id="rScoreDisp" data-tone="neutral">—</div>
-          <div class="rate-label" id="rScoreLabel" aria-live="polite">Выберите оценку</div>
-          <div class="rate-stars" id="starsR" data-tone="neutral" role="group" aria-label="Оценка матча от 1 до 10"></div>
-          <div class="rate-scale-labels" aria-hidden="true"><span>Не понравился</span><span>Отличный матч</span></div>
-        </section>
         
         <label class="rating-public-toggle">
           <span><b>Показывать в профиле и ленте</b><small>Оценку и отзыв смогут увидеть другие пользователи</small></span>
@@ -542,7 +548,7 @@
       <div id="rS2" style="display:none;">
         <div class="rating-section-intro">
           <div><span>Необязательно</span><h3>Оцените игроков</h3></div>
-          <p>Выберите игрока на поле и поставьте оценку. Состав сгруппирован по позициям, а не по стартовой схеме.</p>
+          <p>Выберите игрока и поставьте оценку. Состав сгруппирован по позициям, а не по стартовой схеме.</p>
         </div>
         <div id="rPlayers"></div>
 
@@ -558,8 +564,8 @@
           </div>
           <div class="player-rating-label" id="playerRatingLabel" aria-live="polite">Передвиньте ползунок</div>
           <label class="sr-only" for="playerRatingRange">Оценка игрока от 1 до 10</label>
-          <input class="player-rating-range" id="playerRatingRange" type="range" min="1" max="10" step="1" value="5" data-tone="neutral" data-fbz-input="shell.set-active-player-score">
-          <div class="player-rating-scale" aria-hidden="true"><span>1</span><span>5</span><span>10</span></div>
+          <input class="rating-rail" id="playerRatingRange" type="range" min="1" max="10" step="1" value="5" data-tone="neutral" data-fbz-input="shell.set-active-player-score" data-fbz-click="shell.set-active-player-score" data-fbz-keydown="ratings.commit-player-score">
+          <div class="rating-rail-labels" aria-hidden="true"><span>1 · Слабо</span><span>10 · Исключительно</span></div>
           <div class="player-rating-editor-actions">
             <button class="player-rating-clear" type="button" data-fbz-click="shell.clear-active-player-rating">Сбросить</button>
             <button class="player-best-button" id="playerBestButton" type="button" data-fbz-click="shell.toggle-active-best" aria-pressed="false" disabled><span data-i="star"></span> Лучший игрок</button>
@@ -729,7 +735,7 @@
   <script src="js/feature-loader.js?v=1"></script>
   <script src="app.js?v=64"></script>
   <script src="js/auth.js?v=46"></script>
-  <script src="js/rating-loader.js?v=8"></script>
+  <script src="js/rating-loader.js?v=9"></script>
   <script src="js/matches.js?v=60"></script>
   <script src="js/account.js?v=41"></script>
 </body>

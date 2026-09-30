@@ -18,6 +18,7 @@ function isRatingCurrent(context){
 function setRatingLoading(loading){
   document.getElementById('rateOv').setAttribute('aria-busy',String(loading));
   document.querySelectorAll('#rS1 input,.rate-star,#rS1 button[data-fbz-click="shell.r-next"],#rSave,#rDelete').forEach(control=>{control.disabled=loading;});
+  document.getElementById('matchRatingClear').disabled=loading||rScore===null;
 }
 
 document.getElementById('rateOv')?.addEventListener('fbz:overlay-close',()=>{ratingContext=null;});
@@ -81,9 +82,9 @@ const POSITION_GROUP={
 };
 const POSITION_ORDER={GK:1,Goalkeeper:1,CB:2,'Centre-Back':2,LB:3,'Left-Back':3,RB:4,'Right-Back':4,Defence:5,DM:6,'Defensive Midfield':6,CM:7,'Central Midfield':7,AM:8,'Attacking Midfield':8,LM:9,RM:10,Midfield:11,LW:12,'Left Winger':12,RW:13,'Right Winger':13,ST:14,'Centre-Forward':14,Offence:15};
 const POSITION_LABEL={gk:'Вратари',def:'Защита',mid:'Полузащита',att:'Атака',other:'Другие'};
-const RATING_LABELS=['','Ужасно','Плохо','Слабо','Ниже среднего','Средне','Неплохо','Хорошо','Отлично','Великолепно','Шедевр'];
+const RATING_LABELS=['','Ужасно','Плохо','Слабо','Ниже среднего','Средне','Неплохо','Хорошо','Отлично','Великолепно','Исключительно'];
 
-async function openRate(mid){
+async function openRatingForm(mid){
   if(!CU){openAuth();return;}
   const matchId=Number(mid);
   if(!Number.isSafeInteger(matchId)||matchId<1)return;
@@ -148,6 +149,7 @@ function resetRatingForm(){
     button.className='rate-star';
     button.type='button';
     button.setAttribute('aria-label',`${value} из 10 — ${RATING_LABELS[value]}`);
+    button.setAttribute('aria-pressed','false');
     button.innerHTML=`<span class="rate-star-num">${value}</span>`;
     button.onclick=()=>selScore(value,RATING_LABELS);
     row.appendChild(button);
@@ -156,6 +158,7 @@ function resetRatingForm(){
   document.getElementById('rScoreDisp').classList.remove('active');
   document.getElementById('rScoreDisp').dataset.tone='neutral';
   document.getElementById('rScoreLabel').textContent='Выберите оценку';
+  updateMatchRatingRail(null);
   document.getElementById('rSupportHome').textContent='Первая команда';
   document.getElementById('rSupportAway').textContent='Вторая команда';
   document.getElementById('rCmt').value='';
@@ -177,6 +180,8 @@ function setRatingMode(existing){
 }
 
 function selScore(value,labels=RATING_LABELS){
+  value=Number(value);
+  if(!Number.isInteger(value)||value<1||value>10)return;
   rScore=value;
   document.querySelectorAll('.rate-star').forEach((button,index)=>{
     const filled=index<value;
@@ -186,11 +191,59 @@ function selScore(value,labels=RATING_LABELS){
     button.setAttribute('aria-pressed',String(selected));
   });
   const display=document.getElementById('rScoreDisp');
-  display.textContent=value+'/10';
+  renderRatingValue(display,value);
   display.classList.add('active');
   display.dataset.tone=window.FBZDomain.ratingTone(value);
   document.getElementById('starsR').dataset.tone=window.FBZDomain.ratingTone(value);
   document.getElementById('rScoreLabel').textContent=labels[value]||'';
+  updateMatchRatingRail(value);
+}
+
+function renderRatingValue(element,score){
+  if(!Number.isInteger(score)||score<1||score>10){element.textContent='—';return;}
+  const number=document.createElement('span');
+  number.className='rating-score-number';
+  number.textContent=String(score);
+  const total=document.createElement('span');
+  total.className='rating-score-total';
+  total.textContent='/10';
+  element.replaceChildren(number,total);
+}
+
+function syncRatingRail(range,score){
+  const selected=Number.isInteger(score)&&score>=1&&score<=10;
+  range.value=selected?score:5;
+  range.dataset.tone=window.FBZDomain.ratingTone(selected?score:null);
+  range.dataset.selected=String(selected);
+  range.style.setProperty('--rating-progress',`${((Number(range.value)-1)/9)*100}%`);
+  range.setAttribute('aria-valuetext',selected?`${score} из 10 — ${RATING_LABELS[score]}`:'Оценка не выбрана. Начальное положение — 5 из 10. Нажмите Enter, чтобы выбрать 5.');
+}
+
+function updateMatchRatingRail(score){
+  syncRatingRail(document.getElementById('matchRatingRange'),score);
+  document.getElementById('matchRatingClear').disabled=score===null||!ratingContext?.ready;
+}
+
+function clearMatchScore(){
+  rScore=null;
+  document.querySelectorAll('.rate-star').forEach(button=>{
+    button.classList.remove('on','selected');
+    button.setAttribute('aria-pressed','false');
+  });
+  document.getElementById('starsR').dataset.tone='neutral';
+  const display=document.getElementById('rScoreDisp');
+  renderRatingValue(display,null);
+  display.classList.remove('active');
+  display.dataset.tone='neutral';
+  document.getElementById('rScoreLabel').textContent='Выберите оценку';
+  updateMatchRatingRail(null);
+  document.getElementById('matchRatingRange').focus({preventScroll:true});
+}
+
+function commitRailKey(event,element,setScore){
+  if(event.key!=='Enter'&&event.key!==' ')return;
+  event.preventDefault();
+  setScore(Number(element.value));
 }
 
 function selectSupporterSide(side){
@@ -202,19 +255,23 @@ function selectSupporterSide(side){
 
 function rBack(){
   closePlayerRatingEditor(false);
+  document.querySelector('.rate-box').classList.add('is-match-step');
   document.getElementById('rS1').style.display='block';
   document.getElementById('rS2').style.display='none';
   document.getElementById('ss1').classList.add('on');
   document.getElementById('ss2').classList.remove('on');
+  document.querySelector('.rate-box').scrollTop=0;
 }
 
 function rNext(){
   if(!ratingContext?.ready)return;
   if(!rSupporterSide){toast('Выберите, за какую сторону вы болеете','err');document.querySelector('input[name="ratingSupporterSide"]')?.focus();return;}
   if(!rScore){toast('Выберите оценку','err');return;}
+  document.querySelector('.rate-box').classList.remove('is-match-step');
   document.getElementById('rS1').style.display='none';
   document.getElementById('rS2').style.display='block';
   document.getElementById('ss2').classList.add('on');
+  document.querySelector('.rate-box').scrollTop=0;
   document.querySelector('#rS2 .rating-player, #rS2 textarea')?.focus({preventScroll:true});
 }
 
@@ -335,12 +392,10 @@ function updatePlayerRatingEditor(score){
   if(!value||!range)return;
   const tone=window.FBZDomain.ratingTone(score);
   const hasScore=Number.isInteger(score)&&score>=1&&score<=10;
-  value.textContent=hasScore?`${score}/10`:'—';
+  renderRatingValue(value,score);
   value.dataset.tone=tone;
-  label.textContent=hasScore?RATING_LABELS[score]:'Передвиньте ползунок';
-  range.style.setProperty('--rating-progress',hasScore?`${((score-1)/9)*100}%`:'0%');
-  range.dataset.tone=tone;
-  range.setAttribute('aria-valuetext',hasScore?`${score} из 10 — ${RATING_LABELS[score]}`:'Оценка не выбрана. Начальное положение — 5 из 10.');
+  label.textContent=hasScore?RATING_LABELS[score]:'Выберите оценку на шкале';
+  syncRatingRail(range,score);
   best.disabled=!hasScore;
   best.classList.toggle('on',Number(rBest)===Number(rActivePlayer));
   best.setAttribute('aria-pressed',String(Number(rBest)===Number(rActivePlayer)));
@@ -524,13 +579,17 @@ function refreshAfterRatingChange(matchId){
   else if(CP==='feed')loadFeed();
 }
 
+window.FBZRatings=Object.freeze({open:openRatingForm});
 window.__FOOTBAZED_RATINGS_READY__=true;
-window.openRate=openRate;
 window.selectSupporterSide=selectSupporterSide;
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
-  "ratings.open-rate":(event,element,[id])=>openRate(id),
+  "ratings.select-match-score":(event,element)=>selScore(element.value),
+  "ratings.clear-match-score":()=>clearMatchScore(),
+  "ratings.commit-match-score":(event,element)=>commitRailKey(event,element,selScore),
+  "ratings.commit-player-score":(event,element)=>commitRailKey(event,element,setActivePlayerScore),
+  "ratings.open-rate":(event,element,[id])=>window.openRate(id),
   "ratings.show-rating-team-home":(event,element)=>showRatingTeam('home',element),
   "ratings.show-rating-team-away":(event,element)=>showRatingTeam('away',element),
   "ratings.open-player-rating":(event,element,[id])=>openPlayerRating(id)

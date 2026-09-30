@@ -51,5 +51,5 @@ test('home stays inside the frontend performance budget',async({page},testInfo)=
   expect(result.assetPaths).not.toContain('/admin.css');
   expect(result.assetPaths).not.toContain('/js/entities.js');
   expect(result.assetPaths).not.toContain('/css/entities.css');
-  for(const path of ['/js/search.js','/js/profile.js','/css/profile.css','/js/share.js'])expect(result.assetPaths).not.toContain(path);
+  for(const path of ['/js/search.js','/js/profile.js','/css/profile.css','/js/share.js','/js/ratings.js','/css/ratings.css'])expect(result.assetPaths).not.toContain(path);
 });

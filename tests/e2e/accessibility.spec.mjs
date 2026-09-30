@@ -104,6 +104,9 @@ for(const scenario of [
     await prepare(page);
     await page.goto('/match/101?__e2e=1');
     await page.locator('.md-primary-action').click();
+    await expect(page.locator('#matchRatingRange')).toBeEnabled();
+    await expect(page.locator('#rateOv')).toHaveCSS('opacity','1');
+    await expectNoSignificantWcagViolations(page,'#rateOv');
     await page.getByRole('button',{name:/Продолжить/}).click();
     await page.locator('#rating-player-5292').click();
     await expect(page.locator('#playerRatingEditor')).toBeVisible();
