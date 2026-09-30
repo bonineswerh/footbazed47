@@ -495,6 +495,199 @@ export type Database = {
           },
         ]
       }
+      match_lineup_batches: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          identity: Json
+          match_id: number
+          payload: Json
+          result: Json | null
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          identity: Json
+          match_id: number
+          payload: Json
+          result?: Json | null
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          identity?: Json
+          match_id?: number
+          payload?: Json
+          result?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_lineup_batches_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_lineups: {
+        Row: {
+          away_club_id: number
+          away_formation: string | null
+          events_available: boolean
+          fixture_id: number
+          home_club_id: number
+          home_formation: string | null
+          match_id: number
+          obtained_at: string
+          provider: string
+          statistics_available: boolean
+        }
+        Insert: {
+          away_club_id: number
+          away_formation?: string | null
+          events_available?: boolean
+          fixture_id: number
+          home_club_id: number
+          home_formation?: string | null
+          match_id: number
+          obtained_at?: string
+          provider?: string
+          statistics_available?: boolean
+        }
+        Update: {
+          away_club_id?: number
+          away_formation?: string | null
+          events_available?: boolean
+          fixture_id?: number
+          home_club_id?: number
+          home_formation?: string | null
+          match_id?: number
+          obtained_at?: string
+          provider?: string
+          statistics_available?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_lineups_away_club_id_fkey"
+            columns: ["away_club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_lineups_home_club_id_fkey"
+            columns: ["home_club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_lineups_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: true
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_player_appearances: {
+        Row: {
+          assists: number | null
+          club_id: number
+          entered_extra: number | null
+          entered_minute: number | null
+          goals: number | null
+          grid: string | null
+          left_extra: number | null
+          left_minute: number | null
+          match_id: number
+          minutes_played: number | null
+          missed_penalties: number | null
+          name: string
+          own_goals: number | null
+          participation: string
+          player_id: number | null
+          position: string | null
+          provider_player_id: number
+          red_cards: number | null
+          shirt_number: number | null
+          yellow_cards: number | null
+        }
+        Insert: {
+          assists?: number | null
+          club_id: number
+          entered_extra?: number | null
+          entered_minute?: number | null
+          goals?: number | null
+          grid?: string | null
+          left_extra?: number | null
+          left_minute?: number | null
+          match_id: number
+          minutes_played?: number | null
+          missed_penalties?: number | null
+          name: string
+          own_goals?: number | null
+          participation: string
+          player_id?: number | null
+          position?: string | null
+          provider_player_id: number
+          red_cards?: number | null
+          shirt_number?: number | null
+          yellow_cards?: number | null
+        }
+        Update: {
+          assists?: number | null
+          club_id?: number
+          entered_extra?: number | null
+          entered_minute?: number | null
+          goals?: number | null
+          grid?: string | null
+          left_extra?: number | null
+          left_minute?: number | null
+          match_id?: number
+          minutes_played?: number | null
+          missed_penalties?: number | null
+          name?: string
+          own_goals?: number | null
+          participation?: string
+          player_id?: number | null
+          position?: string | null
+          provider_player_id?: number
+          red_cards?: number | null
+          shirt_number?: number | null
+          yellow_cards?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_player_appearances_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_player_appearances_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "match_lineups"
+            referencedColumns: ["match_id"]
+          },
+          {
+            foreignKeyName: "match_player_appearances_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           api_fixture_id: number | null
@@ -675,6 +868,35 @@ export type Database = {
             columns: ["rating_id"]
             isOneToOne: false
             referencedRelation: "ratings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_provider_ids: {
+        Row: {
+          created_at: string
+          external_id: number
+          player_id: number
+          provider: string
+        }
+        Insert: {
+          created_at?: string
+          external_id: number
+          player_id: number
+          provider: string
+        }
+        Update: {
+          created_at?: string
+          external_id?: number
+          player_id?: number
+          provider?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_provider_ids_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
             referencedColumns: ["id"]
           },
         ]
@@ -1078,6 +1300,10 @@ export type Database = {
         Args: { p_actor: string; p_batch: string }
         Returns: Json
       }
+      admin_apply_match_lineup: {
+        Args: { p_actor: string; p_batch: string }
+        Returns: Json
+      }
       admin_apply_prepared_catalog: {
         Args: { p_batch: string; p_confirmation: string }
         Returns: Json
@@ -1101,6 +1327,10 @@ export type Database = {
           p_league: string
           p_season: number
         }
+        Returns: Json
+      }
+      admin_stage_match_lineup: {
+        Args: { p_actor: string; p_match_id: number; p_payload: Json }
         Returns: Json
       }
       are_friends: {
@@ -1165,6 +1395,7 @@ export type Database = {
         Returns: Json
       }
       get_match_insights: { Args: { p_match_id: number }; Returns: Json }
+      get_match_lineup: { Args: { p_match_id: number }; Returns: Json }
       get_matches_page: {
         Args: {
           p_league?: string
@@ -1245,6 +1476,16 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_confirmed_or_unchanged_player_rating: {
+        Args: {
+          p_best: boolean
+          p_match: number
+          p_player: number
+          p_rating: number
+          p_user: string
+        }
+        Returns: boolean
+      }
       is_displayable_media_asset: {
         Args: { p_asset: Database["public"]["Tables"]["media_assets"]["Row"] }
         Returns: boolean

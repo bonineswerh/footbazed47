@@ -69,13 +69,10 @@ async function openRatingForm(mid){
     }
     context.match=match;
     context.playerScores=playerScores||[];
+    context.playerScores.forEach(item=>{rPS[item.player_id]=Number(item.rating);if(item.is_best_player)rBest=item.player_id;});
     await loadRatePlayers(match,context);
     if(!isRatingCurrent(context))return;
-    (playerScores||[]).forEach(item=>{
-      rPS[item.player_id]=Number(item.rating);
-      updatePlayerRatingVisual(item.player_id);
-      if(item.is_best_player)rBest=item.player_id;
-    });
+    Object.keys(rPS).forEach(updatePlayerRatingVisual);
     syncBestPlayerVisuals();
     context.ready=true;
     setRatingLoading(false);
@@ -242,13 +239,22 @@ async function loadRatePlayers(match,context){
   if(!players.length){
     container.innerHTML=`<div class="rating-roster-empty" role="status">${ico('football',22)}<strong>${failed?'Не удалось загрузить состав':'Состав этого матча пока недоступен'}</strong><p>Для оценки игроков нужно подтверждение их участия именно в этой игре.</p><span>Оценку матча и рецензию можно сохранить сейчас.</span>${failed?`<button type="button" class="btn btn-g btn-sm" data-fbz-click="ratings.retry-lineup">Повторить загрузку состава</button>`:''}</div>`;
   }else{
-    container.innerHTML=`<p class="rating-lineup-note">${ico('check',14)} Состав на этот матч · ${lineup.provider==='api-football'?'API-Football':'подтверждённое участие'}</p><div class="rating-team-tabs" role="group" aria-label="Выберите команду">
+    container.innerHTML=`<p class="rating-lineup-note">${ico('check',14)} Состав на этот матч · ${lineup.provider==='api-football'?'API-Football':'подтверждённое участие'}</p>${players.some(p=>!p.eligible)?'<p class="rating-lineup-note">Для части игроков оценки пока недоступны.</p>':''}<div class="rating-team-tabs" role="group" aria-label="Выберите команду">
       <button class="on" type="button" aria-pressed="true" aria-controls="rating-squad-home" data-fbz-click="ratings.show-rating-team-home">${esc(match.home_team_name)}</button>
       <button type="button" aria-pressed="false" aria-controls="rating-squad-away" data-fbz-click="ratings.show-rating-team-away">${esc(match.away_team_name)}</button>
     </div><div class="rating-squad-grid">${renderTeamSquad(match.home_team_name,players.filter(p=>Number(p.club_id)===Number(lineup.home.club_id)),'home',lineup.home.formation)}${renderTeamSquad(match.away_team_name,players.filter(p=>Number(p.club_id)===Number(lineup.away.club_id)),'away',lineup.away.formation)}</div>`;
   }
-  const legacy=context.playerScores.filter(item=>!ratingPlayers.has(Number(item.player_id)));
-  if(legacy.length)container.insertAdjacentHTML('beforeend',`<section class="rating-legacy"><h3>Ранее сохранённые оценки</h3><p>Участие этих игроков ещё не подтверждено. Ваши оценки сохранятся вместе с рецензией.</p><ul>${legacy.map(item=>`<li><span>${esc(item.player?.name||`Игрок №${Number(item.player_id)}`)}</span><strong data-tone="${FBZDomain.ratingTone(item.rating)}">${Number(item.rating)}/10</strong></li>`).join('')}</ul></section>`);
+  const legacy=context.playerScores.filter(item=>!ratingPlayers.has(Number(item.player_id))&&rPS[item.player_id]!=null);
+  if(legacy.length)container.insertAdjacentHTML('beforeend',`<section class="rating-legacy"><h3>Ранее сохранённые оценки</h3><p>Участие этих игроков ещё не подтверждено. Ваши оценки сохранятся вместе с рецензией. Удаление выбранных оценок вступит в силу после сохранения.</p><ul>${legacy.map(item=>`<li data-legacy-player-id="${Number(item.player_id)}"><span>${esc(item.player?.name||`Игрок №${Number(item.player_id)}`)}</span><strong data-tone="${FBZDomain.ratingTone(item.rating)}">${Number(item.rating)}/10</strong><button type="button" class="btn btn-g btn-sm" aria-label="Убрать ранее сохранённую оценку ${esc(item.player?.name||'игрока')}" ${FBZActions.attrs('ratings.clear-legacy',[Number(item.player_id)])}>Убрать</button></li>`).join('')}</ul></section>`);
+}
+
+function clearLegacyRating(id){
+  if(!isRatingCurrent(ratingContext)||ratingContext.saving||ratingPlayers.has(Number(id)))return;
+  delete rPS[id];if(Number(rBest)===Number(id))rBest=null;
+  const row=document.querySelector(`[data-legacy-player-id="${Number(id)}"]`),section=row?.closest('.rating-legacy');
+  const next=row?.nextElementSibling?.querySelector('button')||row?.previousElementSibling?.querySelector('button')||document.getElementById('rCmt');row?.remove();
+  if(!section?.querySelector('li'))section?.remove();
+  next?.focus({preventScroll:true});
 }
 
 async function retryLineup(){
@@ -266,10 +272,11 @@ function renderTeamSquad(teamName,players,side,formation){
   const onGrid=starters.length>0&&starters.every(p=>/^[1-6]:[1-5]$/u.test(p.grid||''));
   starters.forEach(player=>{const key=onGrid?player.grid.split(':')[0]:POSITION_GROUP[player.position]||'other';(groups[key]??=[]).push(player);});
   let html=`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(teamName)}"><header class="rating-team-head"><div><span>${side==='home'?'Хозяева':'Гости'} · Стартовый состав</span><h3>${esc(teamName)}</h3></div><small>${esc(formation||'Схема недоступна')}</small></header><div class="rating-pitch">`;
-  (onGrid?Object.keys(groups).sort((a,b)=>Number(b)-Number(a)):['att','mid','def','gk','other']).forEach(group=>{
+  (onGrid?Object.keys(groups).sort((a,b)=>Number(a)-Number(b)):['gk','def','mid','att','other']).forEach(group=>{
     if(!groups[group]?.length)return;
     groups[group].sort((a,b)=>onGrid?Number(a.grid.split(':')[1])-Number(b.grid.split(':')[1]):String(a.name).localeCompare(String(b.name),'ru'));
-    const label=onGrid?`Линия ${group}`:POSITION_LABEL[group];
+    const positions=[...new Set(groups[group].map(p=>POSITION_GROUP[p.position]))];
+    const label=onGrid?(positions.length===1?POSITION_LABEL[positions[0]]:'Стартовый состав'):POSITION_LABEL[group];
     html+=`<div class="rating-pitch-line rating-line-${group}" aria-label="${label}"><span class="rating-position">${label}</span><div class="rating-player-row" style="--player-count:${Math.min(groups[group].length,5)}">${groups[group].map(renderPlayerRating).join('')}</div></div>`;
   });
   html+='</div>';
@@ -298,7 +305,6 @@ function renderPlayerRating(player){
     <span class="rating-player-name">${esc(player.name)}</span>
     <span class="rating-player-position">${esc(POSITION_LABEL[POSITION_GROUP[player.position]]||({G:'Вратарь',D:'Защитник',M:'Полузащитник',F:'Нападающий'})[player.position]||player.position||'—')}</span>
     ${details.length?`<span class="rating-player-events">${esc(details.join(' · '))}</span>`:''}
-    ${eligible?'':'<span class="rating-player-events">Оценивание пока недоступно</span>'}
   </button>`;
 }
 
@@ -312,6 +318,7 @@ function openPlayerRating(id){
   rActivePlayer=Number(id);
   const editor=document.getElementById('playerRatingEditor');
   editor.hidden=false;
+  document.getElementById('rPlayers').inert=true;
   document.getElementById('playerRatingInitials').textContent=playerInitials(player.name);
   document.getElementById('playerRatingName').textContent=player.name;
   document.getElementById('playerRatingMeta').textContent=`${player.team||''}${player.position?' · '+player.position:''}`;
@@ -326,6 +333,7 @@ function closePlayerRatingEditor(returnFocus=true){
   const activeId=rActivePlayer;
   const editor=document.getElementById('playerRatingEditor');
   if(editor)editor.hidden=true;
+  document.getElementById('rPlayers').inert=false;
   rActivePlayer=null;
   if(returnFocus&&activeId)document.getElementById(`rating-player-${activeId}`)?.focus({preventScroll:true});
 }
@@ -537,6 +545,7 @@ FBZActions.register({
   "ratings.commit-player-score":(event,element)=>commitRailKey(event,element,setActivePlayerScore),
   "ratings.open-rate":(event,element,[id])=>window.openRate(id),
   "ratings.retry-lineup":()=>retryLineup(),
+  "ratings.clear-legacy":(event,element,[id])=>clearLegacyRating(id),
   "ratings.show-rating-team-home":(event,element)=>showRatingTeam('home',element),
   "ratings.show-rating-team-away":(event,element)=>showRatingTeam('away',element),
   "ratings.open-player-rating":(event,element,[id])=>openPlayerRating(id)

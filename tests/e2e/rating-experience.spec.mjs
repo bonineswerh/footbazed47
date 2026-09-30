@@ -28,6 +28,15 @@ test('lineup read failure offers retry without disabling match ratings or queryi
   expect((await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastRating())).p_player_ratings).toHaveLength(2);
 });
 
+test('removing a legacy player score is an explicit draft change and preserves the other score',async({page})=>{
+  await installSupabaseMock(page,{lineup:{available:false,players:[]}});
+  await page.goto('/match/101?__e2e=1');await page.locator('.md-primary-action').click();
+  await page.getByRole('button',{name:/Продолжить/}).click();
+  await page.getByRole('button',{name:'Убрать ранее сохранённую оценку Thibaut Courtois'}).click();
+  await expect(page.locator('.rating-legacy li')).toHaveCount(1);await page.locator('#rSave').click();
+  expect((await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastRating())).p_player_ratings).toEqual([{player_id:5292,rating:8,is_best_player:false}]);
+});
+
 test('rating CSS can be retried without bypassing the loader or duplicating JavaScript',async({page})=>{
   let styles=0,scripts=0;
   await page.route('**/css/ratings.css*',route=>++styles===1?route.abort():route.continue());
