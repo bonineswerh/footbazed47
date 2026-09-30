@@ -241,9 +241,12 @@ function clearMatchScore(){
 }
 
 function commitRailKey(event,element,setScore){
-  if(event.key!=='Enter'&&event.key!==' ')return;
+  if(element.disabled||event.ctrlKey||event.metaKey||event.altKey)return;
+  const value=Number(element.value);
+  const keys={Home:1,End:10,ArrowLeft:Math.max(1,value-1),ArrowDown:Math.max(1,value-1),ArrowRight:Math.min(10,value+1),ArrowUp:Math.min(10,value+1),Enter:value,' ':value};
+  if(!Object.hasOwn(keys,event.key))return;
   event.preventDefault();
-  setScore(Number(element.value));
+  setScore(keys[event.key]);
 }
 
 function selectSupporterSide(side){
