@@ -71,7 +71,7 @@ begin
       case when version_two then match_date else created_at end,'id',id) from page
       order by (case when version_two then match_date else created_at end),id limit 1),
     'months',coalesce((select jsonb_agg(to_jsonb(x) order by x.month desc) from (
-      select to_char(v.match_date at time zone 'UTC','YYYY-MM') month,count(*) matches,
+      select to_char(v.match_date at time zone 'UTC','YYYY-MM') as month,count(*) matches,
         round(avg(v.match_rating),1) average,count(*) filter(where v.has_review) reviews
       from filtered v where to_char(v.match_date at time zone 'UTC','YYYY-MM') in
         (select to_char(p.match_date at time zone 'UTC','YYYY-MM') from page p)
