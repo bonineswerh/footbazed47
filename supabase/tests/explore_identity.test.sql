@@ -8,9 +8,9 @@ insert into auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data,cr
 insert into public.users(id,username,is_public) values
 ('14000000-0000-0000-0000-000000000001','explore_owner',true),
 ('14000000-0000-0000-0000-000000000002','explore_private',false);
-insert into public.media_assets(id,asset_type,source_provider,source_url,usage_status,license_name) overriding system value values
-(970001,'club_logo','fixture','https://example.test/club.png','verified','Test fixture only'),
-(970002,'club_logo','fixture','https://example.test/unknown.png','unknown',null);
+insert into public.media_assets(id,asset_type,source_provider,source_url,usage_status,license_name,verified_at) overriding system value values
+(970001,'club_logo','fixture','https://example.test/club.png','verified','Test fixture only',now()),
+(970002,'club_logo','fixture','https://example.test/unknown.png','unknown',null,null);
 insert into public.clubs(id,name,logo_asset_id) overriding system value values
 (970001,'Renamed Home',970001),(970002,'Original Away',970002),(970003,'Other Home',null);
 insert into public.competitions(id,name) overriding system value values(970001,'ID Tournament A'),(970002,'ID Tournament B');
