@@ -113,16 +113,21 @@ export async function installSupabaseMock(page,overrides={}){
       }
       if(name==='get_profile_diary'){
         const f=args.p_filters||{},cursor=args.p_cursor,limit=args.p_limit||8;
-        const visible=state.diary||state.feed.filter(r=>r.user_id===args.p_user_id).map(r=>({id:r.rating_id,user_id:r.user_id,match_id:r.match_id,match_rating:r.match_rating,is_public:true,created_at:r.created_at,...r.match}));
-        const filtered=visible.filter(r=>(!f.query||`${r.home_team_name} ${r.away_team_name}`.toLowerCase().includes(f.query.toLowerCase()))&&(!f.league||r.league_name===f.league)&&(!f.team||[r.home_team_name,r.away_team_name].includes(f.team))&&(!f.from||r.match_date.slice(0,10)>=f.from)&&(!f.to||r.match_date.slice(0,10)<=f.to)&&(!f.min_rating||r.match_rating>=Number(f.min_rating))&&(!f.max_rating||r.match_rating<=Number(f.max_rating))&&(!f.home_score||r.home_score===Number(f.home_score))&&(!f.away_score||r.away_score===Number(f.away_score))).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id-a.id);
-        const remaining=filtered.filter(r=>!cursor||r.created_at<cursor.created_at||r.created_at===cursor.created_at&&r.id<cursor.id),items=remaining.slice(0,limit),last=items.at(-1);
-        return promiseResult({items,total:filtered.length,has_more:remaining.length>limit,next_cursor:last?{created_at:last.created_at,id:last.id}:null,leagues:[...new Set(visible.map(r=>r.league_name))],teams:[...new Set(visible.flatMap(r=>[r.home_team_name,r.away_team_name]))]});
+        const visible=state.diary||state.feed.filter(r=>r.user_id===args.p_user_id).map(r=>({...state.matches.find(m=>m.id===r.match_id),...r.match,id:r.rating_id,user_id:r.user_id,match_id:r.match_id,match_rating:r.match_rating,is_public:true,created_at:r.created_at}));
+        const dateKey=f.v==='2'?'match_date':'created_at';
+        const filtered=visible.filter(r=>(!f.query||`${r.home_team_name} ${r.away_team_name}`.toLowerCase().includes(f.query.toLowerCase()))&&(!f.competition_id||r.competition_id===Number(f.competition_id))&&(!f.club_id||[r.home_club_id,r.away_club_id].includes(Number(f.club_id)))&&(!f.league||r.league_name===f.league)&&(!f.team||[r.home_team_name,r.away_team_name].includes(f.team))&&(!f.from||r.match_date.slice(0,10)>=f.from)&&(!f.to||r.match_date.slice(0,10)<=f.to)&&(!f.min_rating||r.match_rating>=Number(f.min_rating))&&(!f.max_rating||r.match_rating<=Number(f.max_rating))&&(!f.home_score||r.home_score===Number(f.home_score))&&(!f.away_score||r.away_score===Number(f.away_score))).sort((a,b)=>b[dateKey].localeCompare(a[dateKey])||b.id-a.id);
+        const remaining=filtered.filter(r=>!cursor||r[dateKey]<cursor[dateKey]||r[dateKey]===cursor[dateKey]&&r.id<cursor.id),items=remaining.slice(0,limit),last=items.at(-1);
+        const months=[...new Set(items.map(r=>r.match_date.slice(0,7)))].map(month=>{const rows=filtered.filter(r=>r.match_date.startsWith(month));return{month,matches:rows.length,average:rows.reduce((sum,r)=>sum+r.match_rating,0)/rows.length};});
+        const competitions=[...new Map(visible.filter(r=>r.competition_id).map(r=>[r.competition_id,{id:r.competition_id,name:r.league_name}])).values()];
+        const clubs=[...new Set(visible.flatMap(r=>[r.home_club_id,r.away_club_id]).filter(Boolean))].map(id=>{const rows=visible.filter(r=>[r.home_club_id,r.away_club_id].includes(id)),r=rows[0];return{id,name:r.home_club_id===id?r.home_team_name:r.away_team_name,competition_ids:[...new Set(rows.map(r=>r.competition_id))]};});
+        return promiseResult({items,total:filtered.length,has_more:remaining.length>limit,next_cursor:last?{[dateKey]:last[dateKey],id:last.id}:null,months,competitions,clubs});
       }
       if(name==='get_football_statistics'){
         const f=args.p_filters||{},kind=args.p_kind||'matches',offset=args.p_offset||0,limit=args.p_limit||12;
-        const base=state.feed.filter(r=>(!f.league||r.match.league_name===f.league)&&(!f.team||[r.match.home_team_name,r.match.away_team_name].includes(f.team))&&(!f.from||r.match.match_date.slice(0,10)>=f.from)&&(!f.to||r.match.match_date.slice(0,10)<=f.to));
+        const catalogue=state.matches;
+        const base=state.feed.map(r=>({...r,match:{...catalogue.find(m=>m.id===r.match_id),...r.match}})).filter(r=>(!f.competition_id||r.match.competition_id===Number(f.competition_id))&&(!f.club_id||[r.match.home_club_id,r.match.away_club_id].includes(Number(f.club_id)))&&(!f.league||r.match.league_name===f.league)&&(!f.team||[r.match.home_team_name,r.match.away_team_name].includes(f.team))&&(!f.from||r.match.match_date.slice(0,10)>=f.from)&&(!f.to||r.match.match_date.slice(0,10)<=f.to));
         const groups=new Map();
-        const add=(id,title,subtitle,r,score=r.match_rating)=>{const key=String(id),g=groups.get(key)||{entity_key:key,entity_id:id,title,subtitle,scores:[],people:new Set(),latest:r.match.match_date,home_score:r.match.home_score,away_score:r.match.away_score};g.scores.push(score);g.people.add(r.user_id);groups.set(key,g);};
+        const add=(id,title,subtitle,r,score=r.match_rating)=>{const key=String(id),g=groups.get(key)||{...r.match,entity_key:key,entity_id:id,title,subtitle,scores:[],people:new Set(),latest:r.match.match_date,home_score:r.match.home_score,away_score:r.match.away_score};g.scores.push(score);g.people.add(r.user_id);groups.set(key,g);};
         for(const r of base){const m=r.match;
           if(kind==='matches')add(r.match_id,`${m.home_team_name} — ${m.away_team_name}`,m.league_name,r);
           if(kind==='leagues')add(7,m.league_name,'Турнир',r);
@@ -130,7 +135,9 @@ export async function installSupabaseMock(page,overrides={}){
           if(kind==='players')for(const pr of state.playerRatings.filter(p=>p.match_id===r.match_id&&p.user_id===r.user_id)){const p=state.players.find(p=>p.id===pr.player_id);add(p.id,p.name,p.team,r,pr.rating);}
         }
         const rows=[...groups.values()].map(g=>({...g,average:g.scores.reduce((a,b)=>a+b,0)/g.scores.length,votes:g.scores.length,voters:g.people.size})).filter(g=>g.votes>=Number(f.min_votes||1)&&(!f.query||`${g.title} ${g.subtitle}`.toLowerCase().includes(f.query.toLowerCase()))).sort((a,b)=>f.sort==='votes'?b.votes-a.votes:b.average-a.average).map((g,i)=>({...g,rank:i+1}));
-        return promiseResult({items:rows.slice(offset,offset+limit),total:rows.length,has_more:rows.length>offset+limit,next_offset:offset+limit,summary:{votes:base.length,matches:new Set(base.map(r=>r.match_id)).size,voters:new Set(base.map(r=>r.user_id)).size},leagues:[...new Set(state.matches.map(m=>m.league_name))],teams:[...new Set(state.matches.flatMap(m=>[m.home_team_name,m.away_team_name]))]});
+        const competitions=[...new Map(catalogue.map(m=>[m.competition_id,{id:m.competition_id,name:m.league_name}])).values()];
+        const clubs=[...new Set(catalogue.flatMap(m=>[m.home_club_id,m.away_club_id]))].map(id=>{const matches=catalogue.filter(m=>[m.home_club_id,m.away_club_id].includes(id)),m=matches[0];return{id,name:m.home_club_id===id?m.home_team_name:m.away_team_name,competition_ids:[...new Set(matches.map(m=>m.competition_id))]};});
+        return promiseResult({items:rows.slice(offset,offset+limit),total:rows.length,has_more:rows.length>offset+limit,next_offset:offset+limit,summary:{votes:base.length,matches:new Set(base.map(r=>r.match_id)).size,voters:new Set(base.map(r=>r.user_id)).size},competitions,clubs});
       }
       if(name==='get_my_profile')return promiseResult(structuredClone(state.profile));
       if(name==='save_match_rating'){

@@ -26,12 +26,13 @@ test('failed feature CSS can be retried without duplicate JavaScript',async({pag
 test('invalid first filter can be reset and stale counts disappear on failure',async({page})=>{
   await page.goto('/discover?__e2e=1');
   await expect(page.locator('.statistics-row')).toHaveCount(1);
-  await page.locator('#statisticsFilters summary').click();
+  await page.locator('#statisticsFilters-open').click();
   await page.getByLabel('Матчи с',{exact:true}).fill('2026-09-20');
   await page.getByLabel('Матчи по',{exact:true}).fill('2026-09-01');
   await expect(page.locator('.explore-validation')).toContainText('Начало периода');
   await expect(page.getByRole('button',{name:'Сбросить фильтры'})).toBeEnabled();
   await expect(page.locator('#statisticsList')).toHaveAttribute('aria-busy','false');
+  await page.getByRole('button',{name:'Закрыть фильтры'}).click();
   await page.getByRole('button',{name:'Клубы',exact:true}).click();
   await expect(page.locator('#statisticsList')).toBeEmpty();
   await expect(page.locator('.explore-validation')).toContainText('Начало периода');

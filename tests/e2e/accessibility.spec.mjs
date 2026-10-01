@@ -17,6 +17,12 @@ async function prepare(page){
 }
 
 async function expectNoSignificantWcagViolations(page,contextSelector=null){
+  // Check the settled interface, not intermediate opacity during a dialog fade.
+  await page.evaluate(async selector=>{
+    await document.fonts.ready;
+    const context=selector?document.querySelector(selector):document.documentElement;
+    await Promise.all(context.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));
+  },contextSelector);
   await page.addScriptTag({url: "/node_modules/axe-core/axe.min.js"});
   const violations=await page.evaluate(async selector=>{
     const context=selector?document.querySelector(selector):document;
@@ -78,6 +84,16 @@ for(const scenario of [
     await expectNoSignificantWcagViolations(page,scenario.target);
   });
 }
+
+for(const theme of ['dark','light'])test(`explore filter sheet ${theme} preserves WCAG and keyboard focus`,async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);
+  await prepare(page);await page.goto('/discover?__e2e=1');
+  await expect(page.locator('.statistics-row')).toBeVisible();
+  await page.locator('#statisticsFilters-open').click();
+  await expect(page.getByRole('dialog',{name:'Фильтры'})).toBeVisible();
+  await expectNoSignificantWcagViolations(page,'#statisticsFilters-sheet');
+});
 
 test('матч в фокусе сохраняет контраст при смене темы и акцента',async({page})=>{
   await page.setViewportSize({width:390,height:844});

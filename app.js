@@ -1,5 +1,6 @@
 // ─── SVG ICONS (Heroicons style) ───
 const I={
+  filter:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M4 7h6m4 0h6M4 17h10m4 0h2"/><circle cx="12" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></svg>`,
   close:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18"/></svg>`,
   plus:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>`,
   home:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.955-8.955a1.126 1.126 0 0 1 1.59 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>`,
@@ -198,6 +199,7 @@ function go(p,d){
   const page=document.getElementById(`page-${p}`);
   if(!page)return;
   routeVersion++;
+  window.FBZExplore?.closePanels();
   window.FBZProfileEditor?.resetSession();
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   page.classList.add('on');
@@ -317,7 +319,7 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=3',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=4',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
   }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" data-fbz-click="app.load-lb">Повторить</button></div>';}
 }
@@ -344,9 +346,12 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=5',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=6',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
-function ensureExploreModule(){return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=3',script:'js/explore.js?v=2',ready:()=>window.FBZExplore});}
+async function ensureExploreModule(){
+  await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=1',ready:()=>window.FBZExploreModel});
+  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=4',script:'js/explore.js?v=3',ready:()=>window.FBZExplore});
+}
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
   const target=document.getElementById('profileW');

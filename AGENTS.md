@@ -16,7 +16,7 @@
 - Навигация — History API с индексируемыми путями `/club/<id>`, `/player/<id>`, `/match/<id>`, `/profile/<uuid>` и статическими разделами. Старые hash-маршруты остаются только для обратной совместимости; маршрутизацией управляют `go`, `syncRoute` и `applyRouteFromLocation` в `app.js`.
 - Данные, Auth и PostgreSQL — Supabase через `@supabase/supabase-js@2`.
 - Серверная часть — CommonJS Vercel Functions: `api/config.js` для публичной runtime-конфигурации, `api/admin.js` для привилегированных действий и `api/sitemap.js` для динамического sitemap.
-- Рабочий источник футбольного каталога — football-data.org через `api/admin.js`. API-Football используется для защищённой диагностики и отдельного staged подключения эмблем существующих клубов; импорт матчей/игроков пока не включён.
+- Рабочий источник футбольного каталога — football-data.org через `api/admin.js`. API-Football используется для защищённой диагностики, staged подключения эмблем и preview/apply исторического состава точно сопоставленного матча. Массовый импорт матчей/игроков новым провайдером пока не включён.
 - Production — Vercel из GitHub-ветки `main`.
 - Тесты — встроенный `node:test`, pgTAP и Playwright Test с Axe. Требуется Node.js 22+.
 - Менеджер зависимостей — pnpm: изменяя зависимости, обновляй и коммить `pnpm-lock.yaml`; не добавляй параллельный `package-lock.json`.
@@ -36,7 +36,7 @@
 - `js/share.js` — ленивый экспорт профиля/оценки в PNG 1200×800 с загруженным кириллическим Onest.
 - `js/core.js` — инициализация публичного Supabase-клиента из runtime-конфигурации, разрешённые наборы полей, кэш и функции безопасного вывода.
 - `js/data.js` — единая клиентская граница агрегирующих и пагинированных RPC.
-- `js/explore.js` и `css/explore.css` — общие фильтры дневника и обзора; `js/statistics.js` — ленивый раздел `/discover`. Старый `/leaderboard` остаётся совместимым маршрутом. Обзор учитывает только публичные оценки публичных профилей, показывает размер выборки и не ранжирует пользователей.
+- `js/explore-model.js`, `js/explore.js` и `css/explore.css` — ленивые общие фильтры дневника и обзора: internal IDs, поиск вариантов, зависимые по actual fixtures клубы, URL и доступная modal/bottom sheet. `js/statistics.js` — ленивый `/discover`, старый `/leaderboard` совместим. Обзор учитывает только публичные оценки публичных профилей, показывает выборку и не ранжирует пользователей. Diary v2 использует курсор `(match_date,id)` и полные месячные summaries разрешённой отфильтрованной истории; старые клиенты сохраняют курсор `(created_at,id)`.
 - `js/seo.js` — canonical, metadata и structured data для маршрутов.
 - `api/page.js` — начальные HTML metadata публичных маршрутов, использующие тот же `js/seo.js`; только publishable key, минимальные поля, без cookies/tokens посетителя. Это не полный SSR. Шаблон `dist/index.html` включается в Vercel Function через `includeFiles`.
 - `js/session-hint.js` и `js/performance.js` — безопасная ранняя стабилизация layout и локальная диагностика LCP/CLS/длительности взаимодействий без пользовательских данных и сетевой отправки. Это не RUM и не сертифицированный расчёт INP.
@@ -44,7 +44,7 @@
 - `js/auth.js`, `js/ratings.js`, `js/matches.js`, `js/entities.js`, `js/feed.js`, `js/search.js`, `js/admin.js` — владельцы своих доменов. `js/rating-loader.js` сохраняет глобальную оболочку `openRate()` и лениво подключает `js/ratings.js` вместе с `css/ratings.css`, затем вызывает `FBZRatings.open()`. Реализация не заменяет оболочку: повтор после ошибки CSS обязан снова проходить через loader. Не возвращай эти модули в критический путь главной страницы.
 - `js/appearance.js`, `js/overlays.js`, `js/confirm.js`, `js/account.js` — общие UI-механизмы.
 - `api/admin.js` и `api/sitemap.js` — доверенные серверные границы с `service_role`; ключ никогда не передаётся клиенту.
-- `server/football/api-football.js` — CommonJS provider client без собственного HTTP endpoint: fixed origin/allowlist, bounded timeout/body/pagination/request budget, quota reserve и безопасные ошибки. `API_FOOTBALL_KEY` используется только на сервере. GET overview сообщает лишь configured; реальный API вызывается только отдельной admin-командой. Unit/E2E не расходуют настоящую квоту.
+- `server/football/api-football.js` — CommonJS provider client без собственного HTTP endpoint: fixed origin/allowlist, bounded timeout/body/pagination/request budget, quota reserve и безопасные ошибки. `API_FOOTBALL_KEY` используется только на сервере. GET overview сообщает лишь configured; реальный API вызывается только отдельной admin-командой. Unit/E2E не расходуют настоящую квоту. `server/football/match-lineups.js` сопоставляет fixture по обоим provider team IDs, турниру, сезону и времени; максимум четыре запроса, честный plan/coverage fallback.
 - `supabase/migrations/` — полная последовательная история production-схемы, воспроизводимая на пустой локальной БД.
 - `types/database.ts` — генерируемый Supabase-контракт. Не редактируй вручную; CI сравнивает его с чистой БД после всех миграций.
 - `tests/domain.test.js` — unit-тесты чистой логики.
@@ -155,6 +155,7 @@
 - В одной операции разрешено максимум 60 player ratings; ID игроков должны быть уникальны и существовать.
 - Лучший игрок может быть только один и обязан иметь пользовательскую оценку в том же payload.
 - Player ratings принадлежат родительской паре `(user_id, match_id)` и удаляются вместе с основной оценкой.
+- Новые player ratings требуют подтверждённого исторического участия: starter либо вышедший substitute в `match_player_appearances`. Текущий squad клуба не доказывает участие. Provider mappings и import batches service-only, snapshot клуба исторический. Старые неподтверждённые оценки можно сохранить без изменения или явно удалить; заново создать или повысить их нельзя. Не угадывай identities по имени.
 - Счётчики профиля и streak обновляет база внутри rating transaction. Клиент только принимает возвращённый результат.
 - Streak считается по уникальным UTC-дням создания оценок и остаётся активным только при оценке сегодня или вчера; редактирование старой оценки не продлевает серию.
 - Свою оценку нельзя лайкать. Лайк возможен только для публичной оценки.
