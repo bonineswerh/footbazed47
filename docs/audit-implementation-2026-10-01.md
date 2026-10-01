@@ -106,3 +106,15 @@ Diary v2 отсортирован по дате матча и rating ID с keyse
 Quality Gate `9f1641d` (run 36794760701) полностью успешен: clean reset, generated contract, lint, 213 SQL assertions, application и secret scan. CI обнаружил синтаксический month alias и отсутствие обязательного verified_at в искусственной тестовой media fixture; оба исправлены в feature branch до production DDL, правила provenance не ослаблялись. Реальная версия применённой миграции: `20261001001517_explore_identity_and_months`; SQL в репозитории переименован без изменения содержимого.
 
 Данные до/после совпадают: 261 матч, 2656 игроков, 98 эмблем, 9 оценок матчей и 9 оценок игроков. Хэши обеих таблиц оценок идентичны в проверке до/после (`row_to_json` / ordered MD5). Advisors не добавили новых функций/таблиц exposure и не сообщили performance WARN; прежние public RPC/RLS каталоги и Auth recommendation остаются прежними. Дальнейший live smoke проверяет опубликованные assets, реальные эмблемы и месячные summaries без записи оценок.
+
+`b60a00a` опубликован: main Quality Gate 36795376054 и Vercel deployment успешны. Рабочий браузер подтвердил новые lazy assets и реальные загруженные API-Sports эмблемы в Overview. Bundesliga оставляет 18 клубов из actual fixture relations. Собственный Diary показывает `1–8 из 9`, затем `9–9 из 9`; обе страницы сохраняют полную сводку `9 матчей · средняя оценка 7.4`. Пользовательские записи не отправлялись/не удалялись, production theme остаётся dark.
+
+## Этап 3 — недостающие эмблемы
+
+Для клубов без logo_asset_id добавлен прямой поиск API-Football `/teams?search=...`: один bounded request, query из серверного каталога, country/name/available founding-year checks, отказ при нескольких подходящих provider IDs. Клиент не задаёт provider ID, URL, query или actor. Сборные и неизвестные типы не импортируются. Disabled/unknown existing asset не заменяется автоматически.
+
+Предпросмотр и publish/rollback используют прежний service-only batch mechanism и его identity guards, expiry, atomic lock и admin audit. Новый CATALOG context хранит NULL season; provenance отмечает team-search без выдуманного tournament/season coverage или лицензии. Старые league-season batches остаются совместимыми. Админ видит только bounded список отсутствующих эмблем; смена клуба отменяет прежнюю подготовку. Ordinary unit/E2E используют fixtures, реальная квота не расходуется.
+
+Добавлены unit tests server trust boundary/ambiguity/country/query encoding, mobile E2E prepare/reset/apply без второго provider request и девять SQL assertions compatibility/provenance/rollback/grants. Изолированная CI/schema-contract проверка предшествует production DDL и настоящему поиску 13 оставшихся клубов. Этот этап пока не отмечен опубликованным.
+
+Источник дизайна запроса: [официальный API-Football Teams guide](https://www.api-football.com/news/post/how-to-get-started-with-api-football-the-complete-beginners-guide), direct search доступен независимо от league-season selector; фактический доступ проверяется отдельно.

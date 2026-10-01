@@ -38,6 +38,12 @@ test('provider is server-only, uses the fixed origin and rejects arbitrary endpo
   const missing=mockClient(undefined,{apiKey:''});await rejects(missing.client.accountStatus(),'provider_not_configured');assert.equal(missing.calls.length,0);
 });
 
+test('team name search is encoded and bounded without accepting arbitrary parameters',async()=>{
+  const {client,calls}=mockClient(()=>({payload:envelope()}));
+  for(const value of ['',12,'xx','https://evil.test','a&key=private','x'.repeat(81)])await rejects(client.get('/teams',{search:value}),'invalid_provider_parameters');
+  await client.get('/teams',{search:'Le Mans'});assert.equal(calls.length,1);assert.equal(calls[0].url.searchParams.get('search'),'Le Mans');assert.equal(calls[0].url.origin,'https://v3.football.api-sports.io');
+});
+
 test('account diagnostics discard personal fields, arbitrary plan text and upstream fields',async()=>{
   for(const plan of ['Free','private-token','constructor']){
     const {client}=mockClient(()=>({payload:envelope({...account,account:{email:'private@example.test',key:'private-token'},subscription:{plan,active:true}})}));

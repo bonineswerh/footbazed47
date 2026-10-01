@@ -4,7 +4,7 @@
 
 const https = require('https');
 const {createApiFootballClient} = require('../server/football/api-football');
-const {prepareClubEmblems} = require('../server/football/club-emblems');
+const {prepareClubEmblems,prepareMissingClubEmblem} = require('../server/football/club-emblems');
 const {prepareMatchLineup} = require('../server/football/match-lineups');
 
 const LEAGUES = Object.freeze({
@@ -144,7 +144,7 @@ async function tableCount(table, filter = '') {
 
 async function getOverview() {
   const now = new Date().toISOString();
-  const [matches, players, ratings, users, predictions, upcoming, legacyAvatars, recentResponse] = await Promise.all([
+  const [matches, players, ratings, users, predictions, upcoming, legacyAvatars, recentResponse, missingEmblems] = await Promise.all([
     tableCount('matches'),
     tableCount('players'),
     tableCount('ratings'),
@@ -152,12 +152,14 @@ async function getOverview() {
     tableCount('predictions'),
     tableCount('matches', `&match_date=gte.${encodeURIComponent(now)}&status=in.(scheduled,live)`),
     tableCount('users', '&avatar_url=like.data:image/*'),
-    supabase('/rest/v1/matches?select=id,league_name,league_code,home_team_name,away_team_name,match_date,status,home_score,away_score,external_id&order=match_date.desc&limit=120')
+    supabase('/rest/v1/matches?select=id,league_name,league_code,home_team_name,away_team_name,match_date,status,home_score,away_score,external_id&order=match_date.desc&limit=120'),
+    supabase('/rest/v1/clubs?logo_asset_id=is.null&select=id,name,area_name&order=name&limit=500')
   ]);
 
   return {
     counts: { matches, players, ratings, users, predictions, upcoming, legacyAvatars },
     recentMatches: parseJson(recentResponse.raw, []),
+    missingEmblemClubs: parseJson(missingEmblems.raw, []),
     footballApiConfigured: Boolean(process.env.FOOTBALL_DATA_API_KEY || process.env.FOOTBALL_API_KEY),
     apiFootballConfigured: Boolean(process.env.API_FOOTBALL_KEY),
     checkedAt: new Date().toISOString()
@@ -555,6 +557,19 @@ module.exports = async function handler(req, res) {
     }
     if (action === 'api_football_competition') {
       return sendJson(res,200,await createApiFootballClient({requestBudget:1}).competitionStatus(body.league,body.season));
+    }
+    if (action === 'prepare_missing_club_emblem') {
+      if(!Number.isSafeInteger(body.club_id)||body.club_id<1)return sendJson(res,400,{error:'invalid_club_id'});
+      const [clubResponse,mappingsResponse]=await Promise.all([
+        supabase(`/rest/v1/clubs?id=eq.${body.club_id}&logo_asset_id=is.null&select=id,name,short_name,external_id,area_name,founded,logo_asset_id&limit=1`),
+        supabase('/rest/v1/club_provider_ids?provider=eq.api-football&select=club_id,external_id&limit=500')
+      ]);
+      const club=parseJson(clubResponse.raw,[])[0];
+      if(!club)return sendJson(res,404,{error:'missing_emblem_club_not_found'});
+      const prepared=await prepareMissingClubEmblem(createApiFootballClient({requestBudget:1}),club,parseJson(mappingsResponse.raw,[]));
+      if(!prepared.items.length)return sendJson(res,200,{...prepared,batch:null,matched:0});
+      const staged=await supabase('/rest/v1/rpc/admin_stage_club_emblems',{method:'POST',body:{p_items:prepared.items,p_league:'CATALOG',p_season:null,p_actor:administrator.id}});
+      return sendJson(res,200,{...prepared,...parseJson(staged.raw,{})});
     }
     if (action === 'prepare_club_emblems') {
       const league=requireLeague(body.league);

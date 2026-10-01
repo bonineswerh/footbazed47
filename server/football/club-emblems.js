@@ -33,7 +33,8 @@ const aliases=Object.freeze([
   ['troyes','estactroyes','estroyes'],
   ['sporting','sportingcp','sportingclubedeportugal'],['bodoglimt'],
   ['clubbrugge','clubbruggekv'],['redbullsalzburg','rbsalzburg','salzburg'],
-  ['lask','lasklinz'],['aek','aekathens','paeaek']
+  ['lask','lasklinz'],['aek','aekathens','paeaek'],
+  ['coventrycity','coventry'],['realracingclubdesantander','racingsantander','santander']
 ]);
 function nameKey(value){
   const name=normalizedName(value);
@@ -78,4 +79,29 @@ async function prepareClubEmblems(client,league,season,clubs,mappings){
   return {...matched,league,season,quota:result.quota,termsUrl:TERMS_URL};
 }
 
-module.exports={matchClubEmblems,prepareClubEmblems};
+async function prepareMissingClubEmblem(client,club,mappings=[]){
+  if(!club||!Number.isSafeInteger(Number(club.id))||Number(club.id)<1||club.logo_asset_id!=null)throw new FootballProviderError('club_emblem_not_missing',400);
+  const cleanName=String(club.short_name||club.name||'').normalize('NFKD').replace(/\p{M}/gu,'')
+    .replace(/\b(?:fc|cf|afc|ac|sc|rc|bc|ca|ud|cd|fk|as|ssc)\b/giu,'').replace(/\s+/gu,' ').trim();
+  const words=cleanName.split(' '),generic=/^(?:real|racing|man|manchester|united|city|le|la|les|stade|sporting)$/iu;
+  const query=words[0].length>=3&&!generic.test(words[0])?words[0]:words.slice(0,2).join(' ');
+  if(query.length<3||query.length>80)throw new FootballProviderError('invalid_provider_parameters',400);
+  const result=await client.collection('/teams',{search:query},{maxPages:1,maxItems:120});
+  const eligible=[],skipped=[],seen=new Set();
+  // Search spans countries and may include national or similarly named teams.
+  // Check every result independently, then refuse multiple exact identities.
+  for(const row of result.items){
+    if(seen.has(row?.team?.id))throw new FootballProviderError('provider_invalid_teams');seen.add(row?.team?.id);
+    if(row?.team?.national!==false){skipped.push({providerName:String(row?.team?.name||''),reason:'not_club'});continue;}
+    if(club.founded!=null&&row.team.founded!=null&&Number(club.founded)!==Number(row.team.founded)){
+      skipped.push({providerName:row.team.name,reason:'identity_conflict'});continue;
+    }
+    const matched=matchClubEmblems([row],[club],mappings);eligible.push(...matched.items);skipped.push(...matched.skipped);
+  }
+  const unique=new Map(eligible.map(item=>[item.provider_id,item]));
+  const items=unique.size===1?[...unique.values()]:[];
+  if(unique.size>1)skipped.push(...[...unique.values()].map(item=>({providerName:item.provider_name,reason:'ambiguous'})));
+  return {items,skipped,received:result.items.length,lookup:'team-search',query,league:null,season:null,quota:result.quota,termsUrl:TERMS_URL};
+}
+
+module.exports={matchClubEmblems,prepareClubEmblems,prepareMissingClubEmblem};

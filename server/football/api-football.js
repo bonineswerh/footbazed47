@@ -5,7 +5,7 @@ const BASE_URL = 'https://v3.football.api-sports.io';
 const PARAMETERS = Object.freeze({
   '/status': [],
   '/leagues': ['id', 'season'],
-  '/teams': ['league', 'season', 'id'],
+  '/teams': ['league', 'season', 'id', 'search'],
   '/fixtures': ['league', 'season', 'from', 'to', 'date', 'id', 'page'],
   '/fixtures/lineups': ['fixture'],
   '/fixtures/events': ['fixture'],
@@ -56,7 +56,9 @@ function requestUrl(endpoint, params) {
   const url = new URL(endpoint,BASE_URL);
   for (const [key,value] of Object.entries(params)) {
     if (!PARAMETERS[endpoint].includes(key)) throw new FootballProviderError('invalid_provider_parameters',400);
-    if (key==='season') requireSeason(value);
+    if (key==='search') {
+      if (typeof value !== 'string' || value.length<3 || value.length>80 || !/^[\p{L}\p{N} .'-]+$/u.test(value)) throw new FootballProviderError('invalid_provider_parameters',400);
+    } else if (key==='season') requireSeason(value);
     else if (key==='from' || key==='to' || key==='date') {
       if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0,10)!==value) throw new FootballProviderError('invalid_provider_parameters',400);
     } else requireId(value);

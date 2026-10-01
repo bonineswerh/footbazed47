@@ -99,6 +99,16 @@ test('historical lineup actions reject missing admin, invalid IDs and forged pay
   assert.deepEqual(app.calls.at(-1).body,{p_batch:batch,p_actor:'12000000-0000-0000-0000-000000000001'});
   assert.equal(app.calls.some(c=>c.url.includes('api-sports.io')),false);
 });
+
+test('missing-emblem lookup derives its query from an existing club and never trusts client provider IDs',async()=>{
+  const app=api({route:call=>call.url.includes('/clubs?')?{data:[{id:31,external_id:65,name:'Manchester City FC',short_name:'Man City',area_name:'England',logo_asset_id:null}]}:call.url.includes('/club_provider_ids?')?{data:[]}:call.url.includes('api-sports.io')?{data:{errors:[],results:1,paging:{current:1,total:1},response:[{team:{id:50,name:'Manchester City',country:'England',national:false,logo:'https://media.api-sports.io/football/teams/50.png'}}]}}:{data:{batch:'12345678-1234-4123-8123-123456789012'}}});
+  for(const club_id of [null,-1,'31',31.1])assert.equal((await app.send({action:'prepare_missing_club_emblem',club_id})).status,400);
+  const result=await app.send({action:'prepare_missing_club_emblem',club_id:31,provider_id:999,search:'Forged Club',actor:'forged'});assert.equal(result.status,200);
+  const provider=app.calls.filter(c=>c.url.includes('api-sports.io'));assert.equal(provider.length,1);assert.match(provider[0].url,/search=Man\+City$/);
+  const stage=app.calls.find(c=>c.url.includes('/rpc/admin_stage_club_emblems'));assert.equal(stage.body.p_league,'CATALOG');assert.equal(stage.body.p_season,null);assert.equal(stage.body.p_items[0].provider_id,50);assert.equal(stage.body.p_actor,'12000000-0000-0000-0000-000000000001');
+  const denied=api({admin:false});assert.equal((await denied.send({action:'prepare_missing_club_emblem',club_id:31})).status,403);assert.equal(denied.calls.some(c=>c.url.includes('api-sports.io')),false);
+  const missing=api({route:()=>({data:[]})});assert.equal((await missing.send({action:'prepare_missing_club_emblem',club_id:31})).status,404);assert.equal(missing.calls.some(c=>c.url.includes('api-sports.io')),false);
+});
 test('unsupported API-Football season stops lineup import and returns a plan error without upstream text',async()=>{
   const app=api({route:call=>call.url.includes('/matches?')?{data:[{id:1,status:'finished',league_code:'PL',season:'2026',match_date:'2026-09-01T19:00:00Z',home_club_id:24,away_club_id:31}]}:
     call.url.includes('/club_provider_ids?')?{data:[{club_id:24,external_id:541},{club_id:31,external_id:50}]}:

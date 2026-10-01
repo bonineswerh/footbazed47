@@ -10,7 +10,7 @@
     activities: []
   };
   let apiFootballBusy=false,apiFootballConfigured=false;
-  let emblemBatch=null,emblemApplied=false;
+  let emblemBatch=null,emblemApplied=false,missingEmblemId=null;
   let lineupBatch=null;
   let catalogBatch=null,catalogReady=false;
   const STATUS_LABELS = {
@@ -179,6 +179,8 @@
       <div class="admin-emblem-section">
         <h4>Эмблемы клубов</h4>
         <p class="admin-provider-copy">Подготовьте эмблемы для турнира и сезона, выбранных выше. Один запрос к API. Публикация сохраняет существующие клубы, матчи и оценки. Неоднозначные совпадения пропускаются.</p>
+        <div class="admin-provider-form admin-missing-emblem"><label class="admin-edit-field"><span>Клуб без эмблемы</span><select id="adminMissingEmblemClub" data-fbz-change="admin.emblems-reset"><option value="">Загрузка каталога…</option></select></label><button type="button" class="btn btn-g" id="adminMissingEmblemPrepare" data-fbz-click="admin.emblems-missing" disabled>Найти эмблему клуба</button></div>
+        <p class="admin-provider-copy">Точечный поиск не зависит от сезона. Один запрос, проверка названия, страны и доступного года основания; несколько подходящих клубов не подключаются автоматически.</p>
         <div class="admin-provider-actions"><button type="button" class="btn btn-g" id="adminEmblemsPrepare" data-fbz-click="admin.emblems-prepare" disabled>Подготовить эмблемы</button><button type="button" class="btn btn-l" id="adminEmblemsApply" data-fbz-click="admin.emblems-apply" disabled>Опубликовать эмблемы</button><button type="button" class="btn btn-g" id="adminEmblemsUndo" data-fbz-click="admin.emblems-undo" hidden>Отменить подключение</button></div>
         <div id="adminEmblemsResult" class="admin-provider-result" role="status" aria-live="polite"></div>
         <div id="adminEmblemsPreview" class="admin-emblem-grid" aria-label="Подготовленные эмблемы"></div>
@@ -210,6 +212,9 @@
     if(lineupApply)lineupApply.disabled=apiFootballBusy||!lineupBatch;
     const lineupMatch=document.getElementById('adminLineupMatch');
     if(lineupMatch)lineupMatch.disabled=apiFootballBusy;
+    const missingSelect=document.getElementById('adminMissingEmblemClub'),missingPrepare=document.getElementById('adminMissingEmblemPrepare');
+    if(missingSelect)missingSelect.disabled=apiFootballBusy;
+    if(missingPrepare)missingPrepare.disabled=apiFootballBusy||!apiFootballConfigured||!missingSelect?.value;
     document.getElementById('adminApiFootballPanel')?.setAttribute('aria-busy',String(apiFootballBusy));
   }
 
@@ -256,22 +261,25 @@
     const result=document.getElementById('adminEmblemsResult');
     apiFootballBusy=true;providerControls();
     try{
-      if(kind==='prepare'){
-        emblemBatch=null;emblemApplied=false;document.getElementById('adminEmblemsPreview').replaceChildren();
+      if(kind==='prepare'||kind==='missing'){
+        const clubId=Number(document.getElementById('adminMissingEmblemClub').value);
+        if(kind==='missing'&&(!Number.isSafeInteger(clubId)||clubId<1))return;
+        emblemBatch=null;emblemApplied=false;missingEmblemId=kind==='missing'?clubId:null;document.getElementById('adminEmblemsPreview').replaceChildren();
         result.textContent='Получаем эмблемы и проверяем совпадения клубов…';
         const form=document.getElementById('adminProviderForm');
-        const data=await request('prepare_club_emblems',{league:form.elements.league.value,season:Number(form.elements.season.value)});
+        const data=await request(kind==='missing'?'prepare_missing_club_emblem':'prepare_club_emblems',kind==='missing'?{club_id:clubId}:{league:form.elements.league.value,season:Number(form.elements.season.value)});
         emblemBatch=data.batch||null;
         const items=Array.isArray(data.items)?data.items:[];
-        result.textContent=`${data.league} · ${data.season}/${String(Number(data.season)+1).slice(-2)}: подготовлено ${items.length} из ${Number(data.received)||0}. Пропущено: ${Array.isArray(data.skipped)?data.skipped.length:0}. ${quotaText(data.quota)}`;
+        result.textContent=`${kind==='missing'?'Поиск «'+data.query+'»':data.league+' · '+data.season+'/'+String(Number(data.season)+1).slice(-2)}: подготовлено ${items.length} из ${Number(data.received)||0}. Пропущено: ${Array.isArray(data.skipped)?data.skipped.length:0}. ${quotaText(data.quota)}`;
         const skipped=Array.isArray(data.skipped)?data.skipped:[];
-        const reasons={no_match:'нет точного совпадения',ambiguous:'несколько похожих клубов',mapping_conflict:'конфликт идентификаторов'};
-        document.getElementById('adminEmblemsPreview').innerHTML=items.map(item=>`<div>${FBZMedia.visual({entity:{name:item.club_name,media:{asset_type:'club_logo',usage_status:'identification',source_provider:'api-football',url:item.source_url}},kind:'club',className:'admin-emblem-mark'})}<span>${esc(item.club_name)}</span></div>`).join('')+(skipped.length?`<details class="admin-emblem-skipped"><summary>Пропущенные клубы: ${skipped.length}</summary><ul>${skipped.map(item=>`<li>${esc(item.providerName)} — ${esc(reasons[item.reason]||'не подключён')}</li>`).join('')}</ul></details>`:'');
+        const reasons={no_match:'нет точного совпадения названия и страны',ambiguous:'несколько похожих клубов',mapping_conflict:'конфликт идентификаторов',not_club:'сборная или неизвестный тип команды',identity_conflict:'год основания не совпал'};
+        document.getElementById('adminEmblemsPreview').innerHTML=items.map(item=>`<div>${FBZMedia.visual({entity:{name:item.club_name,media:{asset_type:'club_logo',usage_status:'identification',source_provider:'api-football',url:item.source_url}},kind:'club',className:'admin-emblem-mark'})}<span>${esc(item.club_name)}${kind==='missing'?`<small>${esc(item.provider_name)} · ${esc(item.country)}</small>`:''}</span></div>`).join('')+(skipped.length?`<details class="admin-emblem-skipped"><summary>Пропущенные клубы: ${skipped.length}</summary><ul>${skipped.map(item=>`<li>${esc(item.providerName)} — ${esc(reasons[item.reason]||'не подключён')}</li>`).join('')}</ul></details>`:'');
       }else{
         if(!emblemBatch)return;
         result.textContent=kind==='apply'?'Подключаем эмблемы…':'Восстанавливаем предыдущие эмблемы…';
         const data=await request(kind==='apply'?'apply_club_emblems':'rollback_club_emblems',{batch:emblemBatch});
         emblemApplied=kind==='apply';
+        if(emblemApplied&&missingEmblemId){document.querySelector(`#adminMissingEmblemClub option[value="${missingEmblemId}"]`)?.remove();document.getElementById('adminMissingEmblemClub').value='';}
         result.textContent=emblemApplied?`Подключено эмблем: ${Number(data.applied)||0}. Они доступны в календаре, ленте и на страницах клубов.`:`Восстановлено клубов: ${Number(data.restored)||0}.`;
         if(!emblemApplied)emblemBatch=null;
         FBZData.invalidate();clearAppCache();
@@ -280,6 +288,8 @@
     }catch(error){result.textContent=error.message;}
     finally{apiFootballBusy=false;providerControls();}
   }
+
+  function resetEmblems(){emblemBatch=null;emblemApplied=false;missingEmblemId=null;document.getElementById('adminEmblemsPreview')?.replaceChildren();const result=document.getElementById('adminEmblemsResult');if(result)result.textContent='';providerControls();}
 
   async function inspectProvider(kind,event){
     event?.preventDefault();
@@ -309,6 +319,8 @@
       const data = await request('overview');
       state.matches = data.recentMatches || [];
       const lineupSelect=document.getElementById('adminLineupMatch');
+      const missingSelect=document.getElementById('adminMissingEmblemClub');
+      if(missingSelect)missingSelect.innerHTML='<option value="">Выберите клуб</option>'+(data.missingEmblemClubs||[]).map(c=>`<option value="${Number(c.id)}">${esc(c.name)} · ${esc(c.area_name||'Страна неизвестна')}</option>`).join('');
       if(lineupSelect)lineupSelect.innerHTML='<option value="">Выберите матч</option>'+state.matches.filter(m=>m.status==='finished').map(m=>`<option value="${Number(m.id)}">${esc(m.home_team_name)} — ${esc(m.away_team_name)} · ${esc(new Date(m.match_date).toLocaleDateString('ru-RU'))}</option>`).join('');
       state.loaded = true;
       renderMetrics(data.counts);
@@ -584,7 +596,7 @@
     }
   }
 
-  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup};
+  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup,resetEmblems};
 })();
 
 // Explicit action bindings; parameters are JSON data, never executable code.
@@ -592,6 +604,8 @@ FBZActions.register({
   "admin.provider-status":()=>FBZAdmin.inspectProvider('status'),
   "admin.provider-competition":event=>FBZAdmin.inspectProvider('competition',event),
   "admin.emblems-prepare":()=>FBZAdmin.clubEmblems('prepare'),
+  "admin.emblems-missing":()=>FBZAdmin.clubEmblems('missing'),
+  "admin.emblems-reset":()=>FBZAdmin.resetEmblems(),
   "admin.emblems-apply":()=>FBZAdmin.clubEmblems('apply'),
   "admin.emblems-undo":()=>FBZAdmin.clubEmblems('undo'),
   "admin.lineup-prepare":event=>FBZAdmin.matchLineup('prepare',event),
