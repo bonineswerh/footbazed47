@@ -148,7 +148,7 @@ export type Database = {
           items: Json
           league: string
           result: Json
-          season: number
+          season: number | null
           status: string
         }
         Insert: {
@@ -159,7 +159,7 @@ export type Database = {
           items: Json
           league: string
           result?: Json
-          season: number
+          season?: number | null
           status?: string
         }
         Update: {
@@ -170,7 +170,7 @@ export type Database = {
           items?: Json
           league?: string
           result?: Json
-          season?: number
+          season?: number | null
           status?: string
         }
         Relationships: []
