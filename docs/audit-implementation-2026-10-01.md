@@ -117,4 +117,6 @@ Quality Gate `9f1641d` (run 36794760701) полностью успешен: clea
 
 Добавлены unit tests server trust boundary/ambiguity/country/query encoding, mobile E2E prepare/reset/apply без второго provider request и девять SQL assertions compatibility/provenance/rollback/grants. Изолированная CI/schema-contract проверка предшествует production DDL и настоящему поиску 13 оставшихся клубов. Этот этап пока не отмечен опубликованным.
 
+Проверки этапа: 101 unit и 220 E2E локально; feature CI `7173b9c` / `36797400082` полностью успешен, включая 222 pgTAP assertions, clean reset, lint, generated contract и secret scan. Nullable season взят из настоящего CI artifact `11133569815`, ZIP SHA256 `b56a70f1601bd7dfbab4c4822dc718b16524149fa1013ba9f037292566c4cb43`, а не написан вручную. Миграция успешно применена как `20261001004739_missing_club_emblem_lookup`; файл переименован к серверной версии без изменения SQL. Публикация клиента и фактическое наполнение оставшихся эмблем проверяются следующим шагом.
+
 Источник дизайна запроса: [официальный API-Football Teams guide](https://www.api-football.com/news/post/how-to-get-started-with-api-football-the-complete-beginners-guide), direct search доступен независимо от league-season selector; фактический доступ проверяется отдельно.
