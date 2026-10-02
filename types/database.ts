@@ -1552,6 +1552,10 @@ export type Database = {
           title: string
         }[]
       }
+      search_footbazed_v2: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: Json
+      }
       send_direct_message: {
         Args: {
           p_body?: string
