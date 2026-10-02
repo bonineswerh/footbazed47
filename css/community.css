@@ -1,9 +1,9 @@
 /* ═══ FRIENDS ═══ */
-.friend-card{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg2);border:1px solid var(--b2);border-radius:12px;margin-bottom:8px;transition:all .25s var(--ease);cursor:pointer}.friend-card:hover{border-color:var(--b3);background:var(--bg3)}
+.friend-card{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg2);border:1px solid var(--b2);border-radius:12px;margin-bottom:8px;transition-property:background,color,border-color,box-shadow,opacity,transform;transition-duration:var(--motion-normal);transition-timing-function:var(--ease);cursor:pointer}.friend-card:hover{border-color:var(--b3);background:var(--bg3)}
 .fcard-av{width:40px;height:40px;border-radius:10px;background:var(--grad);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .fcard-info{flex:1;min-width:0}.fcard-name{font-weight:600;font-size:var(--type-small);margin-bottom:1px}.fcard-sub{font-size:var(--type-meta);color:var(--text2)}
 .fcard-action{display:flex;gap:5px;flex-shrink:0}
-.fbtn{min-height:44px;padding:5px 12px;border-radius:6px;font-size:var(--type-small);font-weight:600;cursor:pointer;border:1px solid var(--b2);background:transparent;color:var(--text2);transition:all .2s;font-family:inherit}
+.fbtn{min-height:44px;padding:5px 12px;border-radius:6px;font-size:var(--type-small);font-weight:600;cursor:pointer;border:1px solid var(--b2);background:transparent;color:var(--text2);transition-property:background,color,border-color,box-shadow,opacity,transform;transition-duration:var(--motion-normal);transition-timing-function:var(--ease);font-family:inherit}
 .fbtn:hover{border-color:var(--accent);color:var(--accent2);background:var(--accent3)}
 .fbtn.accept{background:var(--accent3);color:var(--accent2)}.fbtn.accept:hover{background:var(--accent);color:#fff}.fbtn.chat{display:grid;place-items:center;width:44px;padding:0;color:var(--accent2)}
 .fbtn.remove,.fbtn.reject{color:var(--text3)}.fbtn.remove:hover,.fbtn.reject:hover{color:var(--danger);border-color:var(--danger);background:var(--danger2)}
@@ -18,7 +18,7 @@
 .community-tabs .ftab2{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;flex:1;padding:8px 14px;white-space:nowrap;border:0;border-radius:5px;background:transparent;color:var(--text2);font-size:var(--type-small);font-weight:650;cursor:pointer}.community-tabs .ftab2:hover{background:var(--bg3);color:var(--snow)}
 .community-tabs .ftab2.on{background:var(--bg4)!important;color:var(--snow)!important;border:0!important;box-shadow:inset 0 -2px var(--accent)}
 .community-badge{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:5px;background:var(--accent3);color:var(--accent2);font-size:var(--type-meta)}.community-badge[hidden]{display:none}
-.community-page .friend-card{padding:8px 12px;margin-bottom:10px;border-radius:8px;cursor:default;gap:16px;transition:background .18s,border-color .18s}
+.community-page .friend-card{padding:8px 12px;margin-bottom:10px;border-radius:8px;cursor:default;gap:16px;transition:background var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease)}
 .friend-profile{display:flex;align-items:center;gap:14px;min-height:64px;min-width:0;flex:1;padding:6px 0;color:var(--snow);text-decoration:none;border-radius:5px}.friend-profile:hover .fcard-name{color:var(--accent2)}
 .community-page .fcard-av{width:44px;height:44px;object-fit:cover;border-radius:8px}.community-page .fcard-info{display:block}.community-page .fcard-name{display:block;font-size:var(--type-small);font-weight:650;overflow-wrap:anywhere}.community-page .fcard-sub{display:block;font-size:var(--type-meta);color:var(--text3);overflow-wrap:anywhere}
 .community-page .fbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px}.community-page .fbtn:disabled{opacity:.5;cursor:wait}.community-self{font-size:var(--type-small);color:var(--text3);padding:10px}

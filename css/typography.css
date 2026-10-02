@@ -65,6 +65,8 @@ body :is(.home-overview-item strong,.home-spotlight-team b,.pst-v,.entity-stat-s
 body :is(.squad-player-rating b,.performance-community b,.entity-ranking-row b){font-size:var(--type-score)}
 body .home-overview-item strong{font-size:var(--type-stat)}
 body .pr-rank{font-size:var(--type-body)}
+body :is(.home-feed-card>header>b,.admin-metric b,.admin-match-score){font-family:var(--font-ui);font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.025em;line-height:1.2}
+body .confirm-box h2{font-family:var(--font-ui);font-size:1.375rem;font-weight:650;letter-spacing:-.025em;line-height:1.35}
 body .home-spotlight-team b{font-size:2rem}
 body .md-score{font-size:clamp(3rem,5.5vw,4.25rem)}
 body .rating-pitch{background:var(--pitch-bg);border-color:var(--pitch-line)}

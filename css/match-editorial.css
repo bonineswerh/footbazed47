@@ -21,7 +21,7 @@
 .home-spotlight-team strong{min-width:0;overflow-wrap:anywhere;color:#fff;font-size:clamp(16px,1.8vw,23px);font-weight:780;letter-spacing:-.5px;line-height:1.1}
 .home-spotlight-team b{min-width:43px;text-align:center;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:38px;font-weight:400;line-height:1}
 .home-spotlight-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:auto;padding-top:19px}
-.home-spotlight-actions button{min-height:43px;padding:0 17px;border-radius:6px;font-size:var(--type-small);font-weight:800;cursor:pointer;transition:background .18s,transform .18s,border-color .18s}
+.home-spotlight-actions button{min-height:43px;padding:0 17px;border-radius:6px;font-size:var(--type-small);font-weight:800;cursor:pointer;transition:background var(--motion-normal) var(--ease),transform var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease)}
 .home-spotlight-actions button:active{transform:scale(.98)}
 .home-spotlight-primary{display:inline-flex;align-items:center;gap:13px;border:1px solid transparent;background:var(--accent);color:var(--onAccent)}.home-spotlight-primary:hover{filter:brightness(1.07)}
 .home-spotlight-primary span{font-size:18px;line-height:1}
@@ -42,7 +42,7 @@
 .home-overview-item strong{font-size:42px}
 
 /* Calendar cards use the same score hierarchy at a smaller scale. */
-.mcard{border-radius:10px;background:var(--bg2);transition:border-color .2s,transform .2s,box-shadow .2s}
+.mcard{border-radius:10px;background:var(--bg2);transition:border-color var(--motion-normal) var(--ease),transform var(--motion-normal) var(--ease),box-shadow var(--motion-normal) var(--ease)}
 .mcard:hover{transform:translateY(-2px)}
 .mcard-gradient{height:4px;opacity:1}
 .mcard-body{padding:18px}

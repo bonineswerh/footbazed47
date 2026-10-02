@@ -9,7 +9,7 @@
 .rate-score-panel{padding:22px 24px 14px}
 .rate-label{min-height:24px;margin-top:5px;font-size:14px}
 .rating-supporter-options input:checked+span small{color:var(--text2)}
-.rating-rail{--rating-progress:0%;--rail-fill:currentColor;display:block;width:100%;height:48px;margin:12px 0 0;appearance:none;background:transparent;color:var(--text3);cursor:pointer;transition:color .16s;touch-action:pan-y}
+.rating-rail{--rating-progress:0%;--rail-fill:currentColor;display:block;width:100%;height:48px;margin:12px 0 0;appearance:none;background:transparent;color:var(--text3);cursor:pointer;transition:color var(--motion-fast) var(--ease);touch-action:pan-y}
 .rating-rail[data-selected="false"]{--rail-fill:var(--bg5)}
 .rating-rail[data-tone="low"]{color:var(--rating-low)}
 .rating-rail[data-tone="mid"]{color:var(--rating-mid)}
@@ -27,7 +27,7 @@
 .rating-rail-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px}
 .rating-rail-hint{color:var(--text3);font-size:12px;line-height:1.5}
 .rate-stars{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px;margin-top:8px}
-.rate-star{display:flex;align-items:center;justify-content:center;min-width:0;height:44px;border:1px solid var(--b1);border-radius:6px;background:transparent;color:var(--text2);font-family:var(--font-ui);font-size:14px;font-weight:650;font-variant-numeric:tabular-nums;cursor:pointer;transition:color .16s,border-color .16s,background .16s}
+.rate-star{display:flex;align-items:center;justify-content:center;min-width:0;height:44px;border:1px solid var(--b1);border-radius:6px;background:transparent;color:var(--text2);font-family:var(--font-ui);font-size:14px;font-weight:650;font-variant-numeric:tabular-nums;cursor:pointer;transition:color var(--motion-fast) var(--ease),border-color var(--motion-fast) var(--ease),background var(--motion-fast) var(--ease)}
 .rate-star:hover{border-color:var(--b3);background:var(--bg4)}
 .rate-star-num{font-size:14px;pointer-events:none}
 .rate-stars[data-tone] .rate-star.on{border-color:var(--b1);background:transparent;color:var(--text2)}

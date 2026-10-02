@@ -56,6 +56,13 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await expect(page.getByRole('option').first().locator('.search-mark')).toBeVisible();
   await page.locator('#globalSearchInput').press('ArrowDown');await page.locator('#globalSearchInput').press('Enter');
   await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');
+  await page.getByRole('button',{name:'Меню аккаунта bazed',exact:true}).click();
+  await page.getByRole('menuitem',{name:'Настройки Тема и цвет интерфейса',exact:true}).click();
+  await expect(page.locator(`input[name="setTheme"][value="${theme}"]`)).toBeFocused();
+  await page.getByRole('radio',{name:theme==='dark'?'Светлая Высокий контраст':'Темная Меньше света',exact:true}).locator('..').click();
+  await page.getByRole('button',{name:'Отмена',exact:true}).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme',theme);
+  await expect(page.getByRole('button',{name:'Меню аккаунта bazed',exact:true})).toBeFocused();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
   expect(errors).toEqual([]);
 });

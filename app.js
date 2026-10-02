@@ -62,13 +62,13 @@ window.addEventListener('fbz:session-change',()=>{
 function ensureFeatureModule(options){return window.FBZFeatures.load(options);}
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=50',script:'js/admin.js?v=53',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=51',script:'js/admin.js?v=53',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=57',script:'js/entities.js?v=58',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=58',script:'js/entities.js?v=58',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=58',script:'js/feed.js?v=59',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=59',script:'js/feed.js?v=59',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
   return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=1',script:'js/search.js?v=58',ready:()=>window.FBZSearch});
@@ -177,14 +177,14 @@ function renderNav(){
           <div class="account-menu-items">
             <button type="button" role="menuitem" data-fbz-click="app.account-go-profile">${ico('users',17)}<span><b>Мой профиль</b><small>Оценки и статистика</small></span></button>
             ${adminItem}
-            <button type="button" role="menuitem" data-fbz-click="app.account-open-settings">${ico('settings',17)}<span><b>Настройки</b><small>Тема и данные аккаунта</small></span></button>
+            <button type="button" role="menuitem" data-fbz-click="app.account-open-settings">${ico('settings',17)}<span><b>Настройки</b><small>Тема и цвет интерфейса</small></span></button>
           </div>
           <button class="account-logout" type="button" role="menuitem" data-fbz-click="app.account-do-logout">${ico('logout',17)}<span>Выйти</span></button>
         </div>
       </div>`;
     if(hb)hb.innerHTML=`<button class="btn btn-l" data-fbz-click="shell.go-matches">Смотреть матчи →</button>`;
   }else{
-    nr.innerHTML=`<button class="nbtn nbtn-lime" data-fbz-click="shell.open-auth">Войти</button>`;
+    nr.innerHTML=`<button class="header-icon-button" type="button" data-fbz-click="app.open-settings" aria-label="Настройки" title="Настройки">${ico('settings',18)}</button><button class="nbtn nbtn-lime" data-fbz-click="shell.open-auth">Войти</button>`;
     if(hb)hb.innerHTML=`<button class="btn btn-l" data-fbz-click="shell.open-register">Начать свой дневник</button><button class="btn btn-g" data-fbz-click="shell.go-matches">Посмотреть матчи</button>`;
   }
   window.FBZHome?.sync(CU);
@@ -385,7 +385,7 @@ function editProfile(){
 
 // ─── COMMUNITY LOADER ───
 function ensureCommunityModule(){
-  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=2',script:'js/community.js?v=3',ready:()=>window.FBZCommunity});
+  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=3',script:'js/community.js?v=3',ready:()=>window.FBZCommunity});
 }
 function loadFriendsTab(tab){
   FT=tab;
@@ -427,17 +427,6 @@ function openSettings(){
   const ov=document.getElementById('settingsOv');
   if(!ov)return;
   window.FBZAppearance?.syncControls();
-  const profileUrl=CU?.id?`${window.location.origin}/profile/${encodeURIComponent(CU.id)}`:'—';
-  const values={
-    techUserId:CU?.id||'—',
-    techEmail:CU?.email||'—',
-    techProfileUrl:profileUrl,
-    techRole:CU?.is_admin?'Администратор':'Пользователь'
-  };
-  Object.entries(values).forEach(([id,value])=>{
-    const el=document.getElementById(id);
-    if(el)el.textContent=value;
-  });
   FBZOverlay.open('settingsOv','input[name="setTheme"]:checked');
 }
 function closeSettings(){FBZOverlay.close('settingsOv');}
@@ -447,12 +436,6 @@ function saveAppearanceSettings(){
   closeSettings();
   toast('Настройки сохранены','ok');
 }
-function copyTechValue(id){
-  const value=document.getElementById(id)?.textContent?.trim();
-  if(!value||value==='—')return;
-  copyText(value);
-}
-
 // ─── REVEAL + MISC ───
 function injectIcons(){
   // Nav links
@@ -510,7 +493,7 @@ FBZActions.register({
   "app.open-settings":()=>openSettings(),
   "app.toggle-account-menu":()=>toggleAccountMenu(),
   "app.account-go-profile":()=>{FBZAccount.close();return go('profile');},
-  "app.account-open-settings":()=>{FBZAccount.close();return openSettings();},
+  "app.account-open-settings":()=>{FBZAccount.close({returnFocus:true});return openSettings();},
   "app.account-do-logout":()=>{FBZAccount.close();return doLogout();},
   "app.load-lb":()=>loadLB(),
   "app.load-profile":()=>loadProfile(viewUID),

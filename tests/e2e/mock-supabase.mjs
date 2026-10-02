@@ -406,7 +406,7 @@ export async function installSupabaseMock(page,overrides={}){
 
     window.__FOOTBAZED_TEST_CLIENT__={
       auth:{
-        getSession:()=>promiseResult({session:{user:structuredClone(state.sessionUser)}}),
+        getSession:()=>promiseResult({session:state.sessionUser?{user:structuredClone(state.sessionUser)}:null}),
         getUser:()=>promiseResult({user:structuredClone(state.sessionUser)}),
         onAuthStateChange:callback=>{authListener=callback;return{data:{subscription:{unsubscribe(){authListener=null;}}}};},
         resetPasswordForEmail:(email,options)=>{state.passwordRecovery={email,options};return promiseResult({});},
