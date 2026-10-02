@@ -20,7 +20,7 @@ test('поиск исправляет только известные повре
   await expect(page.locator('#globalSearchInput')).toBeVisible();
   await page.evaluate(()=>{
     const original=sb.rpc.bind(sb);
-    sb.rpc=(name,args)=>name==='search_footbazed'?Promise.resolve({data:[
+    sb.rpc=(name,args)=>name==='search_footbazed_v2'?Promise.resolve({data:[
       {entity_type:'club',entity_id:'24',title:'Real Madrid CF',subtitle:'РљР»СѓР±'},
       {entity_type:'match',entity_id:'101',title:'Real Madrid вЂ” Man City',subtitle:'Champions League',meta:'finished'},
       {entity_type:'club',entity_id:'25',title:'Динамо',subtitle:'Россия',meta:'DIN'}
@@ -38,7 +38,7 @@ test('новый поисковый запрос сразу отменяет в�
   await expect(page.locator('#globalSearchInput')).toBeVisible();
   await page.evaluate(()=>{
     const original=sb.rpc.bind(sb);
-    sb.rpc=(name,args)=>name==='search_footbazed'
+    sb.rpc=(name,args)=>name==='search_footbazed_v2'
       ?args.p_query==='Первый'
         ?Promise.resolve({data:[{entity_type:'club',entity_id:'24',title:'Первый клуб'}],error:null})
         :new Promise(resolve=>{window.__resolveSocialSearch=resolve;})
@@ -70,7 +70,7 @@ test('ответ старого поиска во время debounce не за�
   await page.evaluate(()=>{
     const original=sb.rpc.bind(sb);
     window.__socialSearchResolvers={};
-    sb.rpc=(name,args)=>name==='search_footbazed'?new Promise(resolve=>{window.__socialSearchResolvers[args.p_query]=resolve;}):original(name,args);
+    sb.rpc=(name,args)=>name==='search_footbazed_v2'?new Promise(resolve=>{window.__socialSearchResolvers[args.p_query]=resolve;}):original(name,args);
   });
   await page.locator('#globalSearchInput').fill('Старый');
   await expect.poll(()=>page.evaluate(()=>typeof window.__socialSearchResolvers['Старый'])).toBe('function');

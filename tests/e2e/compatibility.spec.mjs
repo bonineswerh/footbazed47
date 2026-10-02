@@ -51,6 +51,11 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await expect(page.locator('.comparison-gap')).toHaveText('Разница 2');
   await page.getByRole('button',{name:'Закрыть сравнение'}).click();
   await expect(page.getByRole('button',{name:'Сравнить',exact:true})).toBeFocused();
+  await page.getByRole('button',{name:'Поиск',exact:true}).click();
+  await page.locator('#globalSearchInput').fill('Real');
+  await expect(page.getByRole('option').first().locator('.search-mark')).toBeVisible();
+  await page.locator('#globalSearchInput').press('ArrowDown');await page.locator('#globalSearchInput').press('Enter');
+  await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
   expect(errors).toEqual([]);
 });

@@ -71,12 +71,14 @@ function ensureFeedModule(){
   return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=58',script:'js/feed.js?v=59',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
-  return ensureFeatureModule({key:'search',script:'js/search.js?v=57',ready:()=>window.FBZSearch});
+  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=1',script:'js/search.js?v=58',ready:()=>window.FBZSearch});
 }
 
 function openGlobalSearch(){
   window.FBZAccount?.close();
+  const route=routeVersion,user=CU?.id;
   ensureSearchModule().then(search=>{
+    if(routeVersion!==route||CU?.id!==user)return;
     search.init();
     search.open();
   }).catch(()=>{});

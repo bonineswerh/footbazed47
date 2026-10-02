@@ -59,7 +59,11 @@
     const version=++requestVersion;
     renderLoading();
     try{
-      const{data,error}=await sb.rpc('search_footbazed',{p_query:query,p_limit:14});
+      const args={p_query:query,p_limit:14};
+      let{data,error}=await sb.rpc('search_footbazed_v2',args);
+      if(version!==requestVersion)return;
+      // Rolling deployments may still have the old reader; other failures stay errors.
+      if(error?.code==='PGRST202')({data,error}=await sb.rpc('search_footbazed',args));
       if(error)throw error;
       if(version!==requestVersion)return;
       currentResults=data||[];
@@ -142,7 +146,8 @@
     const title=item.entity_type==='match'?String(item.title||'').replaceAll(' вЂ” ',' — '):item.title;
     const rawMeta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='player'?positionLabel(item.meta):(item.meta||resultLabel(item.entity_type)));
     const meta=rawMeta&&rawMeta!==subtitle?rawMeta:'';
-    return`<button class="search-result" id="global-search-option-${index}" type="button" role="option" aria-selected="false" data-index="${index}" ${FBZActions.attrs("search.search-select",[index])}><span class="search-result-icon">${ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(title)}</strong><small>${esc(subtitle)}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
+    const visual=item.visual&&['club','player','competition'].includes(item.entity_type)?window.FBZMedia.visual({entity:item.visual,kind:item.entity_type,className:'search-mark',fallbackText:item.entity_type==='club'?item.visual.tla||'':''}):'';
+    return`<button class="search-result" id="global-search-option-${index}" type="button" role="option" aria-selected="false" data-index="${index}" ${FBZActions.attrs("search.search-select",[index])}><span class="search-result-icon${visual?' search-result-media':''}" aria-hidden="true">${visual||ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(title)}</strong><small>${esc(subtitle)}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
   }
 
   function renderResults(results,query){

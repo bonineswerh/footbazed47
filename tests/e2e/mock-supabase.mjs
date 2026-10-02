@@ -344,12 +344,12 @@ export async function installSupabaseMock(page,overrides={}){
         const distribution=Array.from({length:10},(_,index)=>({score:10-index,count:index===1?1:index===2?1:0}));
         return promiseResult({rating_count:2,average:8.5,distribution,segments:{all:{rating_count:2,average:8.5,distribution},home:{rating_count:1,average:9,distribution},away:{rating_count:0,average:null,distribution:[]},neutral:{rating_count:1,average:8,distribution}},top_players:[{player_id:5290,name:'Thibaut Courtois',team:'Real Madrid CF',average:8.7,rating_count:3,best_votes:2}]});
       }
-      if(name==='search_footbazed'){
+      if(name==='search_footbazed'||name==='search_footbazed_v2'){
         const query=String(args.p_query||'').toLocaleLowerCase();
         const results=[];
         if('champions league'.includes(query)||query.includes('champions'))results.push({entity_type:'competition',entity_id:'7',title:'Champions League',subtitle:'Europe',meta:'CL',relevance:0.99});
         if('real madrid cf'.includes(query)||query.includes('madrid'))results.push({entity_type:'club',entity_id:'24',title:'Real Madrid CF',subtitle:'Spain',meta:'RMA',relevance:0.98});
-        return promiseResult(results.slice(0,Number(args.p_limit)||14));
+        return promiseResult(results.slice(0,Number(args.p_limit)||14).map(item=>name==='search_footbazed_v2'?{...item,visual:item.entity_type==='club'?structuredClone(state.club.club):item.entity_type==='competition'?structuredClone(state.competition.competition):null}:item));
       }
       return promiseResult(null);
     }

@@ -30,6 +30,7 @@
 - `css/entities.css`, `css/feed.css`, `admin.css` — стили соответствующих доменов.
 - `app.js` — иконки, общий shell, маршрутизация, настройки и совместимые глобальные оболочки ленивых модулей.
 - `js/feature-loader.js` — единая загрузка JS/CSS модулей, таймауты и повтор после ошибки; готовность namespace не заменяет готовность CSS.
+- `js/search.js` и `css/search.css` загружаются вместе только при явном открытии поиска. `search_footbazed_v2` одним bounded invoker RPC обогащает старый ranked reader displayable media; fallback на старый RPC только при отсутствующей функции. Route/session и request guards, 180ms debounce и клавиатурные roles обязательны; изображения optional, без provider API или N+1.
 - `js/actions.js` — делегирование DOM-событий через явный реестр функций; `js/shell-actions.js` — действия статической оболочки. Домен регистрирует собственные действия вместе с ленивым модулем. HTML передаёт только имя действия и экранированные JSON-параметры.
 - `css/typography.css` — общая шкала Onest, читаемые размеры, формы и адаптивные правила текста; подключается после основных стилей.
 - `js/profile.js` и `css/profile.css` — ленивый профиль, фактическая статистика и дневник участия. `get_profile_page.rating_summary` агрегирует всю разрешённую историю независимо от bounded ratings page: владелец видит own, остальные public (включая accepted friends). Header/distribution/tournaments используют этот summary; старый RPC получает явно обозначенный sample fallback. Статус не должен выдавать количество оценок или лайков за экспертность.
