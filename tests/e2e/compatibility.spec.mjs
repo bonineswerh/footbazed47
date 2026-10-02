@@ -1,7 +1,11 @@
 import {expect,test} from '@playwright/test';
 import {installSupabaseMock} from './mock-supabase.mjs';
 
-test.beforeEach(async({page})=>{await installSupabaseMock(page);});
+test.beforeEach(async({page})=>{await installSupabaseMock(page,{profileSummaries:{'cd291181-2db6-42cb-9f3d-ef84ab3a9660':{
+  scope:'public',total:60,average:9,reviewed:2,minimum:9,maximum:9,tournament_count:1,
+  distribution:Array.from({length:10},(_,i)=>({rating:10-i,count:i===1?60:0})),
+  tournaments:[{id:7,name:'Champions League',votes:60,average:9}]
+}}});});
 
 for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings and keyboard in each browser`,async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -38,6 +42,9 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await page.keyboard.press('Escape');
   await expect(page.locator('#rateOv')).not.toHaveClass(/on/);
   await page.goto('/profile/cd291181-2db6-42cb-9f3d-ef84ab3a9660?__e2e=1');
+  await expect(page.locator('.pstats .pst-v').first()).toHaveText('60');
+  await expect(page.locator('.prdist-note')).toContainText('Вся публичная история');
+  await expect(page.getByRole('button',{name:'Меню аккаунта bazed',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Сравнить',exact:true}).click();
   await expect(page.locator('.comparison-match')).toHaveCount(1);
   await page.getByLabel('Порядок матчей').selectOption('different');

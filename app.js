@@ -169,7 +169,7 @@ function renderNav(){
       <button class="notif-btn header-icon-button" id="notifBtn" type="button" data-fbz-click="app.toggle-notif" aria-label="Уведомления" aria-controls="notifPanel" aria-expanded="false">${ico('bell',18)}<span class="notif-badge" id="notifBadge"></span></button>
       <button class="header-icon-button header-settings" type="button" data-fbz-click="app.open-settings" aria-label="Настройки" title="Настройки">${ico('settings',18)}</button>
       <div class="account-shell">
-        <button class="account-trigger" id="accountBtn" type="button" data-fbz-click="app.toggle-account-menu" aria-haspopup="menu" aria-expanded="false" aria-controls="accountMenu">${navAv}<span class="nav-uname">${safeName}</span>${ico('chevron',14)}</button>
+        <button class="account-trigger" id="accountBtn" type="button" data-fbz-click="app.toggle-account-menu" aria-label="Меню аккаунта ${safeName}" aria-haspopup="menu" aria-expanded="false" aria-controls="accountMenu">${navAv}<span class="nav-uname">${safeName}</span>${ico('chevron',14)}</button>
         <div class="account-menu" id="accountMenu" role="menu" aria-hidden="true">
           <div class="account-menu-head">${navAv}<div><b>${safeName}</b><small>${esc(CU.email||'')}</small></div></div>
           <div class="account-menu-items">
@@ -348,7 +348,7 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=7',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=3',script:'js/profile.js?v=8',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=1',ready:()=>window.FBZExploreModel});

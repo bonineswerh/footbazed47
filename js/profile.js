@@ -47,7 +47,16 @@
     });
     return loadDiary();
   }
-function renderProfileInsights(ratings,matchMap){
+function renderProfileInsights(ratings,matchMap,summary){
+  if(summary){
+    const total=Number(summary.total)||0,tournaments=summary.tournaments||[];
+    const scope=summary.scope==='own'?'По всей вашей истории, включая оценки «Только вам».':'По всей публичной истории оценок этого болельщика.';
+    return '<section class="pcard" aria-labelledby="profileInsightsTitle"><h2 class="pcard-title" id="profileInsightsTitle">Футбол в деталях</h2>'
+      +'<p class="profile-sample">'+esc(scope)+'</p>'
+      +(total?'<div class="p-insight-grid"><div class="p-mini"><span>'+Number(summary.reviewed)+'</span><small>с комментарием</small></div><div class="p-mini"><span>'+Number(summary.tournament_count)+'</span><small>турниров</small></div><div class="p-mini"><span>'+Number(summary.minimum)+'–'+Number(summary.maximum)+'</span><small>диапазон оценок</small></div></div>'
+        +(tournaments.length?'<h3 class="profile-subtitle">'+(Number(summary.tournament_count)>tournaments.length?'Чаще всего оценивает':'Оценки по турнирам')+'</h3><div class="p-leagues">'+tournaments.map(t=>'<button class="p-league profile-tournament" type="button" '+FBZActions.attrs('profile.go-competition',[Number(t.id)])+'><span>'+esc(t.name)+'<small>'+esc(FBZDomain.countLabel(Number(t.votes),{one:'оценка',few:'оценки',many:'оценок'}))+'</small></span><span class="profile-tournament-average rating-ink" data-tone="'+FBZDomain.ratingTone(Number(t.average))+'">'+FBZDomain.ratingPresentation(t.average,1).value+'<span class="sr-only"> — средняя оценка</span></span></button>').join('')+'</div>':'')
+        :'<div class="profile-empty"><strong>У каждой истории есть первый матч</strong><p>Здесь появятся турниры и впечатления из доступных оценок.</p></div>')+'</section>';
+  }
   const list=ratings||[];
   if(!list.length)return '<section class="pcard"><h2 class="pcard-title">Футбол в деталях</h2><div class="profile-empty"><strong>У каждой истории есть первый матч</strong><p>Здесь появятся турниры и впечатления из доступных оценок.</p></div></section>';
   const leagueMap={};
@@ -61,13 +70,13 @@ function renderProfileInsights(ratings,matchMap){
     +(leagues.length?'<h3 class="profile-subtitle">Турниры в этой выборке</h3><div class="p-leagues">'+leagues.slice(0,3).map(([league,count])=>'<div class="p-league"><span>'+esc(league)+'</span><b>'+count+'</b></div>').join('')+'</div>':'')+'</section>';
 }
 
-function renderRatingDistribution(ratings){
+function renderRatingDistribution(ratings,summary){
   const list=(ratings||[]).filter(r=>Number(r.match_rating)>0);
-  if(!list.length)return`<div class="pcard"><div class="pcard-title">${ico('chart',14)} Распределение оценок</div><div class="empty-state" style="padding:18px 0">Нет данных</div></div>`;
-  const total=list.length;
-  const counts=Array.from({length:10},(_,i)=>10-i).map(n=>({n,c:list.filter(r=>Number(r.match_rating)===n).length}));
+  const total=summary?Number(summary.total):list.length;
+  if(!total)return`<section class="pcard" aria-labelledby="profileDistributionTitle"><h2 class="pcard-title" id="profileDistributionTitle">${ico('chart',14)} Распределение оценок</h2><div class="empty-state" style="padding:18px 0">Оценок пока нет</div></section>`;
+  const counts=Array.from({length:10},(_,i)=>10-i).map(n=>({n,c:summary?Number(summary.distribution?.find(x=>Number(x.rating)===n)?.count)||0:list.filter(r=>Number(r.match_rating)===n).length}));
   const max=Math.max(...counts.map(x=>x.c),1);
-  return`<div class="pcard"><div class="pcard-title">${ico('chart',14)} Распределение оценок</div>
+  return`<section class="pcard" aria-labelledby="profileDistributionTitle"><h2 class="pcard-title" id="profileDistributionTitle">${ico('chart',14)} Распределение оценок</h2>
     <div class="prdist">${counts.map(x=>`
       <div class="prdist-row" data-tone="${FBZDomain.ratingTone(x.n)}">
         <span>${x.n}</span>
@@ -75,8 +84,8 @@ function renderRatingDistribution(ratings){
         <b>${x.c}</b>
       </div>`).join('')}
     </div>
-    <div class="prdist-note">${FBZDomain.countLabel(total,{one:'доступная оценка',few:'доступные оценки',many:'доступных оценок'})}. Полная история может быть больше.</div>
-  </div>`;
+    <div class="prdist-note">${FBZDomain.countLabel(total,{one:'доступная оценка',few:'доступные оценки',many:'доступных оценок'})}. ${summary?'Вся '+(summary.scope==='own'?'ваша':'публичная')+' история.':'Полная история может быть больше.'}</div>
+  </section>`;
 }
 function renderFootballDiary(count,isOwner){
   const activity=FBZDomain.profileActivity(count);
@@ -107,12 +116,13 @@ async function loadProfile(uid){
     const tl=payload.stats?.like_count||0;
     const matchMap={};
     ratings.forEach(r=>{if(r.match)matchMap[r.match_id]=r.match;});
-    const profileInsights=renderProfileInsights(ratings,matchMap);
-    const ratingDistribution=renderRatingDistribution(ratings);
+    const summary=payload.rating_summary||null;
+    const profileInsights=renderProfileInsights(ratings,matchMap,summary);
+    const ratingDistribution=renderRatingDistribution(ratings,summary);
     window.FBZSEO?.profile(u);
 
-    const cnt=u.ratings_count||0;
-    const avg=cnt?Number(u.avg_rating||0).toFixed(1):'—';
+    const cnt=summary?Number(summary.total)||0:u.ratings_count||0;
+    const avg=cnt?Number(summary?summary.average:u.avg_rating||0).toFixed(1):'—';
     const isMe=ownsProfile;
     const j=new Date(u.created_at||Date.now());
     const ms2=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
@@ -146,7 +156,7 @@ async function loadProfile(uid){
         <span class="pbadge pb-j">С ${j.getDate()} ${ms2[j.getMonth()]} ${j.getFullYear()}</span>
       </div>
       <div class="pstats">
-        <div class="pst"><div class="pst-v">${cnt}</div><div class="pst-l">Оценок</div></div>
+        <div class="pst"><div class="pst-v">${cnt}</div><div class="pst-l">${summary&&summary.scope==='public'?'Публичных оценок':'Оценок'}</div></div>
         <div class="pst"><div class="pst-v rating-ink" data-tone="${FBZDomain.ratingTone(Number(avg))}">${avg}</div><div class="pst-l">Средняя</div></div>
         <div class="pst"><div class="pst-v">${tl}</div><div class="pst-l">Лайков</div></div>
         <div class="pst"><div class="pst-v">${friendCount}</div><div class="pst-l">Друзей</div></div>
@@ -221,6 +231,7 @@ FBZActions.register({
   "profile.add-friend-from-profile":(event,element,[userId])=>addFriendFromProfile(userId),
   "profile.edit-profile":()=>editProfile(),
   "profile.go-club":(event,element,[id])=>go('club',{id:id}),
+  "profile.go-competition":(event,element,[id])=>go('competition',{id:id}),
   "profile.copy-app-link":(event,element,[url])=>copyAppLink(url,'Ссылка на профиль'),
   "profile.copy-inv":(event,element,[code])=>copyInv(code),
   "profile.open-share-profile":(event,element,[name,username,ratings,average,likes,friends,activity])=>openShare('profile',{name:name,username:username,ratings:ratings,avg:average,likes:likes,friends:friends,activity:activity}),

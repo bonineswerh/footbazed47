@@ -22,6 +22,12 @@
 .profile-subtitle{margin:22px 0 12px;font-size:var(--type-small);font-weight:650}
 .p-insight-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.p-mini{padding:0;border:0;background:none}.p-mini span{font-family:var(--font-ui);font-size:1.5rem;font-weight:600;font-variant-numeric:tabular-nums}.p-mini small{font-size:var(--type-meta);line-height:1.4}
 .p-league{padding:10px 0;border-bottom:1px solid var(--b1);background:none;border-radius:0;font-size:var(--type-small)}.p-league:last-child{border:0}
+.profile-tournament{width:100%;min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;color:var(--snow);border:0;border-bottom:1px solid var(--b1)}
+.profile-tournament>span:first-child{min-width:0;overflow-wrap:anywhere;white-space:normal;overflow:visible;line-height:1.4;font-weight:600}.profile-tournament small{display:block;margin-top:4px;font-size:var(--type-meta);font-weight:400;color:var(--text2)}
+.profile-tournament-average{font-size:1.125rem;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}.profile-tournament:hover{color:var(--accent2)}
+:root[data-theme="light"] .profile-tournament{background:transparent}
+.prdist-row{grid-template-columns:20px minmax(0,1fr) minmax(2ch,max-content)}
+.prdist-row>span,.prdist-row>b{font-family:var(--font-ui);font-size:var(--type-small);font-weight:600;font-variant-numeric:tabular-nums}.prdist-row>b{color:var(--text2)}
 .profile-diary{position:relative;padding:24px;margin-bottom:20px;border:1px solid var(--b2);border-radius:10px;background:var(--bg2);overflow:hidden}
 .profile-diary::before{content:'';position:absolute;inset:0 0 auto;height:3px;background:var(--accent)}
 .profile-diary h2{margin:10px 0 8px;font-size:1.4rem;line-height:1.25;letter-spacing:-.4px;font-weight:650}

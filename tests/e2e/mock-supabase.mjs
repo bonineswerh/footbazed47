@@ -73,7 +73,10 @@ const fixture={
     ],
     matches:[]
   },
-  favoriteClubs:[{id:24,name:'Real Madrid CF',short_name:'Real Madrid',tla:'RMA',media:null,primary_color:'#274C77',secondary_color:'#E7ECEF',favorited_at:'2026-08-01T10:00:00Z'}]
+  favoriteClubs:[{id:24,name:'Real Madrid CF',short_name:'Real Madrid',tla:'RMA',media:null,primary_color:'#274C77',secondary_color:'#E7ECEF',favorited_at:'2026-08-01T10:00:00Z'}],
+  // Existing visual fixtures exercise the compatible pre-summary response.
+  // profile-summary.spec supplies the complete new server aggregate explicitly.
+  profileSummaries:{}
 };
 
 export async function installSupabaseMock(page,overrides={}){
@@ -172,6 +175,7 @@ export async function installSupabaseMock(page,overrides={}){
         return promiseResult({
           profile:{...structuredClone(profile),bio:userId===state.profile.id?state.profile.bio:null,favorite_teams:null,streak:userId===state.profile.id?state.profile.streak:0,created_at:state.profile.created_at,invite_code:userId===state.profile.id?'TESTCODE':null},
           favorite_clubs:userId===state.profile.id?structuredClone(state.favoriteClubs):[],
+          rating_summary:structuredClone(state.profileSummaries[userId]??null),
           stats:{friend_count:friendIds.size,like_count:state.feed.filter(item=>item.user_id===userId).reduce((sum,item)=>sum+item.like_count,0)},
           friendship:friendship?{status:friendship.status,direction:friendship.user_id===state.sessionUser.id?'outgoing':'incoming'}:null,
           ratings
