@@ -18,7 +18,10 @@
     menu.classList.toggle('on', open);
     menu.setAttribute('aria-hidden', String(!open));
     if (open && focusMenu) {
-      requestAnimationFrame(() => elements().menu?.querySelector('[role="menuitem"]')?.focus());
+      requestAnimationFrame(() => {
+        const current = elements();
+        if (open && current.menu?.classList.contains('on')) current.menu.querySelector('[role="menuitem"]')?.focus();
+      });
     }
   }
 

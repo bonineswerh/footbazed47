@@ -39,7 +39,7 @@ test('поиск остаётся ленивым, получает media одн�
   await page.locator('#globalSearchInput').fill('Real');
   await expect(page.getByRole('option')).toHaveCount(3);
   await expect(page.locator('.search-mark.has-image')).toHaveCount(2);
-  expect(await page.locator('.search-mark img').evaluateAll(imgs=>imgs.every(i=>i.complete&&i.naturalWidth>0))).toBe(true);
+  await expect.poll(()=>page.locator('.search-mark img').evaluateAll(imgs=>imgs.length===2&&imgs.every(i=>i.complete&&i.naturalWidth>0))).toBe(true);
   expect(await page.evaluate(()=>window.__searchCalls)).toEqual([{name:'search_footbazed_v2',args:{p_query:'Real',p_limit:14}}]);
   await page.locator('#globalSearchInput').press('ArrowDown');await page.locator('#globalSearchInput').press('ArrowDown');
   await expect(page.getByRole('option').nth(1)).toHaveAttribute('aria-selected','true');
