@@ -37,6 +37,13 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await expect(page.locator('#playerRatingValue')).toHaveAttribute('data-tone','elite');
   await page.keyboard.press('Escape');
   await expect(page.locator('#rateOv')).not.toHaveClass(/on/);
+  await page.goto('/profile/cd291181-2db6-42cb-9f3d-ef84ab3a9660?__e2e=1');
+  await page.getByRole('button',{name:'Сравнить',exact:true}).click();
+  await expect(page.locator('.comparison-match')).toHaveCount(1);
+  await page.getByLabel('Порядок матчей').selectOption('different');
+  await expect(page.locator('.comparison-gap')).toHaveText('Разница 2');
+  await page.getByRole('button',{name:'Закрыть сравнение'}).click();
+  await expect(page.getByRole('button',{name:'Сравнить',exact:true})).toBeFocused();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
   expect(errors).toEqual([]);
 });

@@ -1,0 +1,33 @@
+.comparison-overlay{padding:24px}
+.comparison-panel{width:min(100%,860px);max-height:calc(100dvh - 48px);display:flex;flex-direction:column;border:1px solid var(--b2);border-radius:12px;background:var(--bg2);color:var(--snow);box-shadow:var(--shadow);min-width:0}
+.comparison-panel>header{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:22px 24px;border-bottom:1px solid var(--b2)}
+.comparison-panel h2{font-size:1.5rem;letter-spacing:-.03em;line-height:1.2;margin-top:6px}.comparison-panel h3{font-size:1.125rem;letter-spacing:-.02em}.comparison-panel h4{font-size:var(--type-small);font-weight:650;margin-bottom:10px}
+#comparisonWith{font-size:var(--type-small);color:var(--text2);margin-top:8px;overflow-wrap:anywhere}
+.comparison-close{width:44px;height:44px;flex-shrink:0;padding:0}
+.comparison-body{padding:20px 24px;overflow:auto;overscroll-behavior:contain;min-height:0}
+.comparison-method,.comparison-sample,.comparison-interests p{font-size:var(--type-small);line-height:1.6;color:var(--text2)}
+.comparison-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:20px 0}
+.comparison-filters>div{display:grid;gap:8px;min-width:0}.comparison-filters label{font-size:var(--type-meta);color:var(--text2)}
+.comparison-filters .input{width:100%;margin:0;min-height:46px;min-width:0;background:var(--bg3);color:var(--snow);border-color:var(--b2);font:inherit;font-size:var(--type-small)}
+.comparison-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;border-block:1px solid var(--b2);padding-block:18px}
+.comparison-summary strong{display:block;font-size:1.75rem;line-height:1.2;letter-spacing:-.03em;font-weight:650;font-variant-numeric:tabular-nums}.comparison-summary span{display:block;margin-top:6px;font-size:var(--type-meta);line-height:1.5;color:var(--text2)}
+.comparison-sample{margin-block:14px 4px}.comparison-matches{list-style:none;margin:0;padding:0}
+.comparison-match{width:100%;display:grid;grid-template-columns:minmax(0,1fr) 148px;gap:10px 18px;align-items:center;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--b1);padding:18px 0;color:var(--snow);font:inherit;cursor:pointer;border-radius:4px}
+.comparison-match:hover{background:var(--bg3)}.comparison-match-info{display:flex;align-items:center;gap:12px;min-width:0}.comparison-match-info>span:last-child{min-width:0}.comparison-match-info strong{font-size:var(--type-small);line-height:1.5;display:block;overflow-wrap:anywhere}
+.comparison-match-info small{font-size:var(--type-meta);line-height:1.5;color:var(--text2);display:block;margin-top:5px}
+.comparison-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;text-align:right}.comparison-pair small{display:block;color:var(--text2);font-size:var(--type-meta);line-height:1.5}
+.comparison-rating{font:650 1.375rem/1.4 var(--font-ui);font-variant-numeric:tabular-nums;white-space:nowrap}
+.comparison-gap{grid-column:1/-1;text-align:right;color:var(--text2);font-size:var(--type-meta);line-height:1.5}
+.comparison-interests{border-top:1px solid var(--b2);margin-top:24px;padding-top:24px}.comparison-interests>p{margin-block:8px 20px}
+.comparison-interest-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.comparison-interest-grid>section{min-width:0}
+.comparison-interest{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;margin-bottom:8px;padding:8px 0;border:0;background:transparent;color:var(--snow);text-align:left;font:inherit;cursor:pointer;border-radius:4px}
+.comparison-interest:hover{background:var(--bg3)}.comparison-interest>span:last-child{min-width:0}.comparison-interest strong{font-size:var(--type-small);line-height:1.5;display:block;overflow-wrap:anywhere}.comparison-interest small{display:block;color:var(--text2);font-size:var(--type-meta);line-height:1.5;margin-top:3px}
+.comparison-tournaments{list-style:none;padding:0;margin:0}.comparison-tournaments li{display:flex;align-items:baseline;justify-content:space-between;gap:14px;border-bottom:1px solid var(--b1);padding:12px 0;font-size:var(--type-small);line-height:1.5}.comparison-tournaments li>span:first-child{min-width:0;overflow-wrap:anywhere}.comparison-tournaments li>span:last-child{white-space:nowrap;color:var(--text2);font-variant-numeric:tabular-nums}
+.comparison-players{margin-top:22px}.comparison-players>p{margin-bottom:12px}
+@media(max-width:620px){
+ .comparison-overlay{align-items:flex-end;padding:0}.comparison-panel{width:100%;max-height:calc(100dvh - 16px);border-radius:14px 14px 0 0}.comparison-panel>header{padding:18px 20px}.comparison-panel h2{font-size:1.375rem}
+ .comparison-body{padding:18px 20px calc(20px + env(safe-area-inset-bottom))}.comparison-filters{grid-template-columns:1fr;gap:12px}.comparison-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px}.comparison-summary strong{font-size:1.625rem}
+ .comparison-match{grid-template-columns:minmax(0,1fr);gap:12px}.comparison-match-info .collection-mark{width:26px;height:30px}.comparison-match-info{gap:10px}.comparison-pair{grid-row:2;grid-column:1;grid-template-columns:repeat(2,70px);justify-content:start;text-align:left}.comparison-gap{grid-row:2;grid-column:1;align-self:end;justify-self:end;max-width:calc(100% - 160px)}
+ .comparison-interest-grid{grid-template-columns:1fr;gap:20px}
+}
+@media(prefers-reduced-motion:reduce){.comparison-panel{animation:none;transition:none}}

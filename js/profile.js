@@ -61,18 +61,6 @@ function renderProfileInsights(ratings,matchMap){
     +(leagues.length?'<h3 class="profile-subtitle">Турниры в этой выборке</h3><div class="p-leagues">'+leagues.slice(0,3).map(([league,count])=>'<div class="p-league"><span>'+esc(league)+'</span><b>'+count+'</b></div>').join('')+'</div>':'')+'</section>';
 }
 
-function renderProfileComparison(comparison,friend){
-  if(!comparison)return'';
-  const common=Number(comparison.common_matches)||0;
-  if(!common)return`<div class="pcard pcompare"><div class="pcard-title">${ico('users',14)} Ваш футбольный ракурс</div><div class="empty-state" style="padding:12px 0">Пока нет общих публично оценённых матчей.</div></div>`;
-  const agreement=Math.max(0,Math.min(100,Number(comparison.agreement_score)||0));
-  const rows=(comparison.closest||[]).map(item=>`<button type="button" ${FBZActions.attrs("profile.go-md",[Number(item.match_id)])}><span>${esc(item.home_team_name)} — ${esc(item.away_team_name)}</span><b>${item.my_score} : ${item.friend_score}</b></button>`).join('');
-  return`<div class="pcard pcompare"><div class="pcard-title">${ico('users',14)} Ваш футбольный ракурс</div>
-    <div class="pcompare-score"><div><strong>${agreement}%</strong><span>совпадение оценок</span></div><div><b>${common}</b><span>общих матчей</span></div><div><b>${Number(comparison.exact_matches)||0}</b><span>точных совпадений</span></div></div>
-    <div class="pcompare-track"><i style="width:${agreement}%"></i></div>
-    ${rows?`<div class="pcompare-list"><small>Самые близкие мнения · сначала ваша оценка</small>${rows}</div>`:''}
-  </div>`;
-}
 function renderRatingDistribution(ratings){
   const list=(ratings||[]).filter(r=>Number(r.match_rating)>0);
   if(!list.length)return`<div class="pcard"><div class="pcard-title">${ico('chart',14)} Распределение оценок</div><div class="empty-state" style="padding:18px 0">Нет данных</div></div>`;
@@ -99,6 +87,7 @@ function renderFootballDiary(count,isOwner){
 }
 
 async function loadProfile(uid){
+  root.FBZComparison?.close(false);
   disposeDiary?.();diary=null;
   const token=++profileVersion,user=CU?.id,route=routeVersion;
   const current=()=>token===profileVersion&&CU?.id===user&&route===routeVersion&&CP==='profile';
@@ -120,13 +109,6 @@ async function loadProfile(uid){
     ratings.forEach(r=>{if(r.match)matchMap[r.match_id]=r.match;});
     const profileInsights=renderProfileInsights(ratings,matchMap);
     const ratingDistribution=renderRatingDistribution(ratings);
-    let comparison=null;
-    if(!ownsProfile&&CU&&payload.friendship?.status==='accepted'){
-      const result=await sb.rpc('get_profile_comparison',{p_user_id:uid});
-      if(!current())return;
-      if(!result.error)comparison=result.data;
-    }
-    const profileComparison=renderProfileComparison(comparison,u);
     window.FBZSEO?.profile(u);
 
     const cnt=u.ratings_count||0;
@@ -171,12 +153,12 @@ async function loadProfile(uid){
       </div>
       <div class="phero-acts">
         ${ownerActions}
+        ${!isMe&&CU?`<button class="btn btn-g btn-sm" ${FBZActions.attrs('profile.compare',[uid])}>${ico('chart',14)} Сравнить</button>`:''}
         <button class="btn btn-g btn-sm" ${FBZActions.attrs("profile.copy-app-link",['/profile/'+encodeURIComponent(uid)])}>${ico('link',13)} Ссылка</button>
       </div>
     </div>
     <div class="pgrid">
       <div>
-        ${profileComparison}
         ${profileInsights}
         ${diaryMarkup()}
       </div>
@@ -216,11 +198,21 @@ async function mutateProfileFriendship(fid,accept){
   finally{profileFriendActions.delete(key);if(button?.isConnected)button.disabled=false;}
 }
 
-  root.FBZProfile=Object.freeze({mount:loadProfile,mutateFriendship:mutateProfileFriendship,diaryPage:changeDiaryPage,retryDiary:loadDiary});
+  async function compare(uid,button){
+    if(!CU||uid===CU.id||CP!=='profile'||button.disabled)return;
+    const user=CU.id,route=routeVersion,profile=profileVersion;button.disabled=true;
+    try{
+      const comparison=await ensureFeatureModule({key:'comparison',styleId:'comparisonStyles',style:'css/comparison.css?v=1',script:'js/comparison.js?v=1',ready:()=>root.FBZComparison});
+      if(CU?.id===user&&route===routeVersion&&profile===profileVersion&&CP==='profile'){button.disabled=false;button.focus({preventScroll:true});await comparison.open(uid);}
+    }catch(error){if(CU?.id===user&&route===routeVersion)toast('Не удалось открыть сравнение. Попробуйте ещё раз.','err');}
+    finally{if(button.isConnected)button.disabled=false;}
+  }
+  root.FBZProfile=Object.freeze({mount:loadProfile,mutateFriendship:mutateProfileFriendship,diaryPage:changeDiaryPage,retryDiary:loadDiary,compare});
 })(window);
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "profile.compare":(event,element,[uid])=>FBZProfile.compare(uid,element),
   "profile.diary-previous":()=>FBZProfile.diaryPage(-1),
   "profile.diary-next":()=>FBZProfile.diaryPage(1),
   "profile.go-md":(event,element,[id])=>go('md',{mid:id}),

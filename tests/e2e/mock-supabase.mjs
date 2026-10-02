@@ -269,6 +269,19 @@ export async function installSupabaseMock(page,overrides={}){
         message.body=String(args.p_body||'');message.updated_at=new Date().toISOString();message.edited_at=message.updated_at;
         return promiseResult({id:message.id,body:message.body,updated_at:message.updated_at,edited_at:message.edited_at});
       }
+      if(name==='get_profile_comparison_page'){
+        if(state.comparisonUnavailable)return promiseResult(null);
+        if(state.comparisonError)return promiseResult(null,{message:'not exposed to interface'});
+        const all=state.comparisonItems||[{...state.matches[0],match_id:101,my_score:8,their_score:10,gap:2}];
+        let items=all.filter(m=>!args.p_filters?.competition_id||String(m.competition_id)===String(args.p_filters.competition_id));
+        const sort=args.p_filters?.sort||'recent';
+        items=items.sort((a,b)=>(sort==='closest'?a.gap-b.gap:sort==='different'?b.gap-a.gap:0)||String(b.match_date).localeCompare(String(a.match_date))||b.match_id-a.match_id);
+        const total=items.length,offset=Number(args.p_offset)||0,limit=Number(args.p_limit)||12,similar=items.filter(m=>m.gap<=1).length;
+        return promiseResult({profile:state.users.find(u=>u.id===args.p_user_id),total,summary:{total,similar_matches:similar,exact_matches:items.filter(m=>m.gap===0).length,similar_percent:total?Math.round(100*similar/total):null,average_gap:total?Number((items.reduce((n,m)=>n+m.gap,0)/total).toFixed(1)):null},
+          items:structuredClone(items.slice(offset,offset+limit)),has_more:offset+limit<total,next_offset:offset+limit,
+          competitions:[{id:7,name:'Champions League'},{id:8,name:'La Liga'}],favorites:state.favoriteClubs.map(c=>({...c,side:'both'})),
+          tournaments:[{id:7,name:'Champions League',my_votes:12,their_votes:9}],players:state.comparisonPlayers||[]});
+      }
       if(name==='get_profile_comparison')return promiseResult({common_matches:1,agreement_score:89,average_gap:1,exact_matches:0,closest:[],contrasts:[]});
       if(name==='get_social_feed_page'||name==='get_social_feed'){
         let items=structuredClone(state.feed);

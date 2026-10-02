@@ -54,6 +54,7 @@ window.addEventListener('fbz:session-change',()=>{
   window.FBZCommunity?.resetSession();
   window.FBZNotifications?.resetSession();
   window.FBZProfileEditor?.resetSession();
+  window.FBZComparison?.close(false);
   document.querySelectorAll('.overlay.on').forEach(overlay=>window.FBZOverlay?.close(overlay.id,false));
   ['profileW','mdC','clubC','playerC','competitionC'].forEach(id=>document.getElementById(id)?.replaceChildren());
   if(CP!=='home')go('home');
@@ -200,6 +201,7 @@ function go(p,d){
   if(!page)return;
   routeVersion++;
   window.FBZExplore?.closePanels();
+  window.FBZComparison?.close(false);
   window.FBZProfileEditor?.resetSession();
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   page.classList.add('on');
@@ -346,7 +348,7 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=6',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=2',script:'js/profile.js?v=7',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=1',ready:()=>window.FBZExploreModel});

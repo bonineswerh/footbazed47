@@ -1440,6 +1440,15 @@ export type Database = {
       }
       get_player_page: { Args: { p_player_id: number }; Returns: Json }
       get_profile_comparison: { Args: { p_user_id: string }; Returns: Json }
+      get_profile_comparison_page: {
+        Args: {
+          p_filters?: Json
+          p_limit?: number
+          p_offset?: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       get_profile_diary: {
         Args: {
           p_cursor?: Json

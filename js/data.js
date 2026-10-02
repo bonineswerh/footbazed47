@@ -80,6 +80,11 @@
     if(kind==='matches')await enrichMatchMedia(page?.items||[]);
     return page;
   }
+  async function getProfileComparisonPage(userId,{filters={},offset=0,limit=12}={}){
+    const page=await rpc('get_profile_comparison_page',{p_user_id:userId,p_filters:filters,p_offset:offset,p_limit:limit});
+    await enrichMatchMedia(page?.items||[]);
+    return page;
+  }
 
   function setSessionUser(userId){
     const next=userId||null;
@@ -89,5 +94,5 @@
     invalidate();
   }
 
-  root.FBZData=Object.freeze({getMatchesPage,getProfilePage,getProfileDiary,getFootballStatistics,enrichMatchMedia,invalidate,setSessionUser});
+  root.FBZData=Object.freeze({getMatchesPage,getProfilePage,getProfileDiary,getFootballStatistics,getProfileComparisonPage,enrichMatchMedia,invalidate,setSessionUser});
 })(window);

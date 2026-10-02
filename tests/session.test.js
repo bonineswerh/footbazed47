@@ -12,6 +12,18 @@ function dataHarness(rpc){
   vm.runInNewContext(dataSource,{window,structuredClone,setTimeout,clearTimeout});
   return window.FBZData;
 }
+test('comparison responses cannot cross account changes and are not cached',async()=>{
+  let complete;
+  const data=dataHarness(()=>new Promise(resolve=>{complete=resolve;}));
+  data.setSessionUser('viewer');
+  const pending=data.getProfileComparisonPage('target');
+  data.setSessionUser('other');complete({data:{items:[],summary:{total:3}}});
+  await assert.rejects(pending,{name:'AbortError'});
+  let calls=0;
+  const fresh=dataHarness(async()=>({data:{items:[],summary:{total:++calls}}}));
+  assert.equal((await fresh.getProfileComparisonPage('target')).summary.total,1);
+  assert.equal((await fresh.getProfileComparisonPage('target')).summary.total,2);
+});
 
 test('profile payloads cannot cross account changes or logout',async()=>{
   let viewer='owner';
