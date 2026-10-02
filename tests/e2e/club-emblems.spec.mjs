@@ -76,3 +76,11 @@ test('неоднозначный поиск эмблемы оставляет п
   await expect(page.locator('#adminEmblemsResult')).toContainText('подготовлено 0 из 2');await expect(page.getByRole('button',{name:'Опубликовать эмблемы',exact:true})).toBeDisabled();
   await page.getByText('Пропущенные клубы: 1').click();await expect(page.locator('#adminEmblemsPreview')).toContainText('несколько похожих клубов');
 });
+
+test('предпросмотр объясняет конкретное расхождение исторических дат',async({page})=>{
+  await installSupabaseMock(page);await page.route('**/api/admin*',route=>{
+    const body=route.request().postDataJSON();return route.fulfill({contentType:'application/json',body:JSON.stringify(body?.action==='prepare_missing_club_emblem'?{batch:null,lookup:'team-search',query:'Malaga',received:1,items:[],skipped:[{providerName:'Malaga',country:'Spain',reason:'identity_conflict',localFounded:1933,providerFounded:2000}]}:{counts:{},recentMatches:[],missingEmblemClubs:[{id:217,name:'Málaga CF',area_name:'Spain'}],apiFootballConfigured:true})});
+  });
+  await page.goto('/admin?__e2e=1');await page.getByRole('button',{name:'Синхронизация',exact:true}).click();await page.getByLabel('Клуб без эмблемы').selectOption('217');await page.getByRole('button',{name:'Найти эмблему клуба',exact:true}).click();
+  await page.getByText('Пропущенные клубы: 1').click();await expect(page.locator('#adminEmblemsPreview')).toContainText('Malaga · Spain — год основания не совпал (каталог: 1933; поставщик: 2000)');await expect(page.getByRole('button',{name:'Опубликовать эмблемы',exact:true})).toBeDisabled();
+});

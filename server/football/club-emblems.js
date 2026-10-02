@@ -34,7 +34,8 @@ const aliases=Object.freeze([
   ['sporting','sportingcp','sportingclubedeportugal'],['bodoglimt'],
   ['clubbrugge','clubbruggekv'],['redbullsalzburg','rbsalzburg','salzburg'],
   ['lask','lasklinz'],['aek','aekathens','paeaek'],
-  ['coventrycity','coventry'],['realracingclubdesantander','racingsantander','santander']
+  ['coventrycity','coventry'],['realracingclubdesantander','racingsantander','santander'],
+  ['deportivolacoruna','deportivo'],['sabah','sabahfa']
 ]);
 function nameKey(value){
   const name=normalizedName(value);
@@ -42,7 +43,19 @@ function nameKey(value){
 }
 function countryKey(value){
   const key=normalizedName(value);
-  return ({germany:'germany',deutschland:'germany',espana:'spain',italia:'italy'})[key]||key;
+  return ({germany:'germany',deutschland:'germany',espana:'spain',italia:'italy',azerbaidjan:'azerbaijan'})[key]||key;
+}
+// Exact, country-scoped historical dates documented by the clubs themselves.
+// They identify predecessor/merger dates; never rewrite the legacy catalogue.
+const historicalFoundations=Object.freeze({
+  'malaga:spain':{years:[1933,1948,1994],source:'https://www.malagacf.com/1941-1992-club-deportivo-malaga'},
+  'paderborn07:germany':{years:[1907,1908,1985],source:'https://www.scp07.de/SCP07/Der-Verein/Chronik/'}
+});
+function foundingEvidence(club,team){
+  if(club.founded==null||team.founded==null||Number(club.founded)===Number(team.founded))return {matches:true};
+  const history=historicalFoundations[nameKey(club.name)+':'+countryKey(club.area_name)];
+  if(history?.years.includes(Number(club.founded))&&history.years.includes(Number(team.founded)))return {matches:true,source:history.source};
+  return {matches:false};
 }
 function sameCountry(club,team){
   const local=countryKey(club.area_name),remote=countryKey(team.country);
@@ -81,10 +94,11 @@ async function prepareClubEmblems(client,league,season,clubs,mappings){
 
 async function prepareMissingClubEmblem(client,club,mappings=[]){
   if(!club||!Number.isSafeInteger(Number(club.id))||Number(club.id)<1||club.logo_asset_id!=null)throw new FootballProviderError('club_emblem_not_missing',400);
-  const cleanName=String(club.short_name||club.name||'').normalize('NFKD').replace(/\p{M}/gu,'')
+  const searchName=normalizedName(club.short_name)==='deportivo'?club.name:club.short_name||club.name;
+  const cleanName=String(searchName||'').normalize('NFKD').replace(/\p{M}/gu,'')
     .replace(/\b(?:fc|cf|afc|ac|sc|rc|bc|ca|ud|cd|fk|as|ssc)\b/giu,'').replace(/\s+/gu,' ').trim();
   const words=cleanName.split(' '),generic=/^(?:real|racing|man|manchester|united|city|le|la|les|stade|sporting)$/iu;
-  const query=words[0].length>=3&&!generic.test(words[0])?words[0]:words.slice(0,2).join(' ');
+  const query=normalizedName(club.short_name)==='deportivo'?cleanName:words[0].length>=3&&!generic.test(words[0])?words[0]:words.slice(0,2).join(' ');
   if(query.length<3||query.length>80)throw new FootballProviderError('invalid_provider_parameters',400);
   const result=await client.collection('/teams',{search:query},{maxPages:1,maxItems:120});
   const eligible=[],skipped=[],seen=new Set();
@@ -92,11 +106,14 @@ async function prepareMissingClubEmblem(client,club,mappings=[]){
   // Check every result independently, then refuse multiple exact identities.
   for(const row of result.items){
     if(seen.has(row?.team?.id))throw new FootballProviderError('provider_invalid_teams');seen.add(row?.team?.id);
-    if(row?.team?.national!==false){skipped.push({providerName:String(row?.team?.name||''),reason:'not_club'});continue;}
-    if(club.founded!=null&&row.team.founded!=null&&Number(club.founded)!==Number(row.team.founded)){
-      skipped.push({providerName:row.team.name,reason:'identity_conflict'});continue;
-    }
-    const matched=matchClubEmblems([row],[club],mappings);eligible.push(...matched.items);skipped.push(...matched.skipped);
+    const details={country:String(row?.team?.country||'').slice(0,100),localFounded:club.founded,providerFounded:Number.isSafeInteger(row?.team?.founded)?row.team.founded:null};
+    if(row?.team?.national!==false){skipped.push({providerName:String(row?.team?.name||'').slice(0,160),reason:'not_club',...details});continue;}
+    const matched=matchClubEmblems([row],[club],mappings);
+    skipped.push(...matched.skipped.map(item=>({...item,...details})));
+    if(!matched.items.length)continue;
+    const foundation=foundingEvidence(club,row.team);
+    if(!foundation.matches){skipped.push({providerName:row.team.name,reason:'identity_conflict',...details});continue;}
+    eligible.push(...matched.items.map(item=>({...item,...(foundation.source?{identity_evidence:{source:foundation.source,local_founded:club.founded,provider_founded:row.team.founded}}:{})})));
   }
   const unique=new Map(eligible.map(item=>[item.provider_id,item]));
   const items=unique.size===1?[...unique.values()]:[];

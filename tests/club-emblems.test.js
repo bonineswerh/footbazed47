@@ -57,3 +57,26 @@ test('direct lookup refuses ambiguity, national teams, conflicting founding year
   const empty=await prepareMissingClubEmblem({collection:async()=>({items:[],quota:{}})},club);assert.equal(empty.items.length,0);
   await assert.rejects(prepareMissingClubEmblem({}, {...club,logo_asset_id:1}),e=>e.code==='club_emblem_not_missing');
 });
+
+test('Deportivo uses the complete local identity rather than an unbounded generic name',async()=>{
+  const calls=[],candidate={...club,name:'RC Deportivo La Coruña',short_name:'Deportivo',area_name:'Spain',founded:1906};
+  const result=await prepareMissingClubEmblem({collection:async(...args)=>{calls.push(args);return{items:[{team:{...team(77,'Deportivo La Coruna','Spain').team,national:false,founded:1906}}]};}},candidate);
+  assert.deepEqual(calls,[['/teams',{search:'Deportivo La Coruna'},{maxPages:1,maxItems:120}]]);
+  assert.equal(result.items[0].club_id,31);assert.equal(result.items[0].provider_id,77);
+});
+test('Sabah aliases retain country isolation, including the provider country spelling',async()=>{
+  const candidate={...club,name:'Sabah FK',short_name:'Sabah FK',area_name:'Azerbaijan',founded:null};
+  const result=await prepareMissingClubEmblem({collection:async()=>({items:[{team:{...team(77,'Sabah FA','Malaysia').team,national:false,founded:1963}},{team:{...team(78,'Sabah FA','Azerbaidjan').team,national:false,founded:2017}}]})},candidate);
+  assert.equal(result.items.length,1);assert.equal(result.items[0].provider_id,78);
+  assert.equal(result.skipped[0].country,'Malaysia');assert.equal(result.skipped[0].reason,'no_match');
+});
+test('verified predecessor dates are narrow exceptions and never relax club or country identity',async()=>{
+  for(const [name,country,local,remote]of [['Málaga CF','Spain',1933,1948],['Málaga CF','Spain',1933,1994],['SC Paderborn 07','Germany',1985,1907],['SC Paderborn 07','Germany',1985,1908]]){
+    const candidate={...club,name,short_name:name,area_name:country,founded:local};
+    const lookup=(extra={})=>prepareMissingClubEmblem({collection:async()=>({items:[{team:{...team(78,name,country).team,national:false,founded:remote,...extra}}]})},candidate);
+    const result=await lookup();assert.equal(result.items.length,1);assert.ok(result.items[0].identity_evidence.source.startsWith('https://'));
+    assert.equal(result.items[0].identity_evidence.local_founded,local);assert.equal(candidate.founded,local);
+    for(const extra of [{founded:2000},{country:'Other country'},{name:'Another Club'},{national:true}])assert.equal((await lookup(extra)).items.length,0);
+    const conflict=await lookup({founded:2000});assert.equal(conflict.skipped[0].localFounded,local);assert.equal(conflict.skipped[0].providerFounded,2000);
+  }
+});
