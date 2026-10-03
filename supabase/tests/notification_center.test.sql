@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path=public,extensions;
-select plan(35);
+select plan(42);
 insert into auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
 select ('59000000-0000-0000-0000-00000000000'||i)::uuid,'authenticated','authenticated','notif'||i||'@example.test','{}','{}',now(),now() from generate_series(1,3) i;
 insert into public.users(id,username,display_name,is_public)
@@ -62,6 +62,21 @@ reset role;
 select is((select count(*)::integer from public.notifications where user_id='59000000-0000-0000-0000-000000000002' and type='friend_accepted'),1,'acceptance produces one notification to requester');
 update public.friendships set status='accepted' where user_id='59000000-0000-0000-0000-000000000002' and friend_id='59000000-0000-0000-0000-000000000001';
 select is((select count(*)::integer from public.notifications where user_id='59000000-0000-0000-0000-000000000002' and type='friend_accepted'),1,'repeated accepted state cannot produce duplicate');
+set local role authenticated;
+select lives_ok($$select public.remove_friendship('59000000-0000-0000-0000-000000000002')$$,'accepted friendship can be removed');
+select set_config('request.jwt.claims','{"sub":"59000000-0000-0000-0000-000000000002","role":"authenticated"}',true);
+select lives_ok($$select public.request_friendship('59000000-0000-0000-0000-000000000001')$$,'new request is permitted after removal');
+reset role;
+select is((select count(*)::integer from public.notifications where user_id='59000000-0000-0000-0000-000000000001' and from_user_id='59000000-0000-0000-0000-000000000002' and type='friend_request'),2,'a later request produces a fresh notification');
+set local role authenticated;
+select lives_ok($$select public.request_friendship('59000000-0000-0000-0000-000000000001')$$,'repeat pending request remains idempotent');
+reset role;
+select is((select count(*)::integer from public.notifications where user_id='59000000-0000-0000-0000-000000000001' and from_user_id='59000000-0000-0000-0000-000000000002' and type='friend_request'),2,'repeat button press cannot create a third notification');
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"59000000-0000-0000-0000-000000000001","role":"authenticated"}',true);
+select lives_ok($$select public.respond_friendship('59000000-0000-0000-0000-000000000002','accept')$$,'later request can be accepted');
+reset role;
+select is((select count(*)::integer from public.notifications where user_id='59000000-0000-0000-0000-000000000002' and type='friend_accepted'),2,'second real acceptance produces one new notification');
 set local role authenticated;
 select public.set_user_block('59000000-0000-0000-0000-000000000002',true);
 select ok(not jsonb_path_exists(public.get_notifications_page(false,null,null,50),'$.items[*] ? (@.type == "comment")'),'blocked source disappears from history RPC');
