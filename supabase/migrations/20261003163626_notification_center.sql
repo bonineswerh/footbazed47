@@ -1,5 +1,7 @@
 -- Additive notification history. Personal readers keep the existing RLS and
 -- block scope; clients still cannot create events or change their identity.
+update public.notifications set read=false where read is null;
+alter table public.notifications add constraint notifications_read_required check(read is not null);
 alter table public.notifications drop constraint notifications_type_check;
 alter table public.notifications add constraint notifications_type_check
   check (type in ('friend_request','friend_accepted','like','comment','system'));
@@ -33,7 +35,9 @@ begin
       case when u.id is null then null else jsonb_build_object('id',u.id,'username',u.username,
         'display_name',u.display_name,'avatar_url',u.avatar_url) end actor,
       case when r.id is null then null else jsonb_build_object('id',m.id,'home_team_name',m.home_team_name,
-        'away_team_name',m.away_team_name,'league_name',m.league_name) end "match",
+        'away_team_name',m.away_team_name,'league_name',m.league_name,
+        'home_club',jsonb_build_object('name',hc.name,'short_name',hc.short_name),
+        'away_club',jsonb_build_object('name',ac.name,'short_name',ac.short_name)) end "match",
       case when n.type in ('like','comment') then r.id is not null else true end target_available,
       case when n.type in ('friend_request','friend_accepted') then
         case when exists(select 1 from public.friendships f where f.status='accepted'
@@ -43,6 +47,8 @@ begin
     from page n left join public.users u on u.id=n.from_user_id
     left join public.ratings r on r.id=n.rating_id and r.user_id=viewer
     left join public.matches m on m.id=r.match_id
+    left join public.clubs hc on hc.id=m.home_club_id
+    left join public.clubs ac on ac.id=m.away_club_id
   ) select jsonb_build_object(
     'items',coalesce((select jsonb_agg(to_jsonb(e) order by e.created_at desc,e.id desc) from enriched e),'[]'::jsonb),
     'has_more',(select count(*)>page_size from candidates),

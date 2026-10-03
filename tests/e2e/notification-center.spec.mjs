@@ -3,6 +3,13 @@ import {installSupabaseMock} from './mock-supabase.mjs';
 const own='3615141a-7700-46b8-9ba5-e4f4450537fc';
 const events=(count=26)=>Array.from({length:count},(_,i)=>({id:1001+i,user_id:own,from_user_id:null,type:'system',message:`Событие ${i+1}`,read:false,created_at:'2026-10-03T12:00:00Z',rating_id:null,comment_id:null}));
 async function start(page,overrides={}){await installSupabaseMock(page,overrides);await page.goto('/matches?__e2e=1');await expect(page.locator('#notifBtn')).toBeVisible();}
+test('счётчик показывает 99+ и обновляется при возврате без загрузки истории',async({page})=>{
+  await start(page,{notifications:events(120)});await expect(page.locator('#notifBadge')).toBeVisible();await expect(page.locator('#notifBadge')).toHaveText('99+');
+  await expect(page.locator('#notifBtn')).toHaveAttribute('aria-label','Уведомления: 120 непрочитанных');
+  await page.evaluate(async()=>{await sb.rpc('set_notification_read',{p_notification_id:1001,p_read:true});window.dispatchEvent(new Event('focus'));});
+  await expect(page.locator('#notifBtn')).toHaveAttribute('aria-label','Уведомления: 119 непрочитанных');
+  expect(await page.evaluate(()=>Boolean(window.FBZNotifications))).toBe(false);await expect(page.locator('.notif-item')).toHaveCount(0);
+});
 test('полная история, одинаковое время, фильтр и отдельная отметка сохраняются',async({page})=>{
   await start(page,{notifications:events()});await expect(page.locator('#notifBadge')).toHaveText('26');
   await expect(page.locator('.notif-item')).toHaveCount(0);await page.locator('#notifBtn').click();

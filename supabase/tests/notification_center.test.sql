@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path=public,extensions;
-select plan(34);
+select plan(35);
 insert into auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
 select ('59000000-0000-0000-0000-00000000000'||i)::uuid,'authenticated','authenticated','notif'||i||'@example.test','{}','{}',now(),now() from generate_series(1,3) i;
 insert into public.users(id,username,display_name,is_public)
@@ -39,6 +39,7 @@ select throws_ok($$select public.set_notification_read(959130,true,null)$$,'4250
 select throws_ok($$select public.set_notification_read(null,true,null)$$,'22023','invalid_notification_update','empty marking fails');
 select throws_ok($$select public.set_notification_read(null,false,959126)$$,'22023','invalid_notification_update','bulk unread is forbidden');
 select throws_ok($$update public.notifications set rating_id=null where id=959126$$,'42501',null,'direct writes cannot rewrite target');
+select throws_ok($$update public.notifications set read=null where id=959126$$,'23514',null,'read state cannot disappear through direct writes');
 select is((public.get_rating_entry((select id from public.ratings where match_id=959001 and match_rating=9))->>'match_rating')::integer,9,'old exact entry opens without recent feed scan');
 select ok(public.get_rating_entry(959702) is null,'foreign private rating remains unavailable');
 select is(public.get_rating_comment((select id from public.ratings where match_id=959001 and match_rating=9),(select id from public.rating_comments where comment='Target comment'))->>'comment','Target comment','exact scoped comment opens');

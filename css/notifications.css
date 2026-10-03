@@ -1,4 +1,4 @@
-.notif-overlay{align-items:flex-start;justify-content:flex-end;padding:76px 24px 24px;background:rgba(0,0,0,.3)}
+.notif-overlay{align-items:flex-start;justify-content:flex-end;padding:76px 24px 24px;background:rgba(0,0,0,.3);transition:none}
 .notif-sheet{display:flex;flex-direction:column;width:440px;max-width:100%;max-height:calc(100dvh - 100px);border:1px solid var(--b2);border-radius:14px;background:var(--bg2);box-shadow:var(--shadow);overflow:hidden}
 .notif-header{display:flex;align-items:center;gap:4px;padding:16px 16px 12px 20px}.notif-header>div{flex:1;min-width:0}.notif-header h2{font:650 20px/1.4 var(--font-ui)}.notif-header p{margin-top:4px;font-size:13px;color:var(--text2)}
 .notif-icon,.notif-read{display:grid;place-items:center;flex:0 0 44px;width:44px;min-height:44px;border:0;border-radius:8px;background:transparent;color:var(--text2);cursor:pointer}.notif-icon{font-size:24px}.notif-icon:hover,.notif-read:hover{background:var(--bg3)}
