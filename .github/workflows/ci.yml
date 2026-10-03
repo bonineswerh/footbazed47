@@ -73,7 +73,7 @@ jobs:
           path: types/database.ts
           retention-days: 7
       - if: ${{ !cancelled() && steps.reset.outcome == 'success' }}
-        run: supabase db lint --local --level error
+        run: supabase db lint --local --level error --fail-on error
       # The CLI installs its privileged lint extension before the test session
       # switches to PostgREST's preload configuration.
       # Match the hosted PostgREST session without granting superuser to tests.
