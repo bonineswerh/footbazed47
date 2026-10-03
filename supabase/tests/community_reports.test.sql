@@ -14,9 +14,9 @@ insert into public.ratings(id,user_id,match_id,match_rating,is_public,comment) o
 select 967000+i,'54000000-0000-0000-0000-000000000003',966000+i,9,i<>2,'Public text '||i from generate_series(1,8) i;
 insert into public.ratings(id,user_id,match_id,match_rating,is_public,comment) overriding system value
 values(967009,'54000000-0000-0000-0000-000000000002',966001,8,true,'Private profile public rating');
-insert into public.rating_comments(id,rating_id,user_id,comment) overriding system value values
-(968001,967001,'54000000-0000-0000-0000-000000000003','Visible comment'),
-(968002,967002,'54000000-0000-0000-0000-000000000003','Private rating comment');
+insert into public.rating_comments(id,rating_id,user_id,comment,created_at) overriding system value values
+(968001,967001,'54000000-0000-0000-0000-000000000003','Visible comment',now()-interval '2 days'),
+(968002,967002,'54000000-0000-0000-0000-000000000003','Private rating comment',now()-interval '1 day');
 create temp table report_test_ids(name text primary key,id uuid);
 grant select,insert on report_test_ids to authenticated,service_role;
 select ok(not has_function_privilege('anon','public.submit_community_report(text,text,text,text)','EXECUTE'),'anonymous report submission is denied');
