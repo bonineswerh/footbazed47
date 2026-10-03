@@ -1,5 +1,7 @@
 import {expect,test} from '@playwright/test';
 import {installSupabaseMock} from './mock-supabase.mjs';
+// Native font rasterization differs by OS; strict references remain separate and dates are deterministic.
+test.use({timezoneId:'UTC'});
 const owner='3615141a-7700-46b8-9ba5-e4f4450537fc',other='cd291181-2db6-42cb-9f3d-ef84ab3a9660';
 const reportId=i=>'55000000-0000-4000-8000-'+String(i).padStart(12,'0');
 
@@ -81,7 +83,7 @@ test('гость не получает кнопок жалоб и собстве
 for(const theme of ['dark','light'])for(const width of [320,390,1440])test(`диалог жалобы ${theme} ${width}px: контраст, клавиатура и детали`,async({page})=>{
   await setup(page);await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);await page.setViewportSize({width,height:844});await openReview(page);
   await expect(page.getByLabel('Причина',{exact:true})).toBeFocused();await layout(page,'#reportOverlay');
-  if(width!==320)await expect(page).toHaveScreenshot(`report-${width}-${theme}.png`,{animations:'disabled'});
+  if(width!==320)await expect(page).toHaveScreenshot(`report-${width}-${theme}-${process.platform}.png`,{animations:'disabled'});
   await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Пожаловаться на запись'})).toBeFocused();
 });
 
@@ -110,7 +112,7 @@ test('очередь жалоб: полные counts, фильтры, стран
   expect(calls.find(c=>c.action==='review_community_report')).toEqual({action:'review_community_report',report_id:reportId(1),status:'dismissed',note:'Нарушений в указанной записи не обнаружено.'});expect(errors).toEqual([]);
 });
 for(const theme of ['dark','light'])for(const width of [390,1440])test(`очередь жалоб ${theme} ${width}px: доступность и оформление`,async({page})=>{
-  await adminSetup(page);await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);await page.setViewportSize({width,height:1000});await page.goto('/admin?__e2e=1');await page.getByRole('button',{name:'Жалобы',exact:true}).click();await expect(page.locator('.admin-report-card')).toHaveCount(20);await layout(page,'#admin-view-reports');await expect(page).toHaveScreenshot(`report-queue-${width}-${theme}.png`,{animations:'disabled'});
+  await adminSetup(page);await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);await page.setViewportSize({width,height:1000});await page.goto('/admin?__e2e=1');await page.getByRole('button',{name:'Жалобы',exact:true}).click();await expect(page.locator('.admin-report-card')).toHaveCount(20);await layout(page,'#admin-view-reports');await expect(page).toHaveScreenshot(`report-queue-${width}-${theme}-${process.platform}.png`,{animations:'disabled'});
 });
 test('мои обращения показывают только свою историю и решение, по десять на странице',async({page})=>{
   const rows=Array.from({length:13},(_,i)=>({id:reportId(i+1),reporter_id:owner,target_type:'rating',target_id:String(501+i),reason:'spam',details:'My report '+i,status:i?'open':'dismissed',decision_note:i?'':'Обращение проверено, нарушений не обнаружено.',created_at:new Date(Date.UTC(2026,8,20-i)).toISOString()}));rows.push({...rows[0],id:reportId(99),reporter_id:other,details:'Private report from another account'});

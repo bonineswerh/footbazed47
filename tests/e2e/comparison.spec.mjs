@@ -61,6 +61,7 @@ for(const theme of ['dark','light'])for(const width of [320,390,1440])test(`ср
   await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);
   await prepare(page);await page.getByRole('button',{name:'Сравнить',exact:true}).click();await expect(page.locator('.comparison-match')).toHaveCount(12);
   await expect(page.getByRole('button',{name:'Закрыть сравнение'})).toBeInViewport();
+  await expect(page.getByRole('button',{name:'Закрыть сравнение'})).toBeFocused();
   await page.keyboard.press('Shift+Tab');expect(await page.evaluate(()=>document.querySelector('#comparisonOverlay').contains(document.activeElement))).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
   expect(await page.locator('.comparison-body').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);

@@ -302,6 +302,12 @@ test('отозванная сессия немедленно возвращае�
   await expect(page.getByRole('button',{name:'Войти'}).first()).toBeVisible();
 });
 
+test('начальный маршрут отображается без отложенного перехода',async({page})=>{
+  await page.clock.install({time:new Date('2026-10-03T12:00:00Z')});await page.clock.pauseAt(new Date('2026-10-03T12:00:00Z'));
+  await page.goto('/matches?__e2e=1');await expect(page.locator('#page-matches')).toHaveClass(/on/);await expect(page.locator('#page-home')).not.toHaveClass(/on/);
+  await page.clock.resume();await expect(page.locator('.mcard')).not.toHaveCount(0);
+});
+
 test('уведомление открывает публикацию без таймера и гонки рендера',async({page})=>{
   await page.goto('/?__e2e=1#matches');
   const notification=page.locator('.notif-item').filter({hasText:'Gamlet оценил вашу публикацию'});

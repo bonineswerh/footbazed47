@@ -162,7 +162,7 @@ async function init(){
   window.addEventListener('popstate',applyRouteFromLocation);
   const inv=new URLSearchParams(window.location.search).get('invite');
   if(inv)setTimeout(()=>handleInvite(inv),800);
-  if(window.location.hash||!['/','/index.html'].includes(window.location.pathname))setTimeout(applyRouteFromLocation,100);
+  if(window.location.hash||!['/','/index.html'].includes(window.location.pathname))applyRouteFromLocation();
 }
 
 function renderNav(){

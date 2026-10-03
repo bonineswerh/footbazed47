@@ -117,6 +117,7 @@ for(const width of [320,390,1440])for(const theme of ['dark','light']){
     await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);
     await openSearch(page);await page.evaluate(()=>document.fonts.ready);
     const dialog=page.locator('.global-search-box');
+    await dialog.evaluate(async element=>{await Promise.all(element.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
     expect(await dialog.evaluate(e=>e.scrollWidth-e.clientWidth)).toBeLessThanOrEqual(1);
     expect(await page.locator('.global-search-close').evaluate(e=>e.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
     await page.addScriptTag({url:'/node_modules/axe-core/axe.min.js'});
