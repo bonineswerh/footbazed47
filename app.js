@@ -65,10 +65,10 @@ function ensureAdminModule(){
   return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=52',script:'js/admin.js?v=54',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=58',script:'js/entities.js?v=58',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=59',script:'js/entities.js?v=59',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=60',script:'js/feed.js?v=60',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=61',script:'js/feed.js?v=61',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
   return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=1',script:'js/search.js?v=58',ready:()=>window.FBZSearch});
@@ -206,6 +206,7 @@ function renderNav(){
           <div class="account-menu-head">${navAv}<div><b>${safeName}</b><small>${esc(CU.email||'')}</small></div></div>
           <div class="account-menu-items">
             <button type="button" role="menuitem" data-fbz-click="app.account-go-profile">${ico('users',17)}<span><b>Мой профиль</b><small>Оценки и статистика</small></span></button>
+            <button type="button" role="menuitem" data-fbz-click="app.account-go-friends">${ico('users',17)}<span><b>Друзья</b><small>Ваш круг и заявки</small></span></button>
             ${adminItem}
             <button type="button" role="menuitem" data-fbz-click="app.account-open-settings">${ico('settings',17)}<span><b>Настройки</b><small>Тема и цвет интерфейса</small></span></button>
           </div>
@@ -240,7 +241,7 @@ function go(p,d){
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   page.classList.add('on');
   document.querySelectorAll('.nav-link').forEach(l=>{l.classList.remove('active');l.removeAttribute('aria-current');});
-  const lk=document.querySelector(`.nav-link[data-fbz-click="shell.go-${p}"]`);
+  const lk=document.querySelector(`.nav-link[data-fbz-click="shell.go-${p==='profile'?'own-profile':p}"]`);
   if(lk){lk.classList.add('active');lk.setAttribute('aria-current','page');}
   CP=p;window.scrollTo({top:0,behavior:'instant'});closeNotif();window.FBZAccount?.close();
   page.setAttribute('tabindex','-1');
@@ -355,7 +356,7 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=4',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=5',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
   }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" data-fbz-click="app.load-lb">Повторить</button></div>';}
 }
@@ -382,11 +383,11 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=4',script:'js/profile.js?v=10',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=5',script:'js/profile.js?v=11',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=1',ready:()=>window.FBZExploreModel});
-  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=4',script:'js/explore.js?v=3',ready:()=>window.FBZExplore});
+  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=5',script:'js/explore.js?v=4',ready:()=>window.FBZExplore});
 }
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
@@ -411,7 +412,7 @@ async function expStats(c,a,u){
 function editProfile(){
   profileVersion++;
   const user=CU?.id,route=routeVersion,profile=profileVersion;
-  ensureFeatureModule({key:'profile-editor',styleId:'profileEditorCss',style:'css/profile-editor.css?v=2',script:'js/profile-editor.js?v=2',ready:()=>window.FBZProfileEditor})
+  ensureFeatureModule({key:'profile-editor',styleId:'profileEditorCss',style:'css/profile-editor.css?v=3',script:'js/profile-editor.js?v=3',ready:()=>window.FBZProfileEditor})
     .then(editor=>{if(CP==='profile'&&user&&CU?.id===user&&routeVersion===route&&profileVersion===profile)editor.open();}).catch(()=>{});
 }
 
@@ -471,7 +472,7 @@ function saveAppearanceSettings(){
 // ─── REVEAL + MISC ───
 function injectIcons(){
   // Nav links
-  const navIcons={Главная:'home',Матчи:'football',Лента:'feed',Обзор:'chart',Друзья:'users'};
+  const navIcons={Главная:'home',Матчи:'football',Лента:'feed',Обзор:'chart',Друзья:'users',Профиль:'profile'};
   document.querySelectorAll('.nav-link').forEach(a=>{
     const t=a.textContent.trim();if(navIcons[t])a.innerHTML=ico(navIcons[t],15)+' '+t;
   });
@@ -527,6 +528,7 @@ FBZActions.register({
   "app.manage-blocks":(event,element,[uid,name])=>{element.focus({preventScroll:true});return manageUserBlocks(uid,name);},
   "app.toggle-account-menu":()=>toggleAccountMenu(),
   "app.account-go-profile":()=>{FBZAccount.close();return go('profile');},
+  "app.account-go-friends":()=>{FBZAccount.close();return go('friends');},
   "app.account-open-settings":()=>{FBZAccount.close({returnFocus:true});return openSettings();},
   "app.account-do-logout":()=>{FBZAccount.close();return doLogout();},
   "app.load-lb":()=>loadLB(),

@@ -84,6 +84,7 @@ export async function installSupabaseMock(page,overrides={}){
   await page.addInitScript(data=>{
     localStorage.setItem('fbz_session_hint','1');
     const state=structuredClone(data);
+    const participationVerified=(matchId,playerId)=>!Object.hasOwn(state,'lineup')||Boolean(state.lineup?.players?.some(p=>Number(p.id)===Number(playerId)&&['starter','substitute'].includes(p.participation)));
     state.club.matches=structuredClone(state.matches);
     state.competition.matches=structuredClone(state.matches.filter(match=>match.competition_id===7));
     state.directConversations=[];
@@ -144,7 +145,7 @@ export async function installSupabaseMock(page,overrides={}){
         const catalogue=state.matches;
         const base=state.feed.map(r=>({...r,match:{...catalogue.find(m=>m.id===r.match_id),...r.match}})).filter(r=>(!f.competition_id||r.match.competition_id===Number(f.competition_id))&&(!f.club_id||[r.match.home_club_id,r.match.away_club_id].includes(Number(f.club_id)))&&(!f.league||r.match.league_name===f.league)&&(!f.team||[r.match.home_team_name,r.match.away_team_name].includes(f.team))&&(!f.from||r.match.match_date.slice(0,10)>=f.from)&&(!f.to||r.match.match_date.slice(0,10)<=f.to));
         const groups=new Map();
-        const add=(id,title,subtitle,r,score=r.match_rating)=>{const key=String(id),g=groups.get(key)||{...r.match,entity_key:key,entity_id:id,title,subtitle,scores:[],people:new Set(),latest:r.match.match_date,home_score:r.match.home_score,away_score:r.match.away_score};g.scores.push(score);g.people.add(r.user_id);groups.set(key,g);};
+        const add=(id,title,subtitle,r,score=r.match_rating)=>{const key=String(id),g=groups.get(key)||{...r.match,entity_key:key,entity_id:id,title,subtitle,scores:[],people:new Set(),unverified_votes:0,latest:r.match.match_date,home_score:r.match.home_score,away_score:r.match.away_score};g.scores.push(score);g.people.add(r.user_id);if(kind==='players'&&!participationVerified(r.match_id,id))g.unverified_votes++;groups.set(key,g);};
         for(const r of base){const m=r.match;
           if(kind==='matches')add(r.match_id,`${m.home_team_name} — ${m.away_team_name}`,m.league_name,r);
           if(kind==='leagues')add(7,m.league_name,'Турнир',r);
@@ -154,7 +155,7 @@ export async function installSupabaseMock(page,overrides={}){
         const rows=[...groups.values()].map(g=>({...g,average:g.scores.reduce((a,b)=>a+b,0)/g.scores.length,votes:g.scores.length,voters:g.people.size})).filter(g=>g.votes>=Number(f.min_votes||1)&&(!f.query||`${g.title} ${g.subtitle}`.toLowerCase().includes(f.query.toLowerCase()))).sort((a,b)=>f.sort==='votes'?b.votes-a.votes:b.average-a.average).map((g,i)=>({...g,rank:i+1}));
         const competitions=[...new Map(catalogue.map(m=>[m.competition_id,{id:m.competition_id,name:m.league_name}])).values()];
         const clubs=[...new Set(catalogue.flatMap(m=>[m.home_club_id,m.away_club_id]))].map(id=>{const matches=catalogue.filter(m=>[m.home_club_id,m.away_club_id].includes(id)),m=matches[0];return{id,name:m.home_club_id===id?m.home_team_name:m.away_team_name,competition_ids:[...new Set(matches.map(m=>m.competition_id))]};});
-        return promiseResult({items:rows.slice(offset,offset+limit),total:rows.length,has_more:rows.length>offset+limit,next_offset:offset+limit,summary:{votes:base.length,matches:new Set(base.map(r=>r.match_id)).size,voters:new Set(base.map(r=>r.user_id)).size},competitions,clubs});
+        return promiseResult({items:rows.slice(offset,offset+limit),total:rows.length,has_more:rows.length>offset+limit,next_offset:offset+limit,summary:{votes:base.length,matches:new Set(base.map(r=>r.match_id)).size,voters:new Set(base.map(r=>r.user_id)).size,performance_votes:kind==='players'?rows.reduce((n,g)=>n+g.votes,0):null,unverified_performance_votes:kind==='players'?rows.reduce((n,g)=>n+g.unverified_votes,0):null},competitions,clubs});
       }
       if(name==='get_my_profile')return promiseResult(structuredClone(state.profile));
       if(name==='save_match_rating'){
@@ -356,7 +357,8 @@ export async function installSupabaseMock(page,overrides={}){
       if(name==='get_competition_page')return promiseResult(Number(args.p_competition_id)===7?structuredClone(state.competition):null);
       if(name==='get_match_insights'){
         const distribution=Array.from({length:10},(_,index)=>({score:10-index,count:index===1?1:index===2?1:0}));
-        return promiseResult({rating_count:2,average:8.5,distribution,segments:{all:{rating_count:2,average:8.5,distribution},home:{rating_count:1,average:9,distribution},away:{rating_count:0,average:null,distribution:[]},neutral:{rating_count:1,average:8,distribution}},top_players:[{player_id:5290,name:'Thibaut Courtois',team:'Real Madrid CF',average:8.7,rating_count:3,best_votes:2}]});
+        const others=state.feed.filter(r=>r.match_id===Number(args.p_match_id)&&r.is_public!==false&&r.user_id!==state.sessionUser.id);
+        return promiseResult({rating_count:2,average:8.5,distribution,others_rating_count:others.length,others_average:others.length?others.reduce((n,r)=>n+r.match_rating,0)/others.length:null,segments:{all:{rating_count:2,average:8.5,distribution},home:{rating_count:1,average:9,distribution},away:{rating_count:0,average:null,distribution:[]},neutral:{rating_count:1,average:8,distribution}},top_players:[{player_id:5290,name:'Thibaut Courtois',team:'Real Madrid CF',average:8.7,rating_count:3,best_votes:2,unverified_rating_count:participationVerified(args.p_match_id,5290)?0:3}],...structuredClone(state.matchInsights||{})});
       }
       if(name==='search_footbazed'||name==='search_footbazed_v2'){
         const query=String(args.p_query||'').toLocaleLowerCase();

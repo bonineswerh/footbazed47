@@ -28,7 +28,7 @@
         const score=root.FBZDomain.ratingPresentation(r.match_rating),date=new Date(r.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
         const result=r.home_score!==null&&r.away_score!==null?`<span class="diary-scoreline">${Number(r.home_score)} : ${Number(r.away_score)}</span> · `:'';
         const marks=root.matchClubMark(r,'home','collection-mark')+root.matchClubMark(r,'away','collection-mark');
-        return `<button class="rh-row" type="button" ${FBZActions.attrs("profile.go-md",[Number(r.match_id)])}><span class="diary-content"><span class="collection-marks" aria-hidden="true">${marks}</span><span><span class="rh-m">${esc(r.home_team_name)} — ${esc(r.away_team_name)}</span><span class="rh-l">${result}${esc(r.league_name)} · ${esc(date)}${r.is_public?'':' · Только вам'}</span></span></span><span class="rh-r"><span class="rh-v" data-tone="${score.tone}">${score.value}<span class="score-denominator">/10</span></span></span></button>`;
+        return `<button class="rh-row" type="button" ${FBZActions.attrs("profile.go-md",[Number(r.match_id)])}><span class="diary-content"><span class="collection-marks" aria-hidden="true">${marks}</span><span><span class="rh-m">${esc(FBZDomain.matchTeamName(r,'home'))} — ${esc(FBZDomain.matchTeamName(r,'away'))}</span><span class="rh-l">${result}${esc(r.league_name)} · ${esc(date)}${r.is_public?'':' · Только вам'}</span></span></span><span class="rh-r"><span class="rh-v" data-tone="${score.tone}">${score.value}<span class="score-denominator">/10</span></span></span></button>`;
       }).join('')+'</section>';}).join(''):(root.FBZExplore.activeCount(document.getElementById('diaryFilters'))?'<div class="empty-state"><strong>Оценок по этим условиям нет</strong><p>Измените поиск или сбросьте фильтры.</p></div>':'<div class="empty-state"><strong>История оценок пока пуста</strong><p>Здесь появятся оценки просмотренных матчей.</p><button class="btn btn-g" type="button" data-fbz-click="shell.go-matches">Найти матч</button></div>');
       document.getElementById('diaryCount').textContent=root.FBZDomain.countLabel(Number(data.total),{one:'оценка',few:'оценки',many:'оценок'});
       document.getElementById('diaryPage').textContent=items.length?`${s.index*8+1}–${s.index*8+items.length} из ${Number(data.total)}`:'Нет записей';
@@ -159,7 +159,7 @@ async function loadProfile(uid){
         <div class="pst"><div class="pst-v">${cnt}</div><div class="pst-l">${summary&&summary.scope==='public'?'Публичных оценок':'Оценок'}</div></div>
         <div class="pst"><div class="pst-v rating-ink" data-tone="${FBZDomain.ratingTone(Number(avg))}">${avg}</div><div class="pst-l">Средняя</div></div>
         <div class="pst"><div class="pst-v">${tl}</div><div class="pst-l">Лайков</div></div>
-        <div class="pst"><div class="pst-v">${friendCount}</div><div class="pst-l">Друзей</div></div>
+        ${isMe?`<button class="pst pst-link" type="button" data-fbz-click="shell.go-friends" aria-label="Открыть друзей: ${friendCount}"><span class="pst-v">${friendCount}</span><span class="pst-l">Друзей</span></button>`:`<div class="pst"><div class="pst-v">${friendCount}</div><div class="pst-l">Друзей</div></div>`}
       </div>
       <div class="phero-acts">
         ${ownerActions}

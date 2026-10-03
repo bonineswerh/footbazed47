@@ -265,5 +265,16 @@ c05958 e8e3dd|Спартак|Спартак Москва|Spartak Moscow
     });
   }
 
-  return Object.freeze({authErrorMessage,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});
+  function clubDisplayName(club,fallback=''){
+    return String(club?.short_name||club?.name||fallback||'Клуб').trim()||'Клуб';
+  }
+  function matchTeamName(match,side){
+    return clubDisplayName(match?.[`${side}_club`],match?.[`${side}_team_name`]);
+  }
+  function ratingEvidence({votes=0,voters=0,unverified=0}={}){
+    const count=Math.max(0,Number(votes)||0),authors=Math.max(0,Number(voters)||0);
+    return Object.freeze({preliminary:count<5||authors<5,unverified:Math.max(0,Number(unverified)||0),votes:count,voters:authors});
+  }
+
+  return Object.freeze({authErrorMessage,clubDisplayName,matchTeamName,ratingEvidence,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});
 });

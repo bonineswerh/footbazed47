@@ -189,3 +189,5 @@
 :root[data-theme="light"] .entity-section,:root[data-theme="light"] .squad-group{box-shadow:var(--shadow-card)}
 .entity-media-credit{margin:18px 0 0;color:var(--text3);font-size:var(--type-small);line-height:1.5}
 .entity-media-credit a{color:var(--text2);text-decoration:underline;text-underline-offset:3px}
+.entity-rating-context{grid-column:1/-1;color:var(--text2);font-size:var(--type-small);line-height:1.6;padding:16px 0;margin:0;border-bottom:1px solid var(--b2)}
+.entity-evidence{display:block;color:var(--text2);font-size:var(--type-meta);line-height:1.5;margin-top:5px}

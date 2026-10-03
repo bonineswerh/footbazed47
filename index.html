@@ -24,9 +24,9 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=63">
-  <link rel="stylesheet" href="css/match-editorial.css?v=3">
-  <link rel="stylesheet" href="css/typography.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=64">
+  <link rel="stylesheet" href="css/match-editorial.css?v=4">
+  <link rel="stylesheet" href="css/typography.css?v=7">
   <link rel="stylesheet" href="css/club-palettes.css?v=5">
 </head>
 <body>
@@ -41,6 +41,7 @@
       <button type="button" class="nav-link" data-fbz-click="shell.go-feed">Лента</button>
       <button type="button" class="nav-link" data-fbz-click="shell.go-leaderboard">Обзор</button>
       <button type="button" class="nav-link" data-fbz-click="shell.go-friends">Друзья</button>
+      <button type="button" class="nav-link nav-profile" data-fbz-click="shell.go-own-profile">Профиль</button>
     </nav>
     <div class="header-actions">
       <button class="header-icon-button global-search-trigger" id="globalSearchBtn" type="button" data-fbz-click="shell.open-global-search" aria-label="Поиск" title="Поиск">
@@ -122,7 +123,7 @@
       <div class="home-dashboard-grid">
         <section class="home-priority-panel" aria-labelledby="homePriorityTitle">
           <div class="home-panel-head">
-            <div><span class="section-kicker">Следующий шаг</span><h2 id="homePriorityTitle">Нужно оценить</h2></div>
+            <div><span class="section-kicker">Ваш дневник</span><h2 id="homePriorityTitle">Недавние матчи</h2></div>
             <button class="home-sec-link" type="button" data-fbz-click="shell.go-matches">Все матчи →</button>
           </div>
           <div id="homePendingRatings" aria-live="polite"><div class="loading compact"><div class="spin"></div></div></div>
@@ -714,7 +715,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- APP JS -->
-  <script src="js/domain.js?v=57"></script>
+  <script src="js/domain.js?v=58"></script>
   <script src="js/appearance.js?v=40"></script>
   <script src="js/performance.js?v=1"></script>
   <script src="js/core.js?v=54"></script>
@@ -725,12 +726,12 @@
   <script src="js/confirm.js?v=42"></script>
   <script src="js/actions.js?v=1"></script>
   <script src="js/shell-actions.js?v=3"></script>
-  <script src="js/home.js?v=9"></script>
+  <script src="js/home.js?v=10"></script>
   <script src="js/feature-loader.js?v=1"></script>
-  <script src="app.js?v=78"></script>
+  <script src="app.js?v=79"></script>
   <script src="js/auth.js?v=46"></script>
   <script src="js/rating-loader.js?v=12"></script>
-  <script src="js/matches.js?v=61"></script>
-  <script src="js/account.js?v=42"></script>
+  <script src="js/matches.js?v=62"></script>
+  <script src="js/account.js?v=43"></script>
 </body>
 </html>

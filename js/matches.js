@@ -97,9 +97,9 @@ function renderMCard(match){
         <div class="mc-tags">${derby?`<span class="tag t-derby">${ico('fire',12)} Дерби</span>`:''}<span class="tag ${statusClass}">${esc(statusLabel)}</span></div>
       </div>
       <button class="mc-score-block mc-score-link" type="button" aria-label="Открыть матч: ${esc(match.home_team_name)} против ${esc(match.away_team_name)}" ${FBZActions.attrs("matches.go-md",[match.id])}>
-        <span class="mc-score-team">${matchClubMark(match,'home','mc-score-mark')}<span class="mc-score-name">${esc(match.home_team_name)}</span></span>
+        <span class="mc-score-team">${matchClubMark(match,'home','mc-score-mark')}<span class="mc-score-name">${esc(FBZDomain.matchTeamName(match,'home'))}</span></span>
         <span class="mc-score-result"><span class="mc-score-num">${esc(match.home_score??'—')}<span class="mc-score-separator">:</span>${esc(match.away_score??'—')}</span><span class="mc-score-vs">${match.status==='scheduled'?'НЕТ СЧЁТА':'СЧЁТ'}</span></span>
-        <span class="mc-score-team">${matchClubMark(match,'away','mc-score-mark')}<span class="mc-score-name">${esc(match.away_team_name)}</span></span>
+        <span class="mc-score-team">${matchClubMark(match,'away','mc-score-mark')}<span class="mc-score-name">${esc(FBZDomain.matchTeamName(match,'away'))}</span></span>
       </button>
       <div class="mc-bottom">
         <span class="mc-meta-date">${ico('calendar',12)} ${fmtDate(match.match_date)}</span>
@@ -297,16 +297,18 @@ async function loadMD(id){
     const communityMarkup=ratingCount?`<div class="md-comm">
       <div class="md-ci"><div class="md-cv" id="mdCommunityAverage" data-tone="${hasAverage?window.FBZDomain.ratingTone(averageValue):''}">${average}</div><div class="md-cl" id="mdCommunityLabel">Все зрители</div></div>
       <div class="md-ci"><div class="md-cv" id="mdCommunityCount">${ratingCount}</div><div class="md-cl">Публичных оценок</div></div>
-      <div class="md-ci"><div class="md-cv md-cv-player">${esc(topPlayers[0]?.name||'—')}</div><div class="md-cl">Лучший игрок</div></div>
+      <div class="md-ci"><div class="md-cv md-cv-player">${esc(topPlayers[0]?.name||'—')}</div><div class="md-cl">Выбор болельщиков${Number(topPlayers[0]?.unverified_rating_count)>0?' · участие не подтверждено':''}</div></div>
     </div>${segmentControls}`:`<div class="md-community-empty"><strong>${match.status==='scheduled'?'Оценки откроются после матча':'Мнение сообщества ещё не сформировано'}</strong><span>${match.status==='scheduled'?'После финального свистка здесь появятся оценки болельщиков.':'Поставьте первую оценку и начните обсуждение матча.'}</span></div>`;
-    const difference=ownRating&&hasAverage?Number(ownRating.match_rating)-averageValue:null;
-    const differenceLabel=difference===null?'Сравнение появится после публичных оценок':Math.abs(difference)<0.05?'Вы совпали с мнением сообщества':difference>0?'Вы оценили матч выше сообщества':'Вы оценили матч ниже сообщества';
+    const othersCount=Number(insights?.others_rating_count)||0;
+    const othersAverage=othersCount>0&&insights?.others_average!=null&&Number.isFinite(Number(insights.others_average))?Number(insights.others_average):null;
+    const difference=ownRating&&othersAverage!==null?Number(ownRating.match_rating)-othersAverage:null;
+    const differenceLabel=difference===null?(ownRating?.is_public&&ratingCount===1?'Пока есть только ваша оценка':'Другие болельщики ещё не оценили матч'):Math.abs(difference)<0.05?'Ваша оценка совпала со средней других болельщиков':difference>0?'Вы оценили матч выше других болельщиков':'Вы оценили матч ниже других болельщиков';
     const differenceValue=difference===null?'—':`${difference>0?'+':''}${difference.toFixed(1)}`;
     const ownRatingMarkup=ownRating?`<section class="md-rating-comparison" aria-label="Сравнение оценок">
       <div class="md-comparison-copy"><span class="section-kicker">Ваш вердикт${ownRating.is_public===false?' · приватный':''}</span><strong>${esc(differenceLabel)}</strong></div>
       <div class="md-comparison-values">
         <div><span>Ваша оценка</span><b>${ownRating.match_rating}</b></div>
-        <div><span>Сообщество</span><b>${average}</b></div>
+        <div><span>Другие болельщики${othersCount?' · '+othersCount:''}</span><b>${othersAverage===null?'—':othersAverage.toFixed(1)}</b></div>
         <div><span>Разница</span><b class="${difference===null||Math.abs(difference)<0.05?'neutral':difference>0?'positive':'negative'}">${differenceValue}</b></div>
       </div>
     </section>`:'';
@@ -331,7 +333,7 @@ async function loadMD(id){
       ${ownRatingMarkup}
       <div class="md-grid">
         <div>
-          <section class="mdcard"><div class="mdcard-title">Топ игроков</div>${topPlayers.length?topPlayers.map((player,index)=>{const presentation=window.FBZDomain.ratingPresentation(player.average,1);return`<button class="pr-row pr-row-link" data-tone="${presentation.tone}" type="button" ${FBZActions.attrs("matches.go-player",[Number(player.player_id)])}><span class="pr-rank">${index+1}</span><span class="pr-info"><span class="pr-name">${esc(player.name)}</span><span class="pr-team">${esc(player.team)} · ${FBZDomain.countLabel(Number(player.rating_count)||0,{one:'оценка',few:'оценки',many:'оценок'})}${Number(player.best_votes)?` · ${Number(player.best_votes)} выборов лучшим`:''}</span></span><span class="pr-r"><span class="pr-bar"><span class="pr-fill" style="width:${presentation.progress}%"></span></span><span class="pr-val">${presentation.value}<span class="score-denominator">/10</span></span></span></button>`;}).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong><span>Они появятся, когда болельщики оценят составы.</span></div>'}</section>
+          <section class="mdcard"><div class="mdcard-title">Выбор болельщиков</div>${topPlayers.length?topPlayers.map((player,index)=>{const presentation=window.FBZDomain.ratingPresentation(player.average,1);return`<button class="pr-row pr-row-link" data-tone="${presentation.tone}" type="button" ${FBZActions.attrs("matches.go-player",[Number(player.player_id)])}><span class="pr-rank">${index+1}</span><span class="pr-info"><span class="pr-name">${esc(player.name)}</span><span class="pr-team">${esc(player.team)} · ${FBZDomain.countLabel(Number(player.rating_count)||0,{one:'оценка',few:'оценки',many:'оценок'})}${Number(player.best_votes)?` · ${FBZDomain.countLabel(Number(player.best_votes),{one:'голос за лучшего игрока',few:'голоса за лучшего игрока',many:'голосов за лучшего игрока'})}`:''}</span>${Number(player.unverified_rating_count)>0?'<span class="pr-evidence">Участие в матче не подтверждено</span>':''}</span><span class="pr-r"><span class="pr-bar"><span class="pr-fill" style="width:${presentation.progress}%"></span></span><span class="pr-val">${presentation.value}<span class="score-denominator">/10</span></span></span></button>`;}).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong><span>Они появятся после оценок подтверждённых участников матча.</span></div>'}</section>
           <section class="mdcard"><div class="mdcard-title">Оценки болельщиков</div>${ratings?.length?ratings.slice(0,8).map(rating=>{const user=userMap[rating.user_id]||{};const sideLabel={home:match.home_team_name,away:match.away_team_name,neutral:'Нейтральный'}[rating.supporter_side]||'Нейтральный';return`<div class="rh-row"><div><button class="text-link rh-m" ${FBZActions.attrs("app.go-profile",[rating.user_id])}>${esc(user.username||'Аноним')}</button><div class="rh-l">@${esc(user.username||'user')} · ${esc(sideLabel)}${rating.comment?' · '+esc(rating.comment.substring(0,50)):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" data-tone="${window.FBZDomain.ratingTone(rating.match_rating)}" style="width:${(rating.match_rating||0)*10}%"></div></div><div class="rh-v" data-tone="${window.FBZDomain.ratingTone(rating.match_rating)}">${rating.match_rating}<span class="score-denominator">/10</span></div></div></div>`;}).join(''):`<div class="empty-state compact"><strong>${match.status==='finished'?'Оценок пока нет':'Обсуждение начнётся после матча'}</strong><span>${match.status==='finished'?'Сформируйте первое мнение о матче.':'Здесь появятся оценки болельщиков.'}</span>${match.status==='finished'?`<button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs("matches.open-rate",[match.id])}>Оценить первым</button>`:''}</div>`}</section>
         </div>
         <section class="mdcard"><div class="mdcard-title">Распределение оценок</div><div id="mdDistribution">${distributionMarkup}</div></section>

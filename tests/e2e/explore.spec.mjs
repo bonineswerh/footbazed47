@@ -87,7 +87,7 @@ test('клубы зависят от турнира, поиск варианто
   await page.getByRole('searchbox',{name:'Найти клуб в фильтрах'}).fill('barc');
   await expect(page.getByLabel('Клуб',{exact:true}).locator('option')).toHaveCount(2);
   await page.getByLabel('Клуб',{exact:true}).selectOption('25');
-  await page.getByRole('button',{name:'Показать результаты'}).click();
+  await page.getByRole('button',{name:'Готово'}).click();
   await expect(page).toHaveURL(/ov_competition_id=8.*ov_club_id=25/);
   await expect(page.getByRole('button',{name:'Убрать фильтр Клуб: FC Barcelona'})).toBeVisible();
   await page.reload();
@@ -112,9 +112,9 @@ test('мобильные фильтры возвращают фокус, обр�
   await expect(page.locator('#statisticsList')).toContainText('пока нет оценок');
   await page.locator('#statisticsFilters-open').click();
   await expect(page.getByRole('dialog',{name:'Фильтры'})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Показать результаты'})).toBeInViewport();
+  await expect(page.getByRole('button',{name:'Готово'})).toBeInViewport();
   await expect(page.getByRole('button',{name:'Закрыть фильтры'})).toBeInViewport();
-  expect(await page.getByRole('button',{name:'Показать результаты'}).evaluate(el=>{const b=el.getBoundingClientRect();return el.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2));})).toBe(true);
+  expect(await page.getByRole('button',{name:'Готово'}).evaluate(el=>{const b=el.getBoundingClientRect();return el.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2));})).toBe(true);
   await page.getByLabel('Клуб',{exact:true}).focus();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog',{name:'Фильтры'})).toBeHidden();

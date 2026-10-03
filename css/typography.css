@@ -58,7 +58,7 @@ body .mc-score-name{font-family:var(--font-ui);font-size:.9375rem;font-weight:60
 @media(max-width:620px){.hero-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;gap:12px}.hstat{padding:0;border:0}.hstat-l{overflow-wrap:anywhere}.rating-player-row{grid-template-columns:repeat(auto-fit,minmax(82px,1fr))}.rating-player-name{font-size:var(--type-meta)}.md-comparison-values{flex-wrap:wrap}.md-comparison-values span{font-size:var(--type-meta)}}
 
 .score-denominator{font-family:inherit;font-size:.75rem;font-weight:500;letter-spacing:0;margin-left:2px;color:var(--text2)}
-body .mc-score-name{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:break-word}
+body .mc-score-name{flex:0 0 auto;display:block;overflow-wrap:anywhere}
 
 /* Numeric hierarchy: display lettering is reserved for the brand. */
 body :is(.home-overview-item strong,.home-spotlight-team b,.home-pending-match strong b,.pst-v,.entity-stat-strip strong,.entity-metric strong,.squad-player-rating b,.squad-player-number,.performance-community b,.entity-ranking-row b,.entity-ranking-row>span,.teammate-card>b,.entity-match-score,.pr-rank,.md-comparison-values b,.md-score,.mc-score-num,.feed-rating strong,.feed-players strong,.rate-score,.rd-l,.prdist-row span,.prdist-row b,.pred-input,.player-rating-output){font-family:var(--font-ui);font-weight:650;font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.025em;line-height:1.2}

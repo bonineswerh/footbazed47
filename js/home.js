@@ -62,7 +62,7 @@
       <div class="home-spotlight-main">
         <div class="home-spotlight-top"><span class="home-spotlight-overline">FOOTBAZED <i></i> МАТЧ В ФОКУСЕ</span><span class="home-spotlight-status">${live?'<span class="live-dot"></span>LIVE':finished?'Финальный свисток':'В календаре'}</span></div>
         <p class="home-spotlight-league">${root.esc(match.league_name||'Футбол')} <span>·</span> ${root.esc(dateLabel)}</p>
-        <h2 class="home-spotlight-title">${finished?'Матч, который стоит обсудить':live?'Игра идёт прямо сейчас':'Впереди большая игра'}</h2>
+        <h2 class="home-spotlight-title">${finished?'Недавний матч':live?'Игра идёт прямо сейчас':'Ближайший матч'}</h2>
         <div class="home-spotlight-score" role="group" aria-label="${root.esc(homeName)} ${root.esc(match.home_score??'без счёта')}, ${root.esc(awayName)} ${root.esc(match.away_score??'без счёта')}">
           <div class="home-spotlight-team">${root.matchClubMark(match,'home','home-spotlight-mark','eager')}<strong>${root.esc(homeName)}</strong><b>${root.esc(match.home_score??'—')}</b></div>
           <div class="home-spotlight-team">${root.matchClubMark(match,'away','home-spotlight-mark','eager')}<strong>${root.esc(awayName)}</strong><b>${root.esc(match.away_score??'—')}</b></div>
@@ -101,7 +101,7 @@
       const pending=matches.filter(match=>!ratedIds.has(Number(match.id))).slice(0,3);
       target.innerHTML=pending.length
         ?`<div class="home-pending-list">${pending.map(pendingMatch).join('')}</div>`
-        :`<div class="home-priority-empty">${root.ico('check',22)}<div><strong>Всё оценено</strong><p>${matches.length?'В недавних матчах нет незавершённых оценок.':'Завершённые матчи появятся здесь после обновления календаря.'}</p></div></div>`;
+        :`<div class="home-priority-empty">${root.ico('check',22)}<div><strong>${matches.length?'Всё оценено в этой подборке':'Пока нет недавних матчей'}</strong><p>${matches.length?'Все игры из этой подборки уже в вашем дневнике. Остальные матчи можно найти в календаре.':'Завершённые матчи появятся здесь после обновления календаря.'}</p></div></div>`;
     }catch(error){
       if(version!==requestVersion)return;
       console.warn('Home dashboard load error:',error);

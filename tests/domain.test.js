@@ -108,3 +108,15 @@ test('club palettes preserve home/away identity and reject arbitrary CSS',()=>{
   assert.equal(...domain.clubPalette('Real Madrid'));
   assert.equal(domain.ratingTone(8.9),'high');
 });
+test('compact team names prefer catalog metadata with safe readable fallbacks',()=>{
+  assert.equal(domain.matchTeamName({home_team_name:'Real Madrid CF',home_club:{name:'Real Madrid CF',short_name:'Real Madrid'}},'home'),'Real Madrid');
+  assert.equal(domain.matchTeamName({away_team_name:'Unknown FC'},'away'),'Unknown FC');
+  assert.equal(domain.clubDisplayName({name:'Full Name'}),'Full Name');
+});
+
+test('many votes from one author remain preliminary',()=>{
+  assert.equal(domain.ratingEvidence({votes:100,voters:1}).preliminary,true);
+  assert.equal(domain.ratingEvidence({votes:5,voters:5}).preliminary,false);
+  assert.equal(domain.ratingEvidence({votes:4,voters:4}).preliminary,true);
+  assert.equal(domain.ratingEvidence({votes:8,voters:5,unverified:2}).unverified,2);
+});

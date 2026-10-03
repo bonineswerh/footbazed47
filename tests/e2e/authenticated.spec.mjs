@@ -182,15 +182,15 @@ test('глобальный поиск открывает страницу тур
   await expect(page.getByRole('heading',{name:'Champions League',exact:true})).toBeVisible();
 });
 
-test('страница матча сравнивает личную оценку с сообществом',async({page})=>{
+test('страница матча сравнивает личную оценку с другими болельщиками',async({page})=>{
   await page.goto('/match/101?__e2e=1');
 
   const comparison=page.locator('.md-rating-comparison');
   await expect(comparison).toBeVisible();
-  await expect(comparison).toContainText('Вы оценили матч ниже сообщества');
+  await expect(comparison).toContainText('Вы оценили матч ниже других болельщиков');
   await expect(comparison).toContainText('8');
-  await expect(comparison).toContainText('8.5');
-  await expect(comparison).toContainText('-0.5');
+  await expect(comparison).toContainText('10.0');
+  await expect(comparison).toContainText('-2.0');
   await expect(page.getByRole('button',{name:/Изменить оценку/})).toBeVisible();
 
   const topPlayerRow=page.locator('.pr-row').first();

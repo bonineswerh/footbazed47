@@ -46,14 +46,14 @@
   }
 
   function clubButton(id,name,side,match){
-    const mark=`<span aria-hidden="true">${matchClubMark(match||{},side,'feed-club-mark')}</span><span>${esc(name)}</span>`;
+    const mark=`<span aria-hidden="true">${matchClubMark(match||{},side,'feed-club-mark')}</span><span>${esc(FBZDomain.matchTeamName(match||{},side))}</span>`;
     if(!id)return`<span class="feed-team ${side}">${mark}</span>`;
     return`<button class="feed-team ${side}" type="button" ${FBZActions.attrs("feed.go-club",[Number(id)])}>${mark}</button>`;
   }
 
   function playerHighlights(items){
     if(!Array.isArray(items)||!items.length)return'';
-    return`<div class="feed-players" aria-label="Оценки игроков">${items.map(player=>{const presentation=window.FBZDomain.ratingPresentation(player.rating,1);return`<button type="button" data-tone="${presentation.tone}" ${FBZActions.attrs("feed.go-player",[Number(player.player_id)])}><span>${player.is_best_player?'★':'●'}</span><b>${esc(player.name)}</b><strong>${presentation.value}</strong></button>`;}).join('')}</div>`;
+    return`<div class="feed-players" aria-label="Оценки игроков">${items.map(player=>{const presentation=window.FBZDomain.ratingPresentation(player.rating,1);return`<button type="button" data-tone="${presentation.tone}" ${FBZActions.attrs("feed.go-player",[Number(player.player_id)])}><span>${player.is_best_player?'★':'●'}</span><b>${esc(player.name)}</b><strong>${presentation.value}</strong>${player.participation_verified===false?'<small class="feed-player-evidence">Участие не подтверждено</small>':''}</button>`;}).join('')}</div>`;
   }
 
   function renderFeedItem(item){

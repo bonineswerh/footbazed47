@@ -84,7 +84,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .boot-error{max-width:520px;padding:13px 16px;border:1px solid var(--b2);border-radius:8px;background:rgba(8,10,9,.72);color:var(--text2);font-size:var(--type-small);line-height:1.55}
 .nav-user{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 10px 4px 4px;border:0;border-radius:8px;transition:background var(--motion-normal) var(--ease);background:transparent;color:var(--snow)}.nav-user:hover{background:var(--accent3)}
 .nav-av{width:32px;height:32px;border-radius:8px;background:var(--grad);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:var(--type-small);display:flex;align-items:center;justify-content:center}
-.nav-uname{font-size:var(--type-small);font-weight:600}
+.nav-uname{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--type-small);font-weight:600}
 .notif-btn{width:44px;height:44px;border-radius:8px;background:transparent;border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;position:relative;transition:background var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease);color:var(--text2)}
 .notif-btn:hover{background:var(--bg3);border-color:var(--b2);color:var(--snow)}
 .notif-badge{display:none}
@@ -311,6 +311,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .pr-row-link .pr-info,.pr-row-link .pr-r,.pr-row-link .pr-bar,.pr-row-link .pr-fill,.pr-row-link .pr-name,.pr-row-link .pr-team,.pr-row-link .pr-val{display:block}.pr-row-link .pr-r{display:flex}
 .pr-rank{font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--text3);width:28px}
 .pr-info{flex:1;min-width:0}.pr-name{font-weight:700;font-size:var(--type-small)}.pr-team{margin-top:2px;font-size:var(--type-meta);color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-evidence{display:block;color:var(--text2);font-size:var(--type-meta);line-height:1.5;margin-top:5px}
 .pr-r{display:flex;align-items:center;gap:10px}.pr-bar{width:74px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}.pr-fill{height:100%;border-radius:2px}.pr-row[data-tone="low"] .pr-fill{background:var(--rating-low)}.pr-row[data-tone="mid"] .pr-fill{background:var(--rating-mid)}.pr-row[data-tone="high"] .pr-fill{background:var(--rating-high)}.pr-row[data-tone="elite"] .pr-fill{background:var(--rating-elite)}
 .pr-val{min-width:28px;font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--text2);text-align:right}
 .md-prediction{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r);padding:20px;margin-bottom:16px}
@@ -386,7 +387,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 :root[data-theme="light"] .nav-link.active{background:transparent;color:var(--snow)}
 :root[data-theme="light"] .header-icon-button{border-color:var(--b2);background:rgba(255,255,255,.55);color:var(--text2)}
 :root[data-theme="light"] .header-icon-button:hover{background:var(--bg3);border-color:var(--b3);color:var(--snow)}
-:root[data-theme="light"] .mc-score-block,:root[data-theme="light"] .pred-wrap,:root[data-theme="light"] .p-league{background:var(--accent4)}
+:root[data-theme="light"] .pred-wrap,:root[data-theme="light"] .p-league{background:var(--accent4)}
 :root[data-theme="light"] .account-menu{background:var(--bg2);box-shadow:0 20px 50px rgba(26,40,34,.14)}
 :root[data-theme="light"] .accent-swatch{border-color:rgba(17,23,20,.24)}
 
@@ -503,3 +504,4 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .overlay.on>:is(.auth-box,.settings-box,.confirm-box,.share-box,.rate-box,.comparison-panel,.explore-panel){animation:panel-enter var(--motion-slow) var(--ease)}
 .notif-panel.on{animation:panel-enter var(--motion-normal) var(--ease)}
 @media(prefers-reduced-motion:reduce){.overlay.on>:is(.auth-box,.settings-box,.confirm-box,.share-box,.rate-box,.comparison-panel,.explore-panel),.notif-panel.on{animation:none}.mcard:hover,.fcard:hover,.fc-av:hover,.fc-av-img:hover,.theme-choice>span:hover,.home-spotlight-actions button:active{transform:none}}
+@media(min-width:901px) and (max-width:1199px){.header{padding-inline:16px}.nav-center{gap:2px}.nav-link{padding-inline:8px}.nav-uname{display:none}.header-actions,.nav-right{flex-shrink:0}}

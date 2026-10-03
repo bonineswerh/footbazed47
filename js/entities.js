@@ -104,7 +104,7 @@
     const rating=ratingData(player.average);
     return`<button class="squad-player" type="button" ${FBZActions.attrs("entities.go-player",[Number(player.id)])}>
       ${identityVisual({entity:player,kind:'player',className:'squad-player-photo'})}
-      <span class="squad-player-copy"><strong>${esc(player.name)}</strong><small>${esc(positionLabel(player.position))}</small></span>
+      <span class="squad-player-copy"><strong>${esc(player.name)}</strong><small>${esc(positionLabel(player.position))}</small>${Number(player.unverified_rating_count)>0?'<small class="entity-evidence">Есть оценки без подтверждения участия</small>':''}</span>
       <span class="squad-player-number">${player.shirt_number?`#${esc(player.shirt_number)}`:'—'}</span>
       <span class="squad-player-rating" data-tone="${rating.tone}"><b>${rating.value}</b><small>${Number(player.rating_count)||0} ${plural(player.rating_count,'оценка','оценки','оценок')}</small></span>
       <span class="squad-player-arrow">→</span>
@@ -194,8 +194,9 @@
         <div><strong>${Number(stats.squad_count)||0}</strong><span>Игроков</span></div>
         <div><strong>${Number(stats.match_count)||0}</strong><span>Матчей</span></div>
         <div><strong>${Number(stats.upcoming_count)||0}</strong><span>Впереди</span></div>
-        <div><strong class="rating-ink" data-tone="${ratingData(stats.player_rating).tone}">${ratingValue(stats.player_rating)}</strong><span>Оценка состава</span></div>
+        <div><strong class="rating-ink" data-tone="${ratingData(stats.player_rating).tone}">${ratingValue(stats.player_rating)}</strong><span>Оценка выступлений</span></div>
       </div>
+      <p class="entity-rating-context">${Number(stats.player_rating_count)>0?`${FBZDomain.countLabel(Number(stats.player_rating_count),{one:'оценка',few:'оценки',many:'оценок'})} выступлений${stats.rated_player_count!=null?` · ${FBZDomain.countLabel(Number(stats.rated_player_count),{one:'игрок',few:'игрока',many:'игроков'})}`:''}${stats.player_match_count!=null?` · ${FBZDomain.countLabel(Number(stats.player_match_count),{one:'матч',few:'матча',many:'матчей'})}`:''}. Это впечатления от отдельных выступлений, а не оценка всего состава.`:'Оценок выступлений пока нет.'}${Number(stats.unverified_player_rating_count)>0?' Есть ранее сохранённые оценки игроков, участие которых в матче ещё не подтверждено.':''}</p>
       <div class="entity-tabs" id="clubTabs" role="tablist" aria-label="Разделы клуба" data-fbz-keydown="entities.on-club-tab-key">
         <button class="entity-tab on" id="club-tab-overview" data-tab="overview" role="tab" aria-controls="clubBody" aria-selected="true" tabindex="0" type="button" data-fbz-click="entities.set-club-tab-overview">Обзор</button>
         <button class="entity-tab" id="club-tab-squad" data-tab="squad" role="tab" aria-controls="clubBody" aria-selected="false" tabindex="-1" type="button" data-fbz-click="entities.set-club-tab-squad">Состав <span>${Number(stats.squad_count)||0}</span></button>
@@ -280,7 +281,7 @@
   function performanceRow(item){
     const rating=ratingData(item.average);
     return`<button class="performance-row" type="button" ${FBZActions.attrs("entities.go-md",[Number(item.match_id)])}>
-      <span class="performance-match"><small>${matchDate(item.match_date)} · ${esc(item.league_name||'')}</small><strong>${esc(item.home_team_name)} <b>${esc(item.home_score??'—')} : ${esc(item.away_score??'—')}</b> ${esc(item.away_team_name)}</strong></span>
+      <span class="performance-match"><small>${matchDate(item.match_date)} · ${esc(item.league_name||'')}</small><strong>${esc(item.home_team_name)} <b>${esc(item.home_score??'—')} : ${esc(item.away_score??'—')}</b> ${esc(item.away_team_name)}</strong>${item.participation_verified===false?'<small class="entity-evidence">Участие в матче не подтверждено</small>':''}</span>
       <span class="performance-community" data-tone="${rating.tone}"><b>${rating.value}</b><small>${Number(item.rating_count)||0} ${plural(item.rating_count,'оценка','оценки','оценок')}</small></span>
       <span class="squad-player-arrow">→</span>
     </button>`;
@@ -317,6 +318,7 @@
         <div><strong>${Number(stats.best_votes)||0}</strong><span>Лучший игрок</span></div>
       </div>
       <div class="entity-body player-body">
+        ${Number(stats.unverified_rating_count)>0?'<p class="entity-rating-context">Средняя включает ранее сохранённые оценки без подтверждения участия в матче. Они отмечены в списке ниже.</p>':''}
         <section class="entity-section">
           <header class="entity-section-head"><div><span>Оценки болельщиков</span><h2>Матчи игрока</h2></div><strong>${performances.length}</strong></header>
           <div class="performance-list">${performances.length?performances.map(performanceRow).join(''):'<div class="entity-inline-empty">Оценок в матчах пока нет</div>'}</div>

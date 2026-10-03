@@ -115,7 +115,8 @@ test('ошибка сохранения профиля сохраняет вве
   await expect(page.getByRole('textbox',{name:/О себе/})).toHaveValue('Новый футбольный сезон');
   await expect(page.locator('#epSaveBtn')).toBeEnabled();
   await page.locator('#epSaveBtn').click();
-  await expect(page.getByRole('heading',{name:'new_bazed',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Bazed',exact:true})).toBeVisible();
+  await expect(page.locator('.phero-hand')).toHaveText('@new_bazed');
   expect(await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.profile().bio)).toBe('Новый футбольный сезон');
 });
 

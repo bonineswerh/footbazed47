@@ -10,7 +10,7 @@ for(const theme of ['dark','light'])for(const width of [390,1440]){
     await expect(page.locator('.statistics-row')).toBeVisible();await page.evaluate(()=>document.fonts.ready);
     await expect(page.locator('#statisticsRoot')).toHaveScreenshot(`overview-${theme}-${width}.png`,{animations:'disabled',maxDiffPixelRatio:.03});
     await page.locator('#statisticsFilters-open').click();
-    await expect(page.getByRole('button',{name:'Показать результаты'})).toBeInViewport();
+    await expect(page.getByRole('button',{name:'Готово'})).toBeInViewport();
     await expect(page.getByRole('dialog',{name:'Фильтры'})).toHaveScreenshot(`filters-${theme}-${width}.png`,{animations:'disabled',maxDiffPixelRatio:.03});
     await page.keyboard.press('Escape');
     await page.goto(`/profile/${owner}?__e2e=1`);

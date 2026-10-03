@@ -14,7 +14,7 @@
       <div class="overlay explore-sheet" id="${id}-sheet" aria-hidden="true" data-close-backdrop="true"><div class="explore-panel" role="dialog" aria-modal="true" aria-labelledby="${id}-title" tabindex="-1"><header><div><span class="section-kicker">${diary?'Ваш дневник':'Футбол глазами сообщества'}</span><h2 id="${id}-title">Фильтры</h2></div><button class="btn btn-g explore-close" type="button" aria-label="Закрыть фильтры">${root.ico('close',18)}</button></header><div class="explore-panel-body">
       <div class="explore-filter-row">${picker('competition_id','Турнир','Все турниры')}${picker('club_id','Клуб','Все клубы')}</div><div class="explore-filter-grid">${field('from','Матчи с','date')}${field('to','Матчи по','date')}
       ${diary?field('min_rating','Оценка от','number','min="1" max="10" step="1" placeholder="1"')+field('max_rating','Оценка до','number','min="1" max="10" step="1" placeholder="10"')+field('home_score','Голы хозяев','number','min="0" max="99" step="1" placeholder="Любые"')+field('away_score','Голы гостей','number','min="0" max="99" step="1" placeholder="Любые"'):select('min_votes','Минимум оценок','<option value="1">От 1 оценки</option><option value="5">От 5 оценок</option><option value="10">От 10 оценок</option><option value="25">От 25 оценок</option>')+select('sort','Порядок','<option value="average">По средней оценке</option><option value="votes">По числу оценок</option><option value="recent">По дате матча</option>')}
-      </div><p class="explore-hint">Период относится к дате матча. Клубы доступны по участию в выбранном турнире.</p><p class="explore-validation" id="${id}-validation" role="status" hidden></p></div><footer><button class="btn btn-g explore-panel-reset" type="button">Сбросить</button><button class="btn btn-l explore-done" type="button">Показать результаты</button></footer></div></div>
+      </div><p class="explore-hint">Фильтры применяются автоматически. Период относится к дате матча. Клубы доступны по участию в выбранном турнире.</p><p class="explore-validation" id="${id}-validation" role="status" hidden></p></div><footer><button class="btn btn-g explore-panel-reset" type="button">Сбросить</button><button class="btn btn-l explore-done" type="button">Готово</button></footer></div></div>
     </form>`;
   }
   function read(form){return model.normalize(Object.fromEntries(new FormData(form)),form.dataset.diary==='true');}
@@ -56,7 +56,7 @@
     panel.querySelectorAll('input,select').forEach(field=>field.setAttribute('form',form.id));
     document.body.append(panel);
     const listen=(name,handler)=>{form.addEventListener(name,handler,eventOptions);panel.addEventListener(name,handler,eventOptions);};
-    const run=(mode='push')=>{clearTimeout(timer);sync(form);if(valid(form))onChange(read(form),mode);else onInvalid();};
+    const run=(mode='push')=>{clearTimeout(timer);timer=null;sync(form);if(valid(form))onChange(read(form),mode);else onInvalid();};
     listen('input',event=>{if(event.target.dataset.optionsQuery){options(form,event.target.dataset.optionsQuery);return;}sync(form);onInvalidate();clearTimeout(timer);timer=setTimeout(()=>run(event.target.name==='query'?'replace':'push'),event.target.name==='query'?250:350);});
     listen('change',event=>{
       if(event.target.tagName!=='SELECT')return;
@@ -72,7 +72,7 @@
       const target=event.target.closest('button');if(!target)return;
       if(target.classList.contains('explore-open')){root.FBZOverlay.open(form.id+'-sheet','select[name="competition_id"]');valid(form);}
       else if(target.classList.contains('explore-close'))root.FBZOverlay.close(form.id+'-sheet');
-      else if(target.classList.contains('explore-done')){run();if(valid(form))root.FBZOverlay.close(form.id+'-sheet');else panel.querySelector('[aria-invalid="true"]')?.focus();}
+      else if(target.classList.contains('explore-done')){if(timer){run();timer=null;}if(valid(form))root.FBZOverlay.close(form.id+'-sheet');else panel.querySelector('[aria-invalid="true"]')?.focus();}
       else if(target.classList.contains('explore-panel-reset'))form.reset();
       else if(target.dataset.clear){const key=target.dataset.clear,field=form.elements.namedItem(key);field.value=key==='min_votes'?'1':key==='sort'?'average':'';if(key==='competition_id')options(form,'club_id');onInvalidate();run();form.querySelector('.explore-open').focus();}
     });

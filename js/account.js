@@ -48,7 +48,7 @@
       close({returnFocus:true});
       return;
     }
-    if (!['ArrowDown','ArrowUp','Home','End'].includes(event.key)) return;
+    if (!menu?.contains(event.target) || !['ArrowDown','ArrowUp','Home','End'].includes(event.key)) return;
     const items = [...(menu?.querySelectorAll('[role="menuitem"]:not([disabled])') || [])];
     if (!items.length) return;
     event.preventDefault();
@@ -58,6 +58,11 @@
       : event.key === 'ArrowDown' ? (current + 1 + items.length) % items.length
       : (current - 1 + items.length) % items.length;
     items[next].focus();
+  });
+
+  document.addEventListener('focusin', event => {
+    if (!open || event.target.closest('#accountMenu') || event.target.closest('#accountBtn')) return;
+    close();
   });
 
   window.FBZAccount = {toggle, close};

@@ -10,8 +10,10 @@
     el('profileW').innerHTML=`<div class="profile-editor"><header><span class="section-kicker">Мой профиль</span><h1>Ваш футбольный профиль</h1><p>Так вас видят другие болельщики.</p></header><form data-fbz-submit="profile-editor.profile-editor-save">
       <div class="profile-photo"><button class="profile-photo-button" type="button" data-fbz-click="profile-editor.choose-avatar" aria-label="Выбрать фотографию профиля"><span id="avPreview">${src?`<img src="${src}" alt="">`:`<span class="phero-av ${avColor(CU.username)}">${esc((CU.username||'U')[0].toUpperCase())}</span>`}</span><span class="profile-photo-edit">${ico('photo',16)}</span></button><div><strong>Фото профиля</strong><p>JPG, PNG или WebP, до 5 МБ.<br>Сохраним квадратный аватар.</p></div><input id="avFile" type="file" accept="image/jpeg,image/png,image/webp" hidden data-fbz-change="profile-editor.profile-editor-preview"></div>
       <label for="ep_user">Никнейм</label><input class="input" id="ep_user" value="${esc(CU.username)}" minlength="3" maxlength="30" required autocomplete="nickname" aria-describedby="usernameHint"><p class="field-hint" id="usernameHint">3–30 символов: буквы, цифры и нижнее подчёркивание.</p>
+      <label for="ep_name">Имя в профиле</label><input class="input" id="ep_name" value="${esc(CU.display_name||CU.username)}" maxlength="60" autocomplete="name" aria-describedby="displayNameHint"><p class="field-hint" id="displayNameHint">Подпись, которую видят болельщики. Никнейм остаётся вашим уникальным именем.</p>
       <label for="ep_email">Email</label><input class="input" id="ep_email" value="${esc(CU.email||'')}" readonly aria-describedby="emailHint"><p class="field-hint" id="emailHint">Доступен только вам.</p>
       <label for="ep_bio">О себе <span>Необязательно</span></label><textarea class="input" id="ep_bio" rows="3" maxlength="120" placeholder="За кого болеете и что цените в футболе" data-fbz-input="profile-editor.profile-editor-update-count" aria-describedby="bioCount">${esc(CU.bio||'')}</textarea><p class="field-hint field-counter" id="bioCount">${String(CU.bio||'').length}/120</p>
+      <fieldset class="profile-visibility"><legend>Видимость профиля</legend><label for="ep_public"><input id="ep_public" type="checkbox" ${CU.is_public!==false?'checked':''}> Открытый профиль</label><p>Открытый профиль виден всем. Закрытый — только вам и подтверждённым друзьям.</p><p>Публичные оценки сохраняются в общих показателях матчей. Чтобы скрыть конкретную оценку, выберите «Только вам» при её сохранении. Фотография профиля остаётся доступна по прямой ссылке.</p></fieldset>
       <div class="profile-favorites-help"><b>Любимые клубы</b><p>Откройте клуб через поиск и добавьте его в избранное.</p><button class="text-action" type="button" data-fbz-click="shell.open-global-search">Найти клуб →</button></div>
       <p class="form-error" id="profileEditError" role="alert" hidden></p>
       <div class="profile-editor-actions"><button class="btn btn-g" type="button" data-fbz-click="profile-editor.profile-editor-cancel">Отмена</button><button class="btn btn-l" id="epSaveBtn" type="submit">Сохранить</button></div>
@@ -44,14 +46,16 @@
   async function save(event){
     event?.preventDefault();
     if(saving||!CU)return;
-    const user=CU.id,view=generation,name=el('ep_user').value.trim(),bio=el('ep_bio').value.trim(),photo=avatar;
+    const user=CU.id,view=generation,name=el('ep_user').value.trim(),displayName=el('ep_name').value.trim()||name,bio=el('ep_bio').value.trim(),isPublic=el('ep_public').checked,photo=avatar;
     if(!/^[a-zA-Z0-9_а-яёА-ЯЁ]{3,30}$/u.test(name)){error('Никнейм: от 3 до 30 букв, цифр или знаков подчёркивания.');el('ep_user').focus();return;}
+    if(displayName.length>60){error('Имя в профиле: не больше 60 символов.');el('ep_name').focus();return;}
+    if(bio.length>120){error('Описание: не больше 120 символов.');el('ep_bio').focus();return;}
     const current=()=>view===generation&&CU?.id===user;
     saving=true;error('');
     const button=el('epSaveBtn');button.disabled=true;button.textContent='Сохраняем…';
     const controls=[...el('profileW').querySelectorAll('input,textarea,button')];controls.forEach(control=>control.disabled=true);
     try{
-      const update={username:name,display_name:name,bio:bio||null};
+      const update={username:name,display_name:displayName,bio:bio||null,is_public:isPublic};
       if(photo){
         const path=`${user}/avatar.jpg`;
         const result=await sb.storage.from('avatars').upload(path,photo,{upsert:true,contentType:'image/jpeg',cacheControl:'31536000'});
@@ -65,7 +69,7 @@
       const result=await sb.from('users').update(update).eq('id',user);
       if(result.error)throw result.error;
       if(!current())return;
-      CU={...CU,...update};clearAppCache();window.FBZData?.invalidate('profile:');
+      CU={...CU,...update};clearAppCache();window.FBZData?.invalidateVisibility();
       resetSession();renderNav();await loadProfile(user);toast('Профиль обновлён');
     }catch(failure){if(current())error(failure?.code==='23505'?'Этот никнейм уже занят. Выберите другой.':'Не удалось сохранить профиль. Ваши изменения остались в форме. Попробуйте ещё раз.');}
     finally{if(current()){saving=false;controls.forEach(control=>{if(control.isConnected)control.disabled=false;});button.textContent='Сохранить';}}

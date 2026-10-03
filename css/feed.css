@@ -40,6 +40,8 @@ button.feed-team:hover{color:var(--accent2)}
 .feed-players{display:flex;flex-wrap:wrap;gap:6px;padding:0 18px 15px}
 .feed-players button{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 11px;border:1px solid var(--b1);border-radius:6px;background:var(--bg3);color:var(--text2);font-size:var(--type-meta);cursor:pointer;transition:border-color var(--motion-fast) var(--ease),color var(--motion-fast) var(--ease)}
 .feed-players button:hover{border-color:var(--b3);color:var(--snow)}
+.feed-players button:has(.feed-player-evidence){flex-wrap:wrap;padding-block:9px}
+.feed-player-evidence{flex-basis:100%;font-size:var(--type-meta);line-height:1.5;color:var(--text2);text-align:left}
 .feed-players button span{color:var(--accent)}.feed-players button b{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.feed-players button strong{color:var(--snow)}.feed-players button[data-tone="low"] strong{color:var(--rating-low)}.feed-players button[data-tone="mid"] strong{color:var(--rating-mid)}.feed-players button[data-tone="high"] strong{color:var(--rating-high)}.feed-players button[data-tone="elite"] strong{color:var(--rating-elite)}
 .feed-actions{display:flex;align-items:center;min-height:48px;padding:5px 10px;border-top:1px solid var(--b1)}
 .feed-action{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:0;border-radius:6px;background:transparent;color:var(--text3);font-size:var(--type-small);font-weight:700;cursor:pointer;transition:background var(--motion-fast) var(--ease),color var(--motion-fast) var(--ease)}
