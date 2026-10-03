@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path=public,extensions;
-select plan(41);
+select plan(42);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
 select ('55000000-0000-0000-0000-00000000000'||i)::uuid,'00000000-0000-0000-0000-000000000000','authenticated','authenticated',
@@ -24,16 +24,19 @@ insert into public.ratings(user_id,match_id,match_rating,is_public,comment)
 values('55000000-0000-0000-0000-000000000001',955001,9,true,null),
 ('55000000-0000-0000-0000-000000000002',955001,7,true,null),
 ('55000000-0000-0000-0000-000000000003',955001,5,true,null),
-('55000000-0000-0000-0000-000000000001',955002,1,false,'aggregate-private-review-marker');
+('55000000-0000-0000-0000-000000000001',955002,1,false,'aggregate-private-review-marker'),
+('55000000-0000-0000-0000-000000000002',955003,2,false,null);
 insert into public.player_ratings(user_id,match_id,player_id,rating,is_best_player)
 values('55000000-0000-0000-0000-000000000001',955001,955001,9,true),
 ('55000000-0000-0000-0000-000000000002',955001,955001,7,false),
 ('55000000-0000-0000-0000-000000000003',955001,955001,5,false),
 ('55000000-0000-0000-0000-000000000001',955002,955001,1,true),
 ('55000000-0000-0000-0000-000000000001',955002,955002,4,false),
--- Preserved orphan legacy data has no public parent vote and cannot enter aggregates.
+-- A different owner's private match also cannot enter the public player sample.
 ('55000000-0000-0000-0000-000000000002',955003,955001,2,false);
 insert into public.favorite_clubs(user_id,club_id) values('55000000-0000-0000-0000-000000000001',955001);
+select throws_ok($$insert into public.player_ratings(user_id,match_id,player_id,rating)
+values('55000000-0000-0000-0000-000000000003',955003,955002,2)$$,'23503',null,'the existing parent-rating FK still prevents orphan votes');
 
 select is(has_table_privilege('anon','private.community_public_match_votes','SELECT'),false,'anon cannot read aggregate source rows');
 select is(has_table_privilege('authenticated','private.community_public_match_votes','SELECT'),false,'signed-in clients cannot read aggregate source rows');
@@ -48,12 +51,12 @@ set local role anon;
 select set_config('request.jwt.claims','{"role":"anon"}',true);
 select is(public.get_club_page(955001)->>'is_favorite','false','guest cannot inherit an owner favorite');
 select is((public.get_club_page(955001)#>>'{stats,player_rating}')::numeric,7.0::numeric,'club average counts only public parent votes');
-select is((public.get_club_page(955001)#>>'{stats,player_rating_count}')::integer,3,'club excludes private and orphan votes');
+select is((public.get_club_page(955001)#>>'{stats,player_rating_count}')::integer,3,'club excludes both owners private votes');
 select is((public.get_club_page(955001)#>>'{squad,0,average}')::numeric,7.0::numeric,'squad rows use the same public scope');
 select is((public.get_player_page(955001)#>>'{stats,average}')::numeric,7.0::numeric,'player average uses public parent votes');
-select is((public.get_player_page(955001)#>>'{stats,rating_count}')::integer,3,'player count excludes private and orphan votes');
+select is((public.get_player_page(955001)#>>'{stats,rating_count}')::integer,3,'player count excludes both owners private votes');
 select is((public.get_player_page(955001)#>>'{stats,matches_rated}')::integer,1,'only one public rated performance');
-select is(jsonb_array_length(public.get_player_page(955001)->'performances'),1,'private or orphan performances never appear');
+select is(jsonb_array_length(public.get_player_page(955001)->'performances'),1,'private performances never appear');
 select ok(public.get_player_page(955002)#>'{stats,average}'='null'::jsonb,'no public player sample produces null, not a private score');
 select is((public.get_match_insights(955001)->>'average')::numeric,7.0::numeric,'match contract retains all public votes');
 select is((public.get_match_insights(955001)->>'rating_count')::integer,3,'match count includes public votes independent of profile visibility');
@@ -97,9 +100,9 @@ select is(public.get_club_page(955001)->>'is_favorite','true','global aggregate 
 select set_config('request.jwt.claims','{"sub":"55000000-0000-0000-0000-000000000002","role":"authenticated"}',true);
 select is(public.get_club_page(955001)->>'is_favorite','false','another account cannot inherit the previous owner favorite');
 select is((public.get_player_page(955001)#>>'{stats,rating_count}')::integer,3,'second viewer has identical public count');
-select is((select count(*)::integer from public.ratings where user_id=auth.uid()),1,'second viewer retains their own raw history');
+select is((select count(*)::integer from public.ratings where user_id=auth.uid()),2,'second viewer retains their own public and private raw history');
 reset role;
-select is((select count(*)::integer from public.ratings where match_id between 955001 and 955003),4,'all match rows are preserved');
-select is((select count(*)::integer from public.player_ratings where match_id between 955001 and 955003),6,'private and orphan player rows remain preserved');
+select is((select count(*)::integer from public.ratings where match_id between 955001 and 955003),5,'all match rows are preserved');
+select is((select count(*)::integer from public.player_ratings where match_id between 955001 and 955003),6,'private player rows remain preserved');
 select * from finish();
 rollback;

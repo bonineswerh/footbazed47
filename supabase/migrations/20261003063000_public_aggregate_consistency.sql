@@ -10,7 +10,7 @@ create view private.community_public_player_votes with (security_barrier=true) a
   join private.community_public_match_votes r on r.user_id=pr.user_id and r.match_id=pr.match_id;
 revoke all on private.community_public_match_votes,private.community_public_player_votes from public,anon,authenticated,service_role;
 comment on view private.community_public_match_votes is 'Internal public vote scope for aggregate-only RPC. No raw votes, authors or reviews are granted to clients.';
-comment on view private.community_public_player_votes is 'Internal player vote scope: only votes with a public parent match rating. Owner-private/orphan votes never enter community aggregates.';
+comment on view private.community_public_player_votes is 'Internal player vote scope: only votes with a public parent match rating. Owner-private votes never enter community aggregates; the existing parent FK remains enforced.';
 
 CREATE OR REPLACE FUNCTION public.get_club_page(p_club_id bigint)
  RETURNS jsonb
