@@ -42,8 +42,8 @@ select throws_ok($$update public.users set bio=repeat('a',121) where id=auth.uid
 select throws_ok($$update public.users set avatar_url='javascript:alert(1)' where id=auth.uid()$$,'23514',null,'avatar references must be HTTP URLs');
 select throws_ok($$update public.users set is_public=null where id=auth.uid()$$,'23514',null,'visibility cannot silently become null');
 select lives_ok($$update public.users set display_name='Егор',username='audit_owner',is_public=false where id=auth.uid()$$,'owner can set display name and closure independently');
-select is((public.get_my_profile()->>'display_name'),'Егор','display name survives a handle change');
-select is((public.get_my_profile()->>'is_public'),'false','owner can read the closed profile');
+select is((select display_name from public.get_my_profile()),'Егор','display name survives a handle change');
+select is((select is_public from public.get_my_profile()),false,'owner can read the closed profile');
 select throws_ok($$update public.users set is_admin=true where id=auth.uid()$$,'42501',null,'profile update cannot elevate role');
 select is((public.get_match_insights(958001)->>'others_rating_count')::integer,2,'comparison excludes exactly the caller');
 select is((public.get_match_insights(958001)->>'others_average')::numeric,6.0::numeric,'comparison excludes caller score, retains other public votes');
