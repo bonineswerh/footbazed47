@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path=public,extensions;
-select no_plan();
+select plan(45);
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
 select ('54000000-0000-0000-0000-00000000000'||i)::uuid,'00000000-0000-0000-0000-000000000000','authenticated','authenticated',
   'report'||i||'@example.test',crypt('report-test',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}','{}',now(),now()
@@ -46,7 +46,7 @@ insert into report_test_ids select 'review',(public.submit_community_report('rat
 select is(public.submit_community_report('rating','967001','other')->>'duplicate','true','duplicate pending report is idempotent');
 select is((select count(*)::integer from public.community_reports),1,'duplicate does not add another report');
 select is((select details from public.community_reports where id=(select id from report_test_ids where name='review')),'Visible report','details are trimmed');
-select throws_ok($$update public.community_reports set status='dismissed'$$,'42501',null,'reporter cannot resolve own report');
+select throws_ok($$update public.community_reports set status='dismissed' where id=(select id from report_test_ids where name='review')$$,'42501',null,'reporter cannot resolve own report');
 insert into report_test_ids select 'comment',(public.submit_community_report('comment','968001','harassment')->>'id')::uuid;
 insert into report_test_ids select 'profile',(public.submit_community_report('profile','54000000-0000-0000-0000-000000000003','impersonation')->>'id')::uuid;
 reset role;
@@ -73,7 +73,7 @@ select throws_ok($$select public.admin_review_community_report('54000000-0000-00
 select lives_ok($$select public.admin_review_community_report('54000000-0000-0000-0000-000000000005',(select id from report_test_ids where name='review'),'dismissed','No violation in this review.')$$,'admin can resolve a report');
 select is(public.admin_review_community_report('54000000-0000-0000-0000-000000000005',(select id from report_test_ids where name='review'),'reviewed','Different second decision.')->>'status','dismissed','a repeated decision cannot overwrite the first');
 select is((select count(*)::integer from public.admin_audit_logs where target_id=(select id::text from report_test_ids where name='review')),1,'decision has exactly one audit append');
-select throws_ok($$update public.admin_audit_logs set action='forged'$$,'42501',null,'service cannot rewrite audit history');
+select throws_ok($$update public.admin_audit_logs set action='forged' where target_id=(select id::text from report_test_ids where name='review')$$,'42501',null,'service cannot rewrite audit history');
 reset role;
 -- An audit failure must leave the report pending; do not silently accept an unaudited decision.
 create function pg_temp.reject_report_audit() returns trigger language plpgsql as $$begin raise exception 'audit_test_failure'; end$$;

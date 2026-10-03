@@ -275,6 +275,54 @@ export type Database = {
           },
         ]
       }
+      community_reports: {
+        Row: {
+          created_at: string
+          decision_note: string
+          details: string
+          id: string
+          reason: string
+          reporter_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          snapshot: Json
+          status: string
+          subject_id: string | null
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          created_at?: string
+          decision_note?: string
+          details?: string
+          id?: string
+          reason: string
+          reporter_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          snapshot: Json
+          status?: string
+          subject_id?: string | null
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          created_at?: string
+          decision_note?: string
+          details?: string
+          id?: string
+          reason?: string
+          reporter_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          snapshot?: Json
+          status?: string
+          subject_id?: string | null
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       competitions: {
         Row: {
           area_name: string | null
@@ -1312,6 +1360,25 @@ export type Database = {
         Args: { p_confirmation: string; p_scope: string }
         Returns: Json
       }
+      admin_get_community_reports: {
+        Args: {
+          p_actor: string
+          p_limit?: number
+          p_offset?: number
+          p_status?: string
+          p_target_type?: string
+        }
+        Returns: Json
+      }
+      admin_review_community_report: {
+        Args: {
+          p_actor: string
+          p_note: string
+          p_report_id: string
+          p_status: string
+        }
+        Returns: Json
+      }
       admin_rollback_club_emblems: {
         Args: { p_actor: string; p_batch: string }
         Returns: Json
@@ -1572,6 +1639,15 @@ export type Database = {
       }
       set_favorite_club: {
         Args: { p_club_id: number; p_favorite?: boolean }
+        Returns: Json
+      }
+      submit_community_report: {
+        Args: {
+          p_details?: string
+          p_reason: string
+          p_target_id: string
+          p_target_type: string
+        }
         Returns: Json
       }
       toggle_rating_like: { Args: { p_rating_id: number }; Returns: Json }
