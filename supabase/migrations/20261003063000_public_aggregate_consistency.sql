@@ -88,7 +88,7 @@ AS $function$
   from public.clubs c
   left join public.media_assets ma on ma.id = c.logo_asset_id and public.is_displayable_media_asset(ma)
   where c.id = p_club_id;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_football_statistics(p_kind text DEFAULT 'matches'::text, p_filters jsonb DEFAULT '{}'::jsonb, p_offset integer DEFAULT 0, p_limit integer DEFAULT 12)
@@ -202,7 +202,7 @@ begin
     'teams',coalesce((select jsonb_agg(x.name order by x.name) from (select home_team_name name from public.matches union select away_team_name from public.matches limit 1000) x),'[]'::jsonb)
   ) into result;
   return result;
-end $function$
+end $function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_match_insights(p_match_id bigint)
@@ -268,7 +268,7 @@ AS $function$
     'top_players', tp.value
   )
   from segment_json sj cross join top_players tp;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_player_page(p_player_id bigint)
@@ -343,7 +343,7 @@ AS $function$
     from private.community_public_player_votes pr where pr.player_id = p.id
   ) ps on true
   where p.id = p_player_id;
-$function$
+$function$;
 
 
 -- Existing public signatures remain unchanged; each returns aggregates/catalogue
