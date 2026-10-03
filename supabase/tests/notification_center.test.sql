@@ -1,18 +1,19 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path=public,extensions;
-select plan(31);
+select plan(34);
 insert into auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
 select ('59000000-0000-0000-0000-00000000000'||i)::uuid,'authenticated','authenticated','notif'||i||'@example.test','{}','{}',now(),now() from generate_series(1,3) i;
 insert into public.users(id,username,display_name,is_public)
 select ('59000000-0000-0000-0000-00000000000'||i)::uuid,'Notif_'||i,'Notification '||i,i<>3 from generate_series(1,3) i;
 insert into public.matches(id,league_name,home_team_name,away_team_name,match_date,status)
 overriding system value values(959001,'Notification League','Home','Away',now()-interval '1 day','finished');
-insert into public.ratings(user_id,match_id,match_rating,is_public,created_at) values
-('59000000-0000-0000-0000-000000000001',959001,9,true,now()-interval '2 years'),
-('59000000-0000-0000-0000-000000000002',959001,8,false,now());
+insert into public.ratings(id,user_id,match_id,match_rating,is_public,created_at) overriding system value values
+(959701,'59000000-0000-0000-0000-000000000001',959001,9,true,now()-interval '2 years'),
+(959702,'59000000-0000-0000-0000-000000000002',959001,8,false,now());
 insert into public.rating_comments(rating_id,user_id,comment)
 select id,'59000000-0000-0000-0000-000000000002','Target comment' from public.ratings where match_id=959001 and match_rating=9;
+select set_config('test.comment_notification_id',(select id::text from public.notifications where user_id='59000000-0000-0000-0000-000000000001' and type='comment'),true);
 -- Separate synthetic system events model a history with identical timestamps.
 insert into public.notifications(id,user_id,from_user_id,type,message,read,created_at) overriding system value
 select 959100+i,'59000000-0000-0000-0000-000000000001',null,'system','Event '||i,false,'2026-10-03T10:00:00Z' from generate_series(1,26) i;
@@ -39,7 +40,7 @@ select throws_ok($$select public.set_notification_read(null,true,null)$$,'22023'
 select throws_ok($$select public.set_notification_read(null,false,959126)$$,'22023','invalid_notification_update','bulk unread is forbidden');
 select throws_ok($$update public.notifications set rating_id=null where id=959126$$,'42501',null,'direct writes cannot rewrite target');
 select is((public.get_rating_entry((select id from public.ratings where match_id=959001 and match_rating=9))->>'match_rating')::integer,9,'old exact entry opens without recent feed scan');
-select ok(public.get_rating_entry((select id from public.ratings where match_id=959001 and match_rating=8)) is null,'foreign private rating remains unavailable');
+select ok(public.get_rating_entry(959702) is null,'foreign private rating remains unavailable');
 select is(public.get_rating_comment((select id from public.ratings where match_id=959001 and match_rating=9),(select id from public.rating_comments where comment='Target comment'))->>'comment','Target comment','exact scoped comment opens');
 select ok(public.get_rating_comment(959999,(select id from public.rating_comments where comment='Target comment')) is null,'comment cannot cross its parent');
 reset role;
@@ -61,6 +62,10 @@ select is((select count(*)::integer from public.notifications where user_id='590
 update public.friendships set status='accepted' where user_id='59000000-0000-0000-0000-000000000002' and friend_id='59000000-0000-0000-0000-000000000001';
 select is((select count(*)::integer from public.notifications where user_id='59000000-0000-0000-0000-000000000002' and type='friend_accepted'),1,'repeated accepted state cannot produce duplicate');
 set local role authenticated;
+select public.set_user_block('59000000-0000-0000-0000-000000000002',true);
+select ok(not jsonb_path_exists(public.get_notifications_page(false,null,null,50),'$.items[*] ? (@.type == "comment")'),'blocked source disappears from history RPC');
+select throws_ok($$select public.set_notification_read(current_setting('test.comment_notification_id')::integer,true,null)$$,'42501','notification_unavailable','blocked source cannot be marked through RPC');
+select is((public.get_notifications_page()->>'unread_count')::integer,(select count(*)::integer from public.notifications where user_id=auth.uid() and not read),'history and head count have the same block scope');
 select set_config('request.jwt.claims','{}',true);
 select throws_ok($$select public.get_notifications_page()$$,'42501','auth_required','authenticated role without identity cannot read');
 select throws_ok($$select public.set_notification_read(959126,true,null)$$,'42501','auth_required','authenticated role without identity cannot write');

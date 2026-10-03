@@ -90,9 +90,9 @@ begin
   select created_at into rating_time from public.ratings where id=p_rating_id;
   if rating_time is null then return null; end if;
   if p_rating_id<2147483647 then
-    payload := public.get_social_feed_page('all',1,rating_time,p_rating_id+1,null);
+    payload := public.get_social_feed_page('all',1,rating_time,p_rating_id+1,0);
   else
-    payload := public.get_social_feed_page('all',1,rating_time+interval '1 microsecond',2147483647,null);
+    payload := public.get_social_feed_page('all',1,rating_time+interval '1 microsecond',2147483647,0);
   end if;
   entry := payload->'items'->0;
   if (entry->>'rating_id')::integer=p_rating_id then return entry; end if;

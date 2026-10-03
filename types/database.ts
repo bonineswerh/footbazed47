@@ -1505,6 +1505,15 @@ export type Database = {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json
       }
+      get_notifications_page: {
+        Args: {
+          p_cursor_created_at?: string
+          p_cursor_id?: number
+          p_limit?: number
+          p_unread_only?: boolean
+        }
+        Returns: Json
+      }
       get_or_create_direct_conversation: {
         Args: { p_friend_id: string }
         Returns: Json
@@ -1533,10 +1542,15 @@ export type Database = {
         Args: { p_rating_limit?: number; p_user_id: string }
         Returns: Json
       }
+      get_rating_comment: {
+        Args: { p_comment_id: number; p_rating_id: number }
+        Returns: Json
+      }
       get_rating_comments: {
         Args: { p_limit?: number; p_rating_id: number }
         Returns: Json
       }
+      get_rating_entry: { Args: { p_rating_id: number }; Returns: Json }
       get_social_feed: {
         Args: { p_limit?: number; p_offset?: number; p_scope?: string }
         Returns: Json
@@ -1643,6 +1657,14 @@ export type Database = {
       }
       set_favorite_club: {
         Args: { p_club_id: number; p_favorite?: boolean }
+        Returns: Json
+      }
+      set_notification_read: {
+        Args: {
+          p_notification_id?: number
+          p_read?: boolean
+          p_through_id?: number
+        }
         Returns: Json
       }
       set_user_block: {
