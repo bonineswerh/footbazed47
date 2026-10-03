@@ -14,6 +14,11 @@ insert into public.competitions(id,name,code) overriding system value values(956
 insert into public.matches(id,competition_id,league_name,home_team_name,away_team_name,home_club_id,away_club_id,match_date,status) overriding system value
 select 956000+i,956001,'Block League','Block Home','Block Away',956001,956002,now()-i*interval '1 day','finished' from generate_series(1,3) i;
 insert into public.players(id,name,team,club_id) overriding system value values(956001,'Block Player','Block Home',956001);
+-- Player votes require confirmed participation even in isolated service-seeded fixtures.
+insert into public.player_provider_ids(provider,external_id,player_id) values('api-football',956001,956001);
+insert into public.match_lineups(match_id,fixture_id,home_club_id,away_club_id) values(956001,956001,956001,956002);
+insert into public.match_player_appearances(match_id,provider_player_id,player_id,club_id,name,participation)
+  values(956001,956001,956001,956001,'Block Player','starter');
 insert into public.ratings(id,user_id,match_id,match_rating,is_public,comment) overriding system value values
 (956001,'56000000-0000-0000-0000-000000000001',956001,9,true,'Own public'),
 (956002,'56000000-0000-0000-0000-000000000002',956001,7,true,'Target public'),

@@ -1501,6 +1501,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_my_user_blocks: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       get_or_create_direct_conversation: {
         Args: { p_friend_id: string }
         Returns: Json
@@ -1639,6 +1643,10 @@ export type Database = {
       }
       set_favorite_club: {
         Args: { p_club_id: number; p_favorite?: boolean }
+        Returns: Json
+      }
+      set_user_block: {
+        Args: { p_blocked: boolean; p_user_id: string }
         Returns: Json
       }
       submit_community_report: {
