@@ -208,3 +208,10 @@ Feature `6596e34`, Quality Gate `37101162393`: все jobs успешны, вк�
 
 
 `4bd3173` выпущен в main/Vercel; main Quality Gate `37101744425` успешен. Native production подтверждает app v77/styles v63/admin v54 и lazy community-reports v1. Собственная история и admin queue возвращают корректное пустое состояние через реальные RLS/API; форма доступна на чужом видимом профиле. Проверены 390/1440, отсутствие overflow, 44px close, labels/initial focus и focus return; настоящие обращения и решения не создавались. API-Football эмблемы Real Madrid 541 и Liverpool 40 загружены. Этап 8 выпущен; блокировки, ограничения новых публикаций и мягкое скрытие нарушающего контента остаются отдельными следующими этапами.
+
+
+## Этап 9 — единые публичные футбольные показатели
+
+Проверка влияния будущих блокировок выявила две связанные ошибки: invoker entity summaries включали owner-private player ratings, а ограничение видимости raw votes/profiles могло персонализировать общие показатели. Добавлены две закрытые private views, содержащие только public match votes и player votes с public parent. Ни anon, ни authenticated, ни service_role не получают SELECT на исходные views. Четыре существующие aggregate-only RPC получают fixed-path SECURITY DEFINER и используют исключительно этот scope; сигнатуры и DTO сохраняются. История/сравнение/поиск остаются с собственными RLS. Overview сохраняет public-profile filter, match insights — прежний scope публичных votes независимо от публичности профиля; favorite остается строго auth.uid().
+
+41 новая pgTAP проверка сравнивает guest/owner/second account, private-only и orphan legacy votes, null/zero cases, private history preservation, favorite isolation и отсутствие review/voter identity в DTO. Дополнительные restrictive policies в изолированном тесте действительно скрывают raw votes и profile второго участника, затем доказывают неизменность общих футбольных цифр. Production данные не переписываются. Это подготовка инварианта для полноценного enforcement блокировок, сами блокировки этим этапом ещё не включаются. Clean database CI и publication выполняются перед production DDL.
