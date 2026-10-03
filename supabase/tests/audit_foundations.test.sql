@@ -19,11 +19,18 @@ insert into public.ratings(user_id,match_id,match_rating,is_public) values
 ('58000000-0000-0000-0000-000000000002',958001,7,true),
 ('58000000-0000-0000-0000-000000000003',958001,5,true),
 ('58000000-0000-0000-0000-000000000001',958002,2,false);
--- Privileged fixture models an existing legacy child score, not the new-write RPC.
+-- Create valid participation first, then remove evidence in this rolled-back
+-- fixture to model historical scores whose participants are no longer covered.
+insert into public.player_provider_ids(provider,external_id,player_id) values('api-football',958001,958001);
+insert into public.match_lineups(match_id,fixture_id,home_club_id,away_club_id)
+values(958001,958001,958001,958002),(958002,958002,958001,958002);
+insert into public.match_player_appearances(match_id,provider_player_id,player_id,club_id,name,participation)
+values(958001,958001,958001,958001,'Audit Player','starter'),(958002,958001,958001,958001,'Audit Player','starter');
 insert into public.player_ratings(user_id,match_id,player_id,rating,is_best_player) values
 ('58000000-0000-0000-0000-000000000001',958001,958001,9,true),
 ('58000000-0000-0000-0000-000000000002',958001,958001,7,false),
 ('58000000-0000-0000-0000-000000000001',958002,958001,2,false);
+delete from public.match_player_appearances where match_id in (958001,958002) and player_id=958001;
 
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"58000000-0000-0000-0000-000000000001","role":"authenticated"}',true);

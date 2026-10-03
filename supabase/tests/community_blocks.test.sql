@@ -39,6 +39,9 @@ insert into public.rating_comments(id,user_id,rating_id,comment,created_at) over
 insert into public.notifications(user_id,from_user_id,type,message) values
 ('56000000-0000-0000-0000-000000000001','56000000-0000-0000-0000-000000000002','like','Target notification'),
 ('56000000-0000-0000-0000-000000000001',null,'like','System notification');
+-- Keep the same caller before and after blocking: other-viewer comparison
+-- excludes auth.uid(), while public aggregate scopes stay independent of blocks.
+select set_config('request.jwt.claims','{"sub":"56000000-0000-0000-0000-000000000001","role":"authenticated"}',true);
 create temp table block_before as select
   public.get_club_page(956001)->'stats' club_stats,
   public.get_player_page(956001)->'stats' player_stats,
@@ -48,6 +51,7 @@ create temp table block_before as select
   (select count(*) from public.player_ratings where player_id=956001) player_ratings,
   (select count(*) from public.friendships where user_id::text like '56000000%') friendships,
   (select count(*) from public.rating_comments where id between 956001 and 956003) comments;
+select set_config('request.jwt.claims','{}',true);
 grant select on block_before to authenticated,anon;
 select ok(not has_table_privilege('authenticated','private.community_user_blocks','SELECT'),'raw block pairs are closed');
 select ok(not has_table_privilege('authenticated','private.community_user_blocks','INSERT'),'block owner cannot directly insert pairs');
