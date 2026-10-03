@@ -19,7 +19,7 @@
       const title={friend_request:item.friend_status==='pending'?'Заявка в друзья':item.friend_status==='accepted'?'Вы теперь друзья':'Заявка закрыта',friend_accepted:'Заявка в друзья принята',like:'Понравилась ваша оценка',comment:'Комментарий к вашей оценке',system:'Сообщение FOOTBAZED'}[item.type]||'Уведомление';
       const context=item.match?`${FBZDomain.matchTeamName(item.match,'home')} — ${FBZDomain.matchTeamName(item.match,'away')}`:item.type==='system'?item.message:actor;
       return`${group}<div class="notif-item${item.read?'':' unread'}" data-notification-id="${Number(item.id)}"><button class="notif-open" type="button" aria-label="${esc(`${title}. ${item.match?actor+'. ':''}${context||''}`)}" ${FBZActions.attrs('notifications.open-item',[Number(item.id)])} ${pending.has(item.id)?'disabled':''}><span class="notif-ico">${ico({friend_request:'users',friend_accepted:'users',like:'heart',comment:'chat'}[item.type]||'bell',18)}</span><span class="notif-content"><strong class="notif-text">${esc(title)}</strong>${item.match?`<span class="notif-actor">${esc(actor)}</span>`:''}<span class="notif-context">${esc(context||'')}</span><time class="notif-time" datetime="${esc(item.created_at)}">${date.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}${item.target_available===false?' · Запись недоступна':''}</time></span></button><button class="notif-read" type="button" ${FBZActions.attrs('notifications.read',[Number(item.id),!item.read])} aria-label="${item.read?'Отметить непрочитанным':'Отметить прочитанным'}" title="${item.read?'Отметить непрочитанным':'Отметить прочитанным'}" ${pending.has(item.id)||writing?'disabled':''}><span class="notif-dot"></span></button></div>`;
-    }).join(''):`<div class="notif-empty">${ico('bell',26)}<strong>${unreadOnly?'Всё прочитано':'Пока тихо'}</strong><p>${unreadOnly?'Новые отклики появятся здесь.':'Заявки в друзья и отклики на ваши оценки появятся здесь.'}</p></div>`;
+    }).join(''):`<div class="notif-empty">${ico('bell',26)}<strong>${unreadOnly?(totalUnread?'Есть новые уведомления':'Всё прочитано'):'Пока тихо'}</strong><p>${unreadOnly?'Новые отклики появятся здесь.':'Заявки в друзья и отклики на ваши оценки появятся здесь.'}</p>${unreadOnly&&totalUnread?'<button class="btn btn-g" type="button" data-fbz-click="notifications.refresh">Показать новые</button>':''}</div>`;
     controls();
   }
   async function load(append=false){
@@ -78,7 +78,7 @@
       if(epoch!==session||CU?.id!==user)return;
       totalUnread=Number(result.data?.unread_count)||0;window.FBZNotificationCounter.set(totalUnread);
       if(intent!==view||!opened)return;
-      items=items.map(item=>item.id<=boundary?{...item,read:true}:item);if(unreadOnly)items=items.filter(item=>!item.read);
+      items=items.map(item=>item.id<=boundary?{...item,read:true}:item);if(unreadOnly){items=items.filter(item=>!item.read);cursor=null;hasMore=false;}
       el('notifUpdate').hidden=!totalUnread;toast('Уведомления до открытия списка прочитаны');
     }catch{if(epoch===session&&CU?.id===user&&opened)toast('Не удалось отметить уведомления. Попробуйте ещё раз.','err');}
     finally{if(epoch===session){writing=false;if(opened){if(intent!==view)load();else render();}}}
