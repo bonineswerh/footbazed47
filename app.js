@@ -83,6 +83,27 @@ function reportContent(type,id){
 }
 window.addEventListener('fbz:session-change',()=>{reportOpenVersion++;});
 
+let blockOpenVersion=0;
+function manageUserBlocks(uid,name){
+  if(!CU)return openAuth();
+  window.FBZAccount?.close();
+  const version=++blockOpenVersion,user=CU.id,route=routeVersion;
+  return ensureFeatureModule({key:'community-blocks',styleId:'communityBlockStyles',style:'css/community-blocks.css?v=1',script:'js/community-blocks.js?v=1',ready:()=>window.FBZCommunityBlocks})
+    .then(blocks=>{if(version===blockOpenVersion&&user===CU?.id&&route===routeVersion)return uid?blocks.confirm(uid,name):blocks.open();})
+    .catch(()=>{if(version===blockOpenVersion&&user===CU?.id&&route===routeVersion)toast('Не удалось открыть блокировки. Попробуйте ещё раз.','err');});
+}
+window.addEventListener('fbz:session-change',()=>{blockOpenVersion++;});
+window.addEventListener('fbz:community-visibility-change',()=>{
+  blockOpenVersion++;reportOpenVersion++;profileVersion++;routeVersion++;
+  window.FBZData?.invalidateVisibility();window.clearAppCache?.();
+  window.FBZFeed?.resetSession();window.FBZSearch?.resetSession();
+  window.FBZCommunity?.resetSession();window.FBZNotifications?.resetSession();
+  window.FBZComparison?.close(false);
+  document.querySelectorAll('.overlay.on').forEach(overlay=>window.FBZOverlay?.close(overlay.id,false));
+  ['profileW','mdC','clubC','playerC','competitionC'].forEach(id=>document.getElementById(id)?.replaceChildren());
+  go('home');loadNotifications();
+});
+
 function openGlobalSearch(){
   window.FBZAccount?.close();
   const route=routeVersion,user=CU?.id;
@@ -214,6 +235,7 @@ function go(p,d){
   window.FBZExplore?.closePanels();
   window.FBZComparison?.close(false);
   reportOpenVersion++;window.FBZCommunityReports?.close(false);
+  blockOpenVersion++;window.FBZCommunityBlocks?.close(false);
   window.FBZProfileEditor?.resetSession();
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   page.classList.add('on');
@@ -360,7 +382,7 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=4',script:'js/profile.js?v=9',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=4',script:'js/profile.js?v=10',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=1',ready:()=>window.FBZExploreModel});
@@ -502,6 +524,7 @@ FBZActions.register({
   "app.toggle-notif":()=>toggleNotif(),
   "app.open-settings":()=>openSettings(),
   "app.report-content":(event,element,[type,id])=>{element.focus({preventScroll:true});return reportContent(type,id);},
+  "app.manage-blocks":(event,element,[uid,name])=>{element.focus({preventScroll:true});return manageUserBlocks(uid,name);},
   "app.toggle-account-menu":()=>toggleAccountMenu(),
   "app.account-go-profile":()=>{FBZAccount.close();return go('profile');},
   "app.account-open-settings":()=>{FBZAccount.close({returnFocus:true});return openSettings();},

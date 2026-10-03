@@ -76,6 +76,13 @@ for(const theme of ['dark','light'])test(`${theme}: report dialog and own histor
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Мои обращения',exact:true})).toBeFocused();
 });
 
+for(const theme of ['dark','light'])test(`${theme}: personal blocking dialogs and keyboard in each browser`,async({page})=>{
+  await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);await page.setViewportSize({width:390,height:844});
+  await page.goto('/profile/cd291181-2db6-42cb-9f3d-ef84ab3a9660?__e2e=1');const trigger=page.getByRole('button',{name:'Заблокировать',exact:true});await trigger.click();await expect(page.locator('#confirmAction')).toBeFocused();await page.keyboard.press('Escape');await expect(trigger).toBeFocused();
+  await page.goto('/profile/3615141a-7700-46b8-9ba5-e4f4450537fc?__e2e=1');await page.getByRole('button',{name:'Заблокированные',exact:true}).click();await expect(page.getByRole('button',{name:'Закрыть блокировки'})).toBeFocused();await page.keyboard.press('Shift+Tab');await expect(page.getByRole('button',{name:'Закрыть блокировки'})).toBeFocused();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Заблокированные',exact:true})).toBeFocused();
+});
+
 for(const viewport of [{width:667,height:375},{width:844,height:390},{width:820,height:1180},{width:1180,height:820},{width:1366,height:768},{width:1920,height:1080},{width:2560,height:1440},{width:3440,height:1440},{width:3840,height:2160}]){
   test(`layout and modal ${viewport.width}×${viewport.height}`,async({page})=>{
     await page.setViewportSize(viewport);

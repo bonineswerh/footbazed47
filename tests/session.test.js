@@ -81,6 +81,16 @@ test('token refresh keeps a valid session cache and callers cannot mutate cached
   assert.equal(calls,1);
 });
 
+test('a personal visibility change cancels pending profile reads without changing the account',async()=>{
+  let complete;let calls=0;
+  const data=dataHarness(()=>++calls===1?new Promise(resolve=>{complete=resolve;}):Promise.resolve({data:null}));
+  data.setSessionUser('viewer');
+  const pending=data.getProfilePage('blocked');data.invalidateVisibility();
+  complete({data:{profile:{id:'blocked'},ratings:[{comment:'Old visible review'}]}});
+  await assert.rejects(pending,{name:'AbortError'});
+  assert.equal(await data.getProfilePage('blocked'),null);assert.equal(calls,2);
+});
+
 test('optional club marks load in one bounded batch and failures preserve the match data',async()=>{
   const calls=[];
   const data=dataHarness(async(name,args)=>{calls.push({name,args});return{data:[{id:1,name:'Home',media:{url:'logo'}}]};});

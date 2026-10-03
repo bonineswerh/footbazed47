@@ -70,6 +70,8 @@
     for(const key of cache.keys())if(!prefix||key.startsWith(prefix))cache.delete(key);
   }
 
+  function invalidateVisibility(){sessionVersion++;invalidate();}
+
   async function getProfileDiary(userId,{filters={},cursor=null,limit=8}={}){
     const page=await rpc('get_profile_diary',{p_user_id:userId,p_filters:{...filters,v:'2'},p_cursor:cursor,p_limit:limit});
     await enrichMatchMedia(page?.items||[]);
@@ -94,5 +96,5 @@
     invalidate();
   }
 
-  root.FBZData=Object.freeze({getMatchesPage,getProfilePage,getProfileDiary,getFootballStatistics,getProfileComparisonPage,enrichMatchMedia,invalidate,setSessionUser});
+  root.FBZData=Object.freeze({getMatchesPage,getProfilePage,getProfileDiary,getFootballStatistics,getProfileComparisonPage,enrichMatchMedia,invalidate,invalidateVisibility,setSessionUser});
 })(window);

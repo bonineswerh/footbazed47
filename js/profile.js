@@ -110,7 +110,7 @@ async function loadProfile(uid){
     let u=payload?.profile;
     const favoriteClubs=Array.isArray(payload?.favorite_clubs)?payload.favorite_clubs:[];
     if(ownsProfile&&u){u={...u,email:CU?.email};CU={...CU,...u,favorite_clubs:favoriteClubs};}
-    if(!u){w.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>Профиль не найден<br><span style="font-size:var(--type-small);color:var(--fog);margin-top:8px;display:block">Попробуйте войти заново</span></div>';return;}
+    if(!u){w.innerHTML='<div class="empty-state"><strong>Профиль недоступен</strong><p>Он может быть закрыт или больше не участвовать в сообществе.</p><button class="btn btn-g" type="button" data-fbz-click="shell.go-friends">К сообществу</button></div>';return;}
     const ratings=payload.ratings||[];
     const friendCount=payload.stats?.friend_count||0;
     const tl=payload.stats?.like_count||0;
@@ -165,6 +165,7 @@ async function loadProfile(uid){
         ${ownerActions}
         ${!isMe&&CU?`<button class="btn btn-g btn-sm" ${FBZActions.attrs('profile.compare',[uid])}>${ico('chart',14)} Сравнить</button>`:''}
         ${!isMe&&CU?`<button class="btn btn-g btn-sm" ${FBZActions.attrs('app.report-content',['profile',uid])} aria-label="Пожаловаться на профиль" title="Пожаловаться на профиль">${ico('shield',14)} Жалоба</button>`:''}
+        ${!isMe&&CU?`<button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs('app.manage-blocks',[uid,u.display_name||u.username||'Пользователь'])}>${ico('close',14)} Заблокировать</button>`:''}
         <button class="btn btn-g btn-sm" ${FBZActions.attrs("profile.copy-app-link",['/profile/'+encodeURIComponent(uid)])}>${ico('link',13)} Ссылка</button>
       </div>
     </div>
@@ -180,8 +181,8 @@ async function loadProfile(uid){
         <div class="pcard"><div class="pcard-title">${ico('share',14)} Поделиться</div>
           <button class="btn btn-l" style="width:100%;margin-bottom:8px" ${FBZActions.attrs("profile.open-share-profile",[u.display_name||'',u.username||'user',cnt,avg,tl,friendCount,FBZDomain.profileActivity(cnt).label])}>${ico('photo',13)} Создать карточку</button>
           <button class="btn btn-g" style="width:100%" ${FBZActions.attrs("profile.exp-stats",[cnt,avg,u.username||'user'])}>${ico('copy',13)} Копировать текст</button>
-          ${isMe?`<button class="btn btn-g profile-own-reports" type="button" ${FBZActions.attrs('app.report-content',['history',''])}>${ico('shield',14)} Мои обращения</button>`:''}
         </div>
+        ${isMe?`<section class="pcard" aria-label="Ваше сообщество"><h2 class="pcard-title">${ico('shield',14)} Ваше сообщество</h2><button class="btn btn-g profile-own-reports" type="button" ${FBZActions.attrs('app.report-content',['history',''])}>${ico('shield',14)} Мои обращения</button><button class="btn btn-g profile-own-reports" type="button" data-fbz-click="app.manage-blocks">${ico('close',14)} Заблокированные</button></section>`:''}
       </div>
     </div>`;
     await mountDiary(uid);

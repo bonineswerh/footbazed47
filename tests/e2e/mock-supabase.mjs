@@ -1,4 +1,5 @@
 const fixture={
+  userBlocks:[],
   sessionUser:{id:'3615141a-7700-46b8-9ba5-e4f4450537fc',email:'bazed@example.test'},
   profile:{
     id:'3615141a-7700-46b8-9ba5-e4f4450537fc',username:'bazed',display_name:'Bazed',avatar_url:null,
@@ -101,6 +102,19 @@ export async function installSupabaseMock(page,overrides={}){
     }
 
     function rpc(name,args={}){
+      if(name==='set_user_block'){
+        const userId=String(args.p_user_id||''),blocked=Boolean(args.p_blocked),user=state.users.find(u=>u.id===userId);
+        if(!state.sessionUser||!user||userId===state.sessionUser.id)return promiseResult(null,{message:'user_unavailable'});
+        const existing=state.userBlocks.some(b=>b.owner_id===state.sessionUser.id&&b.user_id===userId);
+        if(blocked&&!existing)state.userBlocks.push({owner_id:state.sessionUser.id,user_id:userId,username:user.username,display_name:user.display_name,created_at:new Date().toISOString()});
+        if(!blocked)state.userBlocks=state.userBlocks.filter(b=>!(b.owner_id===state.sessionUser.id&&b.user_id===userId));
+        return promiseResult({user_id:userId,blocked,changed:existing!==blocked});
+      }
+      if(name==='get_my_user_blocks'){
+        const items=state.userBlocks.filter(b=>b.owner_id===state.sessionUser.id).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at))||String(a.user_id).localeCompare(String(b.user_id))).map(({owner_id,...b})=>b);
+        const offset=Number(args.p_offset)||0,limit=Number(args.p_limit)||10;
+        return promiseResult({items:structuredClone(items.slice(offset,offset+limit)),total:items.length,has_more:offset+limit<items.length});
+      }
       if(name==='get_match_lineup'){
         if(state.lineupError)return promiseResult(null,{message:'lineup temporarily unavailable'});
         if(Object.hasOwn(state,'lineup'))return promiseResult(structuredClone(state.lineup));
@@ -163,7 +177,7 @@ export async function installSupabaseMock(page,overrides={}){
       if(name==='get_profile_page'){
         const userId=String(args.p_user_id||'');
         const profile=state.users.find(user=>user.id===userId);
-        if(!profile)return promiseResult(null);
+        if(!profile||!contactClear(userId))return promiseResult(null);
         const ratings=state.feed.filter(item=>item.user_id===userId).map(item=>({
           id:item.rating_id,user_id:item.user_id,match_id:item.match_id,match_rating:item.match_rating,
           comment:item.comment,is_public:true,created_at:item.created_at,match:{id:item.match_id,...item.match}
@@ -288,7 +302,7 @@ export async function installSupabaseMock(page,overrides={}){
       }
       if(name==='get_profile_comparison')return promiseResult({common_matches:1,agreement_score:89,average_gap:1,exact_matches:0,closest:[],contrasts:[]});
       if(name==='get_social_feed_page'||name==='get_social_feed'){
-        let items=structuredClone(state.feed);
+        let items=structuredClone(state.feed).filter(item=>contactClear(item.user_id));
         if(args.p_scope==='mine')items=items.filter(item=>item.user_id===state.sessionUser.id);
         if(args.p_scope==='friends')items=items.filter(item=>item.user_id!==state.sessionUser.id);
         const score=item=>Number(item.like_count||0)*3+Number(item.comment_count||0)*2+(item.comment?1:0);
@@ -354,12 +368,13 @@ export async function installSupabaseMock(page,overrides={}){
       return promiseResult(null);
     }
 
+    function contactClear(userId){return !userId||!state.sessionUser||!state.userBlocks.some(b=>(b.owner_id===state.sessionUser.id&&b.user_id===userId)||(b.user_id===state.sessionUser.id&&b.owner_id===userId));}
     function rowsFor(table){
-      if(table==='users')return structuredClone(state.users);
+      if(table==='users')return structuredClone(state.users.filter(user=>contactClear(user.id)));
       if(table==='matches')return structuredClone(state.matches);
       if(table==='ratings')return state.feed.map(item=>({id:item.rating_id,user_id:item.user_id,match_id:item.match_id,match_rating:item.match_rating,comment:item.comment,is_public:true,created_at:item.created_at}));
-      if(table==='friendships')return structuredClone(state.friendships);
-      if(table==='notifications')return structuredClone(state.notifications);
+      if(table==='friendships')return structuredClone(state.friendships.filter(item=>contactClear(item.user_id)&&contactClear(item.friend_id)));
+      if(table==='notifications')return structuredClone(state.notifications.filter(item=>contactClear(item.from_user_id)));
       if(table==='players')return structuredClone(state.players);
       if(table==='player_ratings')return state.playerRatings.map(r=>({...structuredClone(r),player:{name:state.players.find(p=>p.id===r.player_id)?.name||'Legacy Player'}}));
       if(table==='rating_likes'||table==='rating_comments'||table==='predictions'||table==='chat_messages')return[];
