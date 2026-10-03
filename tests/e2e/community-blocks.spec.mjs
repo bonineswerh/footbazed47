@@ -34,7 +34,7 @@ test('successful block invalidates cached profile, feed and notifications while 
   expect(await page.evaluate(()=>window.__blockCalls)).toEqual([{p_user_id:other,p_blocked:true}]);
   await page.getByRole('button',{name:'Лента',exact:true}).first().click();await expect(page.locator('#feedG')).not.toContainText('Gamlet');
   await page.getByRole('button',{name:/^Уведомления/}).click();await expect(page.locator('#notifList')).not.toContainText('Gamlet');
-  await page.getByRole('button',{name:'Друзья',exact:true}).first().click();await page.getByLabel('Найти пользователей').fill('gamlet');await expect(page.locator('#friendSearchRes')).toContainText('Ничего не найдено');
+  await page.keyboard.press('Escape');await page.getByRole('button',{name:'Друзья',exact:true}).first().click();await page.getByLabel('Найти пользователей').fill('gamlet');await expect(page.locator('#friendSearchRes')).toContainText('Ничего не найдено');
   await page.evaluate(id=>go('profile',{uid:id}),other);await expect(page.locator('#profileW')).toContainText('Профиль недоступен');expect(errors).toEqual([]);
 });
 test('block errors stay safe, preserve confirmation and allow retry',async({page})=>{

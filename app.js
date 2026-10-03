@@ -53,6 +53,7 @@ window.addEventListener('fbz:session-change',()=>{
   profileVersion++;leaderboardVersion++;routeVersion++;
   window.FBZCommunity?.resetSession();
   window.FBZNotifications?.resetSession();
+  window.FBZNotificationCounter?.resetSession();
   window.FBZProfileEditor?.resetSession();
   window.FBZComparison?.close(false);
   document.querySelectorAll('.overlay.on').forEach(overlay=>window.FBZOverlay?.close(overlay.id,false));
@@ -68,7 +69,7 @@ function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=59',script:'js/entities.js?v=59',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=61',script:'js/feed.js?v=61',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=61',script:'js/feed.js?v=62',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
   return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=1',script:'js/search.js?v=58',ready:()=>window.FBZSearch});
@@ -98,6 +99,7 @@ window.addEventListener('fbz:community-visibility-change',()=>{
   window.FBZData?.invalidateVisibility();window.clearAppCache?.();
   window.FBZFeed?.resetSession();window.FBZSearch?.resetSession();
   window.FBZCommunity?.resetSession();window.FBZNotifications?.resetSession();
+  window.FBZNotificationCounter?.resetSession();
   window.FBZComparison?.close(false);
   document.querySelectorAll('.overlay.on').forEach(overlay=>window.FBZOverlay?.close(overlay.id,false));
   ['profileW','mdC','clubC','playerC','competitionC'].forEach(id=>document.getElementById(id)?.replaceChildren());
@@ -213,6 +215,7 @@ function renderNav(){
           <button class="account-logout" type="button" role="menuitem" data-fbz-click="app.account-do-logout">${ico('logout',17)}<span>Выйти</span></button>
         </div>
       </div>`;
+    window.FBZNotificationCounter?.render();
     if(hb)hb.innerHTML=`<button class="btn btn-l" data-fbz-click="shell.go-matches">Смотреть матчи →</button>`;
   }else{
     nr.innerHTML=`<button class="header-icon-button" type="button" data-fbz-click="app.open-settings" aria-label="Настройки" title="Настройки">${ico('settings',18)}</button><button class="nbtn nbtn-lime" data-fbz-click="shell.open-auth">Войти</button>`;
@@ -253,7 +256,7 @@ function go(p,d){
   if(!routeApplying)syncRoute(p,d);
   if(p==='matches')loadM();
   else if(p==='home')refreshHomeDashboard();
-  else if(p==='feed')ensureFeedModule().then(feed=>{if(CP==='feed')feed.open(d?.ratingId);}).catch(()=>{});
+  else if(p==='feed')ensureFeedModule().then(feed=>{if(CP==='feed')feed.open(d?.ratingId,d?.commentId);}).catch(()=>{});
   else if(p==='leaderboard')loadLB();
   else if(p==='profile'){viewUID=d?.uid||CU?.id;loadProfile(viewUID);}
   else if(p==='md'){mdID=d?.mid;loadMD(d?.mid);}
@@ -438,9 +441,9 @@ async function handleInvite(code){
 }
 
 // ─── NOTIFICATIONS LOADER ───
-function ensureNotificationsModule(){return ensureFeatureModule({key:'notifications',styleId:'notificationsCss',style:'css/notifications.css?v=2',script:'js/notifications.js?v=2',ready:()=>window.FBZNotifications});}
-function loadNotifications(){if(!CU)return;return ensureNotificationsModule().then(notifications=>notifications.load()).catch(()=>{});}
-function toggleNotif(){ensureNotificationsModule().then(notifications=>notifications.toggle()).catch(()=>{});}
+function ensureNotificationsModule(){return ensureFeatureModule({key:'notifications',styleId:'notificationsCss',style:'css/notifications.css?v=3',script:'js/notifications.js?v=3',ready:()=>window.FBZNotifications});}
+function loadNotifications(){if(!CU)return;return window.FBZNotifications?.isOpen()?window.FBZNotifications.load():window.FBZNotificationCounter.refresh();}
+async function toggleNotif(){const user=CU?.id,route=routeVersion;if(!user)return;try{const notifications=await ensureNotificationsModule();if(CU?.id===user&&routeVersion===route)notifications.toggle();}catch{if(CU?.id===user)toast('Не удалось открыть уведомления. Попробуйте ещё раз.','err');}}
 function closeNotif(returnFocus=false){window.FBZNotifications?.close(returnFocus);}
 function markAllRead(){window.FBZNotifications?.markAll();}
 

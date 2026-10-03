@@ -310,13 +310,12 @@ test('начальный маршрут отображается без отло
 
 test('уведомление открывает публикацию без таймера и гонки рендера',async({page})=>{
   await page.goto('/?__e2e=1#matches');
-  const notification=page.locator('.notif-item').filter({hasText:'Gamlet оценил вашу публикацию'});
-  await expect(notification).toBeAttached();
-  await page.getByRole('button',{name:'Уведомления'}).click();
+  const notification=page.locator('.notif-item').filter({hasText:'Gamlet'}).locator('.notif-open');
+  await page.locator('#notifBtn').click();
   await expect(page.locator('#notifPanel')).toBeVisible();
   await notification.click();
   await expect(page).toHaveURL(/\/feed\?__e2e=1$/u);
-  await expect(page.locator('.feed-entry[data-rating-id="501"]')).toHaveClass(/focused/u);
+  await expect(page.locator('.feed-entry[data-rating-id="502"]')).toHaveClass(/focused/u);
 });
 
 test('avatar is normalized and stored outside the profile row',async({page})=>{

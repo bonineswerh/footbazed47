@@ -16,7 +16,7 @@ const fixture={
   ],
   notifications:[
     {id:901,user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',from_user_id:'2b854020-9701-4f49-9c36-2b65c9dcd449',type:'friend_request',message:'Natasha хочет добавить вас в друзья',read:false,created_at:'2026-08-09T13:00:00Z',rating_id:null,comment_id:null},
-    {id:902,user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',from_user_id:'cd291181-2db6-42cb-9f3d-ef84ab3a9660',type:'like',message:'Gamlet оценил вашу публикацию',read:false,created_at:'2026-08-09T13:05:00Z',rating_id:501,comment_id:null}
+    {id:902,user_id:'3615141a-7700-46b8-9ba5-e4f4450537fc',from_user_id:'cd291181-2db6-42cb-9f3d-ef84ab3a9660',type:'like',message:'Gamlet оценил вашу публикацию',read:false,created_at:'2026-08-09T13:05:00Z',rating_id:502,comment_id:null}
   ],
   players:[
     {id:5290,name:'Thibaut Courtois',team:'Real Madrid CF',club_id:24,position:'GK',shirt_number:1},
@@ -103,6 +103,25 @@ export async function installSupabaseMock(page,overrides={}){
     }
 
     function rpc(name,args={}){
+      if(name==='get_notifications_page'){
+        const visible=state.notifications.filter(n=>n.user_id===state.sessionUser?.id&&contactClear(n.from_user_id));
+        const filtered=visible.filter(n=>(!args.p_unread_only||!n.read)&&(!args.p_cursor_created_at||n.created_at<args.p_cursor_created_at||(n.created_at===args.p_cursor_created_at&&n.id<args.p_cursor_id))).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id-a.id);
+        const limit=Math.min(50,Math.max(1,args.p_limit||20)),rows=filtered.slice(0,limit),last=rows.at(-1);
+        const items=rows.map(n=>{
+          const rating=state.feed.find(r=>r.rating_id===n.rating_id&&r.user_id===state.sessionUser.id),actor=state.users.find(u=>u.id===n.from_user_id);
+          const relation=state.friendships.find(f=>[f.user_id,f.friend_id].includes(state.sessionUser.id)&&[f.user_id,f.friend_id].includes(n.from_user_id));
+          return{...n,actor:actor?.is_public===false&&actor.id!==state.sessionUser.id?null:actor,match:rating?.match||null,target_available:!['like','comment'].includes(n.type)||Boolean(rating),friend_status:relation?.status==='accepted'?'accepted':relation?.status==='pending'&&relation.friend_id===state.sessionUser.id?'pending':'closed'};
+        });
+        return promiseResult(structuredClone({items,has_more:filtered.length>limit,next_cursor:last?{id:last.id,created_at:last.created_at}:null,unread_count:visible.filter(n=>!n.read).length,through_id:visible.length?Math.max(...visible.map(n=>n.id)):null}));
+      }
+      if(name==='set_notification_read'){
+        const rows=state.notifications.filter(n=>n.user_id===state.sessionUser?.id&&contactClear(n.from_user_id));
+        if(args.p_notification_id&&!rows.some(n=>n.id===args.p_notification_id))return promiseResult(null,{message:'notification_unavailable'});
+        let affected=0;for(const n of rows)if((n.id===args.p_notification_id||(args.p_through_id&&n.id<=args.p_through_id))&&n.read!==args.p_read){n.read=args.p_read;affected++;}
+        return promiseResult({affected,unread_count:rows.filter(n=>!n.read).length});
+      }
+      if(name==='get_rating_entry')return promiseResult(structuredClone(state.feed.find(r=>r.rating_id===args.p_rating_id&&contactClear(r.user_id))||null));
+      if(name==='get_rating_comment')return promiseResult(structuredClone((state.comments[args.p_rating_id]||[]).find(c=>c.id===args.p_comment_id&&contactClear(c.user_id))||null));
       if(name==='set_user_block'){
         const userId=String(args.p_user_id||''),blocked=Boolean(args.p_blocked),user=state.users.find(u=>u.id===userId);
         if(!state.sessionUser||!user||userId===state.sessionUser.id)return promiseResult(null,{message:'user_unavailable'});
@@ -329,7 +348,7 @@ export async function installSupabaseMock(page,overrides={}){
           next_cursor:last&&offset+limit<items.length?{created_at:last.created_at,rating_id:last.rating_id,score:score(last)}:null
         });
       }
-      if(name==='get_rating_comments')return promiseResult(structuredClone(state.comments[args.p_rating_id]||[]));
+      if(name==='get_rating_comments')return promiseResult(structuredClone((state.comments[args.p_rating_id]||[]).slice(0,args.p_limit||60)));
       if(name==='toggle_rating_like'){
         const item=state.feed.find(entry=>entry.rating_id===Number(args.p_rating_id));
         item.liked_by_me=!item.liked_by_me;

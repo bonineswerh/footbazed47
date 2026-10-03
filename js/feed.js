@@ -159,11 +159,11 @@
 
   function loadMore(){if(hasMore)load({append:true});}
 
-  function open(ratingId){
-    return ratingId?focusRating(ratingId):load();
+  function open(ratingId,commentId){
+    return ratingId?focusRating(ratingId,commentId):load();
   }
 
-  async function focusRating(ratingId){
+  async function focusRating(ratingId,commentId){
     const id=Number(ratingId);
     if(!Number.isFinite(id))return;
     scope='all';
@@ -171,13 +171,32 @@
       item.classList.toggle('on',index===0);
       item.setAttribute('aria-pressed',String(index===0));
     });
-    await load();
-    for(let attempt=0;attempt<9&&!document.querySelector(`[data-rating-id="${id}"]`)&&hasMore;attempt++)await load({append:true});
-    const entry=document.querySelector(`[data-rating-id="${id}"]`);
-    if(!entry){toast('Запись больше недоступна','err');return;}
-    entry.scrollIntoView({behavior:'smooth',block:'center'});
-    entry.classList.add('focused');
-    setTimeout(()=>entry.classList.remove('focused'),1800);
+    const token=++requestVersion,version=++viewVersion,user=CU?.id,target=document.getElementById('feedG');
+    cursor=null;hasMore=false;loadedCount=0;seenRatings.clear();openComments.clear();commentCache.clear();commentRequests.clear();renderMore();
+    target.innerHTML=feedSkeleton();target.setAttribute('aria-busy','true');
+    const current=()=>token===requestVersion&&version===viewVersion&&user===CU?.id&&CP==='feed';
+    try{
+      const result=await sb.rpc('get_rating_entry',{p_rating_id:id});if(result.error)throw result.error;
+      if(!current())return;
+      if(!result.data){target.innerHTML='<div class="feed-empty"><strong>Запись больше недоступна</strong><span>Автор мог скрыть или удалить оценку.</span><button class="btn btn-g" type="button" data-fbz-click="feed.load">Вся лента</button></div>';return;}
+      await window.FBZData.enrichMatchMedia([result.data.match].filter(Boolean));if(!current())return;
+      target.innerHTML=renderFeedItem(result.data);document.getElementById('feedMeta').textContent='Оценка из уведомления';
+      document.getElementById('feedMore').innerHTML='<button class="feed-more-button" type="button" data-fbz-click="feed.load">Вся лента</button>';
+      const entry=target.querySelector(`[data-rating-id="${id}"]`);entry.classList.add('focused');entry.scrollIntoView({block:'center'});
+      if(Number(commentId)>0){
+        await toggleComments(id);if(!current()||!openComments.has(id))return;
+        let comments=commentCache.get(id)||[];
+        if(!comments.some(comment=>Number(comment.id)===Number(commentId))){
+          const result=await sb.rpc('get_rating_comment',{p_rating_id:id,p_comment_id:Number(commentId)});if(result.error)throw result.error;
+          if(!current()||!openComments.has(id))return;
+          if(result.data){comments=[...comments,result.data];commentCache.set(id,comments);renderComments(id,comments);}
+        }
+        const comment=entry.querySelector(`[data-comment-id="${Number(commentId)}"]`);
+        if(comment){comment.classList.add('focused');comment.setAttribute('tabindex','-1');comment.focus({preventScroll:true});comment.scrollIntoView({block:'center'});}
+        else toast('Комментарий больше недоступен','err');
+      }
+    }catch{if(current())target.innerHTML=`<div class="feed-empty"><strong>Не удалось открыть запись</strong><button class="btn btn-g" type="button" ${FBZActions.attrs('feed.retry-entry',[id,Number(commentId)||null])}>Повторить</button></div>`;}
+    finally{if(current())target.setAttribute('aria-busy','false');}
   }
 
   function setScope(next,button){
@@ -402,6 +421,7 @@ FBZActions.register({
   "feed.open-rate":(event,element,[id])=>openRate(id),
   "feed.load-more":()=>FBZFeed.loadMore(),
   "feed.load":()=>FBZFeed.load(),
+  "feed.retry-entry":(event,element,[id,commentId])=>FBZFeed.focusRating(id,commentId),
   "feed.edit-comment":(event,element,[ratingId,commentId])=>FBZFeed.editComment(ratingId,commentId),
   "feed.delete-comment":(event,element,[ratingId,commentId])=>FBZFeed.deleteComment(ratingId,commentId,element),
   "feed.add-comment":(event,element,[id])=>FBZFeed.addComment(event,id),

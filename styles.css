@@ -87,7 +87,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .nav-uname{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--type-small);font-weight:600}
 .notif-btn{width:44px;height:44px;border-radius:8px;background:transparent;border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;position:relative;transition:background var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease);color:var(--text2)}
 .notif-btn:hover{background:var(--bg3);border-color:var(--b2);color:var(--snow)}
-.notif-badge{display:none}
+.notif-btn{position:relative}.notif-badge{display:none;position:absolute;top:3px;right:2px;min-width:17px;padding:1px 3px;border:2px solid var(--bg2);border-radius:9px;background:var(--snow);color:var(--bg);font:650 10px/13px var(--font-ui);font-variant-numeric:tabular-nums;pointer-events:none}.notif-badge.on{display:block}
 .header-icon-button{width:44px;height:44px;border:1px solid var(--b1);border-radius:8px;background:transparent;color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease),color var(--motion-normal) var(--ease),transform var(--motion-normal) var(--ease);position:relative}
 .header-icon-button:hover{background:var(--bg3);border-color:var(--b2);color:var(--snow);transform:none}
 .account-shell{position:relative}

@@ -77,12 +77,8 @@ test('неудачная отметка уведомлений не сбрасы
   await page.goto('/?__e2e=1');
   await expect(page.locator('#notifBadge')).toHaveText('2');
   await page.evaluate(()=>{
-    const original=sb.from.bind(sb);let fail=true;
-    sb.from=table=>{
-      const query=original(table),update=query.update;
-      query.update=value=>{update(value);if(table==='notifications'&&fail){fail=false;query.then=resolve=>Promise.resolve({error:{message:'network_failure'}}).then(resolve);}return query;};
-      return query;
-    };
+    const original=sb.rpc.bind(sb);let fail=true;
+    sb.rpc=(name,args)=>{if(name==='set_notification_read'&&fail){fail=false;return Promise.resolve({error:{message:'network_failure'}});}return original(name,args);};
   });
   await page.locator('#notifBtn').click();
   await page.getByRole('button',{name:'Прочитать все'}).click();
@@ -161,13 +157,14 @@ test('поздняя заявка из профиля не меняет друг
 
 test('выход очищает уведомления и отбрасывает позднюю загрузку',async({page})=>{
   await page.goto('/?__e2e=1');
+  await page.locator('#notifBtn').click();
   await expect(page.locator('.notif-item')).toHaveCount(2);
   await page.evaluate(()=>{
-    const original=sb.from.bind(sb);window.notificationReleases=[];
-    sb.from=table=>{const query=original(table);if(table==='notifications'){const then=query.then;query.then=(resolve,reject)=>new Promise(done=>{window.notificationReleases.push(()=>done(then(result=>result)));}).then(resolve,reject);}return query;};
+    const original=sb.rpc.bind(sb);window.notificationReleases=[];
+    sb.rpc=(name,args)=>name==='get_notifications_page'?new Promise(done=>window.notificationReleases.push(()=>done(original(name,args)))):original(name,args);
     window.pendingNotifications=loadNotifications();
   });
-  await expect.poll(()=>page.evaluate(()=>window.notificationReleases.length)).toBe(2);
+  await expect.poll(()=>page.evaluate(()=>window.notificationReleases.length)).toBe(1);
   await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.emit('SIGNED_OUT',null));
   await page.evaluate(async()=>{window.notificationReleases.forEach(release=>release());await window.pendingNotifications;});
   await expect(page.locator('.notif-item')).toHaveCount(0);
@@ -188,5 +185,5 @@ test('счётчик уведомлений учитывает записи вн
     await loadNotifications();
   });
   await expect(page.locator('#notifBadge')).toHaveText('25');
-  await expect(page.locator('.notif-item')).toHaveCount(2);
+  await expect(page.locator('.notif-item')).toHaveCount(0);
 });
