@@ -953,4 +953,3 @@ AS $function$
 $function$;
 
 notify pgrst, 'reload schema';
-
