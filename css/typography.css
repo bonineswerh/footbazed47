@@ -61,7 +61,10 @@ body .mc-score-name{font-family:var(--font-ui);font-size:.9375rem;font-weight:60
 body .mc-score-name{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:break-word}
 
 /* Numeric hierarchy: display lettering is reserved for the brand. */
-body :is(.home-overview-item strong,.home-spotlight-team b,.pst-v,.entity-stat-strip strong,.entity-metric strong,.squad-player-rating b,.performance-community b,.entity-ranking-row b,.pr-rank,.md-comparison-values b,.md-score,.pred-input,.player-rating-output){font-family:var(--font-ui);font-weight:650;font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.025em;line-height:1.2}
+body :is(.home-overview-item strong,.home-spotlight-team b,.home-pending-match strong b,.pst-v,.entity-stat-strip strong,.entity-metric strong,.squad-player-rating b,.squad-player-number,.performance-community b,.entity-ranking-row b,.entity-ranking-row>span,.teammate-card>b,.entity-match-score,.pr-rank,.md-comparison-values b,.md-score,.mc-score-num,.feed-rating strong,.feed-players strong,.rate-score,.rd-l,.prdist-row span,.prdist-row b,.pred-input,.player-rating-output){font-family:var(--font-ui);font-weight:650;font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.025em;line-height:1.2}
+body .feed-rating{align-items:baseline;gap:4px}
+body .feed-rating strong{font-size:2rem;min-width:2ch}
+body .rate-score{font-size:clamp(3rem,7vw,4rem);line-height:1.1}
 body :is(.squad-player-rating b,.performance-community b,.entity-ranking-row b){font-size:var(--type-score)}
 body .home-overview-item strong{font-size:var(--type-stat)}
 body .pr-rank{font-size:var(--type-body)}

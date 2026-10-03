@@ -97,6 +97,9 @@ for(const scenario of [
     await expect(card.getByRole('button',{name:/Открыть матч: Real Madrid CF против Manchester City FC/})).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     await page.evaluate(()=>document.fonts.ready);
+    const scoreType=await card.locator('.mc-score-num').evaluate(element=>({family:getComputedStyle(element).fontFamily,numbers:getComputedStyle(element).fontVariantNumeric}));
+    expect(scoreType.family).toContain('Onest Variable');
+    expect(scoreType.numbers).toContain('tabular-nums');
     await expect(card).toHaveScreenshot(`match-card-${scenario.theme}-${scenario.width}.png`,{animations:'disabled',maxDiffPixelRatio:0.03});
   });
 }
@@ -117,6 +120,10 @@ for(const scenario of [
     await page.evaluate(()=>document.fonts.ready);
     const entry=page.locator('.feed-entry[data-rating-id="501"]');
     await expect(entry.locator('.feed-rating')).toHaveText('10/10');
+    const verdictType=await entry.evaluate(element=>({match:getComputedStyle(element.querySelector('.feed-rating strong')).fontFamily,player:getComputedStyle(element.querySelector('.feed-players strong')).fontFamily,alignment:getComputedStyle(element.querySelector('.feed-rating')).alignItems}));
+    expect(verdictType.match).toContain('Onest Variable');
+    expect(verdictType.match).toBe(verdictType.player);
+    expect(verdictType.alignment).toBe('baseline');
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     await expect(entry).toHaveScreenshot(`feed-rating-${scenario.theme}-${scenario.viewport.width}x${scenario.viewport.height}.png`,{
       animations:'disabled',
@@ -134,6 +141,7 @@ for(const viewport of [{width:320,height:700},{width:390,height:844},{width:1280
     await page.locator('.md-primary-action').click();
     await page.evaluate(()=>document.fonts.ready);
     await expect(page.locator('#rScoreDisp')).toHaveText('8/10');
+    expect(await page.locator('#rScoreDisp').evaluate(element=>getComputedStyle(element).fontFamily)).toContain('Onest Variable');
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     await expect(page).toHaveScreenshot(`rating-score-${viewport.width}x${viewport.height}.png`,{
       animations:'disabled',
