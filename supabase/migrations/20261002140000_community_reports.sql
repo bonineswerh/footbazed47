@@ -158,3 +158,5 @@ end;
 $$;
 revoke all on function public.admin_review_community_report(uuid,uuid,text,text) from public,anon,authenticated,service_role;
 grant execute on function public.admin_review_community_report(uuid,uuid,text,text) to service_role;
+
+notify pgrst, 'reload schema';

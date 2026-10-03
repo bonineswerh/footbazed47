@@ -367,6 +367,13 @@ export async function installSupabaseMock(page,overrides={}){
     }
 
     function from(table){
+      if(table==='community_reports'){
+        const query={offset:0,limit:10};
+        const builder={select(){return builder;},order(){return builder;},range(from,to){query.offset=Number(from);query.limit=Number(to)-Number(from)+1;return builder;},then(resolve,reject){
+          const rows=(state.communityReports||[]).filter(r=>r.reporter_id===state.sessionUser?.id).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id.localeCompare(a.id));
+          return Promise.resolve({data:structuredClone(rows.slice(query.offset,query.offset+query.limit)),count:rows.length,error:null}).then(resolve,reject);
+        }};return builder;
+      }
       const query={filters:[],limitValue:null,head:false,countMode:null,orderBy:null,writeData:null,operation:'select'};
       const builder={
         select(_fields,options={}){query.head=Boolean(options.head);query.countMode=options.count||null;return builder;},

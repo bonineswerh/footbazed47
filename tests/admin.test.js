@@ -53,6 +53,27 @@ test('admin reads verify the bearer token and protected database role independen
   assert.equal(app.calls[1].headers.Authorization,'Bearer server-only-test-key');
 });
 
+test('moderation queue and decisions derive actor only from verified administrator',async()=>{
+  const app=api(),report_id='55000000-0000-4000-8000-000000000001';
+  await app.send({action:'moderation_queue',status:'open',target_type:'comment',offset:20,p_actor:'forged',limit:99999});
+  assert.deepEqual(app.calls.at(-1).body,{p_actor:'12000000-0000-0000-0000-000000000001',p_status:'open',p_target_type:'comment',p_offset:20,p_limit:20});
+  await app.send({action:'review_community_report',report_id,status:'dismissed',note:'  No violation found.  ',p_actor:'forged',snapshot:{email:'forged'}});
+  assert.deepEqual(app.calls.at(-1).body,{p_actor:'12000000-0000-0000-0000-000000000001',p_report_id:report_id,p_status:'dismissed',p_note:'No violation found.'});
+  assert.equal(app.calls.some(c=>c.url.includes('api-sports.io')||c.url.includes('/rest/v1/community_reports')),false);
+  assert.equal(app.calls.some(c=>c.url.includes('/rest/v1/admin_audit_logs')),false); // audit is atomic inside the SQL decision
+});
+test('moderation rejects non-admin requests and malformed decisions before any privileged RPC',async()=>{
+  for(const scenario of [{authorization:''},{authStatus:401},{admin:false}]){
+    const app=api(scenario);
+    for(const action of ['moderation_queue','review_community_report'])assert.equal((await app.send({action},scenario)).status,403);
+    assert.equal(app.calls.some(c=>c.method==='POST'),false);
+  }
+  const app=api(),report_id='55000000-0000-4000-8000-000000000001';
+  for(const body of [{status:'forged'},{target_type:'users;delete'},{offset:-1},{offset:'20'},{offset:1.1},{offset:1000001}])assert.equal((await app.send({action:'moderation_queue',...body})).status,400);
+  for(const body of [{report_id:'invalid',status:'reviewed',note:'A valid long note.'},{report_id,status:'open',note:'A valid long note.'},{report_id,status:'reviewed',note:'short'},{report_id,status:'reviewed',note:'x'.repeat(1001)}])assert.equal((await app.send({action:'review_community_report',...body})).status,400);
+  assert.equal(app.calls.some(c=>c.method==='POST'),false);
+});
+
 test('API-Football diagnostics require administrator identity and never import catalogue rows',async()=>{
   const data={errors:[],results:1,paging:{current:1,total:1},response:{account:{email:'private@example.test'},subscription:{plan:'Free',active:true},requests:{current:3,limit_day:100}}};
   for(const scenario of [{authorization:''},{authStatus:401},{admin:false}]){

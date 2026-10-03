@@ -552,6 +552,23 @@ module.exports = async function handler(req, res) {
 
     const body = await readBody(req);
     const action = String(body.action || '');
+    if (action === 'moderation_queue') {
+      const status = body.status ?? 'open', targetType = body.target_type ?? 'all', offset = body.offset ?? 0;
+      if (!['all','open','reviewed','dismissed'].includes(status) || !['all','rating','comment','profile'].includes(targetType) ||
+          !Number.isSafeInteger(offset) || offset < 0 || offset > 1000000) return sendJson(res,400,{error:'invalid_report_filters'});
+      const response = await supabase('/rest/v1/rpc/admin_get_community_reports', {method:'POST',body:{
+        p_actor:administrator.id,p_status:status,p_target_type:targetType,p_offset:offset,p_limit:20
+      }});
+      return sendJson(res,200,parseJson(response.raw,{}));
+    }
+    if (action === 'review_community_report') {
+      if (!validBatch(body.report_id) || !['reviewed','dismissed'].includes(body.status) || typeof body.note !== 'string' ||
+          body.note.trim().length < 10 || body.note.trim().length > 1000) return sendJson(res,400,{error:'invalid_report_decision'});
+      const response = await supabase('/rest/v1/rpc/admin_review_community_report', {method:'POST',body:{
+        p_actor:administrator.id,p_report_id:body.report_id,p_status:body.status,p_note:body.note.trim()
+      }});
+      return sendJson(res,200,parseJson(response.raw,{}));
+    }
     if (action === 'api_football_status') {
       return sendJson(res,200,await createApiFootballClient({requestBudget:1}).accountStatus());
     }

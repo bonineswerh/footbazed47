@@ -317,7 +317,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .text-link{appearance:none;background:transparent;border:0;color:var(--accent2);padding:0;cursor:pointer;text-align:left}.text-link:hover{color:var(--snow)}
 
 /* ═══ OVERLAYS ═══ */
-.overlay{position:fixed;inset:0;background:rgba(5,7,6,.84);backdrop-filter:blur(18px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s var(--ease),visibility .22s}.overlay.on{opacity:1;visibility:visible;pointer-events:auto}
+.overlay{position:fixed;inset:0;background:rgba(5,7,6,.84);backdrop-filter:blur(18px);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;pointer-events:none;transition:opacity var(--motion-normal) var(--ease)}.overlay.on{opacity:1;visibility:visible;pointer-events:auto}
 .overlay>div{transform:translateY(10px) scale(.99);transition:transform .22s var(--ease)}.overlay.on>div{transform:translateY(0) scale(1)}
 .auth-box{width:440px;max-width:94vw;background:var(--surface-raised);border:1px solid var(--b2);border-radius:12px;padding:36px;box-shadow:var(--shadow)}
 .auth-box h2{font-family:'Bebas Neue',sans-serif;font-size:24px;text-align:center;margin-bottom:20px;letter-spacing:1px}

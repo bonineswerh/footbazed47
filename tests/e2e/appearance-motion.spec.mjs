@@ -49,7 +49,7 @@ for(const width of [320,1440])test(`гостевые настройки дост
   await page.goto('/?__e2e=1');
   const trigger=page.getByRole('button',{name:'Настройки',exact:true});
   await trigger.focus();await trigger.press('Enter');
-  await expect(page.locator('input[name="setTheme"]:checked')).toBeFocused();
+  await expect(page.locator('#settingsOv .settings-head .icon-btn')).toBeFocused();
   await checkLayout(page);
   await page.keyboard.press('Escape');
   await expect(trigger).toBeFocused();

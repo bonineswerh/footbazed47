@@ -13,6 +13,7 @@
   let emblemBatch=null,emblemApplied=false,missingEmblemId=null;
   let lineupBatch=null;
   let catalogBatch=null,catalogReady=false;
+  const reports={version:0,offset:0,total:0,hasMore:false,status:'open',type:'all',items:[],busy:false};
   const STATUS_LABELS = {
     scheduled: 'Запланирован', live: 'LIVE', finished: 'Завершен',
     postponed: 'Перенесен', cancelled: 'Отменен'
@@ -364,7 +365,69 @@
     view.classList.add('on');
     (trigger || document.querySelector(`[data-admin-view="${name}"]`))?.classList.add('on');
     if (name === 'matches') filterMatches();
+    reports.version++;
+    if (name === 'reports') loadReportQueue();
   }
+
+  const reportReasons={harassment:'Оскорбления или травля',hate:'Разжигание ненависти',spam:'Спам или реклама',impersonation:'Выдаёт себя за другого',other:'Другая причина'};
+  const reportStatuses={open:'Ожидает решения',reviewed:'Рассмотрена',dismissed:'Отклонена'};
+  const reportTypes={rating:'Запись',comment:'Комментарий',profile:'Профиль'};
+  function mountReports(){
+    if(document.getElementById('admin-view-reports'))return;
+    const nav=document.querySelector('.admin-nav'),workspace=document.querySelector('.admin-workspace');if(!nav||!workspace)return;
+    nav.insertAdjacentHTML('beforeend','<button class="admin-nav-item" type="button" data-admin-view="reports" data-fbz-click="admin.reports-open">'+ico('shield',17)+'<span>Жалобы</span></button>');
+    workspace.insertAdjacentHTML('beforeend','<section class="admin-view" id="admin-view-reports" aria-labelledby="adminReportsTitle"><div class="admin-section-head"><div><h2 id="adminReportsTitle">Жалобы сообщества</h2><p>Проверьте обращение и оставьте причину решения. Старые оценки сохраняются.</p></div></div>'
+      +'<div class="admin-report-counts" id="adminReportCounts" aria-label="Статусы жалоб"></div>'
+      +'<form class="admin-report-filters" id="adminReportFilters"><div><label for="adminReportStatus">Статус</label><select class="input" id="adminReportStatus" name="status"><option value="open">Ожидают решения</option><option value="reviewed">Рассмотрены</option><option value="dismissed">Отклонены</option><option value="all">Все обращения</option></select></div><div><label for="adminReportType">Тип</label><select class="input" id="adminReportType" name="type"><option value="all">Все типы</option><option value="rating">Записи</option><option value="comment">Комментарии</option><option value="profile">Профили</option></select></div><button class="btn btn-g" type="button" data-fbz-click="admin.reports-retry">Обновить</button></form>'
+      +'<p class="admin-report-note">«Рассмотрена» фиксирует проверку обращения. Это действие не удаляет запись и не ограничивает аккаунт автоматически.</p>'
+      +'<div id="adminReportList" class="admin-report-list" aria-live="polite" aria-busy="false"></div><div class="admin-report-pagination"><span id="adminReportPage" role="status"></span><div><button class="btn btn-g btn-sm" type="button" id="adminReportPrevious" data-fbz-click="admin.reports-previous">Назад</button><button class="btn btn-g btn-sm" type="button" id="adminReportNext" data-fbz-click="admin.reports-next">Далее →</button></div></div></section>');
+    const form=document.getElementById('adminReportFilters');form.addEventListener('submit',event=>event.preventDefault());form.addEventListener('change',()=>{reports.status=form.elements.status.value;reports.type=form.elements.type.value;reports.offset=0;loadReportQueue();});
+  }
+  function reportCurrent(version,user,route){return version===reports.version&&user===CU?.id&&CU?.is_admin&&route===routeVersion&&CP==='admin'&&document.getElementById('admin-view-reports')?.classList.contains('on');}
+  function reportControls(){
+    const previous=document.getElementById('adminReportPrevious'),next=document.getElementById('adminReportNext');
+    if(previous)previous.disabled=reports.busy||reports.offset===0;if(next)next.disabled=reports.busy||!reports.hasMore;
+    document.querySelectorAll('#adminReportFilters input,#adminReportFilters select,#adminReportFilters button').forEach(el=>{el.disabled=reports.busy;});
+  }
+  function reportRow(r){
+    const id=String(r.id),snapshot=r.snapshot||{};
+    return '<article class="admin-report-card" data-report-id="'+esc(id)+'"><header><div><span class="section-kicker">'+esc(reportTypes[r.target_type]||'Обращение')+'</span><h3>'+esc(snapshot.label||'Запись больше не найдена')+'</h3><p>@'+esc(snapshot.username||'удалённый аккаунт')+' · '+esc(reportReasons[r.reason]||'Другая причина')+'</p></div><span class="admin-report-status">'+esc(reportStatuses[r.status]||r.status)+'</span></header>'
+      +'<p class="admin-report-meta">Отправил '+(r.reporter?.username?'@'+esc(r.reporter.username):'удалённый аккаунт')+' · '+esc(formatDate(r.created_at))+'</p>'
+      +(r.details?'<p class="admin-report-details">'+esc(r.details)+'</p>':'')+'<details><summary>Текст на момент обращения</summary><blockquote>'+esc(snapshot.text||'Текст отсутствует')+'</blockquote></details>'
+      +(r.subject_id?'<button class="admin-text-button" type="button" '+FBZActions.attrs('app.go-profile',[r.subject_id])+'>Открыть профиль автора →</button>':'')
+      +(r.status==='open'?'<form class="admin-report-decision" '+FBZActions.attrs('admin.report-review',[id],'submit')+'><label for="report-note-'+esc(id)+'">Причина решения</label><textarea class="input" id="report-note-'+esc(id)+'" name="note" rows="2" minlength="10" maxlength="1000" required aria-describedby="report-note-help-'+esc(id)+'"></textarea><small id="report-note-help-'+esc(id)+'">10–1000 символов. Эту причину увидит отправитель жалобы.</small><div><label for="report-decision-'+esc(id)+'" class="sr-only">Решение по обращению</label><select class="input" id="report-decision-'+esc(id)+'" name="decision"><option value="reviewed">Рассмотрена</option><option value="dismissed">Отклонена</option></select><button class="btn btn-l" type="submit">Сохранить решение</button></div><p role="status" class="admin-report-result"></p></form>':'<p class="admin-report-decision-note">'+esc(r.decision_note||'')+'</p>')+'</article>';
+  }
+  async function loadReportQueue(){
+    if(!CU?.is_admin||CP!=='admin')return;
+    const version=++reports.version,user=CU.id,route=routeVersion,host=document.getElementById('adminReportList');if(!host)return;
+    reports.busy=true;reportControls();host.setAttribute('aria-busy','true');host.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка жалоб</span></div>';document.getElementById('adminReportPage').textContent='';
+    try{
+      const data=await request('moderation_queue',{status:reports.status,target_type:reports.type,offset:reports.offset});
+      if(!reportCurrent(version,user,route))return;
+      reports.items=Array.isArray(data.items)?data.items:[];reports.total=Number(data.total)||0;reports.hasMore=Boolean(data.has_more);
+      if(!reports.items.length&&reports.offset>0&&reports.total<=reports.offset){reports.offset=Math.max(0,Math.floor((Math.max(1,reports.total)-1)/20)*20);return loadReportQueue();}
+      document.getElementById('adminReportCounts').innerHTML=Object.entries(reportStatuses).map(([key,label])=>'<div><strong>'+Number(data.counts?.[key]||0)+'</strong><span>'+esc(label)+'</span></div>').join('');
+      host.innerHTML=reports.items.length?reports.items.map(reportRow).join(''):'<div class="admin-empty-compact"><strong>Обращений по этим фильтрам нет</strong><p>Новые жалобы появятся здесь. Можно выбрать другой статус или тип.</p></div>';
+      document.getElementById('adminReportPage').textContent=reports.items.length?(reports.offset+1)+'–'+(reports.offset+reports.items.length)+' из '+reports.total:'Нет обращений';
+    }catch(error){if(reportCurrent(version,user,route)){host.innerHTML='<div class="admin-error-state"><b>Не удалось загрузить жалобы</b><span>'+esc(error.message)+'</span><button class="btn btn-g" type="button" data-fbz-click="admin.reports-retry">Повторить</button></div>';reports.hasMore=false;}}
+    finally{if(reportCurrent(version,user,route)){reports.busy=false;host.setAttribute('aria-busy','false');reportControls();}}
+  }
+  function reportPage(direction){if(reports.busy)return;if(direction>0&&reports.hasMore)reports.offset+=20;else if(direction<0&&reports.offset>0)reports.offset=Math.max(0,reports.offset-20);else return;loadReportQueue();document.getElementById('adminReportsTitle')?.scrollIntoView({block:'start',behavior:'instant'});}
+  async function reviewReport(event,id){
+    event.preventDefault();const form=event.target;
+    if(reports.busy||!CU?.is_admin||!form.reportValidity()||!reports.items.some(r=>r.id===id&&r.status==='open'))return;
+    const version=reports.version,user=CU.id,route=routeVersion;
+    reports.busy=true;reportControls();document.querySelectorAll('.admin-report-decision button').forEach(el=>{el.disabled=true;});
+    const result=form.querySelector('[role="status"]');result.textContent='Сохраняем решение…';
+    try{
+      const data=await request('review_community_report',{report_id:id,status:form.elements.decision.value,note:form.elements.note.value.trim()});
+      if(!reportCurrent(version,user,route))return;
+      toast(data.already_reviewed?'Обращение уже рассмотрено. Список обновлён.':'Решение сохранено в журнале.','ok');await loadReportQueue();
+    }catch(error){if(reportCurrent(version,user,route))result.textContent=error.message;}
+    finally{if(reportCurrent(version,user,route)){reports.busy=false;reportControls();document.querySelectorAll('.admin-report-decision button').forEach(el=>{el.disabled=false;});}}
+  }
+  window.addEventListener('fbz:session-change',()=>{reports.version++;reports.busy=false;reports.items=[];reports.offset=0;document.getElementById('adminReportList')?.replaceChildren();document.getElementById('adminReportCounts')?.replaceChildren();const page=document.getElementById('adminReportPage');if(page)page.textContent='';});
+  mountReports();
 
   function selectedLeagues(){
     return [...document.querySelectorAll('#adminLeagueGrid input:checked')].map(input => input.value);
@@ -597,11 +660,16 @@
     }
   }
 
-  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup,resetEmblems};
+  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup,resetEmblems,loadReportQueue,reportPage,reviewReport};
 })();
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "admin.reports-open":(event,element)=>FBZAdmin.showView('reports',element),
+  "admin.reports-retry":()=>FBZAdmin.loadReportQueue(),
+  "admin.reports-previous":()=>FBZAdmin.reportPage(-1),
+  "admin.reports-next":()=>FBZAdmin.reportPage(1),
+  "admin.report-review":(event,element,[id])=>FBZAdmin.reviewReport(event,id),
   "admin.provider-status":()=>FBZAdmin.inspectProvider('status'),
   "admin.provider-competition":event=>FBZAdmin.inspectProvider('competition',event),
   "admin.emblems-prepare":()=>FBZAdmin.clubEmblems('prepare'),

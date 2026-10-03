@@ -62,17 +62,26 @@ window.addEventListener('fbz:session-change',()=>{
 function ensureFeatureModule(options){return window.FBZFeatures.load(options);}
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=51',script:'js/admin.js?v=53',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=52',script:'js/admin.js?v=54',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=58',script:'js/entities.js?v=58',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=59',script:'js/feed.js?v=59',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=60',script:'js/feed.js?v=60',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
   return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=1',script:'js/search.js?v=58',ready:()=>window.FBZSearch});
 }
+let reportOpenVersion=0;
+function reportContent(type,id){
+  if(!CU)return openAuth();
+  const version=++reportOpenVersion,user=CU.id,route=routeVersion;
+  return ensureFeatureModule({key:'community-reports',styleId:'communityReportStyles',style:'css/community-reports.css?v=1',script:'js/community-reports.js?v=1',ready:()=>window.FBZCommunityReports})
+    .then(reports=>{if(version===reportOpenVersion&&user===CU?.id&&route===routeVersion){if(type==='history')return reports.history();return reports.open(type,id);}})
+    .catch(()=>{if(version===reportOpenVersion&&user===CU?.id&&route===routeVersion)toast('Не удалось открыть жалобу. Попробуйте ещё раз.','err');});
+}
+window.addEventListener('fbz:session-change',()=>{reportOpenVersion++;});
 
 function openGlobalSearch(){
   window.FBZAccount?.close();
@@ -204,6 +213,7 @@ function go(p,d){
   routeVersion++;
   window.FBZExplore?.closePanels();
   window.FBZComparison?.close(false);
+  reportOpenVersion++;window.FBZCommunityReports?.close(false);
   window.FBZProfileEditor?.resetSession();
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   page.classList.add('on');
@@ -350,7 +360,7 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=3',script:'js/profile.js?v=8',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=4',script:'js/profile.js?v=9',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=1',ready:()=>window.FBZExploreModel});
@@ -427,7 +437,7 @@ function openSettings(){
   const ov=document.getElementById('settingsOv');
   if(!ov)return;
   window.FBZAppearance?.syncControls();
-  FBZOverlay.open('settingsOv','input[name="setTheme"]:checked');
+  FBZOverlay.open('settingsOv','.settings-head .icon-btn');
 }
 function closeSettings(){FBZOverlay.close('settingsOv');}
 function saveAppearanceSettings(){
@@ -491,6 +501,7 @@ FBZActions.register({
   "app.account-go-admin":()=>{FBZAccount.close();return go('admin');},
   "app.toggle-notif":()=>toggleNotif(),
   "app.open-settings":()=>openSettings(),
+  "app.report-content":(event,element,[type,id])=>{element.focus({preventScroll:true});return reportContent(type,id);},
   "app.toggle-account-menu":()=>toggleAccountMenu(),
   "app.account-go-profile":()=>{FBZAccount.close();return go('profile');},
   "app.account-open-settings":()=>{FBZAccount.close({returnFocus:true});return openSettings();},

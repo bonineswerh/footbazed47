@@ -58,13 +58,22 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');
   await page.getByRole('button',{name:'Меню аккаунта bazed',exact:true}).click();
   await page.getByRole('menuitem',{name:'Настройки Тема и цвет интерфейса',exact:true}).click();
-  await expect(page.locator(`input[name="setTheme"][value="${theme}"]`)).toBeFocused();
+  await expect(page.locator(`input[name="setTheme"][value="${theme}"]`)).toBeChecked();
+  await expect(page.locator('#settingsOv .settings-head .icon-btn')).toBeFocused();
   await page.getByRole('radio',{name:theme==='dark'?'Светлая Высокий контраст':'Темная Меньше света',exact:true}).locator('..').click();
   await page.getByRole('button',{name:'Отмена',exact:true}).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme',theme);
   await expect(page.getByRole('button',{name:'Меню аккаунта bazed',exact:true})).toBeFocused();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
   expect(errors).toEqual([]);
+});
+
+for(const theme of ['dark','light'])test(`${theme}: report dialog and own history in each browser`,async({page})=>{
+  await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);await page.setViewportSize({width:390,height:844});
+  await page.goto('/profile/cd291181-2db6-42cb-9f3d-ef84ab3a9660?__e2e=1');const trigger=page.getByRole('button',{name:'Пожаловаться на профиль',exact:true});await trigger.click();
+  await expect(page.getByRole('dialog',{name:'Жалоба на профиль'})).toBeVisible();await expect(page.getByLabel('Причина',{exact:true})).toBeFocused();await page.getByLabel('Причина',{exact:true}).selectOption('other');await page.keyboard.press('Escape');await expect(trigger).toBeFocused();
+  await page.goto('/profile/3615141a-7700-46b8-9ba5-e4f4450537fc?__e2e=1');await page.getByRole('button',{name:'Мои обращения',exact:true}).click();await expect(page.getByRole('dialog',{name:'Мои обращения'})).toContainText('Обращений пока нет');await expect(page.getByRole('button',{name:'Закрыть обращения',exact:true})).toBeFocused();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Мои обращения',exact:true})).toBeFocused();
 });
 
 for(const viewport of [{width:667,height:375},{width:844,height:390},{width:820,height:1180},{width:1180,height:820},{width:1366,height:768},{width:1920,height:1080},{width:2560,height:1440},{width:3440,height:1440},{width:3840,height:2160}]){

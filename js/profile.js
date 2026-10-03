@@ -164,6 +164,7 @@ async function loadProfile(uid){
       <div class="phero-acts">
         ${ownerActions}
         ${!isMe&&CU?`<button class="btn btn-g btn-sm" ${FBZActions.attrs('profile.compare',[uid])}>${ico('chart',14)} Сравнить</button>`:''}
+        ${!isMe&&CU?`<button class="btn btn-g btn-sm" ${FBZActions.attrs('app.report-content',['profile',uid])} aria-label="Пожаловаться на профиль" title="Пожаловаться на профиль">${ico('shield',14)} Жалоба</button>`:''}
         <button class="btn btn-g btn-sm" ${FBZActions.attrs("profile.copy-app-link",['/profile/'+encodeURIComponent(uid)])}>${ico('link',13)} Ссылка</button>
       </div>
     </div>
@@ -179,6 +180,7 @@ async function loadProfile(uid){
         <div class="pcard"><div class="pcard-title">${ico('share',14)} Поделиться</div>
           <button class="btn btn-l" style="width:100%;margin-bottom:8px" ${FBZActions.attrs("profile.open-share-profile",[u.display_name||'',u.username||'user',cnt,avg,tl,friendCount,FBZDomain.profileActivity(cnt).label])}>${ico('photo',13)} Создать карточку</button>
           <button class="btn btn-g" style="width:100%" ${FBZActions.attrs("profile.exp-stats",[cnt,avg,u.username||'user'])}>${ico('copy',13)} Копировать текст</button>
+          ${isMe?`<button class="btn btn-g profile-own-reports" type="button" ${FBZActions.attrs('app.report-content',['history',''])}>${ico('shield',14)} Мои обращения</button>`:''}
         </div>
       </div>
     </div>`;

@@ -184,7 +184,7 @@ for(const scenario of [
     await page.evaluate(()=>openSettings());
     const settings=page.locator('.settings-box');
     await expect(settings).toBeVisible();
-    await expect(page.locator('input[name="setTheme"]:checked')).toBeFocused();
+    await expect(page.locator('#settingsOv .settings-head .icon-btn')).toBeFocused();
     await expect(settings).toHaveScreenshot(`settings-${scenario.theme}-${scenario.viewport.width}x${scenario.viewport.height}.png`,{
       animations:'disabled',
       caret:'hide',
