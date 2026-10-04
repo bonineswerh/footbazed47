@@ -272,7 +272,7 @@ declare
   f jsonb := coalesce(p_filters,'{}'::jsonb);
   q text := left(btrim(coalesce(f->>'query','')),80);
   league text := left(coalesce(f->>'league',''),120);
-  team text := left(coalesce(f->>'team',''),160);
+  team_filter text := left(coalesce(f->>'team',''),160);
   competition_id_filter bigint;
   club_id_filter bigint;
   from_day date := nullif(f->>'from','')::date;
@@ -307,7 +307,7 @@ begin
       and (competition_id_filter is null or m.competition_id=competition_id_filter)
       and (p_kind='players' or club_id_filter is null or club_id_filter in (m.home_club_id,m.away_club_id))
       and (competition_id_filter is not null or league='' or m.league_name=league)
-      and (p_kind='players' or club_id_filter is not null or team='' or team in (m.home_team_name,m.away_team_name))
+      and (p_kind='players' or club_id_filter is not null or team_filter='' or team_filter in (m.home_team_name,m.away_team_name))
       and (from_day is null or m.match_date>=from_day::timestamp at time zone 'UTC')
       and (to_day is null or m.match_date<(to_day+1)::timestamp at time zone 'UTC')
   ), entries as (
@@ -331,7 +331,7 @@ begin
     join public.players p on p.id=pr.player_id where p_kind='players'
       and (not confirmed_only or pr.participation_verified)
       and (club_id_filter is null or pr.club_id=club_id_filter)
-      and (club_id_filter is not null or team='' or pr.team=team)
+      and (club_id_filter is not null or team_filter='' or pr.team=team_filter)
   ), grouped as materialized (
     select e.entity_key,min(e.entity_id) entity_id,min(e.title) title,case when p_kind='players' and count(distinct e.subtitle)>1 then 'Несколько клубов в выбранном периоде' else min(e.subtitle) end subtitle,
       round(avg(e.score),1) average,count(*) votes,count(distinct e.user_id) voters,
@@ -383,7 +383,7 @@ begin
       'confirmed_only',p_kind='players' and confirmed_only,
       'excluded_unverified_performance_votes',case when p_kind='players' and confirmed_only then (
         select count(*) from base b join private.community_player_performances pr on pr.match_id=b.match_id and pr.user_id=b.user_id
-        join public.players p on p.id=pr.player_id where not pr.participation_verified and club_id_filter is null and team=''
+        join public.players p on p.id=pr.player_id where not pr.participation_verified and club_id_filter is null and team_filter=''
           and (q='' or position(lower(q) in lower(p.name||' Клуб выступления не подтверждён'))>0)
       ) else 0 end),
     'leagues',coalesce((select jsonb_agg(x.league_name order by x.league_name) from (select distinct league_name from public.matches limit 200) x),'[]'::jsonb),
@@ -590,4 +590,3 @@ $function$
 revoke all on function public.get_club_page(bigint),public.get_player_page(bigint),public.get_match_insights(bigint),public.get_football_statistics(text,jsonb,integer,integer) from public,anon,authenticated,service_role;
 grant execute on function public.get_club_page(bigint),public.get_player_page(bigint),public.get_match_insights(bigint),public.get_football_statistics(text,jsonb,integer,integer) to anon,authenticated,service_role;
 notify pgrst,'reload schema';
-
