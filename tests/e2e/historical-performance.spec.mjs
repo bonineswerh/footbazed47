@@ -12,7 +12,8 @@ test('confirmed overview defaults to an honest empty sample and full history sur
   await expect(page.locator('#statisticsList')).toContainText('пока нет оценок подтверждённых выступлений');
   await page.getByRole('button',{name:'Вся история оценок',exact:true}).click();
   await expect(page.locator('.statistics-row')).toHaveCount(2);await expect(page).toHaveURL(/ov_participation=all/);
-  await expect(page.locator('.statistics-row').first()).toContainText('Клуб выступления не подтверждён');
+  await expect(page.locator('.statistics-meta').first()).toHaveText('Прежние оценки');
+  await expect(page.locator('.statistics-evidence').first()).toHaveText('Участие в матче не подтверждено');
   await page.reload();await expect(page.getByRole('button',{name:'Вся история оценок',exact:true})).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.statistics-row')).toHaveCount(2);
   await page.getByRole('button',{name:'Сбросить фильтры',exact:true}).click();

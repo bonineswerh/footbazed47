@@ -28,8 +28,8 @@ test('поиск исправляет только известные повре
   });
   await page.locator('#globalSearchInput').fill('real');
   await expect(page.getByRole('option').first()).toHaveText('Real Madrid CFКлуб→');
-  await expect(page.getByRole('option').nth(1)).toContainText('Real Madrid — Man City');
-  await expect(page.getByRole('option').nth(2)).toContainText('ДинамоРоссия');
+  await expect(page.getByRole('option').nth(1)).toContainText('ДинамоРоссия');
+  await expect(page.getByRole('option').nth(2)).toContainText('Real Madrid — Man City');
 });
 
 test('новый поисковый запрос сразу отменяет выбор прежнего результата с клавиатуры',async({page})=>{

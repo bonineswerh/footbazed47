@@ -277,5 +277,18 @@ c05958 e8e3dd|Спартак|Спартак Москва|Spartak Moscow
     return Object.freeze({preliminary:count<5||authors<5||missing>0,unverified:missing,votes:count,voters:authors});
   }
 
-  return Object.freeze({authErrorMessage,clubDisplayName,matchTeamName,ratingEvidence,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});
+  // The first returned result determines group order; keep relevance order inside
+  // each group. Keyboard selection must use the same flattened order as the DOM.
+  function searchResultGroups(results){
+    const groups=new Map();
+    for(const item of Array.isArray(results)?results:[]){
+      const kind=item?.entity_type==='team'?'club':item?.entity_type;
+      if(!['club','player','competition','match','user'].includes(kind))continue;
+      if(!groups.has(kind))groups.set(kind,[]);
+      groups.get(kind).push(item);
+    }
+    return [...groups].map(([kind,items])=>({kind,items}));
+  }
+
+  return Object.freeze({authErrorMessage,clubDisplayName,matchTeamName,ratingEvidence,searchResultGroups,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});
 });

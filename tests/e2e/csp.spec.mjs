@@ -61,8 +61,7 @@ test('entity tabs, form submission and account navigation run without policy vio
   await form.locator('input').fill('Проверка формы под CSP');
   await form.getByRole('button',{name:'Отправить',exact:true}).click();
   await expect(page.getByText('Проверка формы под CSP',{exact:true})).toBeVisible();
-  await page.locator('#accountBtn').click();
-  await page.getByRole('menuitem',{name:/Мой профиль/}).click();
+  await page.getByRole('navigation',{name:'Основная навигация'}).getByRole('button',{name:'Профиль',exact:true}).click();
   await expect(page.locator('#profileW')).toContainText('bazed');
   expect(await page.evaluate(()=>Array.from(document.querySelectorAll('*')).flatMap(el=>Array.from(el.attributes).filter(attr=>/^on[a-z]+$/i.test(attr.name))).length)).toBe(0);
   expect(await page.evaluate(()=>window.cspViolations)).toEqual([]);

@@ -605,11 +605,14 @@
       <h2 class="sr-only" id="globalSearchTitle">Поиск по FOOTBAZED</h2>
       <div class="global-search-input-wrap">
         <span class="global-search-icon" data-i="search"></span>
-        <label class="sr-only" for="globalSearchInput">Матч, команда или пользователь</label>
-        <input id="globalSearchInput" type="search" placeholder="Клуб, игрок, матч или пользователь" autocomplete="off" maxlength="80" aria-controls="globalSearchResults">
+        <label class="sr-only" for="globalSearchInput">Клуб, игрок, турнир, матч или болельщик</label>
+        <input id="globalSearchInput" type="search" placeholder="Клуб, игрок, турнир…" autocomplete="off" maxlength="80" aria-controls="globalSearchResults" aria-describedby="globalSearchHint">
+        <button class="global-search-clear" type="button" data-fbz-click="search.search-clear-input" aria-label="Очистить запрос" hidden><span data-i="close"></span></button>
         <button class="global-search-close" type="button" data-fbz-click="shell.search-close" aria-label="Закрыть поиск">×</button>
       </div>
-      <div class="global-search-results" id="globalSearchResults" aria-live="polite"></div>
+      <p class="sr-only" id="globalSearchStatus" role="status" aria-live="polite" aria-atomic="true"></p>
+      <div class="global-search-results" id="globalSearchResults"></div>
+      <footer class="global-search-footer"><span id="globalSearchHint">Введите хотя бы 2 символа</span><span class="search-keyboard-help" aria-hidden="true"><kbd>↑</kbd><kbd>↓</kbd> выбор <kbd>Enter</kbd> открыть <kbd>Esc</kbd> закрыть</span></footer>
     </div>
   </div>
 
@@ -724,7 +727,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- APP JS -->
-  <script src="js/domain.js?v=59"></script>
+  <script src="js/domain.js?v=60"></script>
   <script src="js/appearance.js?v=40"></script>
   <script src="js/performance.js?v=1"></script>
   <script src="js/core.js?v=54"></script>
@@ -738,7 +741,7 @@
   <script src="js/home.js?v=10"></script>
   <script src="js/feature-loader.js?v=1"></script>
   <script src="js/notification-counter.js?v=2"></script>
-  <script src="app.js?v=81"></script>
+  <script src="app.js?v=82"></script>
   <script src="js/auth.js?v=46"></script>
   <script src="js/rating-loader.js?v=12"></script>
   <script src="js/matches.js?v=63"></script>

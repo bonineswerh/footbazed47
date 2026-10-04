@@ -4,6 +4,17 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const domain=require('../js/domain.js');
 
+test('search groups preserve the strongest category and per-category relevance without mutating results',()=>{
+  const items=[{entity_type:'player',entity_id:'1'},{entity_type:'club',entity_id:'2'},{entity_type:'player',entity_id:'3'},{entity_type:'club',entity_id:'4'},{entity_type:'user',entity_id:'5'}];
+  const before=structuredClone(items),groups=domain.searchResultGroups(items);
+  assert.deepEqual(groups.map(group=>group.kind),['player','club','user']);
+  assert.deepEqual(groups.flatMap(group=>group.items).map(item=>item.entity_id),['1','3','2','4','5']);
+  assert.deepEqual(items,before);
+  assert.deepEqual(domain.searchResultGroups(null),[]);
+  assert.deepEqual(domain.searchResultGroups([null,{entity_type:'__proto__'}]),[]);
+  assert.deepEqual(domain.searchResultGroups([{entity_type:'team',title:'Legacy'}]).map(group=>group.kind),['club']);
+});
+
 test('rating draft requires a supporter side and an integer match score from 1 to 10',()=>{
   assert.equal(domain.validateRatingDraft({matchRating:0,supporterSide:'neutral'}).valid,false);
   assert.equal(domain.validateRatingDraft({matchRating:7.5,supporterSide:'home'}).valid,false);

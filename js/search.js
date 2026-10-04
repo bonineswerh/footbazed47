@@ -16,6 +16,7 @@
     input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');
     input.setAttribute('aria-expanded','false');input.setAttribute('aria-controls','globalSearchList');
     input.addEventListener('input',()=>{
+      syncInput();
       clearTimeout(timer);
       requestVersion++;currentResults=[];activeIndex=-1;
       input.removeAttribute('aria-activedescendant');input.setAttribute('aria-expanded','false');
@@ -26,6 +27,14 @@
     input.addEventListener('keydown',onInputKeydown);
     document.getElementById('searchOv')?.addEventListener('fbz:overlay-close',cancelRequest);
   }
+
+  function syncInput(){
+    const value=document.getElementById('globalSearchInput').value;
+    document.querySelector('.global-search-clear').hidden=!value;
+    document.getElementById('globalSearchHint').textContent=window.FBZDomain.normalizeSearchQuery(value).length<2?'Введите хотя бы 2 символа':'Лучшие совпадения · уточните название, чтобы сузить поиск';
+  }
+
+  function announce(message){document.getElementById('globalSearchStatus').textContent=message;}
 
   function cancelRequest(){
     requestVersion++;clearTimeout(timer);currentResults=[];activeIndex=-1;
@@ -38,6 +47,7 @@
     cancelRequest();
     const input=document.getElementById('globalSearchInput');
     input.value='';
+    syncInput();announce('');
     activeIndex=-1;
     currentResults=[];
     renderStart();
@@ -51,6 +61,7 @@
 
   async function run(rawQuery){
     clearTimeout(timer);
+    syncInput();
     const query=window.FBZDomain.normalizeSearchQuery(rawQuery);
     activeIndex=-1;currentResults=[];
     document.getElementById('globalSearchInput').removeAttribute('aria-activedescendant');
@@ -66,12 +77,12 @@
       if(error?.code==='PGRST202')({data,error}=await sb.rpc('search_footbazed',args));
       if(error)throw error;
       if(version!==requestVersion)return;
-      currentResults=data||[];
-      renderResults(currentResults,query);
+      renderResults(data,query);
     }catch(error){
       if(version!==requestVersion)return;
       console.error('Global search error:',error);
       currentResults=[];
+      announce('Ошибка поиска. Можно повторить запрос.');
       document.getElementById('globalSearchResults').setAttribute('aria-busy','false');
       document.getElementById('globalSearchResults').innerHTML='<div class="search-state"><strong>Поиск временно недоступен</strong><button class="btn btn-g btn-sm" type="button" data-fbz-click="search.search-retry">Повторить</button></div>';
     }
@@ -80,6 +91,7 @@
   function retry(){run(document.getElementById('globalSearchInput').value);}
 
   function renderLoading(){
+    announce('Поиск выполняется');
     document.getElementById('globalSearchResults').setAttribute('aria-busy','true');
     document.getElementById('globalSearchResults').innerHTML='<div class="search-loading"><div class="spin"></div><span>Ищем в FOOTBAZED</span></div>';
   }
@@ -100,6 +112,7 @@
     const recent=readRecent();
     const target=document.getElementById('globalSearchResults');
     target.setAttribute('aria-busy','false');
+    announce('');
     if(recent.length){
       currentResults=[];
       target.innerHTML=`<div class="search-section-title"><span>Недавние</span><button type="button" data-fbz-click="search.search-clear-recent">Очистить</button></div><div class="search-recent">${recent.map(query=>`<button type="button" ${FBZActions.attrs("search.search-use-recent",[query])}>${ico('search',14)}<span>${esc(query)}</span></button>`).join('')}</div>`;
@@ -108,7 +121,7 @@
     const featured=typeof featuredMatches==='function'&&Array.isArray(matchCatalog)?featuredMatches(matchCatalog).slice(0,4):[];
     currentResults=featured.map(match=>({entity_type:'match',entity_id:String(match.id),title:`${match.home_team_name} — ${match.away_team_name}`,subtitle:match.league_name,meta:match.status}));
     document.getElementById('globalSearchInput').setAttribute('aria-expanded',String(currentResults.length>0));
-    target.innerHTML=currentResults.length?`<div class="search-section-title"><span>Ближайшие матчи</span></div><div class="search-result-list" id="globalSearchList" role="listbox" aria-label="Ближайшие матчи">${currentResults.map(searchResultMarkup).join('')}</div>`:'<div class="search-state search-state-brand"><span>FOOTBAZED</span><strong>Клубы, игроки, матчи и болельщики</strong></div>';
+    target.innerHTML=currentResults.length?`<div class="search-section-title"><span>Матчи в каталоге</span></div><div class="search-result-list" id="globalSearchList" role="listbox" aria-label="Матчи в каталоге">${currentResults.map(searchResultMarkup).join('')}</div>`:'<div class="search-state search-state-brand"><span>FOOTBAZED</span><strong>Клубы, игроки, турниры, матчи и болельщики</strong></div>';
   }
 
   function clearRecent(){
@@ -119,6 +132,7 @@
   function useRecent(query){
     const input=document.getElementById('globalSearchInput');
     input.value=query;
+    syncInput();
     input.focus();
     run(query);
   }
@@ -145,20 +159,31 @@
     const subtitle=({'РљР»СѓР±':'Клуб','РўСѓСЂРЅРёСЂ':'Турнир'})[item.subtitle]||item.subtitle||'';
     const title=item.entity_type==='match'?String(item.title||'').replaceAll(' вЂ” ',' — '):item.title;
     const rawMeta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='player'?positionLabel(item.meta):(item.meta||resultLabel(item.entity_type)));
-    const meta=rawMeta&&rawMeta!==subtitle?rawMeta:'';
+    const meta=rawMeta&&rawMeta!==subtitle&&rawMeta!==resultLabel(item.entity_type)?rawMeta:'';
     const visual=item.visual&&['club','player','competition'].includes(item.entity_type)?window.FBZMedia.visual({entity:item.visual,kind:item.entity_type,className:'search-mark',fallbackText:item.entity_type==='club'?item.visual.tla||'':''}):'';
     return`<button class="search-result" id="global-search-option-${index}" type="button" role="option" aria-selected="false" data-index="${index}" ${FBZActions.attrs("search.search-select",[index])}><span class="search-result-icon${visual?' search-result-media':''}" aria-hidden="true">${visual||ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(title)}</strong><small>${esc(subtitle)}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
   }
 
   function renderResults(results,query){
     const target=document.getElementById('globalSearchResults');
+    const groups=window.FBZDomain.searchResultGroups(results);
+    currentResults=groups.flatMap(group=>group.items);
     target.setAttribute('aria-busy','false');
-    document.getElementById('globalSearchInput').setAttribute('aria-expanded',String(results.length>0));
-    if(!results.length){
+    document.getElementById('globalSearchInput').setAttribute('aria-expanded',String(currentResults.length>0));
+    announce(currentResults.length?window.FBZDomain.countLabel(currentResults.length,{one:'совпадение в подборке',few:'совпадения в подборке',many:'совпадений в подборке'}):'Совпадений нет. Попробуйте другое название.');
+    if(!currentResults.length){
       target.innerHTML=`<div class="search-state"><strong>Ничего не найдено</strong><span>«${esc(query)}»</span></div>`;
       return;
     }
-    target.innerHTML=`<div class="search-section-title"><span>Результаты</span><small>${results.length}</small></div><div class="search-result-list" id="globalSearchList" role="listbox" aria-label="Результаты поиска">${results.map(searchResultMarkup).join('')}</div>`;
+    const labels={club:'Клубы',player:'Игроки',competition:'Турниры',match:'Матчи',user:'Болельщики'};
+    let index=0;
+    target.innerHTML=`<div class="search-result-list" id="globalSearchList" role="listbox" aria-label="Лучшие совпадения">${groups.map(group=>`<div class="search-result-group" role="group" aria-labelledby="search-group-${group.kind}"><div class="search-section-title" aria-hidden="true"><span id="search-group-${group.kind}">${labels[group.kind]}</span><small>${group.items.length}</small></div>${group.items.map(item=>searchResultMarkup(item,index++)).join('')}</div>`).join('')}</div>`;
+  }
+
+  function clearInput(){
+    cancelRequest();
+    const input=document.getElementById('globalSearchInput');input.value='';
+    syncInput();renderStart();input.focus();
   }
 
   function onInputKeydown(event){
@@ -222,15 +247,16 @@
     if(input){input.value=team;visibleMatchCount=matchPageSize();renderMatchResults();input.focus({preventScroll:true});}
   }
 
-  function resetSession(){close();document.getElementById('globalSearchResults').replaceChildren();document.getElementById('globalSearchInput').value='';}
+  function resetSession(){close();document.getElementById('globalSearchResults').replaceChildren();document.getElementById('globalSearchInput').value='';syncInput();announce('');}
 
-  window.FBZSearch={clearRecent,close,init,open,resetSession,retry,select,useRecent};
+  window.FBZSearch={clearRecent,clearInput,close,init,open,resetSession,retry,select,useRecent};
 })();
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
   "search.search-retry":()=>FBZSearch.retry(),
   "search.search-clear-recent":()=>FBZSearch.clearRecent(),
+  "search.search-clear-input":()=>FBZSearch.clearInput(),
   "search.search-use-recent":(event,element,[query])=>FBZSearch.useRecent(query),
   "search.search-select":(event,element,[index])=>FBZSearch.select(index)
 });

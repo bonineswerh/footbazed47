@@ -19,7 +19,8 @@ test('desktop profile and mobile friends are reachable without search',async({pa
   await page.getByRole('button',{name:'Открыть друзей:'}).click();
   await expect(page).toHaveURL(/\/friends/);
   await page.locator('#accountBtn').click();
-  await page.getByRole('menuitem',{name:/Друзья/}).click();
+  await expect(page.getByRole('menuitem',{name:/Друзья|Мой профиль/})).toHaveCount(0);
+  await page.getByRole('menuitem',{name:/Настройки/}).click();
   await expect(page.locator('#accountMenu')).toHaveAttribute('aria-hidden','true');
 });
 
@@ -80,8 +81,7 @@ test('overview counts player performances and labels a one-author sample',async(
 test('profile keeps the display name independent from its handle and persists closure',async({page})=>{
   await installSupabaseMock(page);
   await page.goto('/?__e2e=1');
-  await page.locator('#accountBtn').click();
-  await page.getByRole('menuitem',{name:/Мой профиль/}).click();
+  await page.getByRole('navigation',{name:'Основная навигация'}).getByRole('button',{name:'Профиль',exact:true}).click();
   await page.getByRole('button',{name:'Редактировать',exact:true}).click();
   const editor=page.locator('.profile-editor');
   await editor.getByLabel('Никнейм',{exact:true}).fill('bazed_new');

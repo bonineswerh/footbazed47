@@ -1,5 +1,6 @@
 // ─── SVG ICONS (Heroicons style) ───
 const I={
+  info:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 11v6m0-10v.01"/></svg>`,
   filter:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M4 7h6m4 0h6M4 17h10m4 0h2"/><circle cx="12" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></svg>`,
   close:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18"/></svg>`,
   plus:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>`,
@@ -72,7 +73,7 @@ function ensureFeedModule(){
   return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=61',script:'js/feed.js?v=62',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
-  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=1',script:'js/search.js?v=58',ready:()=>window.FBZSearch});
+  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=2',script:'js/search.js?v=59',ready:()=>window.FBZSearch});
 }
 let reportOpenVersion=0;
 function reportContent(type,id){
@@ -208,8 +209,6 @@ function renderNav(){
         <div class="account-menu" id="accountMenu" role="menu" aria-hidden="true">
           <div class="account-menu-head">${navAv}<div><b>${safeName}</b><small>${esc(CU.email||'')}</small></div></div>
           <div class="account-menu-items">
-            <button type="button" role="menuitem" data-fbz-click="app.account-go-profile">${ico('users',17)}<span><b>Мой профиль</b><small>Оценки и статистика</small></span></button>
-            <button type="button" role="menuitem" data-fbz-click="app.account-go-friends">${ico('users',17)}<span><b>Друзья</b><small>Ваш круг и заявки</small></span></button>
             ${adminItem}
             <button type="button" role="menuitem" data-fbz-click="app.account-open-settings">${ico('settings',17)}<span><b>Настройки</b><small>Тема и цвет интерфейса</small></span></button>
           </div>
@@ -360,7 +359,7 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=6',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=7',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
   }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" data-fbz-click="app.load-lb">Повторить</button></div>';}
 }
@@ -391,7 +390,7 @@ function ensureProfileModule(){
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});
-  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=6',script:'js/explore.js?v=5',ready:()=>window.FBZExplore});
+  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=7',script:'js/explore.js?v=5',ready:()=>window.FBZExplore});
 }
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
@@ -531,8 +530,6 @@ FBZActions.register({
   "app.report-content":(event,element,[type,id])=>{element.focus({preventScroll:true});return reportContent(type,id);},
   "app.manage-blocks":(event,element,[uid,name])=>{element.focus({preventScroll:true});return manageUserBlocks(uid,name);},
   "app.toggle-account-menu":()=>toggleAccountMenu(),
-  "app.account-go-profile":()=>{FBZAccount.close();return go('profile');},
-  "app.account-go-friends":()=>{FBZAccount.close();return go('friends');},
   "app.account-open-settings":()=>{FBZAccount.close({returnFocus:true});return openSettings();},
   "app.account-do-logout":()=>{FBZAccount.close();return doLogout();},
   "app.load-lb":()=>loadLB(),
