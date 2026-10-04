@@ -49,9 +49,10 @@ select is((public.get_match_insights(958001)->>'others_rating_count')::integer,2
 select is((public.get_match_insights(958001)->>'others_average')::numeric,6.0::numeric,'comparison excludes caller score, retains other public votes');
 select is((public.get_match_insights(958002)->>'others_rating_count')::integer,0,'private own vote cannot create another viewer');
 select ok(public.get_match_insights(958002)->'others_average'='null'::jsonb,'empty comparison stays null');
-select is((public.get_match_insights(958001)#>>'{top_players,0,unverified_rating_count}')::integer,2,'match flags legacy player votes');
-select is((public.get_club_page(958001)#>>'{stats,rated_player_count}')::integer,1,'club sample is actual rated players, not the roster');
-select is((public.get_club_page(958001)#>>'{stats,player_match_count}')::integer,1,'private match does not inflate public performance coverage');
+-- Legacy votes stay in player history, but do not establish fixture participation.
+select is(jsonb_array_length(public.get_match_insights(958001)->'top_players'),0,'legacy player votes cannot establish a match top player');
+select is((public.get_club_page(958001)#>>'{stats,rated_player_count}')::integer,0,'club sample requires confirmed performers, not roster membership');
+select is((public.get_club_page(958001)#>>'{stats,player_match_count}')::integer,0,'legacy and private votes do not establish confirmed performance coverage');
 select is((public.get_player_page(958001)#>>'{stats,unverified_rating_count}')::integer,2,'player evidence does not leak private legacy vote');
 select is((public.get_player_page(958001)#>>'{performances,0,participation_verified}')::boolean,false,'public performance explicitly reports missing participation');
 select is((public.get_social_feed_page()->'items'->0->'player_highlights'->0->>'participation_verified')::boolean,false,'feed reports legacy participation evidence');

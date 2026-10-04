@@ -22,3 +22,10 @@ test('month groups use complete server summaries rather than the page average',(
   const groups=model.monthGroups([{id:1,match_date:'2026-10-10',match_rating:10},{id:2,match_date:'2026-09-30',match_rating:1}], [{month:'2026-10',matches:37,average:7.6}]);
   assert.equal(groups[0].summary.matches,37);assert.equal(groups[0].summary.average,7.6);assert.equal(groups[1].summary,null);
 });
+test('participation mode defaults to confirmed and persists explicit full history only in overview',()=>{
+  assert.deepEqual(model.normalize({participation:'confirmed'}),{});
+  assert.deepEqual(model.normalize({participation:'untrusted'}),{});
+  assert.deepEqual(model.normalize({participation:'all'},true),{});
+  const search=model.searchParams('?__e2e=1','ov',{participation:'all'},{kind:'players'});
+  assert.deepEqual(model.locationFilters(search,'ov'),{participation:'all'});
+});

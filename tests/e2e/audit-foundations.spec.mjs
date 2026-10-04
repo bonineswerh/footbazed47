@@ -67,7 +67,7 @@ test('an only owner vote cannot create comparison with other supporters',async({
 
 test('overview counts player performances and labels a one-author sample',async({page})=>{
   await installSupabaseMock(page,{feed:[own],lineup:{available:false,players:[]}});
-  await page.goto('/discover?__e2e=1&ov_kind=players');
+  await page.goto('/discover?__e2e=1&ov_kind=players&ov_participation=all');
   await expect(page.locator('.statistics-row')).toHaveCount(2);
   await expect(page.locator('#statisticsSummary')).toContainText('Оценок выступлений');
   await expect(page.locator('#statisticsSummary strong')).toHaveText(['1','2','1']);

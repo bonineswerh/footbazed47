@@ -273,7 +273,8 @@ c05958 e8e3dd|Спартак|Спартак Москва|Spartak Moscow
   }
   function ratingEvidence({votes=0,voters=0,unverified=0}={}){
     const count=Math.max(0,Number(votes)||0),authors=Math.max(0,Number(voters)||0);
-    return Object.freeze({preliminary:count<5||authors<5,unverified:Math.max(0,Number(unverified)||0),votes:count,voters:authors});
+    const missing=Math.max(0,Number(unverified)||0);
+    return Object.freeze({preliminary:count<5||authors<5||missing>0,unverified:missing,votes:count,voters:authors});
   }
 
   return Object.freeze({authErrorMessage,clubDisplayName,matchTeamName,ratingEvidence,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});

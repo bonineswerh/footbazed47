@@ -119,4 +119,5 @@ test('many votes from one author remain preliminary',()=>{
   assert.equal(domain.ratingEvidence({votes:5,voters:5}).preliminary,false);
   assert.equal(domain.ratingEvidence({votes:4,voters:4}).preliminary,true);
   assert.equal(domain.ratingEvidence({votes:8,voters:5,unverified:2}).unverified,2);
+  assert.equal(domain.ratingEvidence({votes:8,voters:5,unverified:2}).preliminary,true);
 });

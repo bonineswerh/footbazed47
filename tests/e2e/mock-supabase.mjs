@@ -85,6 +85,7 @@ export async function installSupabaseMock(page,overrides={}){
     localStorage.setItem('fbz_session_hint','1');
     const state=structuredClone(data);
     const participationVerified=(matchId,playerId)=>!Object.hasOwn(state,'lineup')||Boolean(state.lineup?.players?.some(p=>Number(p.id)===Number(playerId)&&['starter','substitute'].includes(p.participation)));
+    const performanceClub=(matchId,playerId)=>Object.hasOwn(state,'lineup')?state.lineup?.players?.find(p=>Number(p.id)===Number(playerId)&&['starter','substitute'].includes(p.participation))?.club_id:[5290,5291,5292,5293,5294,5295].includes(Number(playerId))?24:31;
     state.club.matches=structuredClone(state.matches);
     state.competition.matches=structuredClone(state.matches.filter(match=>match.competition_id===7));
     state.directConversations=[];
@@ -162,19 +163,26 @@ export async function installSupabaseMock(page,overrides={}){
       if(name==='get_football_statistics'){
         const f=args.p_filters||{},kind=args.p_kind||'matches',offset=args.p_offset||0,limit=args.p_limit||12;
         const catalogue=state.matches;
-        const base=state.feed.map(r=>({...r,match:{...catalogue.find(m=>m.id===r.match_id),...r.match}})).filter(r=>(!f.competition_id||r.match.competition_id===Number(f.competition_id))&&(!f.club_id||[r.match.home_club_id,r.match.away_club_id].includes(Number(f.club_id)))&&(!f.league||r.match.league_name===f.league)&&(!f.team||[r.match.home_team_name,r.match.away_team_name].includes(f.team))&&(!f.from||r.match.match_date.slice(0,10)>=f.from)&&(!f.to||r.match.match_date.slice(0,10)<=f.to));
+        const base=state.feed.map(r=>({...r,match:{...catalogue.find(m=>m.id===r.match_id),...r.match}})).filter(r=>r.is_public!==false&&state.users.find(u=>u.id===r.user_id)?.is_public!==false&&(!f.competition_id||r.match.competition_id===Number(f.competition_id))&&(kind==='players'||!f.club_id||[r.match.home_club_id,r.match.away_club_id].includes(Number(f.club_id)))&&(!f.league||r.match.league_name===f.league)&&(!f.team||[r.match.home_team_name,r.match.away_team_name].includes(f.team))&&(!f.from||r.match.match_date.slice(0,10)>=f.from)&&(!f.to||r.match.match_date.slice(0,10)<=f.to));
         const groups=new Map();
-        const add=(id,title,subtitle,r,score=r.match_rating)=>{const key=String(id),g=groups.get(key)||{...r.match,entity_key:key,entity_id:id,title,subtitle,scores:[],people:new Set(),unverified_votes:0,latest:r.match.match_date,home_score:r.match.home_score,away_score:r.match.away_score};g.scores.push(score);g.people.add(r.user_id);if(kind==='players'&&!participationVerified(r.match_id,id))g.unverified_votes++;groups.set(key,g);};
+        const add=(id,title,subtitle,r,score=r.match_rating)=>{const key=String(id),g=groups.get(key)||{...r.match,entity_key:key,entity_id:id,title,subtitle,scores:[],people:new Set(),matchIds:new Set(),voteKeys:new Set(),unverified_votes:0,latest:r.match.match_date,home_score:r.match.home_score,away_score:r.match.away_score};g.scores.push(score);g.people.add(r.user_id);g.matchIds.add(r.match_id);g.voteKeys.add(r.match_id+':'+r.user_id);if(kind==='players'&&!participationVerified(r.match_id,id))g.unverified_votes++;groups.set(key,g);};
+        let excludedUnverified=0;
         for(const r of base){const m=r.match;
           if(kind==='matches')add(r.match_id,`${m.home_team_name} — ${m.away_team_name}`,m.league_name,r);
           if(kind==='leagues')add(7,m.league_name,'Турнир',r);
           if(kind==='clubs'){add(m.home_club_id,m.home_team_name,'Матчи клуба',r);add(m.away_club_id,m.away_team_name,'Матчи клуба',r);}
-          if(kind==='players')for(const pr of state.playerRatings.filter(p=>p.match_id===r.match_id&&p.user_id===r.user_id)){const p=state.players.find(p=>p.id===pr.player_id);add(p.id,p.name,p.team,r,pr.rating);}
+          if(kind==='players')for(const pr of state.playerRatings.filter(p=>p.match_id===r.match_id&&p.user_id===r.user_id)){
+            const p=state.players.find(p=>p.id===pr.player_id),verified=participationVerified(r.match_id,p.id),clubId=performanceClub(r.match_id,p.id);
+            if(f.confirmed_only&&!verified){if(!f.club_id&&(!f.query||p.name.toLowerCase().includes(f.query.toLowerCase())))excludedUnverified++;continue;}
+            if(f.club_id&&Number(clubId)!==Number(f.club_id))continue;
+            const team=verified?(clubId===m.home_club_id?m.home_team_name:m.away_team_name):'Клуб выступления не подтверждён';
+            add(p.id,p.name,team,r,pr.rating);
+          }
         }
         const rows=[...groups.values()].map(g=>({...g,average:g.scores.reduce((a,b)=>a+b,0)/g.scores.length,votes:g.scores.length,voters:g.people.size})).filter(g=>g.votes>=Number(f.min_votes||1)&&(!f.query||`${g.title} ${g.subtitle}`.toLowerCase().includes(f.query.toLowerCase()))).sort((a,b)=>f.sort==='votes'?b.votes-a.votes:b.average-a.average).map((g,i)=>({...g,rank:i+1}));
         const competitions=[...new Map(catalogue.map(m=>[m.competition_id,{id:m.competition_id,name:m.league_name}])).values()];
         const clubs=[...new Set(catalogue.flatMap(m=>[m.home_club_id,m.away_club_id]))].map(id=>{const matches=catalogue.filter(m=>[m.home_club_id,m.away_club_id].includes(id)),m=matches[0];return{id,name:m.home_club_id===id?m.home_team_name:m.away_team_name,competition_ids:[...new Set(matches.map(m=>m.competition_id))]};});
-        return promiseResult({items:rows.slice(offset,offset+limit),total:rows.length,has_more:rows.length>offset+limit,next_offset:offset+limit,summary:{votes:base.length,matches:new Set(base.map(r=>r.match_id)).size,voters:new Set(base.map(r=>r.user_id)).size,performance_votes:kind==='players'?rows.reduce((n,g)=>n+g.votes,0):null,unverified_performance_votes:kind==='players'?rows.reduce((n,g)=>n+g.unverified_votes,0):null},competitions,clubs});
+        return promiseResult({items:rows.slice(offset,offset+limit),total:rows.length,has_more:rows.length>offset+limit,next_offset:offset+limit,summary:{votes:new Set(rows.flatMap(g=>[...g.voteKeys])).size,matches:new Set(rows.flatMap(g=>[...g.matchIds])).size,voters:new Set(rows.flatMap(g=>[...g.people])).size,performance_votes:kind==='players'?rows.reduce((n,g)=>n+g.votes,0):null,unverified_performance_votes:kind==='players'?rows.reduce((n,g)=>n+g.unverified_votes,0):null,confirmed_only:kind==='players'&&Boolean(f.confirmed_only),excluded_unverified_performance_votes:excludedUnverified},competitions,clubs});
       }
       if(name==='get_my_profile')return promiseResult(structuredClone(state.profile));
       if(name==='save_match_rating'){

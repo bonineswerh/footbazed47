@@ -1,7 +1,7 @@
 (function(root){
   'use strict';
   const escape=value=>root.esc(String(value??'')),model=root.FBZExploreModel,catalogues=new WeakMap();
-  const labels={query:'Поиск',competition_id:'Турнир',club_id:'Клуб',from:'С',to:'По',min_rating:'Оценка от',max_rating:'Оценка до',home_score:'Голы хозяев',away_score:'Голы гостей',min_votes:'Минимум оценок',sort:'Порядок'};
+  const labels={query:'Поиск',competition_id:'Турнир',club_id:'Клуб',from:'С',to:'По',min_rating:'Оценка от',max_rating:'Оценка до',home_score:'Голы хозяев',away_score:'Голы гостей',min_votes:'Минимум оценок',sort:'Порядок',participation:'Выступления'};
   const sheet=form=>document.getElementById(form.id+'-sheet');
   function filters(id,{diary=false}={}){
     const field=(name,label,type='text',extra='')=>`<label for="${id}-${name}"><span>${label}</span><input class="input" id="${id}-${name}" name="${name}" type="${type}" ${extra}></label>`;
@@ -18,7 +18,7 @@
     </form>`;
   }
   function read(form){return model.normalize(Object.fromEntries(new FormData(form)),form.dataset.diary==='true');}
-  function entered(form){return Object.fromEntries([...new FormData(form)].map(([k,v])=>[k,String(v).trim()]).filter(([k,v])=>v&&!(k==='min_votes'&&v==='1')&&!(k==='sort'&&v==='average')));}
+  function entered(form){return Object.fromEntries([...new FormData(form)].map(([k,v])=>[k,String(v).trim()]).filter(([k,v])=>v&&!(k==='min_votes'&&v==='1')&&!(k==='sort'&&v==='average')&&!(k==='participation'&&v==='confirmed')));}
   function restore(form,filters){for(const [name,value] of Object.entries(filters)){const field=form.elements.namedItem(name);if(!field)continue;if(field.tagName==='SELECT'&&name.endsWith('_id'))field.add(new Option('Загрузка выбранного фильтра…',value));field.value=value;}}
   function valid(form){
     const f=read(form),from=form.elements.namedItem('from'),max=form.elements.namedItem('max_rating');
@@ -44,7 +44,7 @@
     form.querySelector('.explore-active-count').textContent=count?String(count):'';
     form.querySelector('[type="reset"]').disabled=!count;sheet(form).querySelector('.explore-panel-reset').disabled=!count;
     form.querySelector('.explore-chips').innerHTML=Object.entries(f).map(([key,value])=>{
-      const rows=key==='competition_id'?data.competitions:key==='club_id'?data.clubs:null,label=rows?.find(row=>String(row.id)===value)?.name||({sort:{votes:'По числу оценок',recent:'По дате матча'}}[key]?.[value])||value;
+      const rows=key==='competition_id'?data.competitions:key==='club_id'?data.clubs:null,label=rows?.find(row=>String(row.id)===value)?.name||({sort:{votes:'По числу оценок',recent:'По дате матча'},participation:{all:'Вся история оценок'}}[key]?.[value])||value;
       return `<button class="explore-chip" type="button" data-clear="${escape(key)}" aria-label="Убрать фильтр ${escape(labels[key])}: ${escape(label)}"><span>${escape(labels[key])}: ${escape(label)}</span>${root.ico('close',12)}</button>`;
     }).join('');form.querySelector('.explore-filter-footer').classList.toggle('has-filters',Boolean(count));
   }
@@ -74,7 +74,7 @@
       else if(target.classList.contains('explore-close'))root.FBZOverlay.close(form.id+'-sheet');
       else if(target.classList.contains('explore-done')){if(timer){run();timer=null;}if(valid(form))root.FBZOverlay.close(form.id+'-sheet');else panel.querySelector('[aria-invalid="true"]')?.focus();}
       else if(target.classList.contains('explore-panel-reset'))form.reset();
-      else if(target.dataset.clear){const key=target.dataset.clear,field=form.elements.namedItem(key);field.value=key==='min_votes'?'1':key==='sort'?'average':'';if(key==='competition_id')options(form,'club_id');onInvalidate();run();form.querySelector('.explore-open').focus();}
+      else if(target.dataset.clear){const key=target.dataset.clear,field=form.elements.namedItem(key);field.value=key==='min_votes'?'1':key==='sort'?'average':key==='participation'?'confirmed':'';if(key==='competition_id')options(form,'club_id');onInvalidate();run();form.querySelector('.explore-open').focus();}
     });
     panel.addEventListener('fbz:overlay-close',()=>valid(form),eventOptions);
     sync(form);return ()=>{clearTimeout(timer);controller.abort();root.FBZOverlay.close(panel.id,false);panel.remove();};

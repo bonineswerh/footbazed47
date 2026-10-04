@@ -66,7 +66,7 @@ function ensureAdminModule(){
   return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=52',script:'js/admin.js?v=54',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=59',script:'js/entities.js?v=59',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=60',script:'js/entities.js?v=60',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
   return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=61',script:'js/feed.js?v=62',ready:()=>window.FBZFeed});
@@ -189,6 +189,7 @@ async function init(){
 }
 
 function renderNav(){
+  window.FBZNotificationCounter?.syncSession(CU?.id||null);
   const nr=document.getElementById('navRight');
   const hb=document.getElementById('heroBtns');
   document.body.classList.toggle('signed-in',Boolean(CU));
@@ -359,7 +360,7 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=5',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=6',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
   }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" data-fbz-click="app.load-lb">Повторить</button></div>';}
 }
@@ -389,8 +390,8 @@ function ensureProfileModule(){
   return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=5',script:'js/profile.js?v=11',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
-  await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=1',ready:()=>window.FBZExploreModel});
-  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=5',script:'js/explore.js?v=4',ready:()=>window.FBZExplore});
+  await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});
+  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=6',script:'js/explore.js?v=5',ready:()=>window.FBZExplore});
 }
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;

@@ -7,7 +7,7 @@
   'use strict';
   const common=['query','competition_id','club_id','from','to'];
   const diaryKeys=['min_rating','max_rating','home_score','away_score'];
-  const overviewKeys=['min_votes','sort'];
+  const overviewKeys=['min_votes','sort','participation'];
   function normalize(input={},diary=false){
     const result={};
     for(const key of [...common,...(diary?diaryKeys:overviewKeys)]){
@@ -20,6 +20,7 @@
         }continue;
       }
       if(key==='sort'){if(['votes','recent'].includes(value))result.sort=value;continue;}
+      if(key==='participation'){if(value==='all')result.participation='all';continue;}
       const n=Number(value),minimum=key.endsWith('score')?0:1,maximum=key.endsWith('rating')?10:key.endsWith('score')?99:1000000;
       if(/^\d+$/u.test(value)&&Number.isInteger(n)&&n>=minimum&&n<=maximum&&!(key==='min_votes'&&n===1))result[key]=String(n);
     }return result;
