@@ -65,6 +65,10 @@ for(const theme of ['dark','light'])for(const accent of ['emerald','ice','gold',
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.getByRole('button',{name:'Поиск',exact:true}).click();await page.locator('#globalSearchInput').fill('Real');
     await expect(page.getByRole('option')).toHaveCount(4);await expect(page.getByRole('button',{name:'Закрыть поиск',exact:true})).toBeInViewport();
+    await page.evaluate(async()=>{
+      await document.fonts.ready;
+      await Promise.all(document.querySelector('.global-search-box').getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));
+    });
     const clearBox=await page.getByRole('button',{name:'Очистить запрос',exact:true}).boundingBox();
     expect(clearBox.width).toBeGreaterThanOrEqual(44);expect(clearBox.height).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(()=>document.querySelector('.global-search-box').scrollWidth<=document.querySelector('.global-search-box').clientWidth)).toBe(true);
