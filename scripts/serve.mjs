@@ -3,6 +3,7 @@ import {createServer} from 'node:http';
 import {extname,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import publicConfig from '../api/config.js';
+import {localeSources,englishResource} from './localization.mjs';
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const port=Number(process.env.PORT)||4173;
@@ -16,6 +17,7 @@ if(demo&&(port!==4174||process.env.PORT!=='4174'||publicConfig.isCI(process.env)
   throw new Error('Demo requires PORT=4174 on a local machine outside CI and Vercel.');
 }
 const demoFixture=demo?await (await import('./demo-fixture.mjs')).createDemoFixture():'';
+const english=()=>JSON.parse(readFileSync(resolve(root,'locales/en.json'),'utf8'));
 const types={'.css':'text/css; charset=utf-8','.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2'};
 function runtimeConfig(){
   return demo?{environment:'demo',error:'runtime_config_missing'}:publicConfig.resolveRuntimeConfig(process.env,{local:true});
@@ -41,6 +43,22 @@ const server=createServer((request,response)=>{
     response.end(request.method==='HEAD'?'':body);
     return;
   }
+  if(pathname.startsWith('/en-assets/')){
+    const file=pathname.slice('/en-assets/'.length);
+    if(!localeSources.includes(file)||!file.endsWith('.js')){response.writeHead(404).end('Not found');return;}
+    const body=englishResource(readFileSync(resolve(root,file),'utf8'),file,english());
+    response.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'}).end(request.method==='HEAD'?'':body);return;
+  }
+  if(pathname==='/en/admin.html'){
+    const body=englishResource(readFileSync(resolve(root,'admin.html'),'utf8'),'admin.html',english());
+    response.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'}).end(request.method==='HEAD'?'':body);return;
+  }
+  if(/^\/en(?:\/(?:matches|feed|discover|leaderboard|friends|admin)|\/(?:club|player|competition|league|profile|match)\/[^/]+)?\/?$/u.test(pathname)){
+    let body=englishResource(readFileSync(resolve(root,'index.html'),'utf8'),'index.html',english());
+    if(demo&&url.searchParams.get('__e2e')==='1')body=body.replace('<script src="/api/config.js"','<script src="/__demo/fixture.js"></script>\n<script src="/api/config.js"');
+    response.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'}).end(request.method==='HEAD'?'':body);return;
+  }
+  if(/^\/en\/match\/[1-9]\d*\/chat\/?$/u.test(pathname)){response.writeHead(410,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'}).end('<h1>Chats are closed</h1><a href="/en/matches">Matches and reviews</a>');return;}
   if(/^\/match\/[1-9]\d*\/chat\/?$/.test(pathname)){response.writeHead(410,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'}).end('<h1>Чаты закрыты</h1><a href="/matches">К матчам и рецензиям</a>');return;}
   const relative=pathname==='/'?'index.html':pathname.replace(/^\/+/, '');
   let file=resolve(root,relative);

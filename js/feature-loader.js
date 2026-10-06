@@ -24,7 +24,7 @@ function ensureFeatureModule({key,styleId,style,script,ready}){
   const module=new Promise((resolve,reject)=>{
     if(ready()){resolve(ready());return;}
     const element=document.createElement('script');
-    element.src=script;
+    element.src=root.FBZLocale?.asset(script)||script;
     element.async=true;
     const fail=()=>{clearTimeout(timer);element.remove();reject(new Error(`${key}_module_failed`));};
     const timer=setTimeout(fail,15_000);

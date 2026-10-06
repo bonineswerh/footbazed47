@@ -14,7 +14,7 @@ test.afterEach(async({page})=>{expect(pageErrors.get(page)).toEqual([]);});
 
 test('ошибка загрузки клуба предлагает повтор, а отсутствующий клуб — поиск',async({page})=>{
   await page.goto('/club/24?__e2e=1');
-  await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');
+  await expect(page.locator('.entity-hero h1')).toHaveText('Реал Мадрид');
   await page.evaluate(async()=>{
     const original=sb.rpc.bind(sb);
     let fail=true;
@@ -28,7 +28,7 @@ test('ошибка загрузки клуба предлагает повтор
   await expect(page.locator('.entity-empty-code')).toHaveCount(0);
   await expect(page.locator('#clubC')).toHaveAttribute('aria-busy','false');
   await page.getByRole('button',{name:'Повторить',exact:true}).click();
-  await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');
+  await expect(page.locator('.entity-hero h1')).toHaveText('Реал Мадрид');
   await page.evaluate(()=>go('club',{id:999}));
   await expect(page.getByRole('heading',{name:'Клуб не найден'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Открыть поиск',exact:true})).toBeVisible();
@@ -37,7 +37,7 @@ test('ошибка загрузки клуба предлагает повтор
 
 test('поздний ответ клуба не меняет заголовок и metadata страницы игрока',async({page})=>{
   await page.goto('/club/24?__e2e=1');
-  await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');
+  await expect(page.locator('.entity-hero h1')).toHaveText('Реал Мадрид');
   await page.evaluate(()=>{
     const original=sb.rpc.bind(sb);
     sb.rpc=(name,args)=>{
@@ -73,11 +73,11 @@ test('избранное завершает запись для исходног
   });
   await expect(page.locator('#clubFavoriteButton')).toBeDisabled();
   await page.evaluate(()=>go('club',{id:31}));
-  await expect(page.locator('.entity-hero h1')).toHaveText('Manchester City FC');
+  await expect(page.locator('.entity-hero h1')).toHaveText('Манчестер Сити');
   await page.evaluate(async()=>{window.releaseFavorite();await window.slowFavorite;});
   await expect(page.locator('#clubFavoriteButton')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('#clubFavoriteButton')).toBeEnabled();
-  await expect(page.locator('.entity-hero h1')).toHaveText('Manchester City FC');
+  await expect(page.locator('.entity-hero h1')).toHaveText('Манчестер Сити');
   expect(await page.evaluate(()=>CU.favorite_clubs.some(club=>Number(club.id)===24))).toBe(false);
 });
 
@@ -136,7 +136,7 @@ for(const width of [320,390,1440]){
 test('ошибка verified-изображения возвращает инициалы без broken image',async({page})=>{
   await page.route('https://images.unsplash.com/expired-club.png',route=>route.abort());
   await page.goto('/club/24?__e2e=1');
-  await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');
+  await expect(page.locator('.entity-hero h1')).toHaveText('Реал Мадрид');
   await page.evaluate(async()=>{
     const original=sb.rpc.bind(sb);
     sb.rpc=(name,args)=>{
@@ -155,7 +155,7 @@ test('ошибка verified-изображения возвращает иниц
 
 test('медленный ответ матча не заменяет новый матч и его canonical',async({page})=>{
   await page.goto('/match/101?__e2e=1');
-  await expect(page.locator('.md-hero')).toContainText('Manchester City FC');
+  await expect(page.locator('.md-hero')).toContainText('Ман Сити');
   await page.evaluate(()=>{
     const original=sb.rpc.bind(sb);
     sb.rpc=(name,args)=>{
@@ -166,13 +166,13 @@ test('медленный ответ матча не заменяет новый 
     window.slowMatch=loadMD(101);
     go('md',{mid:102});
   });
-  await expect(page.locator('.md-hero')).toContainText('FC Barcelona');
+  await expect(page.locator('.md-hero')).toContainText('Барселона');
   await page.evaluate(async()=>{window.releaseMatch();await window.slowMatch;});
-  await expect(page.locator('.md-hero')).toContainText('FC Barcelona');
-  await expect(page.locator('.md-hero')).not.toContainText('Manchester City FC');
+  await expect(page.locator('.md-hero')).toContainText('Барселона');
+  await expect(page.locator('.md-hero')).not.toContainText('Ман Сити');
   await expect(page).toHaveURL(/\/match\/102\?__e2e=1$/u);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href',/\/match\/102$/u);
-  await expect(page).toHaveTitle(/FC Barcelona/u);
+  await expect(page).toHaveTitle(/Барселона/u);
 });
 
 test('переоткрытая оценка игнорирует поздние данные предыдущего матча',async({page})=>{
@@ -199,10 +199,10 @@ test('переоткрытая оценка игнорирует поздние 
   await expect(page.locator('#rSave')).toBeDisabled();
   await page.getByRole('button',{name:'Закрыть окно оценки'}).click();
   await page.evaluate(()=>openRate(102));
-  await expect(page.locator('#rMI')).toContainText('FC Barcelona');
+  await expect(page.locator('#rMI')).toContainText('Барселона');
   await expect(page.locator('#rScoreDisp')).toHaveText('—');
   await page.evaluate(async()=>{window.releaseRating();await window.slowRating;});
-  await expect(page.locator('#rMI')).toContainText('FC Barcelona');
+  await expect(page.locator('#rMI')).toContainText('Барселона');
   await expect(page.locator('#rScoreDisp')).toHaveText('—');
   await expect(page.locator('#rDelete')).toBeHidden();
   await page.locator('.rating-supporter-options label').filter({has:page.locator('input[value="neutral"]')}).click();

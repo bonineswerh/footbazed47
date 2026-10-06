@@ -25,7 +25,7 @@ test('grouped search keyboard follows displayed order and preserves one bounded 
   const errors=[];page.on('pageerror',error=>errors.push(error.message));await prepare(page);
   await page.goto('/?__e2e=1');await page.getByRole('button',{name:'Поиск',exact:true}).click();
   const input=page.locator('#globalSearchInput');await input.fill('Real');
-  await expect(page.locator('.search-result-copy strong')).toHaveText(['Thibaut Courtois','Jude Bellingham','Real Madrid CF','FC Barcelona']);
+  await expect(page.locator('.search-result-copy strong')).toHaveText(['Thibaut Courtois','Jude Bellingham','Реал Мадрид','Барселона']);
   await expect(page.locator('.search-result-group')).toHaveCount(2);
   await expect(page.locator('.search-result-group').first()).toHaveAttribute('aria-labelledby','search-group-player');
   await expect(page.locator('#globalSearchStatus')).toHaveText('4 совпадения в подборке');
@@ -33,7 +33,7 @@ test('grouped search keyboard follows displayed order and preserves one bounded 
   await expect(page.getByRole('option').nth(2)).toHaveAttribute('aria-selected','true');
   expect(await page.evaluate(()=>window.__discoverySearchCalls)).toEqual([{p_query:'Real',p_limit:14}]);
   await input.press('Enter');await expect(page).toHaveURL(/\/club\/24/);
-  await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');expect(errors).toEqual([]);
+  await expect(page.locator('.entity-hero h1')).toHaveText('Реал Мадрид');expect(errors).toEqual([]);
 });
 
 test('clear cancels a pending response, restores the input and keeps recent queries usable',async({page})=>{

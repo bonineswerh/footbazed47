@@ -18,7 +18,7 @@ test('failed feature CSS can be retried without duplicate JavaScript',async({pag
   await page.goto('/club/24?__e2e=1');
   await expect(page.getByText('Не удалось загрузить раздел',{exact:true}).first()).toBeVisible();
   await page.getByRole('button',{name:'Повторить',exact:true}).click();
-  await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');
+  await expect(page.locator('.entity-hero h1')).toHaveText('Реал Мадрид');
   await expect(page.locator('#entityStyles')).toHaveAttribute('data-loaded','true');
   expect(css).toBe(2);expect(js).toBe(1);
 });

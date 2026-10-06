@@ -33,7 +33,7 @@
     else if(rel?.status==='pending')actions=action('cancel','Отменить');
     else actions=action('add','Добавить','plus');
     const sub=rel?.status==='pending'?(rel.friend_id===CU?.id?'Хочет добавить вас в друзья':'Заявка отправлена'):`${Number(user.ratings_count)||0} оценок`;
-    return `<article class="friend-card"><a class="friend-profile" href="/profile/${encodeURIComponent(user.id)}" ${FBZActions.attrs("community.open-profile",[id])}>${avatar(user)}<span class="fcard-info"><span class="fcard-name">${esc(name)}</span><span class="fcard-sub">@${esc(name)} · ${esc(sub)}</span></span></a><div class="fcard-action">${actions}</div></article>`;
+    return `<article class="friend-card"><a class="friend-profile" href="${esc(FBZLocale.path('/profile/'+encodeURIComponent(user.id)))}" ${FBZActions.attrs("community.open-profile",[id])}>${avatar(user)}<span class="fcard-info"><span class="fcard-name">${esc(name)}</span><span class="fcard-sub">@${esc(name)} · ${esc(sub)}</span></span></a><div class="fcard-action">${actions}</div></article>`;
   }
   async function loadRelations(user){
     const [sent,received]=await Promise.all([
@@ -149,7 +149,7 @@
   }
   function invite(){
     if(!CU){openAuth();return;}
-    if(CU.invite_code)copyText(`${location.origin}/?invite=${encodeURIComponent(CU.invite_code)}`,'Ссылка-приглашение скопирована');
+    if(CU.invite_code)copyText(invitationUrl(CU.invite_code),'Ссылка-приглашение скопирована');
     else goOwnProfile();
   }
   function resetSession(){version++;searchVersion++;session++;clearTimeout(timer);relationships=[];pending.clear();el('friendsContent').innerHTML='';el('friendSearchRes').innerHTML='';el('friendSearch').value='';el('friendsBrowse').hidden=false;el('friendSearchRes').hidden=true;}

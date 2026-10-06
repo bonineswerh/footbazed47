@@ -27,9 +27,9 @@ test('поиск исправляет только известные повре
     ],error:null}):original(name,args);
   });
   await page.locator('#globalSearchInput').fill('real');
-  await expect(page.getByRole('option').first()).toHaveText('Real Madrid CFКлуб→');
+  await expect(page.getByRole('option').first()).toHaveText('Реал МадридКлуб→');
   await expect(page.getByRole('option').nth(1)).toContainText('ДинамоРоссия');
-  await expect(page.getByRole('option').nth(2)).toContainText('Real Madrid — Man City');
+  await expect(page.getByRole('option').nth(2)).toContainText('Реал Мадрид — Ман Сити');
 });
 
 test('новый поисковый запрос сразу отменяет выбор прежнего результата с клавиатуры',async({page})=>{

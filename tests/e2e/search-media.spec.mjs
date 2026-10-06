@@ -53,7 +53,7 @@ test('недоступное изображение заменяется мон�
   await openSearch(page);
   const row=page.getByRole('option').first();await expect(row.locator('img')).toHaveCount(0);
   await expect(row.locator('.search-mark.is-fallback')).toContainText('RMA');
-  await row.click();await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');
+  await row.click();await expect(page.locator('.entity-hero h1')).toHaveText('Реал Мадрид');
 });
 
 test('unknown и неправильный тип media не превращаются в фото',async({page})=>{

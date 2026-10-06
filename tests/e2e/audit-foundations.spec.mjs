@@ -30,7 +30,7 @@ for(const theme of ['light','dark'])test('club gradients and long names preserve
   await page.setViewportSize({width:320,height:844});
   await page.goto('/matches?__e2e=1');
   const card=page.locator('#matchG .mcard').first();
-  await expect(card).toContainText('Man City');
+  await expect(card).toContainText('Ман Сити');
   await page.evaluate(()=>document.fonts.ready);
   const geometry=await card.evaluate(el=>{
     const box=el.querySelector('.mc-score-block').getBoundingClientRect();
@@ -47,7 +47,7 @@ for(const theme of ['light','dark'])test('club gradients and long names preserve
   // Clubs must own the paint even in light theme, rather than the selected accent.
   const firstBackground=geometry.background;
   await page.getByRole('button',{name:'Лента',exact:true}).first().click();
-  await expect(page.locator('.feed-team').first()).toContainText('Real Madrid');
+  await expect(page.locator('.feed-team').first()).toContainText('Реал Мадрид');
   await expect(page.locator('.feed-match').first()).not.toHaveCSS('background-image','none');
   await page.locator('.feed-score').first().click();
   await expect(page).toHaveURL(/\/match\/101/);

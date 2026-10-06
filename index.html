@@ -20,14 +20,15 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
   <link rel="preload" href="assets/fonts/onest-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/onest-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="js/locale.js?v=20261005"></script>
   <script src="js/session-hint.js?v=1"></script>
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=65">
+  <link rel="stylesheet" href="styles.css?v=20261005">
   <link rel="stylesheet" href="css/match-editorial.css?v=4">
   <link rel="stylesheet" href="css/typography.css?v=7">
-  <link rel="stylesheet" href="css/club-palettes.css?v=5">
+  <link rel="stylesheet" href="css/club-palettes.css?v=20261005">
 </head>
 <body>
   <a class="skip-link" href="#page-home" id="skipContent">Перейти к содержимому</a>
@@ -647,7 +648,7 @@
       <div class="settings-head">
         <div>
           <h2 id="settingsTitle">Настройки</h2>
-          <p>Тема и цвет интерфейса</p>
+          <p>Язык и оформление</p>
         </div>
         <button class="icon-btn" data-fbz-click="shell.close-settings" aria-label="Закрыть">×</button>
       </div>
@@ -671,7 +672,8 @@
         </div>
       </fieldset>
 
-      <p class="settings-note">Оформление сохраняется на этом устройстве.</p>
+        <div class="settings-language"><label for="setLanguage">Язык интерфейса</label><select class="input" id="setLanguage"><option value="ru">Русский</option><option value="en">English</option></select></div>
+        <p class="settings-note">Язык и оформление сохраняются на этом устройстве. При смене языка страница обновится.</p>
 
       <div class="settings-actions">
         <button class="btn btn-g" data-fbz-click="shell.close-settings">Отмена</button>
@@ -727,24 +729,25 @@
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- APP JS -->
-  <script src="js/domain.js?v=60"></script>
+  <script src="js/domain.js?v=20261005"></script>
+  <script src="js/football-names.js?v=20261005"></script>
   <script src="js/appearance.js?v=40"></script>
   <script src="js/performance.js?v=1"></script>
   <script src="js/core.js?v=54"></script>
   <script src="js/media.js?v=5"></script>
-  <script src="js/seo.js?v=4"></script>
+  <script src="js/seo.js?v=20261005"></script>
   <script src="js/data.js?v=51"></script>
   <script src="js/overlays.js?v=43"></script>
   <script src="js/confirm.js?v=42"></script>
   <script src="js/actions.js?v=1"></script>
   <script src="js/shell-actions.js?v=3"></script>
-  <script src="js/home.js?v=10"></script>
-  <script src="js/feature-loader.js?v=1"></script>
+  <script src="js/home.js?v=20261005"></script>
+  <script src="js/feature-loader.js?v=20261005"></script>
   <script src="js/notification-counter.js?v=2"></script>
-  <script src="app.js?v=82"></script>
+  <script src="app.js?v=20261005"></script>
   <script src="js/auth.js?v=46"></script>
   <script src="js/rating-loader.js?v=12"></script>
-  <script src="js/matches.js?v=63"></script>
+  <script src="js/matches.js?v=20261005"></script>
   <script src="js/account.js?v=43"></script>
 </body>
 </html>

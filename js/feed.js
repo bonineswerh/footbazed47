@@ -68,7 +68,7 @@
         <time datetime="${esc(item.created_at)}">${esc(relativeDate(item.created_at))}</time>
       </header>
       <div class="feed-match" style="${FBZDomain.matchPaletteStyle(item.match||{})}">
-        <div class="feed-match-meta"><span>${esc(item.match?.league_name||'Футбол')}</span><time>${new Date(item.match?.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</time></div>
+        <div class="feed-match-meta"><span>${esc(FBZNames.competition(item.match?.league_name)||'Футбол')}</span><time>${new Date(item.match?.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</time></div>
         <div class="feed-scoreline">
           ${clubButton(item.match?.home_club_id,item.match?.home_team_name,'home',item.match)}
           <button class="feed-score" type="button" ${FBZActions.attrs("feed.go-md",[Number(item.match_id)])} aria-label="Открыть матч: ${esc(item.match?.home_team_name||'Хозяева')} против ${esc(item.match?.away_team_name||'Гости')}, счёт ${esc(score(item.match||{}))}"><span class="mc-score-num">${esc(item.match?.home_score??'—')}<span class="mc-score-separator">:</span>${esc(item.match?.away_score??'—')}</span></button>
@@ -371,7 +371,7 @@
     const rating=window.FBZDomain.ratingPresentation(item.match_rating);
     return`<article class="home-feed-card" data-tone="${rating.tone}">
       <header>${avatar(item,'home-feed-avatar')}<span><strong>${esc(displayName(item))}</strong><small>${esc(relativeDate(item.created_at))}</small></span><b aria-label="Оценка ${rating.label}">${rating.label}</b></header>
-      <button class="home-feed-match" type="button" ${FBZActions.attrs("feed.go-md",[Number(item.match_id)])}><small>${esc(item.match?.league_name||'')}</small><strong>${esc(item.match?.home_team_name)} <span>${esc(score(item.match||{}))}</span> ${esc(item.match?.away_team_name)}</strong></button>
+      <button class="home-feed-match" type="button" ${FBZActions.attrs("feed.go-md",[Number(item.match_id)])}><small>${esc(FBZNames.competition(item.match?.league_name)||'')}</small><strong>${esc(FBZNames.club(item.match?.home_team_name))} <span>${esc(score(item.match||{}))}</span> ${esc(FBZNames.club(item.match?.away_team_name))}</strong></button>
       ${item.comment?`<p>${esc(item.comment)}</p>`:''}
       <footer><span>${ico('heart',13)} ${Number(item.like_count)||0}</span><button type="button" ${FBZActions.attrs("feed.go-feed",[Number(item.rating_id)])}>Открыть в ленте →</button></footer>
     </article>`;

@@ -55,7 +55,7 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await page.locator('#globalSearchInput').fill('Real');
   await expect(page.getByRole('option').first().locator('.search-mark')).toBeVisible();
   await page.locator('#globalSearchInput').press('ArrowDown');await page.locator('#globalSearchInput').press('Enter');
-  await expect(page.locator('.entity-hero h1')).toHaveText('Real Madrid CF');
+  await expect(page.locator('.entity-hero h1')).toHaveText('Реал Мадрид');
   await page.getByRole('button',{name:'Меню аккаунта bazed',exact:true}).click();
   await page.getByRole('menuitem',{name:'Настройки Тема и цвет интерфейса',exact:true}).click();
   await expect(page.locator(`input[name="setTheme"][value="${theme}"]`)).toBeChecked();

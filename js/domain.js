@@ -124,7 +124,7 @@ e5e4dd 333941|Valencia CF|Valencia
 e5cb62|Villarreal CF|Villarreal
 80b4d1 e7e5dd|Málaga CF|Málaga|Malaga
 4474a8 e2e4df|RC Deportivo La Coruña|Deportivo|Deportivo La Coruña
-e3e5df 589173|Real Racing Club de Santander|Racing|Racing Santander
+e3e5df 589173|Real Racing Club de Santander|Racing|Racing Santander|Santander
 c3494b|FC Bayern München|Bayern Munich|Bayern München|Bayern|Бавария
 dfc453 343c40|Borussia Dortmund|BV Borussia 09 Dortmund|Dortmund|Боруссия Дортмунд
 e1e5dd 539879|Borussia Mönchengladbach|Mönchengladbach|M'gladbach|Gladbach
@@ -144,7 +144,7 @@ e6e2d9 589875|FC Augsburg|Augsburg
 e5e6df 4979b4|Hamburger SV|Hamburg|HSV
 856454 e2ded4|FC St. Pauli 1910|FC St. Pauli|St. Pauli
 3f74b9 e5e5df|FC Schalke 04|Schalke 04|Schalke
-4274ae 353b43|SC Paderborn 07|Paderborn
+4274ae 353b43|SC Paderborn 07|Paderborn|SC Paderborn
 e4e5e0 343b43|SV 07 Elversberg|Elversberg
 ad4247 303740|AC Milan|Milan|Милан
 3e71ad 2e3642|FC Internazionale Milano|Inter Milan|Internazionale|Inter|Интер
@@ -167,7 +167,7 @@ dcc459 be5254|US Lecce|Lecce
 b95153 a7aaa5|US Cremonese|Cremonese
 477db4 343c46|AC Pisa 1909|Pisa
 e3e6df 7cb5d0|Olympique de Marseille|Marseille|Olympique Marseille|OM
-e7e5e0 4b75ae|Olympique Lyonnais|Lyon|OL
+e7e5e0 4b75ae|Olympique Lyonnais|Lyon|OL|Olympique Lyon
 c54c53 e7e3dc|AS Monaco FC|AS Monaco|Monaco
 b94d57 3b4f72|Lille OSC|Lille
 dabb5d c34b4b|Racing Club de Lens|RC Lens|Lens
@@ -203,22 +203,24 @@ c34e53 e5e1d8|AC Monza|Monza
 4177b7 e4e6df|FC Porto|Porto
 d7be58 3a517b|Fenerbahçe SK|Fenerbahçe|Fenerbahce
 bf4c51 e4e2dc|Feyenoord Rotterdam|Feyenoord
-d08751 363d42|FK Shakhtar Donetsk|Shakhtar Donetsk|Shakhtar
+d08751 363d42|FK Shakhtar Donetsk|Shakhtar Donetsk|Shakhtar|Shaktar
 dfc35c 4a77b0|Frosinone Calcio|Frosinone
 394047 e4e3dc|LASK Linz|LASK
 dcc052 363c42|PAE AEK|AEK Athens|AEK
 477ba9 e4e5df|Sabah FK|Sabah FC|Sabah
-8abbcf e6e6df|ŠK Slovan Bratislava|Slovan Bratislava|Slovan
+8abbcf e6e6df|ŠK Slovan Bratislava|Slovan Bratislava|Slovan|Sl. Bratislava
 c48251 528575|Venezia FC|Venezia
 384e71 e2e5e0|Viking FK|Viking
 73b7cd|Зенит|Zenit|Zenit St. Petersburg
 c05958 e8e3dd|Спартак|Спартак Москва|Spartak Moscow
 7193c3 e2e6e4|Динамо Москва|Dynamo Moscow|Dinamo Moscow
 73a28a 3c4946|Краснодар|FC Krasnodar|Krasnodar`.split('\n').map(row=>{const [colors,...names]=row.split('|');return[colors.split(' ').map(hex=>'#'+hex),names];});
-  const clubKey=name=>String(name||'').normalize('NFKC').toLocaleLowerCase('ru-RU').trim().replace(/\s+/gu,' ');
+  const clubKey=name=>String(name||'').normalize('NFKD').replace(/\p{M}/gu,'').toLocaleLowerCase('ru-RU').trim().replace(/\s+/gu,' ');
   const clubSwatches=new Map(CLUB_SWATCHES.flatMap(([colors,names])=>names.map(name=>[clubKey(name),Object.freeze([colors[0],colors[1]||colors[0]])])));
+  const canonicalClubs=new Map(CLUB_SWATCHES.flatMap(([,names])=>names.map(name=>[clubKey(name),names[0]])));
+  function canonicalClubName(name){return canonicalClubs.get(clubKey(name))||String(name||'');}
   const neutralPalette=Object.freeze(['#99a5ad','#99a5ad']);
-  function clubPalette(name){return clubSwatches.get(clubKey(name))||neutralPalette;}
+  function clubPalette(name){return clubSwatches.get(clubKey(name))||clubSwatches.get(clubKey(globalThis.FBZNames?.canonical(name)))||neutralPalette;}
   function clubColor(name){return clubPalette(name)[0];}
   function matchPaletteStyle(match={}){
     const home=clubPalette(match.home_team_name),away=clubPalette(match.away_team_name);
@@ -266,6 +268,7 @@ c05958 e8e3dd|Спартак|Спартак Москва|Spartak Moscow
   }
 
   function clubDisplayName(club,fallback=''){
+    if(globalThis.FBZNames)return globalThis.FBZNames.club(club,fallback);
     return String(club?.short_name||club?.name||fallback||'Клуб').trim()||'Клуб';
   }
   function matchTeamName(match,side){
@@ -290,5 +293,5 @@ c05958 e8e3dd|Спартак|Спартак Москва|Spartak Moscow
     return [...groups].map(([kind,items])=>({kind,items}));
   }
 
-  return Object.freeze({authErrorMessage,clubDisplayName,matchTeamName,ratingEvidence,searchResultGroups,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});
+  return Object.freeze({authErrorMessage,canonicalClubName,clubDisplayName,matchTeamName,ratingEvidence,searchResultGroups,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});
 });

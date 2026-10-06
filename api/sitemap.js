@@ -16,7 +16,9 @@ function validDate(value){
 }
 
 function entry(path,{lastmod='',changefreq='',priority=''}={}){
-  return `<url><loc>${escapeXml(`${ORIGIN}${path}`)}</loc>${lastmod?`<lastmod>${escapeXml(lastmod)}</lastmod>`:''}${changefreq?`<changefreq>${changefreq}</changefreq>`:''}${priority?`<priority>${priority}</priority>`:''}</url>`;
+  const localized='/en'+(path==='/'?'':path);
+  const alternatives=`<xhtml:link rel="alternate" hreflang="ru" href="${ORIGIN}${path}"/><xhtml:link rel="alternate" hreflang="en" href="${ORIGIN}${localized}"/><xhtml:link rel="alternate" hreflang="x-default" href="${ORIGIN}${path}"/>`;
+  return [path,localized].map(value=>`<url><loc>${escapeXml(`${ORIGIN}${value}`)}</loc>${alternatives}${lastmod?`<lastmod>${escapeXml(lastmod)}</lastmod>`:''}${changefreq?`<changefreq>${changefreq}</changefreq>`:''}${priority?`<priority>${priority}</priority>`:''}</url>`).join('');
 }
 
 function buildSitemap({clubs=[],players=[],competitions=[],matches=[]}={}){
@@ -29,7 +31,7 @@ function buildSitemap({clubs=[],players=[],competitions=[],matches=[]}={}){
     ...competitions.filter(item=>Number.isFinite(Number(item.id))).map(item=>entry(`/competition/${Number(item.id)}`,{lastmod:validDate(item.updated_at),changefreq:'daily',priority:'0.7'})),
     ...matches.filter(item=>Number.isFinite(Number(item.id))).map(item=>entry(`/match/${Number(item.id)}`,{changefreq:'daily',priority:'0.7'}))
   ];
-  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join('')}</urlset>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${urls.join('')}</urlset>`;
 }
 
 function safeSupabaseUrl(value){

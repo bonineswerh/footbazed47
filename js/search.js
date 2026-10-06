@@ -156,8 +156,9 @@
   function searchResultMarkup(item,index){
     // Older hosted RPC definitions emitted these UTF-8 labels as Windows-1251.
     // Repair only known service text, never attempt to decode user names.
-    const subtitle=({'РљР»СѓР±':'Клуб','РўСѓСЂРЅРёСЂ':'Турнир'})[item.subtitle]||item.subtitle||'';
-    const title=item.entity_type==='match'?String(item.title||'').replaceAll(' вЂ” ',' — '):item.title;
+    const service=({'РљР»СѓР±':'Клуб','РўСѓСЂРЅРёСЂ':'Турнир','Клуб':'Клуб','Турнир':'Турнир','Профиль':'Профиль'})[item.subtitle]||item.subtitle||'';
+    const subtitle=item.entity_type==='player'?FBZNames.club(service):item.entity_type==='match'?FBZNames.competition(service):service;
+    const title=item.entity_type==='match'?FBZNames.matchTitle(item.title):item.entity_type==='club'?FBZNames.club(item.title):item.entity_type==='competition'?FBZNames.competition(item.title):item.title;
     const rawMeta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='player'?positionLabel(item.meta):(item.meta||resultLabel(item.entity_type)));
     const meta=rawMeta&&rawMeta!==subtitle&&rawMeta!==resultLabel(item.entity_type)?rawMeta:'';
     const visual=item.visual&&['club','player','competition'].includes(item.entity_type)?window.FBZMedia.visual({entity:item.visual,kind:item.entity_type,className:'search-mark',fallbackText:item.entity_type==='club'?item.visual.tla||'':''}):'';

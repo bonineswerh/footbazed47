@@ -33,8 +33,9 @@
   function options(form,name){
     const data=catalogues.get(form)||{},select=form.elements.namedItem(name),selected=select.value;
     let rows=name==='competition_id'?(data.competitions||[]):model.clubsForCompetition(data.clubs,form.elements.namedItem('competition_id').value);
+    rows=rows.map(row=>({...row,source_name:row.name,name:name==='club_id'?FBZNames.club(row):FBZNames.competition(row)})).sort((a,b)=>a.name.localeCompare(b.name,root.FBZLocale?.intl||'ru-RU'));
     const query=sheet(form).querySelector(`[data-options-query="${name}"]`).value.trim().toLocaleLowerCase('ru-RU'),available=rows.length;
-    rows=rows.filter(row=>String(row.id)===selected||String(row.name).toLocaleLowerCase('ru-RU').includes(query));
+    rows=rows.filter(row=>String(row.id)===selected||String(row.name+' '+row.source_name).toLocaleLowerCase('ru-RU').includes(query));
     select.innerHTML=`<option value="">${name==='club_id'?'Все клубы':'Все турниры'}</option>`+rows.map(row=>`<option value="${escape(row.id)}">${escape(row.name)}</option>`).join('');
     if(selected&&!rows.some(row=>String(row.id)===selected))select.add(new Option('Недоступный '+(name==='club_id'?'клуб':'турнир')+' #'+selected,selected));select.value=selected;
     sheet(form).querySelector(`[data-options-count="${name}"]`).textContent=query?'Найдено: '+rows.length:name==='club_id'?'Клубов в выборке: '+available:'';
@@ -44,7 +45,7 @@
     form.querySelector('.explore-active-count').textContent=count?String(count):'';
     form.querySelector('[type="reset"]').disabled=!count;sheet(form).querySelector('.explore-panel-reset').disabled=!count;
     form.querySelector('.explore-chips').innerHTML=Object.entries(f).map(([key,value])=>{
-      const rows=key==='competition_id'?data.competitions:key==='club_id'?data.clubs:null,label=rows?.find(row=>String(row.id)===value)?.name||({sort:{votes:'По числу оценок',recent:'По дате матча'},participation:{all:'Вся история оценок'}}[key]?.[value])||value;
+      const rows=key==='competition_id'?data.competitions:key==='club_id'?data.clubs:null,rawLabel=rows?.find(row=>String(row.id)===value)?.name,label=rawLabel?(key==='club_id'?FBZNames.club(rawLabel):FBZNames.competition(rawLabel)):({sort:{votes:'По числу оценок',recent:'По дате матча'},participation:{all:'Вся история оценок'}}[key]?.[value])||value;
       return `<button class="explore-chip" type="button" data-clear="${escape(key)}" aria-label="Убрать фильтр ${escape(labels[key])}: ${escape(label)}"><span>${escape(labels[key])}: ${escape(label)}</span>${root.ico('close',12)}</button>`;
     }).join('');form.querySelector('.explore-filter-footer').classList.toggle('has-filters',Boolean(count));
   }

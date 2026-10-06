@@ -28,7 +28,7 @@
         const score=root.FBZDomain.ratingPresentation(r.match_rating),date=new Date(r.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
         const result=r.home_score!==null&&r.away_score!==null?`<span class="diary-scoreline">${Number(r.home_score)} : ${Number(r.away_score)}</span> · `:'';
         const marks=root.matchClubMark(r,'home','collection-mark')+root.matchClubMark(r,'away','collection-mark');
-        return `<button class="rh-row" type="button" ${FBZActions.attrs("profile.go-md",[Number(r.match_id)])}><span class="diary-content"><span class="collection-marks" aria-hidden="true">${marks}</span><span><span class="rh-m">${esc(FBZDomain.matchTeamName(r,'home'))} — ${esc(FBZDomain.matchTeamName(r,'away'))}</span><span class="rh-l">${result}${esc(r.league_name)} · ${esc(date)}${r.is_public?'':' · Только вам'}</span></span></span><span class="rh-r"><span class="rh-v" data-tone="${score.tone}">${score.value}<span class="score-denominator">/10</span></span></span></button>`;
+        return `<button class="rh-row" type="button" ${FBZActions.attrs("profile.go-md",[Number(r.match_id)])}><span class="diary-content"><span class="collection-marks" aria-hidden="true">${marks}</span><span><span class="rh-m">${esc(FBZDomain.matchTeamName(r,'home'))} — ${esc(FBZDomain.matchTeamName(r,'away'))}</span><span class="rh-l">${result}${esc(FBZNames.competition(r.league_name))} · ${esc(date)}${r.is_public?'':' · Только вам'}</span></span></span><span class="rh-r"><span class="rh-v" data-tone="${score.tone}">${score.value}<span class="score-denominator">/10</span></span></span></button>`;
       }).join('')+'</section>';}).join(''):(root.FBZExplore.activeCount(document.getElementById('diaryFilters'))?'<div class="empty-state"><strong>Оценок по этим условиям нет</strong><p>Измените поиск или сбросьте фильтры.</p></div>':'<div class="empty-state"><strong>История оценок пока пуста</strong><p>Здесь появятся оценки просмотренных матчей.</p><button class="btn btn-g" type="button" data-fbz-click="shell.go-matches">Найти матч</button></div>');
       document.getElementById('diaryCount').textContent=root.FBZDomain.countLabel(Number(data.total),{one:'оценка',few:'оценки',many:'оценок'});
       document.getElementById('diaryPage').textContent=items.length?`${s.index*8+1}–${s.index*8+items.length} из ${Number(data.total)}`:'Нет записей';
@@ -54,7 +54,7 @@ function renderProfileInsights(ratings,matchMap,summary){
     return '<section class="pcard" aria-labelledby="profileInsightsTitle"><h2 class="pcard-title" id="profileInsightsTitle">Футбол в деталях</h2>'
       +'<p class="profile-sample">'+esc(scope)+'</p>'
       +(total?'<div class="p-insight-grid"><div class="p-mini"><span>'+Number(summary.reviewed)+'</span><small>с комментарием</small></div><div class="p-mini"><span>'+Number(summary.tournament_count)+'</span><small>турниров</small></div><div class="p-mini"><span>'+Number(summary.minimum)+'–'+Number(summary.maximum)+'</span><small>диапазон оценок</small></div></div>'
-        +(tournaments.length?'<h3 class="profile-subtitle">'+(Number(summary.tournament_count)>tournaments.length?'Чаще всего оценивает':'Оценки по турнирам')+'</h3><div class="p-leagues">'+tournaments.map(t=>'<button class="p-league profile-tournament" type="button" '+FBZActions.attrs('profile.go-competition',[Number(t.id)])+'><span>'+esc(t.name)+'<small>'+esc(FBZDomain.countLabel(Number(t.votes),{one:'оценка',few:'оценки',many:'оценок'}))+'</small></span><span class="profile-tournament-average rating-ink" data-tone="'+FBZDomain.ratingTone(Number(t.average))+'">'+FBZDomain.ratingPresentation(t.average,1).value+'<span class="sr-only"> — средняя оценка</span></span></button>').join('')+'</div>':'')
+        +(tournaments.length?'<h3 class="profile-subtitle">'+(Number(summary.tournament_count)>tournaments.length?'Чаще всего оценивает':'Оценки по турнирам')+'</h3><div class="p-leagues">'+tournaments.map(t=>'<button class="p-league profile-tournament" type="button" '+FBZActions.attrs('profile.go-competition',[Number(t.id)])+'><span>'+esc(FBZNames.competition(t.name))+'<small>'+esc(FBZDomain.countLabel(Number(t.votes),{one:'оценка',few:'оценки',many:'оценок'}))+'</small></span><span class="profile-tournament-average rating-ink" data-tone="'+FBZDomain.ratingTone(Number(t.average))+'">'+FBZDomain.ratingPresentation(t.average,1).value+'<span class="sr-only"> — средняя оценка</span></span></button>').join('')+'</div>':'')
         :'<div class="profile-empty"><strong>У каждой истории есть первый матч</strong><p>Здесь появятся турниры и впечатления из доступных оценок.</p></div>')+'</section>';
   }
   const list=ratings||[];
@@ -67,7 +67,7 @@ function renderProfileInsights(ratings,matchMap,summary){
   return '<section class="pcard"><h2 class="pcard-title">Футбол в деталях</h2>'
     +'<p class="profile-sample">По '+esc(FBZDomain.countLabel(list.length,{one:'доступной оценке',few:'доступным оценкам',many:'доступным оценкам'}))+'. Это часть истории, видимая в профиле.</p>'
     +'<div class="p-insight-grid"><div class="p-mini"><span>'+reviewed+'</span><small>с комментарием</small></div><div class="p-mini"><span>'+leagues.length+'</span><small>турниров</small></div><div class="p-mini"><span>'+(nums.length?Math.min(...nums)+'–'+Math.max(...nums):'—')+'</span><small>диапазон оценок</small></div></div>'
-    +(leagues.length?'<h3 class="profile-subtitle">Турниры в этой выборке</h3><div class="p-leagues">'+leagues.slice(0,3).map(([league,count])=>'<div class="p-league"><span>'+esc(league)+'</span><b>'+count+'</b></div>').join('')+'</div>':'')+'</section>';
+    +(leagues.length?'<h3 class="profile-subtitle">Турниры в этой выборке</h3><div class="p-leagues">'+leagues.slice(0,3).map(([league,count])=>'<div class="p-league"><span>'+esc(FBZNames.competition(league))+'</span><b>'+count+'</b></div>').join('')+'</div>':'')+'</section>';
 }
 
 function renderRatingDistribution(ratings,summary){
@@ -149,7 +149,7 @@ async function loadProfile(uid){
       ${avatarHtml}
       <h1 class="phero-name">${esc(u.display_name||u.username||'Болельщик')}</h1><p class="phero-hand">@${esc(u.username||'user')}</p>
       ${u.bio?`<div class="phero-bio">${esc(u.bio)}</div>`:''}
-      ${favoriteClubs.length?`<div class="profile-favorite-clubs" aria-label="Любимые клубы">${favoriteClubs.map(club=>`<button type="button" ${FBZActions.attrs("profile.go-club",[Number(club.id)])}>${window.FBZMedia.visual({entity:club,kind:'club',className:'profile-club-mark'})}<span>${esc(club.short_name||club.name)}</span></button>`).join('')}</div>`:''}
+      ${favoriteClubs.length?`<div class="profile-favorite-clubs" aria-label="Любимые клубы">${favoriteClubs.map(club=>`<button type="button" ${FBZActions.attrs("profile.go-club",[Number(club.id)])}>${window.FBZMedia.visual({entity:club,kind:'club',className:'profile-club-mark'})}<span>${esc(FBZNames.club(club))}</span></button>`).join('')}</div>`:''}
       <div class="phero-badges">
         <span class="pbadge pb-l">Болельщик</span>
         ${activeProfileStreak(u)>0?`<span class="pbadge pb-s">${ico('fire',12)} ${FBZDomain.countLabel(activeProfileStreak(u),{one:'день',few:'дня',many:'дней'})} подряд</span>`:''}
@@ -215,7 +215,7 @@ async function mutateProfileFriendship(fid,accept){
     if(!CU||uid===CU.id||CP!=='profile'||button.disabled)return;
     const user=CU.id,route=routeVersion,profile=profileVersion;button.disabled=true;
     try{
-      const comparison=await ensureFeatureModule({key:'comparison',styleId:'comparisonStyles',style:'css/comparison.css?v=1',script:'js/comparison.js?v=1',ready:()=>root.FBZComparison});
+      const comparison=await ensureFeatureModule({key:'comparison',styleId:'comparisonStyles',style:'css/comparison.css?v=1',script:'js/comparison.js?v=20261005',ready:()=>root.FBZComparison});
       if(CU?.id===user&&route===routeVersion&&profile===profileVersion&&CP==='profile'){button.disabled=false;button.focus({preventScroll:true});await comparison.open(uid);}
     }catch(error){if(CU?.id===user&&route===routeVersion)toast('Не удалось открыть сравнение. Попробуйте ещё раз.','err');}
     finally{if(button.isConnected)button.disabled=false;}

@@ -68,9 +68,9 @@ test('entity tabs, form submission and account navigation run without policy vio
   expect(errors).toEqual([]);
 });
 
-test('legacy admin link redirects with the same strict script policy',async({page})=>{
+for(const prefix of ['','/en'])test(`legacy admin link ${prefix||'RU'} redirects with the same strict script policy`,async({page})=>{
   await page.route('**/api/admin*',route=>route.fulfill({json:{counts:{},recentMatches:[],footballApiConfigured:true}}));
-  await page.goto('/admin.html?__e2e=1');
-  await expect(page).toHaveURL(/\/admin$/);
+  await page.goto(prefix+'/admin.html?__e2e=1');
+  await expect(page).toHaveURL(new RegExp(prefix+'/admin$'));
   expect(await page.evaluate(()=>window.cspViolations)).toEqual([]);
 });

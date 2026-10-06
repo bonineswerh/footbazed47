@@ -67,13 +67,13 @@ function ensureAdminModule(){
   return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=52',script:'js/admin.js?v=54',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=60',script:'js/entities.js?v=60',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=60',script:'js/entities.js?v=20261005',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=61',script:'js/feed.js?v=62',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=61',script:'js/feed.js?v=20261005',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
-  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=2',script:'js/search.js?v=59',ready:()=>window.FBZSearch});
+  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=2',script:'js/search.js?v=20261005',ready:()=>window.FBZSearch});
 }
 let reportOpenVersion=0;
 function reportContent(type,id){
@@ -290,14 +290,14 @@ function syncRoute(p,d){
   else if(p==='competition'&&d?.id)path=`/competition/${encodeURIComponent(d.id)}`;
   else if(p==='leaderboard')path='/discover';
   else if(['matches','feed','friends','admin'].includes(p))path=`/${p}`;
-  const next=`${path}${window.location.search}`;
+  const next=window.FBZLocale?.path(`${path}${window.location.search}`)||`${path}${window.location.search}`;
   const current=`${window.location.pathname}${window.location.search}${window.location.hash}`;
   if(next!==current)history.pushState({fbzIndex:(Number(history.state?.fbzIndex)||0)+1},'',next);
 }
 
 function applyRouteFromLocation(){
   const hashRoute=window.location.hash.replace(/^#/,'');
-  const pathRoute=window.location.pathname.replace(/^\/+|\/+$/gu,'');
+  const pathRoute=(window.FBZLocale?.strip(window.location.pathname)||window.location.pathname).replace(/^\/+|\/+$/gu,'');
   const raw=hashRoute||pathRoute;
   if(!raw||raw==='index.html'||raw==='home'){
     if(CP!=='home'){
@@ -312,7 +312,7 @@ function applyRouteFromLocation(){
   routeApplying=true;
   try{
     if(type==='profile'&&value)go('profile',{uid:value});
-    else if(type==='match'&&/^[1-9]\d*$/.test(value)&&section==='chat'){history.replaceState(history.state,'',`/match/${value}${location.search}`);go('md',{mid:value});}
+    else if(type==='match'&&/^[1-9]\d*$/.test(value)&&section==='chat'){history.replaceState(history.state,'',window.FBZLocale?.path(`/match/${value}${location.search}`)||`/match/${value}${location.search}`);go('md',{mid:value});}
     else if(type==='match'&&value)go('md',{mid:value});
     else if(type==='club'&&value)go('club',{id:Number(value)});
     else if(type==='player'&&value)go('player',{id:Number(value)});
@@ -338,7 +338,7 @@ async function copyText(value,successLabel='Скопировано'){
 }
 
 function copyAppLink(route,label='Ссылка'){
-  const url=new URL(String(route||'/'),window.location.origin).href;
+  const url=new URL(window.FBZLocale?.path(String(route||'/'))||String(route||'/'),window.location.origin).href;
   copyText(url,`${label} скопирована`);
 }
 
@@ -359,7 +359,7 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=7',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=20261005',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
   }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" data-fbz-click="app.load-lb">Повторить</button></div>';}
 }
@@ -386,11 +386,11 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=5',script:'js/profile.js?v=11',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=5',script:'js/profile.js?v=20261005',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});
-  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=7',script:'js/explore.js?v=5',ready:()=>window.FBZExplore});
+  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=7',script:'js/explore.js?v=20261005',ready:()=>window.FBZExplore});
 }
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
@@ -403,7 +403,7 @@ async function loadProfile(uid){
 }
 function addFriendFromProfile(fid){return window.FBZProfile?.mutateFriendship(fid,false);}
 function acceptFriendFromProfile(fid){return window.FBZProfile?.mutateFriendship(fid,true);}
-function invitationUrl(code){return new URL('/?invite='+encodeURIComponent(code),window.location.origin).href;}
+function invitationUrl(code){return new URL(window.FBZLocale?.path('/?invite='+encodeURIComponent(code))||'/?invite='+encodeURIComponent(code),window.location.origin).href;}
 function copyInv(c){copyText(invitationUrl(c),'Ссылка скопирована');}
 async function expStats(c,a,u){
   const text=`FOOTBAZED\n@${u}\nОценок: ${c}\nСредняя: ${a}/10`;
@@ -421,7 +421,7 @@ function editProfile(){
 
 // ─── COMMUNITY LOADER ───
 function ensureCommunityModule(){
-  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=3',script:'js/community.js?v=3',ready:()=>window.FBZCommunity});
+  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=3',script:'js/community.js?v=20261005',ready:()=>window.FBZCommunity});
 }
 function loadFriendsTab(tab){
   FT=tab;
@@ -463,6 +463,8 @@ function openSettings(){
   const ov=document.getElementById('settingsOv');
   if(!ov)return;
   window.FBZAppearance?.syncControls();
+  const language=document.getElementById('setLanguage');
+  if(language)language.value=window.FBZLocale?.language||'ru';
   FBZOverlay.open('settingsOv','.settings-head .icon-btn');
 }
 function closeSettings(){FBZOverlay.close('settingsOv');}
@@ -470,21 +472,22 @@ function saveAppearanceSettings(){
   const settings=window.FBZAppearance?.readControls();
   if(settings)window.FBZAppearance.save(settings);
   closeSettings();
+  window.FBZLocale?.switchTo(document.getElementById('setLanguage')?.value||'ru');
   toast('Настройки сохранены','ok');
 }
 // ─── REVEAL + MISC ───
 function injectIcons(){
   // Nav links
-  const navIcons={Главная:'home',Матчи:'football',Лента:'feed',Обзор:'chart',Друзья:'users',Профиль:'profile'};
+  const navIcons={'shell.go-home':'home','shell.go-matches':'football','shell.go-feed':'feed','shell.go-leaderboard':'chart','shell.go-friends':'users','shell.go-own-profile':'profile'};
   document.querySelectorAll('.nav-link').forEach(a=>{
-    const t=a.textContent.trim();if(navIcons[t])a.innerHTML=ico(navIcons[t],15)+' '+t;
+    const icon=navIcons[a.dataset.fbzClick],t=a.textContent.trim();if(icon)a.innerHTML=ico(icon,15)+' '+esc(t);
   });
   // Mobile nav
   document.querySelectorAll('[data-i]').forEach(s=>{s.innerHTML=ico(s.dataset.i,s.classList.contains('mob-nav-icon')?20:16);});
   // Page titles
-  const pgIcons={'Матчи':'football','Лента оценок':'feed','Голоса сообщества':'trophy','Друзья и сообщество':'users','Админ-панель':'settings'};
+  const pgIcons={'page-matches':'football','page-feed':'feed','page-leaderboard':'chart','page-friends':'users','page-admin':'settings'};
   document.querySelectorAll('.page-title').forEach(h=>{
-    const t=h.textContent.trim();if(pgIcons[t])h.innerHTML=ico(pgIcons[t],28)+' '+t;
+    const icon=pgIcons[h.closest('.page')?.id],t=h.textContent.trim();if(icon)h.innerHTML=ico(icon,28)+' '+esc(t);
   });
 }
 function setupReveal(){

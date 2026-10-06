@@ -1,16 +1,23 @@
 (function(root,factory){
-  const api=factory(root,root?.FBZMedia||(typeof module==='object'?require('./media.js'):null));
+  const media=root?.FBZMedia||(typeof module==='object'?require('./media.js'):null);
+  const names=root?.FBZNames||(typeof module==='object'?require('./football-names.js'):null);
+  const api=factory(root,media,names,root?.FBZLocale?.language||'ru');
   if(root)root.FBZSEO=api;
-  if(typeof module==='object'&&module.exports)module.exports=api;
-})(typeof window==='undefined'?null:window,function(root,media){
+  if(typeof module==='object'&&module.exports)module.exports={...api,forLanguage:language=>factory(null,media,names,language)};
+})(typeof window==='undefined'?null:window,function(root,media,names,language){
   'use strict';
 
   const origin='https://footbazed47.vercel.app';
+  const en=language==='en';
+  const localizedPath=path=>(en?'/en':'')+(path==='/'&&en?'':path);
+  const labels={'Профиль':'Profile','Клуб':'Club','Игрок':'Player','Турнир':'Competition','Матч':'Match'};
+  const text=value=>en?(labels[value]||value):value;
   const defaults=Object.freeze({
-    title:'FOOTBAZED — Оценивай футбол вместе',
-    description:'Футбольная платформа для оценок матчей и игроков, личной статистики и общения с болельщиками.',
+    title:en?'FOOTBAZED — Rate football together':'FOOTBAZED — Оценивай футбол вместе',
+    description:en?'Rate matches and players, keep your football diary and share your views with other fans.':'Футбольная платформа для оценок матчей и игроков, личной статистики и общения с болельщиками.',
     image:`${origin}/assets/stadium-bg.webp`
   });
+  const translate=value=>!root&&en?(require('../locales/en.json')[value]||value):value;
   const staticPages=Object.freeze({
     home:{path:'/',title:defaults.title,description:defaults.description,index:true},
     matches:{path:'/matches',title:'Матчи — FOOTBAZED',description:'Календарь футбольных матчей, прогнозы и оценки сообщества FOOTBAZED.',index:true},
@@ -33,7 +40,8 @@
   }
 
   function apply({title=defaults.title,description=defaults.description,path='/',image=defaults.image,type='website',index=true,structuredData=null}={}){
-    const cleanPath=String(path||'/').startsWith('/')?String(path||'/'):`/${path}`;
+    const rawPath=String(path||'/').startsWith('/')?String(path||'/'):`/${path}`;
+    const cleanPath=en&&!/^\/en(?:\/|$)/u.test(rawPath)?localizedPath(rawPath):rawPath;
     const canonical=`${origin}${cleanPath}`;
     const cleanDescription=String(description||defaults.description).slice(0,220);
     if(!root)return {title,description:cleanDescription,path:cleanPath,canonical,image:absoluteImage(image),type,index,structuredData};
@@ -41,6 +49,12 @@
     meta('meta[name="description"]','content',cleanDescription);
     meta('meta[name="robots"]','content',index?'index,follow':'noindex,nofollow');
     meta('link[rel="canonical"]','href',canonical);
+    const basePath=cleanPath.replace(/^\/en(?=\/|$)/u,'')||'/';
+    for(const [lang,url] of [['ru',origin+basePath],['en',origin+'/en'+(basePath==='/'?'':basePath)],['x-default',origin+basePath]]){
+      let link=document.querySelector('link[rel="alternate"][hreflang="'+lang+'"]');
+      if(!link){link=document.createElement('link');link.rel='alternate';link.hreflang=lang;document.head.append(link);}
+      link.href=url;
+    }
     meta('meta[property="og:type"]','content',type);
     meta('meta[property="og:title"]','content',title);
     meta('meta[property="og:description"]','content',cleanDescription);
@@ -53,15 +67,17 @@
   }
 
   function setStatic(page){
-    return apply(staticPages[page]||{title:`${page==='profile'?'Профиль':page==='club'?'Клуб':page==='player'?'Игрок':page==='competition'?'Турнир':'Матч'} — FOOTBAZED`,index:false});
+    const base=staticPages[page];
+    return apply(base?{...base,title:translate(base.title),description:translate(base.description)}:{title:`${text(page==='profile'?'Профиль':page==='club'?'Клуб':page==='player'?'Игрок':page==='competition'?'Турнир':'Матч')} — FOOTBAZED`,index:false});
   }
 
   function club(value){
     const club=value||{};
+    const name=names?.club(club,'',true,language)||club.name||text('Клуб');
     const description=[club.area_name,club.venue,club.founded?`основан в ${club.founded} году`:null].filter(Boolean).join(' · ');
     return apply({
-      title:`${club.name||'Клуб'} — FOOTBAZED`,
-      description:`${club.name||'Футбольный клуб'} в FOOTBAZED${description?`: ${description}`:''}. Состав, матчи и оценки игроков.`,
+      title:`${name} — FOOTBAZED`,
+      description:en?`${name} on FOOTBAZED. Squad, matches and player ratings.`:`${name} в FOOTBAZED${description?`: ${description}`:''}. Состав, матчи и оценки игроков.`,
       path:`/club/${Number(club.id)}`,
       image:media?.resolveAsset(club.media,'club_logo')?.url,
       type:'profile',
@@ -74,7 +90,7 @@
     const club=player.club;
     return apply({
       title:`${player.name||'Игрок'} — FOOTBAZED`,
-      description:`${player.name||'Футболист'}${player.position?` · ${player.position}`:''}${club?.name?` · ${club.name}`:''}. Оценки болельщиков и матчи в FOOTBAZED.`,
+      description:en?`${player.name||'Football player'}. Fan ratings and matches on FOOTBAZED.`:`${player.name||'Футболист'}${player.position?` · ${player.position}`:''}${club?.name?` · ${names?.club(club,'',true,language)||club.name}`:''}. Оценки болельщиков и матчи в FOOTBAZED.`,
       path:`/player/${Number(player.id)}`,
       image:media?.resolveAsset(player.media,'player_photo')?.url||media?.resolveAsset(club?.media,'club_logo')?.url,
       type:'profile',
@@ -84,9 +100,10 @@
 
   function competition(value){
     const item=value||{};
+    const name=names?.competition(item,language)||item.name||text('Турнир');
     return apply({
-      title:`${item.name||'Турнир'} — FOOTBAZED`,
-      description:`${item.name||'Футбольный турнир'} в FOOTBAZED. Клубы, матчи и оценки болельщиков.`,
+      title:`${name} — FOOTBAZED`,
+      description:en?`${name} on FOOTBAZED. Clubs, matches and fan ratings.`:`${name} в FOOTBAZED. Клубы, матчи и оценки болельщиков.`,
       path:`/competition/${Number(item.id)}`,
       image:media?.resolveAsset(item.media,'competition_logo')?.url,
       structuredData:{'@type':'SportsOrganization',name:item.name,url:`${origin}/competition/${Number(item.id)}`,sport:'Football'}
@@ -95,10 +112,10 @@
 
   function match(value){
     const match=value||{};
-    const name=`${match.home_team_name||'Команда'} — ${match.away_team_name||'Команда'}`;
+    const name=names?.matchTitle(match,language)||`${match.home_team_name||'Команда'} — ${match.away_team_name||'Команда'}`;
     return apply({
       title:`${name} — FOOTBAZED`,
-      description:`${name}${match.league_name?` · ${match.league_name}`:''}. Оценки матча, игроков и мнение сообщества FOOTBAZED.`,
+      description:en?`${name}. Match ratings, player ratings and views from the FOOTBAZED community.`:`${name}${match.league_name?` · ${names?.competition(match.league_name,language)||match.league_name}`:''}. Оценки матча, игроков и мнение сообщества FOOTBAZED.`,
       path:`/match/${Number(match.id)}`,
       type:'article',
       structuredData:{'@type':'SportsEvent',name,startDate:match.match_date,url:`${origin}/match/${Number(match.id)}`,sport:'Football',homeTeam:{'@type':'SportsTeam',name:match.home_team_name},awayTeam:{'@type':'SportsTeam',name:match.away_team_name}}

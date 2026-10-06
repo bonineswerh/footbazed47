@@ -10,10 +10,18 @@
     },
     "api/page.js": {
       "maxDuration": 10,
-      "includeFiles": "dist/index.html"
+      "includeFiles": "dist/{index.html,en/index.html}"
     }
   },
   "rewrites": [
+    {
+      "source": "/en",
+      "destination": "/api/page?path=/en"
+    },
+    {
+      "source": "/en/:path*",
+      "destination": "/api/page?path=/en/:path*"
+    },
     {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"

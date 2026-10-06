@@ -37,7 +37,7 @@ for(const theme of ['dark','light'])for(const accent of Object.keys(accentNames)
     await page.getByRole('button',{name:'Настройки',exact:true}).click();
     await expect(page.locator(`input[name="setTheme"][value="${theme}"]`)).toBeChecked();
     await expect(page.locator(`input[name="setAccent"][value="${accent}"]`)).toBeChecked();
-    await expect(page.getByRole('dialog',{name:'Настройки'})).toContainText('Оформление сохраняется на этом устройстве.');
+    await expect(page.getByRole('dialog',{name:'Настройки'})).toContainText('Язык и оформление сохраняются на этом устройстве.');
     await checkLayout(page);
     expect(errors).toEqual([]);
   });

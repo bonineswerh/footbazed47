@@ -2,10 +2,10 @@
   'use strict';
 
   const positionGroups=[
-    {key:'goalkeepers',label:'Вратари',codes:['GK','Вратарь']},
-    {key:'defenders',label:'Защитники',codes:['LB','LWB','CB','RB','RWB','DF','Защитник']},
-    {key:'midfielders',label:'Полузащитники',codes:['DM','CDM','CM','AM','CAM','LM','RM','MF','Полузащитник']},
-    {key:'forwards',label:'Нападающие',codes:['LW','RW','CF','ST','SS','FW','Нападающий']}
+    {key:'goalkeepers',label:'Вратари',codes:['GK']},
+    {key:'defenders',label:'Защитники',codes:['LB','LWB','CB','RB','RWB','DF']},
+    {key:'midfielders',label:'Полузащитники',codes:['DM','CDM','CM','AM','CAM','LM','RM','MF']},
+    {key:'forwards',label:'Нападающие',codes:['LW','RW','CF','ST','SS','FW']}
   ];
   const positionNames={GK:'Вратарь',LB:'Левый защитник',LWB:'Левый латераль',CB:'Центральный защитник',RB:'Правый защитник',RWB:'Правый латераль',DM:'Опорный полузащитник',CDM:'Опорный полузащитник',CM:'Центральный полузащитник',AM:'Атакующий полузащитник',CAM:'Атакующий полузащитник',LM:'Левый полузащитник',RM:'Правый полузащитник',LW:'Левый вингер',RW:'Правый вингер',CF:'Оттянутый нападающий',ST:'Нападающий',SS:'Второй нападающий'};
   let clubPayload=null;
@@ -28,7 +28,8 @@
     return window.FBZMedia.visual({entity:{...entity,name:name||entity.name,media:media||entity.media},kind,className,loading});
   }
 
-  function positionLabel(value){return positionNames[value]||value||'Позиция не указана';}
+  function positionCode(value){return {'Вратарь':'GK','Защитник':'DF','Полузащитник':'MF','Нападающий':'FW'}[value]||value;}
+  function positionLabel(value){const code=positionCode(value);return positionNames[code]||({DF:'Защитник',MF:'Полузащитник',FW:'Нападающий'})[code]||value||'Позиция не указана';}
 
   function ratingValue(value){
     return ratingData(value).value;
@@ -39,12 +40,7 @@
   }
 
   function plural(count,one,few,many){
-    const value=Math.abs(Number(count)||0)%100;
-    const last=value%10;
-    if(value>10&&value<20)return many;
-    if(last===1)return one;
-    if(last>=2&&last<=4)return few;
-    return many;
+    return ({one,few,many})[new Intl.PluralRules('ru-RU').select(Math.abs(Number(count)||0))]||many;
   }
 
   function entityLoading(label){
@@ -57,6 +53,7 @@
   }
 
   function clubRoute(id,label){
+    label=FBZNames.club(label);
     if(!id)return`<span>${esc(label||'Клуб')}</span>`;
     return`<button class="entity-text-link" type="button" ${FBZActions.attrs("entities.go-club",[Number(id)])}>${esc(label||'Клуб')}</button>`;
   }
@@ -66,6 +63,7 @@
   }
 
   function competitionRoute(id,label){
+    label=FBZNames.competition(label);
     if(!id)return`<span>${esc(label||'Турнир')}</span>`;
     return`<button class="entity-text-link" type="button" ${FBZActions.attrs("entities.go-competition",[Number(id)])}>${esc(label||'Турнир')}</button>`;
   }
@@ -80,7 +78,7 @@
 
   function renderMatchRow(match,clubId){
     const isHome=Number(match.home_club_id)===Number(clubId);
-    const opponent=isHome?match.away_team_name:match.home_team_name;
+    const opponent=FBZDomain.matchTeamName(match,isHome?'away':'home');
     const opponentId=isHome?match.away_club_id:match.home_club_id;
     const scored=isHome?match.home_score:match.away_score;
     const conceded=isHome?match.away_score:match.home_score;
@@ -88,7 +86,7 @@
     return`<article class="entity-match-row">
       <button class="entity-match-main" type="button" ${FBZActions.attrs("entities.go-md",[Number(match.id)])}>
         <span class="entity-match-date">${matchDate(match.match_date)}</span>
-        <span class="entity-match-opponent"><small>${isHome?'Дома':'В гостях'} · ${esc(match.league_name||'')}</small><strong>${esc(opponent||'Соперник')}</strong></span>
+        <span class="entity-match-opponent"><small>${isHome?'Дома':'В гостях'} · ${esc(FBZNames.competition(match.league_name)||'')}</small><strong>${esc(opponent||'Соперник')}</strong></span>
         <span class="entity-match-score">${esc(score)}</span>
         <span class="entity-match-status status-${esc(match.status||'')}">${esc(matchStatus(match))}</span>
       </button>
@@ -97,7 +95,7 @@
   }
 
   function squadGroup(player){
-    return positionGroups.find(group=>group.codes.includes(player.position))||{key:'other',label:'Другие'};
+    return positionGroups.find(group=>group.codes.includes(positionCode(player.position)))||{key:'other',label:'Другие'};
   }
 
   function renderPlayerRow(player){
@@ -182,7 +180,7 @@
         ${identityVisual({entity:club,kind:'club',loading:'eager'})}
         <div class="entity-identity">
           <div class="entity-eyebrow"><span>Клуб</span>${club.tla?`<b>${esc(club.tla)}</b>`:''}</div>
-          <h1>${esc(club.name)}</h1>
+          <h1>${esc(FBZNames.club(club,'',true))}</h1>
           <div class="entity-meta">${[club.area_name,club.venue,club.founded?`Основан в ${club.founded}`:''].filter(Boolean).map(item=>`<span>${esc(item)}</span>`).join('')}</div>
           ${competitions.length?`<div class="entity-chips">${competitions.map(item=>competitionRoute(item.id,item.name)).join('')}</div>`:''}
         </div>
@@ -282,7 +280,7 @@
   function performanceRow(item){
     const rating=ratingData(item.average);
     return`<button class="performance-row" type="button" ${FBZActions.attrs("entities.go-md",[Number(item.match_id)])}>
-      <span class="performance-match"><small>${matchDate(item.match_date)} · ${esc(item.league_name||'')}</small><strong>${esc(item.home_team_name)} <b>${esc(item.home_score??'—')} : ${esc(item.away_score??'—')}</b> ${esc(item.away_team_name)}</strong>${item.historical_team?`<small>Выступление за ${esc(item.historical_team)}</small>`:''}${item.participation_verified===false?'<small class="entity-evidence">Участие в матче не подтверждено</small>':''}</span>
+      <span class="performance-match"><small>${matchDate(item.match_date)} · ${esc(FBZNames.competition(item.league_name)||'')}</small><strong>${esc(FBZNames.club(item.home_team_name))} <b>${esc(item.home_score??'—')} : ${esc(item.away_score??'—')}</b> ${esc(FBZNames.club(item.away_team_name))}</strong>${item.historical_team?`<small>Выступление за ${esc(FBZNames.club(item.historical_team))}</small>`:''}${item.participation_verified===false?'<small class="entity-evidence">Участие в матче не подтверждено</small>':''}</span>
       <span class="performance-community" data-tone="${rating.tone}"><b>${rating.value}</b><small>${Number(item.rating_count)||0} ${plural(item.rating_count,'оценка','оценки','оценок')}</small></span>
       <span class="squad-player-arrow">→</span>
     </button>`;
@@ -308,7 +306,7 @@
         <div class="entity-identity">
           <div class="entity-eyebrow"><span>Игрок</span>${player.shirt_number?`<b>№ ${esc(player.shirt_number)}</b>`:''}</div>
           <h1>${esc(player.name)}</h1>
-          <div class="entity-meta"><span>${esc(positionLabel(player.position))}</span>${club?`<span>${historical?'Клуб в каталоге: ':''}${clubRoute(club.id,club.name)}</span>`:player.team?`<span>${esc(player.team)}</span>`:''}</div>
+          <div class="entity-meta"><span>${esc(positionLabel(player.position))}</span>${club?`<span>${historical?'Клуб в каталоге: ':''}${clubRoute(club.id,club.name)}</span>`:player.team?`<span>${esc(FBZNames.club(player.team))}</span>`:''}</div>
         </div>
         ${club?identityVisual({entity:club,kind:'club',className:'entity-corner-mark'}):''}
         <button class="entity-share" type="button" ${FBZActions.attrs("entities.share-player",[Number(player.id)])} aria-label="Поделиться игроком" title="Поделиться">${ico('share',18)}</button>
@@ -327,7 +325,7 @@
           <div class="performance-list">${performances.length?performances.map(performanceRow).join(''):'<div class="entity-inline-empty">Оценок в матчах пока нет</div>'}</div>
         </section>
         <section class="entity-section">
-          <header class="entity-section-head"><div><span>${club?esc(club.short_name||club.name):'Команда'}</span><h2>Одноклубники</h2></div>${club?clubRoute(club.id,'Весь состав'):''}</header>
+          <header class="entity-section-head"><div><span>${club?esc(FBZNames.club(club)):'Команда'}</span><h2>Одноклубники</h2></div>${club?clubRoute(club.id,'Весь состав'):''}</header>
           <div class="teammate-grid">${teammates.length?teammates.map(teammateCard).join(''):'<div class="entity-inline-empty">Состав пока не опубликован</div>'}</div>
         </section>
       </div>
@@ -359,7 +357,7 @@
     const score=match.status==='finished'||match.status==='live'?`${match.home_score??'—'} : ${match.away_score??'—'}`:'—';
     return`<button class="competition-match-row" type="button" ${FBZActions.attrs("entities.go-md",[Number(match.id)])}>
       <time>${matchDate(match.match_date)}</time>
-      <span><strong>${esc(match.home_team_name)}</strong><b>${esc(score)}</b><strong>${esc(match.away_team_name)}</strong></span>
+      <span><strong>${esc(FBZNames.club(match.home_team_name))}</strong><b>${esc(score)}</b><strong>${esc(FBZNames.club(match.away_team_name))}</strong></span>
       <small class="status-${esc(match.status||'')}">${esc(matchStatus(match))}</small><i>→</i>
     </button>`;
   }
@@ -373,7 +371,7 @@
         ${identityVisual({entity:competition,kind:'competition',loading:'eager'})}
         <div class="entity-identity">
           <div class="entity-eyebrow"><span>Турнир</span>${competition.code?`<b>${esc(competition.code)}</b>`:''}</div>
-          <h1>${esc(competition.name)}</h1>
+          <h1>${esc(FBZNames.competition(competition))}</h1>
           <div class="entity-meta">${[competition.area_name,competition.competition_type].filter(Boolean).map(item=>`<span>${esc(item)}</span>`).join('')}</div>
         </div>
         <button class="entity-share" type="button" ${FBZActions.attrs("entities.share-competition",[Number(competition.id)])} aria-label="Поделиться турниром" title="Поделиться">${ico('share',18)}</button>
@@ -387,7 +385,7 @@
       <div class="entity-body competition-body">
         <section class="entity-section">
           <header class="entity-section-head"><div><span>Участники</span><h2>Клубы турнира</h2></div><strong>${clubs.length}</strong></header>
-          <div class="competition-club-grid">${clubs.length?clubs.map(club=>`<button type="button" ${FBZActions.attrs("entities.go-club",[Number(club.id)])}>${identityVisual({entity:club,kind:'club',className:'competition-club-mark'})}<span><strong>${esc(club.name)}</strong><small>${esc(club.tla||club.short_name||'Клуб')}</small></span><i>→</i></button>`).join(''):'<div class="entity-inline-empty">Клубы пока не добавлены</div>'}</div>
+          <div class="competition-club-grid">${clubs.length?clubs.map(club=>`<button type="button" ${FBZActions.attrs("entities.go-club",[Number(club.id)])}>${identityVisual({entity:club,kind:'club',className:'competition-club-mark'})}<span><strong>${esc(FBZNames.club(club))}</strong><small>${esc(club.tla||club.short_name||'Клуб')}</small></span><i>→</i></button>`).join(''):'<div class="entity-inline-empty">Клубы пока не добавлены</div>'}</div>
         </section>
         <section class="entity-section">
           <header class="entity-section-head"><div><span>Календарь</span><h2>Матчи турнира</h2></div><strong>${matches.length}</strong></header>

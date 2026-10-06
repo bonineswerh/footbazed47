@@ -56,9 +56,9 @@ async function openRatingForm(mid){
       return;
     }
 
-    document.getElementById('rMI').textContent=`${match.home_team_name} — ${match.away_team_name}`;
-    document.getElementById('rSupportHome').textContent=match.home_team_name;
-    document.getElementById('rSupportAway').textContent=match.away_team_name;
+    document.getElementById('rMI').textContent=FBZNames.matchTitle(match);
+    document.getElementById('rSupportHome').textContent=FBZDomain.matchTeamName(match,'home');
+    document.getElementById('rSupportAway').textContent=FBZDomain.matchTeamName(match,'away');
     setRatingMode(Boolean(existing));
     if(existing){
       selScore(existing.match_rating,RATING_LABELS);
@@ -266,12 +266,12 @@ async function retryLineup(){
 }
 
 function renderTeamSquad(teamName,players,side,formation){
-  if(!players.length)return`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(teamName)}"><div class="rating-roster-empty"><strong>${esc(teamName)}</strong><p>Состав команды пока недоступен.</p><span>Можно оценить матч и игроков другой команды. Отсутствующие данные не считаются нулевой оценкой.</span></div></section>`;
+  if(!players.length)return`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(FBZNames.club(teamName))}"><div class="rating-roster-empty"><strong>${esc(FBZNames.club(teamName))}</strong><p>Состав команды пока недоступен.</p><span>Можно оценить матч и игроков другой команды. Отсутствующие данные не считаются нулевой оценкой.</span></div></section>`;
   const starters=players.filter(p=>p.participation==='starter'),substitutes=players.filter(p=>p.participation==='substitute');
   const groups={};
   const onGrid=starters.length>0&&starters.every(p=>/^[1-6]:[1-5]$/u.test(p.grid||''));
   starters.forEach(player=>{const key=onGrid?player.grid.split(':')[0]:POSITION_GROUP[player.position]||'other';(groups[key]??=[]).push(player);});
-  let html=`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(teamName)}"><header class="rating-team-head"><div><span>${side==='home'?'Хозяева':'Гости'} · Стартовый состав</span><h3>${esc(teamName)}</h3></div><small>${esc(formation||'Схема недоступна')}</small></header><div class="rating-pitch">`;
+  let html=`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(FBZNames.club(teamName))}"><header class="rating-team-head"><div><span>${side==='home'?'Хозяева':'Гости'} · Стартовый состав</span><h3>${esc(FBZNames.club(teamName))}</h3></div><small>${esc(formation||'Схема недоступна')}</small></header><div class="rating-pitch">`;
   (onGrid?Object.keys(groups).sort((a,b)=>Number(a)-Number(b)):['gk','def','mid','att','other']).forEach(group=>{
     if(!groups[group]?.length)return;
     groups[group].sort((a,b)=>onGrid?Number(a.grid.split(':')[1])-Number(b.grid.split(':')[1]):String(a.name).localeCompare(String(b.name),'ru'));
@@ -321,7 +321,7 @@ function openPlayerRating(id){
   document.getElementById('rPlayers').inert=true;
   document.getElementById('playerRatingInitials').textContent=playerInitials(player.name);
   document.getElementById('playerRatingName').textContent=player.name;
-  document.getElementById('playerRatingMeta').textContent=`${player.team||''}${player.position?' · '+player.position:''}`;
+  document.getElementById('playerRatingMeta').textContent=`${player.team?FBZNames.club(player.team):''}${player.position?' · '+player.position:''}`;
   const score=rPS[rActivePlayer]||null;
   document.getElementById('playerRatingRange').value=score||5;
   updatePlayerRatingEditor(score);

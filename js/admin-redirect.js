@@ -1,2 +1,2 @@
 'use strict';
-window.location.replace('/admin');
+window.location.replace((/^\/en(?:\/|$)/u.test(location.pathname)?'/en':'')+'/admin');

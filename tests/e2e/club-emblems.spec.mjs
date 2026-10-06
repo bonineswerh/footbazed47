@@ -12,7 +12,7 @@ for(const theme of ['dark','light'])test(`эмблемы API-Football в кал�
   await page.goto('/matches?__e2e=1');await page.evaluate(value=>document.documentElement.dataset.theme=value,theme);
   await expect(page.locator('#matchG .mc-score-mark img').first()).toBeVisible();
   expect(await page.locator('#matchG .mc-score-mark img').first().evaluate(img=>img.naturalWidth)).toBeGreaterThan(0);
-  await page.locator('#matchG .mc-score-link').filter({hasText:'Manchester City FC'}).click();
+  await page.locator('#matchG .mc-score-link').filter({hasText:'Ман Сити'}).click();
   await expect(page).toHaveURL(/\/match\/101/);await expect(page.locator('.md-team-mark img')).toHaveCount(2);
   for(const mark of await page.locator('.md-team-mark.has-image').all()){
     await expect(mark).toHaveCSS('background-color','rgba(0, 0, 0, 0)');

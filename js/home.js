@@ -31,7 +31,7 @@
     if(!target)return;
     const clubs=Array.isArray(user?.favorite_clubs)?user.favorite_clubs.slice(0,6):[];
     if(clubs.length){
-      target.innerHTML=`<div class="home-team-list">${clubs.map(club=>`<button type="button" ${FBZActions.attrs("home.go-club",[Number(club.id)])}>${root.FBZMedia.visual({entity:club,kind:'club',className:'home-club-mark'})}<span>${root.esc(club.short_name||club.name)}</span></button>`).join('')}</div><p>Откройте клуб, чтобы посмотреть его состав и календарь.</p><button class="text-action" type="button" data-fbz-click="shell.open-global-search">Добавить клуб →</button>`;
+      target.innerHTML=`<div class="home-team-list">${clubs.map(club=>`<button type="button" ${FBZActions.attrs("home.go-club",[Number(club.id)])}>${root.FBZMedia.visual({entity:club,kind:'club',className:'home-club-mark'})}<span>${root.esc(FBZNames.club(club))}</span></button>`).join('')}</div><p>Откройте клуб, чтобы посмотреть его состав и календарь.</p><button class="text-action" type="button" data-fbz-click="shell.open-global-search">Добавить клуб →</button>`;
       return;
     }
     target.innerHTML=`<div class="home-club-empty">${root.ico('football',21)}<strong>Клубы пока не выбраны</strong><p>Добавьте любимые клубы в избранное, чтобы быстро открывать их составы и матчи.</p><button class="btn btn-g btn-sm" type="button" data-fbz-click="shell.open-global-search">Найти клуб</button></div>`;
@@ -55,13 +55,13 @@
     const date=new Date(match.match_date);
     const dateLabel=Number.isFinite(date.getTime())?date.toLocaleDateString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'Дата уточняется';
     const finished=match.status==='finished',live=match.status==='live';
-    const homeName=String(match.home_team_name||'Команда хозяев');
-    const awayName=String(match.away_team_name||'Команда гостей');
+    const homeName=root.FBZDomain.matchTeamName(match,'home');
+    const awayName=root.FBZDomain.matchTeamName(match,'away');
     const mark=name=>root.teamMonogram?root.teamMonogram(name):name.slice(0,2).toLocaleUpperCase('ru-RU');
     target.innerHTML=`<article class="home-spotlight${live?' is-live':''}" style="${root.FBZDomain.matchPaletteStyle(match)}" aria-label="Матч в фокусе: ${root.esc(homeName)} — ${root.esc(awayName)}">
       <div class="home-spotlight-main">
         <div class="home-spotlight-top"><span class="home-spotlight-overline">FOOTBAZED <i></i> МАТЧ В ФОКУСЕ</span><span class="home-spotlight-status">${live?'<span class="live-dot"></span>LIVE':finished?'Финальный свисток':'В календаре'}</span></div>
-        <p class="home-spotlight-league">${root.esc(match.league_name||'Футбол')} <span>·</span> ${root.esc(dateLabel)}</p>
+        <p class="home-spotlight-league">${root.esc(FBZNames.competition(match.league_name)||'Футбол')} <span>·</span> ${root.esc(dateLabel)}</p>
         <h2 class="home-spotlight-title">${finished?'Недавний матч':live?'Игра идёт прямо сейчас':'Ближайший матч'}</h2>
         <div class="home-spotlight-score" role="group" aria-label="${root.esc(homeName)} ${root.esc(match.home_score??'без счёта')}, ${root.esc(awayName)} ${root.esc(match.away_score??'без счёта')}">
           <div class="home-spotlight-team">${root.matchClubMark(match,'home','home-spotlight-mark','eager')}<strong>${root.esc(homeName)}</strong><b>${root.esc(match.home_score??'—')}</b></div>
@@ -77,8 +77,8 @@
     const date=new Date(match.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
     return`<article class="home-pending-match">
       <button type="button" ${FBZActions.attrs("home.go-md",[Number(match.id)])}>
-        <span class="home-pending-meta">${root.esc(match.league_name)} · ${root.esc(date)}</span>
-        <strong><span>${root.esc(match.home_team_name)}</span><b>${root.esc(match.home_score??'—')} : ${root.esc(match.away_score??'—')}</b><span>${root.esc(match.away_team_name)}</span></strong>
+        <span class="home-pending-meta">${root.esc(FBZNames.competition(match.league_name))} · ${root.esc(date)}</span>
+        <strong><span>${root.esc(FBZNames.club(match.home_team_name))}</span><b>${root.esc(match.home_score??'—')} : ${root.esc(match.away_score??'—')}</b><span>${root.esc(FBZNames.club(match.away_team_name))}</span></strong>
       </button>
       <button class="home-pending-rate" type="button" ${FBZActions.attrs("home.open-rate",[Number(match.id)])}>${root.ico('star',15)} Оценить</button>
     </article>`;

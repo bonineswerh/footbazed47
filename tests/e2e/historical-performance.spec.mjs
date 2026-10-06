@@ -25,7 +25,7 @@ test('confirmed overview defaults to an honest empty sample and full history sur
 test('player club filter refers to fixture side and never current membership or opponents',async({page})=>{
   await installSupabaseMock(page,{lineup:confirmed,players:[{id:5290,name:'Transferred Player',team:'Manchester City FC',club_id:31},{id:5292,name:'Bench Player',team:'Real Madrid CF',club_id:24}]});
   await page.goto('/discover?__e2e=1&ov_kind=players&ov_club_id=24');
-  await expect(page.locator('.statistics-row')).toHaveCount(1);await expect(page.locator('.statistics-meta')).toHaveText('Real Madrid CF');
+  await expect(page.locator('.statistics-row')).toHaveCount(1);await expect(page.locator('.statistics-meta')).toHaveText('Реал Мадрид');
   await page.locator('#statisticsFilters-open').click();await page.getByLabel('Клуб',{exact:true}).selectOption('31');await page.getByRole('button',{name:'Готово',exact:true}).click();
   await expect(page.locator('.statistics-row')).toHaveCount(0);await expect(page.locator('#statisticsSummary strong')).toHaveText(['0','0','0']);
   await page.getByRole('button',{name:'Вся история оценок',exact:true}).click();await expect(page.locator('.statistics-row')).toHaveCount(0);
@@ -45,7 +45,7 @@ test('player legacy scores are preserved separately from confirmed statistics',a
   await page.goto('/player/5290?__e2e=1');await expect(page.locator('.entity-meta')).toContainText('Клуб в каталоге: New Club');
   await expect(page.locator('.player-stats strong')).toHaveText(['8.0','2','1','1']);
   await page.getByText('Ранее сохранённые оценки · 1',{exact:true}).click();await expect(page.locator('.entity-legacy')).toContainText('2.0/10');
-  await expect(page.locator('.performance-row').first()).toContainText('Выступление за Real Madrid CF');
+  await expect(page.locator('.performance-row').first()).toContainText('Выступление за Реал Мадрид');
   await expect(page.locator('.performance-row').last()).toContainText('Участие в матче не подтверждено');
   await page.locator('.performance-row').first().click();await expect(page).toHaveURL(/\/match\/101/);
 });

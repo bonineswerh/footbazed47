@@ -1,7 +1,7 @@
 import {expect,test} from '@playwright/test';
 import {installSupabaseMock} from './mock-supabase.mjs';
 
-test('home stays inside the frontend performance budget',async({page},testInfo)=>{
+for(const language of ['ru','en'])test(`home stays inside the frontend performance budget ${language}`,async({page},testInfo)=>{
   await page.addInitScript(()=>{
     window.__FOOTBAZED_LAYOUT_SHIFTS__=[];
     try{
@@ -21,7 +21,7 @@ test('home stays inside the frontend performance budget',async({page},testInfo)=
     }catch{}
   });
   await installSupabaseMock(page);
-  await page.goto('/?__e2e=1#home');
+  await page.goto((language==='en'?'/en':'/')+'?__e2e=1#home');
   await expect(page.locator('#homeDashboardTitle')).toBeVisible();
   await page.waitForTimeout(800);
 

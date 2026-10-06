@@ -20,9 +20,9 @@ test('профиль использует полную историю, а не �
   await expect(page.locator('.prdist-note')).toHaveText('65 доступных оценок. Вся ваша история.');
   await expect(page.locator('.prdist-row[data-tone="elite"]').filter({hasText:/^\s*9\b/}).locator('b')).toHaveText('60');
   await expect(page.locator('.profile-sample')).toContainText('включая оценки «Только вам»');
-  await page.locator('.profile-tournament').filter({hasText:'Champions League'}).click();
+  await page.locator('.profile-tournament').filter({hasText:'Лига чемпионов'}).click();
   await expect(page).toHaveURL(/\/competition\/7\?__e2e=1$/);
-  await expect(page.locator('#competitionC .entity-hero h1')).toHaveText('Champions League');
+  await expect(page.locator('#competitionC .entity-hero h1')).toHaveText('Лига чемпионов');
   expect(errors).toEqual([]);
 });
 

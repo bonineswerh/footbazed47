@@ -47,7 +47,7 @@ test('обзор имеет четыре сущности, выборку и р�
   await expect(page.locator('.statistics-row')).toContainText('Jude Bellingham');
   await page.getByRole('button',{name:'Сбросить фильтры'}).click();
   await page.getByRole('button',{name:'Турниры',exact:true}).click();
-  await expect(page.locator('.statistics-row')).toContainText('Champions League');
+  await expect(page.locator('.statistics-row')).toContainText('Лига чемпионов');
   await page.locator('#statisticsFilters-open').click();
   await page.getByLabel('Минимум оценок').selectOption('5');
   await expect(page.locator('.statistics-list')).toContainText('пока нет оценок');
@@ -63,7 +63,7 @@ test('запоздавший ответ поиска не заменяет но�
   await search.fill('Brighton');
   await expect(page.locator('#diaryList .rh-row')).toHaveCount(1);
   await page.waitForTimeout(1000);
-  await expect(page.locator('#diaryList')).toContainText('Brighton');
+  await expect(page.locator('#diaryList')).toContainText('Брайтон');
   await expect(page.locator('#diaryPage')).toHaveText('1–1 из 1');
 });
 
@@ -89,13 +89,13 @@ test('клубы зависят от турнира, поиск варианто
   await page.getByLabel('Клуб',{exact:true}).selectOption('25');
   await page.getByRole('button',{name:'Готово'}).click();
   await expect(page).toHaveURL(/ov_competition_id=8.*ov_club_id=25/);
-  await expect(page.getByRole('button',{name:'Убрать фильтр Клуб: FC Barcelona'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Убрать фильтр Клуб: Барселона'})).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('button',{name:'Убрать фильтр Клуб: FC Barcelona'})).toBeVisible();
-  await page.getByRole('button',{name:'Убрать фильтр Клуб: FC Barcelona'}).click();
+  await expect(page.getByRole('button',{name:'Убрать фильтр Клуб: Барселона'})).toBeVisible();
+  await page.getByRole('button',{name:'Убрать фильтр Клуб: Барселона'}).click();
   await expect(page).not.toHaveURL(/ov_club_id/);
   await page.goBack();
-  await expect(page.getByRole('button',{name:'Убрать фильтр Клуб: FC Barcelona'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Убрать фильтр Клуб: Барселона'})).toBeVisible();
 });
 
 test('месячная сводка учитывает всю историю, включая записи на следующих страницах',async({page})=>{

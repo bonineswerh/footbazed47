@@ -15,7 +15,7 @@ test('авторизованная главная показывает личн�
   await expect(page.locator('#homeDashboardTitle')).toContainText('Bazed');
   await expect(page.locator('#homeOverview .home-overview-item')).toHaveCount(3);
   await expect(page.locator('#homePendingRatings')).toContainText('Всё оценено');
-  await expect(page.locator('#homeFavoriteTeams')).toContainText('Real Madrid');
+  await expect(page.locator('#homeFavoriteTeams')).toContainText('Реал Мадрид');
   await expect(page.getByRole('button',{name:'Обзор',exact:true}).first()).toBeVisible();
 });
 
@@ -99,7 +99,7 @@ test('авторизованный пользователь управляет �
 test('страница клуба открывает игрока и возвращает в клуб',async({page})=>{
   await page.goto('/club/24?__e2e=1');
 
-  await expect(page.getByRole('heading',{name:'Real Madrid CF',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Реал Мадрид',exact:true})).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href','https://footbazed47.vercel.app/club/24');
   expect(await page.locator('#fbzStructuredData').textContent()).toContain('SportsTeam');
   await expect(page.getByText('Santiago Bernabéu')).toBeVisible();
@@ -109,14 +109,14 @@ test('страница клуба открывает игрока и возвр�
   await expect(page).toHaveURL(/\/player\/5290\?__e2e=1$/u);
   await expect(page.getByRole('heading',{name:'Thibaut Courtois',exact:true})).toBeVisible();
   await expect(page.getByText('Средняя оценка')).toBeVisible();
-  await page.getByRole('button',{name:'Real Madrid CF',exact:true}).click();
+  await page.getByRole('button',{name:'Реал Мадрид',exact:true}).click();
   await expect(page).toHaveURL(/\/club\/24\?__e2e=1$/u);
-  await expect(page.getByRole('heading',{name:'Real Madrid CF',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Реал Мадрид',exact:true})).toBeVisible();
 });
 
 test('публичный URL матча получает canonical и SportsEvent metadata',async({page})=>{
   await page.goto('/match/101?__e2e=1');
-  await expect(page.locator('.md-hero')).toContainText('Real Madrid CF');
+  await expect(page.locator('.md-hero')).toContainText('Реал Мадрид');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href','https://footbazed47.vercel.app/match/101');
   expect(await page.locator('#fbzStructuredData').textContent()).toContain('SportsEvent');
 });
@@ -134,7 +134,7 @@ test('клуб, игрок и турнир работают без production me
   await expect(page.locator('.player-mark img')).toHaveCount(0);
 
   await page.goto('/competition/7?__e2e=1');
-  await expect(page.getByRole('heading',{name:'Champions League',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Лига чемпионов',exact:true})).toBeVisible();
   await expect(page.locator('.entity-mark.is-fallback')).toContainText('CL');
   await expect(page.locator('.competition-club-grid>button')).toHaveCount(2);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href','https://footbazed47.vercel.app/competition/7');
@@ -175,11 +175,11 @@ test('глобальный поиск открывает страницу тур
   await expect(page.locator('#globalSearchInput')).toBeVisible();
   expect(searchRequests).toHaveLength(1);
   await page.locator('#globalSearchInput').fill('Champions');
-  const result=page.getByRole('option',{name:/Champions League/});
+  const result=page.getByRole('option',{name:/Лига чемпионов/});
   await expect(result).toBeVisible();
   await result.click();
   await expect(page).toHaveURL(/\/competition\/7\?__e2e=1$/u);
-  await expect(page.getByRole('heading',{name:'Champions League',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Лига чемпионов',exact:true})).toBeVisible();
 });
 
 test('страница матча сравнивает личную оценку с другими болельщиками',async({page})=>{
@@ -259,18 +259,18 @@ test('матчи фильтруются серверным RPC без загру
 
   await page.locator('#msearch').fill('Barcelona');
   await expect(page.locator('.match-results-summary')).toContainText('Показано 1 из 1');
-  await expect(page.locator('#matchG .mcard')).toContainText('FC Barcelona');
+  await expect(page.locator('#matchG .mcard')).toContainText('Барселона');
 
   await page.locator('#msearch').fill('');
   await page.getByRole('button',{name:'Завершённые'}).click();
   await expect(page.locator('.match-results-summary')).toContainText('Показано 1 из 1');
-  await expect(page.locator('#matchG .mcard')).toContainText('Manchester City FC');
+  await expect(page.locator('#matchG .mcard')).toContainText('Ман Сити');
 });
 
 test('обзор открывает матч с клавиатуры и сохраняет старую ссылку',async({page})=>{
   await page.goto('/?__e2e=1#leaderboard');
   const row=page.locator('.statistics-row').first();
-  await expect(row).toContainText('Real Madrid');
+  await expect(row).toContainText('Реал Мадрид');
   await row.focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/match\/101\?__e2e=1$/u);
