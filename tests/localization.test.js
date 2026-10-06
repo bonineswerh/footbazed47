@@ -8,9 +8,16 @@ test('authored text compiler covers every source and fails on missing translatio
   const compiler=await import('../scripts/localization.mjs');
   for(const file of compiler.localeSources)assert.doesNotThrow(()=>compiler.englishResource(fs.readFileSync(compiler.projectRoot+'/'+file,'utf8'),file,catalog));
   assert.throws(()=>compiler.englishSource('const title="Нет перевода";','sample.js',catalog),/Missing English text/);
-  const home=compiler.englishResource(fs.readFileSync(compiler.projectRoot+'/index.html','utf8'),'index.html',catalog);
+  const russianHome=fs.readFileSync(compiler.projectRoot+'/index.html','utf8');
+  const home=compiler.englishResource(russianHome,'index.html',catalog);
   assert.match(home,/<base href="\/">/);
   assert.match(home,/<link rel="canonical" href="https:\/\/footbazed47.vercel.app\/en">/);
+  for(const document of [russianHome,home]){
+    assert.equal((document.match(/hreflang=/gu)||[]).length,3);
+    assert.match(document,/hreflang="ru" href="https:\/\/footbazed47.vercel.app\/"/);
+    assert.match(document,/hreflang="en" href="https:\/\/footbazed47.vercel.app\/en"/);
+    assert.match(document,/hreflang="x-default" href="https:\/\/footbazed47.vercel.app\/"/);
+  }
   const admin=compiler.englishResource(fs.readFileSync(compiler.projectRoot+'/admin.html','utf8'),'admin.html',catalog);
   assert.match(admin,/src="\/en-assets\/js\/admin-redirect.js/);
   assert.match(admin,/href="\/en\/admin"/);
@@ -42,6 +49,7 @@ test('English public metadata, alternate languages and sitemap agree without que
   const profile=await resolvePage(routeFromPath('/en/profile/3615141a-7700-46b8-9ba5-e4f4450537fc'),{},()=>{throw Error('No private lookup');});
   assert.equal(profile.metadata.index,false);
   const html=renderDocument(fs.readFileSync(require.resolve('../index.html'),'utf8'),staticPage.metadata);
+  assert.equal((html.match(/hreflang=/gu)||[]).length,3);
   assert.match(html,/hreflang="ru" href="https:\/\/footbazed47.vercel.app\/matches"/);
   assert.match(html,/hreflang="en" href="https:\/\/footbazed47.vercel.app\/en\/matches"/);
   const sitemap=buildSitemap({clubs:[{id:24}]});

@@ -32,6 +32,7 @@ function renderDocument(html,metadata){
   const basePath=metadata.path.replace(/^\/en(?=\/|$)/u,'')||'/';
   const origin='https://footbazed47.vercel.app';
   const links=[['ru',origin+basePath],['en',origin+'/en'+(basePath==='/'?'':basePath)],['x-default',origin+basePath]];
+  result=result.replace(/<link rel="alternate" hreflang="[^"]+" href="[^"]+">\s*/gu,'');
   result=result.replace('</head>',links.map(([lang,url])=>`<link rel="alternate" hreflang="${lang}" href="${escape(url)}">`).join('\n')+'\n</head>');
   if(metadata.structuredData){
     const json=JSON.stringify({'@context':'https://schema.org',...metadata.structuredData}).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
