@@ -47,13 +47,14 @@
     });
     return loadDiary();
   }
+function tournamentLabel(count){return root.FBZDomain.countLabel(count,{one:'турнир',few:'турнира',many:'турниров'}).split(/\s+/).at(-1);}
 function renderProfileInsights(ratings,matchMap,summary){
   if(summary){
     const total=Number(summary.total)||0,tournaments=summary.tournaments||[];
     const scope=summary.scope==='own'?'По всей вашей истории, включая оценки «Только вам».':'По всей публичной истории оценок этого болельщика.';
     return '<section class="pcard" aria-labelledby="profileInsightsTitle"><h2 class="pcard-title" id="profileInsightsTitle">Статистика оценок</h2>'
       +'<p class="profile-sample">'+esc(scope)+'</p>'
-      +(total?'<div class="p-insight-grid"><div class="p-mini"><span>'+Number(summary.reviewed)+'</span><small>с комментарием</small></div><div class="p-mini"><span>'+Number(summary.tournament_count)+'</span><small>турниров</small></div><div class="p-mini"><span>'+Number(summary.minimum)+'–'+Number(summary.maximum)+'</span><small>диапазон оценок</small></div></div>'
+      +(total?'<div class="p-insight-grid"><div class="p-mini"><span>'+Number(summary.reviewed)+'</span><small>с комментарием</small></div><div class="p-mini"><span>'+Number(summary.tournament_count)+'</span><small>'+tournamentLabel(Number(summary.tournament_count))+'</small></div><div class="p-mini"><span>'+Number(summary.minimum)+'–'+Number(summary.maximum)+'</span><small>диапазон оценок</small></div></div>'
         +(tournaments.length?'<h3 class="profile-subtitle">'+(Number(summary.tournament_count)>tournaments.length?'Чаще всего оценивает':'Оценки по турнирам')+'</h3><div class="p-leagues">'+tournaments.map(t=>'<button class="p-league profile-tournament" type="button" '+FBZActions.attrs('profile.go-competition',[Number(t.id)])+'><span>'+esc(FBZNames.competition(t.name))+'<small>'+esc(FBZDomain.countLabel(Number(t.votes),{one:'оценка',few:'оценки',many:'оценок'}))+'</small></span><span class="profile-tournament-average rating-ink" data-tone="'+FBZDomain.ratingTone(Number(t.average))+'">'+FBZDomain.ratingPresentation(t.average,1).value+'<span class="sr-only"> — средняя оценка</span></span></button>').join('')+'</div>':'')
         :'<div class="profile-empty"><strong>У каждой истории есть первый матч</strong><p>Здесь появятся турниры и впечатления из доступных оценок.</p></div>')+'</section>';
   }
@@ -66,7 +67,7 @@ function renderProfileInsights(ratings,matchMap,summary){
   const nums=list.map(r=>Number(r.match_rating)).filter(n=>n>=1&&n<=10);
   return '<section class="pcard"><h2 class="pcard-title">Статистика оценок</h2>'
     +'<p class="profile-sample">По '+esc(FBZDomain.countLabel(list.length,{one:'доступной оценке',few:'доступным оценкам',many:'доступным оценкам'}))+'. Это часть истории, видимая в профиле.</p>'
-    +'<div class="p-insight-grid"><div class="p-mini"><span>'+reviewed+'</span><small>с комментарием</small></div><div class="p-mini"><span>'+leagues.length+'</span><small>турниров</small></div><div class="p-mini"><span>'+(nums.length?Math.min(...nums)+'–'+Math.max(...nums):'—')+'</span><small>диапазон оценок</small></div></div>'
+    +'<div class="p-insight-grid"><div class="p-mini"><span>'+reviewed+'</span><small>с комментарием</small></div><div class="p-mini"><span>'+leagues.length+'</span><small>'+tournamentLabel(leagues.length)+'</small></div><div class="p-mini"><span>'+(nums.length?Math.min(...nums)+'–'+Math.max(...nums):'—')+'</span><small>диапазон оценок</small></div></div>'
     +(leagues.length?'<h3 class="profile-subtitle">Турниры в этой выборке</h3><div class="p-leagues">'+leagues.slice(0,3).map(([league,count])=>'<div class="p-league"><span>'+esc(FBZNames.competition(league))+'</span><b>'+count+'</b></div>').join('')+'</div>':'')+'</section>';
 }
 
@@ -138,7 +139,7 @@ async function loadProfile(uid){
       if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs("profile.relationship-menu",[uid,u.display_name||u.username,true])} aria-haspopup="dialog">${ico('users',16)} В друзьях ${ico('chevron',12)}</button>`;
       else if(fr?.status==='pending'&&fr.direction==='outgoing')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.6;cursor:default">⏳ Заявка отправлена</button>`;
       else if(fr?.status==='pending')friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" ${FBZActions.attrs("profile.accept-friend-from-profile",[uid])}>${ico('users',13)} Принять заявку</button>`;
-      else friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" ${FBZActions.attrs("profile.add-friend-from-profile",[uid])}>${ico('users',13)} Добавить в друзья</button>`;
+      else friendBtn=`<button class="btn btn-g btn-sm" id="profAddBtn" ${FBZActions.attrs("profile.add-friend-from-profile",[uid])}>${ico('users',13)} Добавить в друзья</button>`;
     }else if(!isMe){
       friendBtn=`<button class="btn btn-l btn-sm" data-fbz-click="shell.open-auth">Войти чтобы добавить</button>`;
     }

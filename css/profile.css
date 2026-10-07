@@ -80,6 +80,7 @@
 .phero-name{font-family:var(--font-ui);font-weight:650;letter-spacing:-.035em}
 .phero-acts{grid-column:1/-1;grid-row:6;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);max-width:none;align-items:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--b1)}
 .profile-relationship{display:flex;align-items:center;gap:8px;min-width:0}.profile-relationship>.btn{min-height:44px;border-radius:var(--radius-control)}.profile-relationship>.btn:not(.profile-more){flex:1;min-width:0;white-space:normal;line-height:1.4}.profile-relationship>.profile-more{flex:0 0 44px}
+.profile-relationship{justify-self:start;width:fit-content;max-width:100%}
 .phero-acts>.profile-compare{grid-column:2;min-width:200px;box-shadow:0 0 22px var(--accent4)}.phero-acts>.profile-link{grid-column:3;justify-self:end;width:44px;padding:0}
 .phero .pstats{grid-row:7;margin-top:20px;border-top:0;padding-top:0}.phero .pst-v:not(.rating-ink){color:var(--accent2)}.phero .pst-l{color:var(--text2);font-weight:550}
 .phero .profile-more,.phero-acts>.profile-link{width:44px;min-width:44px;max-width:44px;flex:none}

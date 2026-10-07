@@ -106,7 +106,8 @@ test('admin guide explains destructive tools without making provider requests',a
   await installSupabaseMock(page);const mutations=[];
   await page.route('**/api/admin*',route=>{if(route.request().method()==='POST')mutations.push(route.request().postDataJSON());return route.fulfill({contentType:'application/json',body:JSON.stringify({counts:{},recentMatches:[],footballApiConfigured:true,apiFootballConfigured:true})});});
   await page.setViewportSize({width:390,height:844});await page.goto('/admin?__e2e=1');await page.getByRole('button',{name:'Инструкция',exact:true}).click();
-  await expect(page.locator('#admin-view-help details')).toHaveCount(8);
+  const experts=page.locator('#admin-view-help summary').filter({hasText:'Эксперты FOOTBAZED'});await expect(experts).toBeVisible();await experts.click();
+  await expect(page.locator('#admin-view-help')).toContainText('Роль эксперта не даёт прав администратора');
   await page.locator('#admin-view-help summary').filter({hasText:'Очистка и обслуживание'}).click();
   await expect(page.locator('#admin-view-help')).toContainText('сохраните резервную копию');expect(mutations).toEqual([]);
   await expectAccessible(page,'#admin-view-help');await testInfo.attach('admin-guide.png',{body:await page.screenshot(),contentType:'image/png'});

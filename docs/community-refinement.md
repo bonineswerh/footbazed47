@@ -22,3 +22,11 @@ Recommendations require an accepted mutual friend. Existing friends, pending req
 - [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security): graph and editorial privileges are enforced on the database boundary, independently of hidden UI controls.
 
 Validation includes role-level pgTAP, administrator API tests, responsive crest geometry, focus return and dialog privacy, empty/real expert feeds, recommendations after a request, reaction states, reduced motion, startup budget, and full regression checks. Release verification must follow database compatibility, generated types and a production deployment.
+
+## Database release verification
+
+The two additive migrations are applied as `20261007195757` and `20261007200508`; the latter covers the assigning-administrator foreign key. Hosted generated types match the committed normalized contract. Counts remained 6 accounts, 12 ratings, 261 matches and 9 friendships. The registry is empty, RLS is enabled, client roles cannot read it or call the assignment RPC, and the anonymous role cannot call recommendations. Live readers return an empty expert feed and a bounded recommendation contract.
+
+Advisors have no remaining unindexed foreign keys. The private registry intentionally has no client RLS policies or grants. The authenticated SECURITY DEFINER advisory for recommendations is intentional: this aggregate reader needs the protected friendship graph, checks `auth.uid()`, and excludes private and blocked connections before pagination. Existing unrelated advisories remain tracked in the broader audit; this stage does not declare the whole security audit complete.
+
+Profile/editor accessibility and responsive checks include 320, 390 and 1440 pixels; browser compatibility also covers Firefox and WebKit. Visual references were reviewed in both themes on Windows and Linux. The mobile icon-control width and Safari return-focus defects discovered during testing were fixed, rather than bypassed in tests.
