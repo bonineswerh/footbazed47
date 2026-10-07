@@ -386,7 +386,7 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261007-expectations',script:'js/profile.js?v=20261007-expectations',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261007-expectations2',script:'js/profile.js?v=20261007-expectations',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});

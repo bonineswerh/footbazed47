@@ -161,7 +161,7 @@ test('выход очищает уведомления и отбрасывает
   await expect(page.locator('.notif-item')).toHaveCount(2);
   await page.evaluate(()=>{
     const original=sb.rpc.bind(sb);window.notificationReleases=[];
-    sb.rpc=(name,args)=>name==='get_notifications_page'?new Promise(done=>window.notificationReleases.push(()=>done(original(name,args)))):original(name,args);
+    sb.rpc=(name,args)=>name==='get_notifications_page_v2'?new Promise(done=>window.notificationReleases.push(()=>done(original(name,args)))):original(name,args);
     window.pendingNotifications=loadNotifications();
   });
   await expect.poll(()=>page.evaluate(()=>window.notificationReleases.length)).toBe(1);

@@ -54,7 +54,14 @@ test('expectation edits and deletion are explicit and do not alter match ratings
   await page.goto('/match/102?__e2e=1');await page.locator('.md-primary-action').click();
   await expect(page.locator('#rScoreDisp')).toHaveText('9/10');await expect(page.locator('#matchRatingRange')).toHaveAttribute('data-tone','elite');
   await expect(page.locator('input[value="home"][name="ratingSupporterSide"]')).toBeChecked();
+  await page.evaluate(()=>{
+    const rpc=sb.rpc.bind(sb);let attempts=0;
+    sb.rpc=(name,args)=>name==='delete_match_expectation'&&attempts++===0?Promise.resolve({data:null,error:{message:'temporary failure'}}):rpc(name,args);
+  });
   await page.locator('#rExpectationDelete').click();await page.locator('#confirmAction').click();
+  await expect(page.locator('#toast')).toContainText('Не удалось удалить ожидание');
+  await expect(page.locator('#confirmOv')).toBeVisible();await expect(page.locator('.expectation-personal')).toContainText('9.0');
+  await page.locator('#confirmAction').click();
   await expect(page.locator('#rateOv')).toBeHidden();await expect(page.locator('.expectation-personal')).toHaveCount(0);
   expect(await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastRating())).toBeNull();
 });

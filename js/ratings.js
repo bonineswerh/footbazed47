@@ -577,20 +577,22 @@ async function saveExpectation(){
 function requestDeleteExpectation(){
   const context=ratingContext;
   if(!isRatingCurrent(context)||!context.ready||context.saving||!rExisting||context.mode!=='expectation')return;
+  const intent=routeVersion;
+  const current=()=>CU?.id===context.userId&&location.href===context.route&&routeVersion===intent;
+  // The shared confirmation replaces the editor, so its own intent guards the response.
   window.FBZConfirm.open({title:'Удалить ожидание?',message:'Ожидание не будет участвовать в сравнении после матча.',confirmText:'Удалить',onConfirm:async()=>{
-    if(!isRatingCurrent(context)||context.saving)return true;
-    context.saving=true;setRatingLoading(true);
+    if(!current()||context.saving)return true;
+    context.saving=true;
     try{
       const {error}=await sb.rpc('delete_match_expectation',{p_match_id:context.matchId});
-      if(!isRatingCurrent(context))return true;
+      if(!current())return true;
       if(error)throw error;
-      closeRate();
       if(CP==='md'&&Number(mdID)===context.matchId)loadMD(context.matchId);
       toast('Ожидание удалено','ok');return true;
     }catch(error){
-      if(!isRatingCurrent(context))return true;
+      if(!current())return true;
       toast(String(error?.message).includes('expectation_closed')?'Ожидания уже закрыты':'Не удалось удалить ожидание','err');return false;
-    }finally{context.saving=false;if(isRatingCurrent(context))setRatingLoading(false);}
+    }finally{context.saving=false;}
   }});
 }
 
