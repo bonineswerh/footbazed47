@@ -12,7 +12,7 @@ test('guests see the featured match, can open its score, and have one page headi
   await expect(feature.locator('.mc-score-num')).toHaveText('2:1');
   await expect(feature.locator('.fbz-media')).toHaveCount(2);
   await expect(page.locator('#page-home h1')).toHaveCount(1);
-  await feature.getByRole('button',{name:/Открыть матч:/}).focus();
+  await feature.getByRole('link',{name:/Открыть матч:/}).focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/match\/101/);
   await expect(page.locator('.md-hero')).toContainText('Ман Сити');

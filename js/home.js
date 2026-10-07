@@ -62,11 +62,11 @@
       <div class="home-spotlight-main">
         <div class="home-spotlight-top"><span class="home-spotlight-overline">Матч в фокусе</span><span class="home-spotlight-status">${live?'<span class="live-dot"></span>':''}${presentation.status}</span></div>
         <p class="home-spotlight-league">${root.esc(FBZNames.competition(match.league_name)||'Футбол')}</p>
-        <button class="mc-score-block mc-score-link home-spotlight-score" type="button" ${FBZActions.attrs("home.go-md",[id])} aria-label="Открыть матч: ${root.esc(homeName)} против ${root.esc(awayName)}, ${presentation.label} ${presentation.home} : ${presentation.away}">
+        <a class="mc-score-block mc-score-link home-spotlight-score" href="${root.esc(FBZLocale.path(`/match/${id}`))}" ${FBZActions.attrs("home.go-md",[id])} aria-label="Открыть матч: ${root.esc(homeName)} против ${root.esc(awayName)}, ${presentation.label} ${presentation.home} : ${presentation.away}">
           <span class="mc-score-team">${root.matchClubMark(match,'home','home-spotlight-mark','eager')}<span class="mc-score-name">${root.esc(homeName)}</span></span>
           <span class="mc-score-result"><span class="mc-score-num">${presentation.home}<span class="mc-score-separator">:</span>${presentation.away}</span><span class="mc-score-vs">${presentation.label}</span></span>
           <span class="mc-score-team">${root.matchClubMark(match,'away','home-spotlight-mark','eager')}<span class="mc-score-name">${root.esc(awayName)}</span></span>
-        </button>
+        </a>
         <div class="home-spotlight-footer"><span class="home-spotlight-date">${root.ico('calendar',15)} ${root.esc(dateLabel)}</span><div class="home-spotlight-actions"><button class="home-spotlight-primary" type="button" ${FBZActions.attrs(finished?'home.open-rate':'home.go-md',[id])}>${finished?'Оценить матч':'Открыть матч'} <span aria-hidden="true">↗</span></button></div></div>
         <p class="home-spotlight-caption">${finished?'Счёт — только часть истории. Какой была игра для вас?':live?'Матч идёт. Ваше впечатление можно будет сохранить после финального свистка.':'Откройте матч, чтобы посмотреть подробности встречи.'}</p>
       </div>
@@ -135,7 +135,7 @@
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
   "home.go-club":(event,element,[id])=>go('club',{id:id}),
-  "home.go-md":(event,element,[id])=>go('md',{mid:id}),
+  "home.go-md":(event,element,[id])=>FBZActions.follow(event,element,()=>go('md',{mid:id})),
   "home.open-rate":(event,element,[id])=>openRate(id),
   "home.home-reload":()=>FBZHome.reload()
 });

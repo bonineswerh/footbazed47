@@ -75,7 +75,7 @@ test('матч в фокусе открывает тот же матч из ка
   await expect(spotlight).toContainText('Реал Мадрид');
   await expect(spotlight).toContainText('Ман Сити');
   await expect(spotlight.locator('.mc-score-num')).toHaveText('2:1');
-  await spotlight.getByRole('button',{name:'Открыть матч'}).click();
+  await spotlight.getByRole('link',{name:/Открыть матч:/}).click();
   await expect(page).toHaveURL(/\/match\/101\?__e2e=1$/u);
   await expect(page.locator('.md-hero')).toContainText('Ман Сити');
 });
@@ -94,7 +94,7 @@ for(const scenario of [
     const card=page.locator('#matchG .mcard').filter({hasText:'Ман Сити'}).first();
     await expect(card).toBeVisible();
     await expect(card.locator('.mc-score-num')).toContainText('2:1');
-    await expect(card.getByRole('button',{name:/Открыть матч: Реал Мадрид против Ман Сити/})).toBeVisible();
+    await expect(card.getByRole('link',{name:/Открыть матч: Реал Мадрид против Ман Сити/})).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     await page.evaluate(()=>document.fonts.ready);
     const scoreType=await card.locator('.mc-score-num').evaluate(element=>({family:getComputedStyle(element).fontFamily,numbers:getComputedStyle(element).fontVariantNumeric}));

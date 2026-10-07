@@ -34,5 +34,13 @@
       }catch{report();}
     });
   }
-  root.FBZActions=Object.freeze({register,attrs});
+  // Native links keep modifier-click, context menu and new-tab behavior.
+  function follow(event,element,navigate){
+    if(element.matches('a[href]')){
+      if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||element.hasAttribute('download')||element.target&&element.target!=='_self')return;
+      event.preventDefault();
+    }
+    return navigate();
+  }
+  root.FBZActions=Object.freeze({register,attrs,follow});
 })(window);

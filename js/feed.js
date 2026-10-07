@@ -71,7 +71,7 @@
         <div class="feed-match-meta"><span>${esc(FBZNames.competition(item.match?.league_name)||'Футбол')}</span><time>${new Date(item.match?.match_date).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}</time></div>
         <div class="feed-scoreline">
           ${clubButton(item.match?.home_club_id,item.match?.home_team_name,'home',item.match)}
-          <button class="feed-score" type="button" ${FBZActions.attrs("feed.go-md",[Number(item.match_id)])} aria-label="Открыть матч: ${esc(item.match?.home_team_name||'Хозяева')} против ${esc(item.match?.away_team_name||'Гости')}, счёт ${esc(score(item.match||{}))}"><span class="mc-score-num">${esc(item.match?.home_score??'—')}<span class="mc-score-separator">:</span>${esc(item.match?.away_score??'—')}</span></button>
+          <a class="feed-score" href="${esc(FBZLocale.path(`/match/${Number(item.match_id)}`))}" ${FBZActions.attrs("feed.go-md",[Number(item.match_id)])} aria-label="Открыть матч: ${esc(item.match?.home_team_name||'Хозяева')} против ${esc(item.match?.away_team_name||'Гости')}, счёт ${esc(score(item.match||{}))}"><span class="mc-score-num">${esc(item.match?.home_score??'—')}<span class="mc-score-separator">:</span>${esc(item.match?.away_score??'—')}</span></a>
           ${clubButton(item.match?.away_club_id,item.match?.away_team_name,'away',item.match)}
         </div>
       </div>
@@ -416,7 +416,7 @@ FBZActions.register({
   "feed.retry-comments":(event,element,[id])=>{FBZFeed.toggleComments(id);return FBZFeed.toggleComments(id);},
   "feed.go-club":(event,element,[id])=>go('club',{id:id}),
   "feed.go-player":(event,element,[id])=>go('player',{id:id}),
-  "feed.go-md":(event,element,[id])=>go('md',{mid:id}),
+  "feed.go-md":(event,element,[id])=>FBZActions.follow(event,element,()=>go('md',{mid:id})),
   "feed.toggle-comments":(event,element,[id])=>FBZFeed.toggleComments(id,element),
   "feed.open-rate":(event,element,[id])=>openRate(id),
   "feed.load-more":()=>FBZFeed.loadMore(),

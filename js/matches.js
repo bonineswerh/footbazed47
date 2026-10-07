@@ -90,19 +90,19 @@ function renderMCard(match){
   const statusClass={live:'t-live',finished:'t-fin',scheduled:'t-sched'}[match.status]||'';
   const derby=isDerby(match.home_team_name,match.away_team_name);
   return`<article class="mcard mcard--${['live','finished','scheduled'].includes(match.status)?match.status:'other'}${derby?' derby':''}" style="${FBZDomain.matchPaletteStyle(match)}">
-    <div class="mcard-gradient"></div>
     <div class="mcard-body">
       <div class="mc-t">
         <span class="mc-lg">${esc(FBZNames.competition(match.league_name))}</span>
         <div class="mc-tags">${derby?`<span class="tag t-derby">${ico('fire',12)} Дерби</span>`:''}<span class="tag ${statusClass}">${esc(presentation.status)}</span></div>
       </div>
-      <button class="mc-score-block mc-score-link" type="button" aria-label="Открыть матч: ${esc(FBZNames.club(match.home_team_name))} против ${esc(FBZNames.club(match.away_team_name))}" ${FBZActions.attrs("matches.go-md",[match.id])}>
+      <a class="mc-score-block mc-score-link" href="${esc(FBZLocale.path(`/match/${Number(match.id)}`))}" aria-label="Открыть матч: ${esc(FBZNames.club(match.home_team_name))} против ${esc(FBZNames.club(match.away_team_name))}" ${FBZActions.attrs("matches.go-md",[match.id])}>
         <span class="mc-score-team">${matchClubMark(match,'home','mc-score-mark')}<span class="mc-score-name">${esc(FBZDomain.matchTeamName(match,'home'))}</span></span>
         <span class="mc-score-result"><span class="mc-score-num">${presentation.home}<span class="mc-score-separator">:</span>${presentation.away}</span><span class="mc-score-vs">${presentation.label}</span></span>
         <span class="mc-score-team">${matchClubMark(match,'away','mc-score-mark')}<span class="mc-score-name">${esc(FBZDomain.matchTeamName(match,'away'))}</span></span>
-      </button>
+      </a>
       <div class="mc-bottom">
         <span class="mc-meta-date">${ico('calendar',12)} ${fmtDate(match.match_date)}</span>
+        <span class="mc-open-hint" aria-hidden="true">Подробнее <span>↗</span></span>
         <div class="mc-acts">
           ${match.status==='finished'?`<button class="mbtn lime" ${FBZActions.attrs("matches.open-rate",[match.id])}>${ico('star',14)} Оценить</button>`:''}
         </div>
@@ -420,7 +420,7 @@ function renderPredResult(prediction,match){
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
   "matches.retry-match":(event,element,[id])=>loadMD(id),
-  "matches.go-md":(event,element,[id])=>go('md',{mid:id}),
+  "matches.go-md":(event,element,[id])=>FBZActions.follow(event,element,()=>go('md',{mid:id})),
   "matches.open-rate":(event,element,[id])=>openRate(id),
   "matches.load-home-m":()=>loadHomeM(),
   "matches.set-league":(event,element,[league])=>setLeague(league,element),
