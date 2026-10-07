@@ -1471,6 +1471,10 @@ export type Database = {
         Args: { p_limit?: number; p_metric?: string }
         Returns: Json
       }
+      get_match_calendar_page: {
+        Args: { p_filters?: Json; p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       get_match_chat_messages: {
         Args: { p_limit?: number; p_match_id: number }
         Returns: Json

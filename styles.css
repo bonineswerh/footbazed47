@@ -171,7 +171,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .btn-g{background:var(--bg3);color:var(--snow)}.btn-g:hover{background:var(--bg4);border-color:var(--b3)}
 .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}.btn-danger:hover{filter:brightness(1.08)}
 .btn-danger-soft{background:transparent;border-color:color-mix(in srgb,var(--danger) 35%,var(--b1));color:var(--danger)}.btn-danger-soft:hover{background:var(--danger2);border-color:var(--danger)}
-.btn:disabled,.pred-btn:disabled{cursor:wait;opacity:.55;transform:none!important;box-shadow:none!important}
+.btn:disabled{cursor:wait;opacity:.55;transform:none!important;box-shadow:none!important}
 .btn[hidden]{display:none!important}
 .btn-sm{min-height:44px;padding:7px 14px;font-size:var(--type-small)}
 .input{width:100%;padding:12px 16px;background:var(--bg3);border:1px solid var(--b2);border-radius:8px;color:var(--snow);font-size:var(--type-small);font-family:inherit;transition:border-color var(--motion-slow) var(--ease),background var(--motion-slow) var(--ease);margin-bottom:12px}
@@ -304,7 +304,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .pr-evidence{display:block;color:var(--text2);font-size:var(--type-meta);line-height:1.5;margin-top:5px}
 .pr-r{display:flex;align-items:center;gap:10px}.pr-bar{width:74px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}.pr-fill{height:100%;border-radius:2px}.pr-row[data-tone="low"] .pr-fill{background:var(--rating-low)}.pr-row[data-tone="mid"] .pr-fill{background:var(--rating-mid)}.pr-row[data-tone="high"] .pr-fill{background:var(--rating-high)}.pr-row[data-tone="elite"] .pr-fill{background:var(--rating-elite)}
 .pr-val{min-width:28px;font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--text2);text-align:right}
-.md-prediction{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r);padding:20px;margin-bottom:16px}
 .text-link{appearance:none;background:transparent;border:0;color:var(--accent2);padding:0;cursor:pointer;text-align:left}.text-link:hover{color:var(--snow)}
 
 /* ═══ OVERLAYS ═══ */
@@ -390,14 +389,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 
 /* ═══ PREDICTIONS ═══ */
-.pred-wrap{padding:16px;background:var(--accent4);border:1px solid var(--b2);border-radius:10px}
-.pred-teams{display:grid;grid-template-columns:1fr 1fr;gap:52px;margin-bottom:8px;text-align:center;font-size:var(--type-meta);color:var(--text2);font-weight:700}.pred-teams span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pred-row{display:flex;align-items:center;gap:10px;justify-content:center}
-.pred-input{width:56px;height:48px;padding:0;background:var(--bg3);border:1.5px solid var(--b2);border-radius:10px;color:var(--snow);font-family:'Bebas Neue',sans-serif;font-size:24px;text-align:center;line-height:48px;transition:border-color var(--motion-slow) var(--ease)}
-.pred-input:focus{border-color:var(--accent)}.pred-input::placeholder{color:var(--text3)}
-.pred-vs{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--text3)}
-.pred-btn{margin-top:8px;width:100%;padding:9px;background:var(--accent3);border:1px solid var(--b2);border-radius:8px;color:var(--accent2);font-size:var(--type-small);font-weight:600;cursor:pointer;transition-property:background,color,border-color,box-shadow,opacity,transform;transition-duration:var(--motion-normal);transition-timing-function:var(--ease);font-family:inherit}
-.pred-btn:hover{background:var(--accent);color:var(--onAccent)}
 
 /* ═══ CHAT ═══ */
 
@@ -462,9 +453,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 @media(max-width:900px){
   .rate-box{width:620px}.rating-squad-grid{grid-template-columns:1fr}.rating-team-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px;padding:4px;border:1px solid var(--b1);border-radius:8px;background:var(--bg3)}.rating-team-tabs button{min-width:0;min-height:42px;padding:0 9px;overflow:hidden;border:0;border-radius:6px;background:transparent;color:var(--text3);font-size:var(--type-meta);font-weight:750;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.rating-team-tabs button.on{background:var(--bg5);color:var(--snow)}.rating-squad{display:none}.rating-squad.is-active{display:block}.rating-pitch{min-height:540px}
-  .md-prediction{padding:14px}
   .md-rating-comparison{align-items:flex-start;flex-direction:column}.md-comparison-values{width:100%;min-width:0}
-  .pred-teams{gap:36px}
 }
 @media(max-width:400px){.matches-page{padding:16px 10px}}
 @media(max-width:620px){
