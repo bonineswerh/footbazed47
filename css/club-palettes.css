@@ -12,6 +12,7 @@ body .rating-ink[data-tone]{color:var(--score-ink,var(--snow))}
 .mcard{background:var(--club-paint);border-color:var(--surface-edge);box-shadow:inset 0 1px 0 var(--b1),0 8px 24px rgba(0,0,0,.07)}
 
 .mcard .mc-score-block,.mcard .mc-score-block:hover{position:static;min-height:100px;border:0;border-radius:0;padding:10px 6px;background:transparent}
+.home-spotlight .mc-score-link,.home-spotlight .mc-score-link:hover{border:0;background:transparent}
 .mcard .mc-score-block:hover{border-color:var(--b3)}
 .mc-score-team:first-child .mc-score-mark{background:color-mix(in srgb,var(--club-home) var(--club-wash-strong),var(--bg2));border-color:color-mix(in srgb,var(--club-home) 45%,var(--b2));color:var(--snow)}
 .mc-score-team:last-child .mc-score-mark{background:color-mix(in srgb,var(--club-away) var(--club-wash-strong),var(--bg2));border-color:color-mix(in srgb,var(--club-away) 45%,var(--b2));color:var(--snow)}

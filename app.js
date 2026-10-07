@@ -58,7 +58,7 @@ window.addEventListener('fbz:session-change',()=>{
   window.FBZProfileEditor?.resetSession();
   window.FBZComparison?.close(false);
   document.querySelectorAll('.overlay.on').forEach(overlay=>window.FBZOverlay?.close(overlay.id,false));
-  ['profileW','mdC','clubC','playerC','competitionC'].forEach(id=>document.getElementById(id)?.replaceChildren());
+  ['profileW','mdC','clubC','playerC','competitionC','matchG'].forEach(id=>document.getElementById(id)?.replaceChildren());
   if(CP!=='home')go('home');
 });
 function ensureFeatureModule(options){return window.FBZFeatures.load(options);}
@@ -190,6 +190,7 @@ async function init(){
 }
 
 function renderNav(){
+  window.FBZMatchCalendar?.syncSession(CU?.id||null);
   window.FBZNotificationCounter?.syncSession(CU?.id||null);
   const nr=document.getElementById('navRight');
   const hb=document.getElementById('heroBtns');

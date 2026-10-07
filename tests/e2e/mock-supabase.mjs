@@ -96,6 +96,8 @@ export async function installSupabaseMock(page,overrides={}){
     let nextConversationId=1000;
     let nextDirectMessageId=2000;
     let authListener=null;
+    const calendarCalls=[];
+    window.__FOOTBAZED_TEST_CALENDAR__={calls:()=>structuredClone(calendarCalls),error:value=>{state.calendarError=value;}};
 
     function promiseResult(data,error=null,count=null){
       const result=Promise.resolve({data,error,count});
@@ -120,6 +122,22 @@ export async function installSupabaseMock(page,overrides={}){
       return{is_open:match.status==='scheduled'&&Date.parse(match.match_date)>Date.now()&&!match.expectations_closed_at,own,segments};
     }
     function rpc(name,args={}){
+      if(name==='get_match_calendar_page'){
+        calendarCalls.push(structuredClone(args));
+        const filters=args.p_filters||{};
+        if(filters.favorites_only&&!state.sessionUser)return promiseResult(null,{message:'authentication_required'});
+        if(state.calendarError)return promiseResult(null,{message:'temporarily_unavailable'});
+        const favorites=state.favoriteClubs.map(club=>Number(club.id));
+        const items=state.matches.filter(match=>(!filters.status||filters.status==='all'||match.status===filters.status)
+          &&(!filters.league||filters.league==='all'||match.league_name===filters.league)
+          &&(!filters.query||`${match.home_team_name} ${match.away_team_name} ${match.league_name}`.toLocaleLowerCase().includes(filters.query.toLocaleLowerCase()))
+          &&(!filters.from||(Date.parse(match.match_date)>=Date.parse(filters.from)&&Date.parse(match.match_date)<Date.parse(filters.until)))
+          &&(!filters.favorites_only||favorites.includes(Number(match.home_club_id))||favorites.includes(Number(match.away_club_id))));
+        const offset=Math.max(Number(args.p_offset)||0,0),limit=Math.min(Math.max(Number(args.p_limit)||24,1),48);
+        const pageItems=items.slice(offset,offset+limit);
+        const result={items:structuredClone(pageItems),total:items.length,has_more:offset+pageItems.length<items.length,next_offset:offset+pageItems.length,leagues:[...new Set(state.matches.map(match=>match.league_name))].sort(),favorite_club_count:filters.favorites_only?favorites.length:null};
+        return state.calendarDelay?new Promise(resolve=>setTimeout(()=>resolve({data:result,error:null}),state.calendarDelay)):promiseResult(result);
+      }
       if(name==='get_match_expectations')return promiseResult(structuredClone(expectationSummary(args.p_match_id)),state.expectationError?{message:'temporarily_unavailable'}:null);
       if(name==='save_match_expectation'||name==='delete_match_expectation'){
         const data=expectationSummary(args.p_match_id);

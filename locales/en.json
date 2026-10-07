@@ -1446,5 +1446,19 @@
   "Ожидания уже закрыты": "Expectations are already closed",
   "Не удалось удалить ожидание": "Could not delete your expectation",
   "Ожидание удалено": "Expectation deleted",
-  "Ожидание от 1 до 10": "Expectation from 1 to 10"
+  "Ожидание от 1 до 10": "Expectation from 1 to 10",
+  "Все даты": "All dates",
+  "Выбрать дату": "Choose date",
+  "Матчи любимых клубов": "Favourite club matches",
+  "Избранное": "Favourites",
+  "Предыдущий день": "Previous day",
+  "Дни матчей": "Match days",
+  "Сегодня": "Today",
+  "Следующий день": "Next day",
+  "Выберите любимые клубы": "Choose your favourite clubs",
+  "Звёздочка на странице клуба добавит его матчи сюда.": "Star a club on its page to see its matches here.",
+  "Матчей не найдено": "No matches found",
+  "Выберите другой день или измените фильтры.": "Choose another day or change your filters.",
+  "Войдите, чтобы увидеть матчи любимых клубов": "Sign in to see your favourite club matches",
+  "Сбросить ожидание": "Clear expectation"
 }

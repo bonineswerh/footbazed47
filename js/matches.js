@@ -75,7 +75,7 @@ function sortMatches(items){
 }
 
 async function fetchMatchPage({offset=0,limit=matchPageSize(),force=false}={}){
-  return window.FBZData.getMatchesPage({
+  return (window.FBZMatchCalendar?.active()?window.FBZMatchCalendar.getPage:window.FBZData.getMatchesPage)({
     status:MF,
     league:ML,
     query:document.getElementById('msearch')?.value||'',
@@ -181,11 +181,18 @@ async function loadM(reset=true){
   const target=document.getElementById('matchG');
   if(!target)return;
   const requestId=++matchRequestId;
+  const route=routeVersion,user=CU?.id||null;
+  const current=()=>requestId===matchRequestId&&route===routeVersion&&CP==='matches'&&(CU?.id||null)===user;
   matchLoading=true;
+  target.setAttribute('aria-busy','true');
   target.innerHTML='<div class="loading"><div class="spin"></div><span>Загружаем календарь</span></div>';
   try{
+    await FBZFeatures.load({key:'calendar-model',script:'js/calendar-model.js?v=20261007',ready:()=>window.FBZCalendarModel});
+    const calendar=await FBZFeatures.load({key:'match-calendar',styleId:'calendarStyles',style:'css/calendar.css?v=20261007',script:'js/match-calendar.js?v=20261007',ready:()=>window.FBZMatchCalendar});
+    if(!current())return;
+    calendar.mount();
     const page=await fetchMatchPage({offset:0,force:reset});
-    if(requestId!==matchRequestId)return;
+    if(!current())return;
     matchCatalog=Array.isArray(page?.items)?page.items:[];
     matchLeagues=Array.isArray(page?.leagues)?page.leagues:[];
     matchTotal=Number(page?.total)||0;
@@ -193,32 +200,38 @@ async function loadM(reset=true){
     matchNextOffset=Number(page?.next_offset)||matchCatalog.length;
     renderLeagueTabs();
     renderMatchResults();
+    if(!matchCatalog.length&&calendar.active())target.innerHTML=calendar.empty(page);
   }catch(error){
-    if(requestId!==matchRequestId)return;
+    if(!current())return;
+    if(error.message==='calendar_auth_required'){
+      target.innerHTML='<div class="empty-state"><strong>Войдите, чтобы увидеть матчи любимых клубов</strong><button class="btn btn-l" data-fbz-click="shell.open-auth">Войти</button></div>';return;
+    }
     console.error('Matches error:',error);
     target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Календарь временно недоступен</strong><span>Проверь соединение и попробуй ещё раз.</span><button class="btn btn-g btn-sm" data-fbz-click="matches.load-m">Повторить</button></div>';
   }finally{
-    if(requestId===matchRequestId)matchLoading=false;
+    if(requestId===matchRequestId){matchLoading=false;target.setAttribute('aria-busy','false');}
   }
 }
 
 async function loadMoreMatches(){
   if(matchLoading||!matchHasMore)return;
   const requestId=matchRequestId;
+  const route=routeVersion,user=CU?.id||null;
+  const current=()=>requestId===matchRequestId&&route===routeVersion&&CP==='matches'&&(CU?.id||null)===user;
   matchLoading=true;
   const button=document.querySelector('.load-more');
   if(button){button.disabled=true;button.textContent='Загружаем...';}
   try{
     const page=await fetchMatchPage({offset:matchNextOffset});
-    if(requestId!==matchRequestId)return;
+    if(!current())return;
     const knownIds=new Set(matchCatalog.map(match=>String(match.id)));
-    for(const match of page?.items||[])if(!knownIds.has(String(match.id)))matchCatalog.push(match);
+    for(const match of page?.items||[])if(!knownIds.has(String(match.id))){matchCatalog.push(match);knownIds.add(String(match.id));}
     matchTotal=Number(page?.total)||matchTotal;
     matchHasMore=Boolean(page?.has_more);
     matchNextOffset=Number(page?.next_offset)||matchCatalog.length;
     renderMatchResults();
   }catch(error){
-    if(requestId!==matchRequestId)return;
+    if(!current())return;
     console.error('More matches error:',error);
     toast('Не удалось загрузить ещё матчи','err');
     if(button){button.disabled=false;button.textContent='Повторить';}

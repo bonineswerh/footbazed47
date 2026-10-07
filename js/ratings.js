@@ -138,6 +138,7 @@ function resetRatingForm(){
 
 function setRatingMode(existing){
   rExisting=existing;
+  document.getElementById('matchRatingClear').setAttribute('aria-label',ratingContext?.mode==='expectation'?'Сбросить ожидание':'Сбросить оценку матча');
   document.getElementById('rateTitle').textContent=ratingContext?.mode==='expectation'?(existing?'Изменить ожидание':'Оценить ожидание'):(existing?'Изменить оценку':'Оценить матч');
   document.getElementById('rDelete').hidden=!existing;
   document.getElementById('rExpectationDelete').hidden=!(existing&&ratingContext?.mode==='expectation');
