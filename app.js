@@ -64,7 +64,7 @@ window.addEventListener('fbz:session-change',()=>{
 function ensureFeatureModule(options){return window.FBZFeatures.load(options);}
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=52',script:'js/admin.js?v=54',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=20261007-expectations',script:'js/admin.js?v=20261007-expectations',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=20261007-details',script:'js/entities.js?v=20261007-details',ready:()=>window.FBZEntities});
@@ -359,7 +359,7 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=20261007',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=20261007-expectations',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
   }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" data-fbz-click="app.load-lb">Повторить</button></div>';}
 }
@@ -386,11 +386,11 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261007',script:'js/profile.js?v=20261005',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261007-expectations',script:'js/profile.js?v=20261007-expectations',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});
-  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=20261007',script:'js/explore.js?v=20261005',ready:()=>window.FBZExplore});
+  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=20261007-expectations',script:'js/explore.js?v=20261005',ready:()=>window.FBZExplore});
 }
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
@@ -441,7 +441,7 @@ async function handleInvite(code){
 }
 
 // ─── NOTIFICATIONS LOADER ───
-function ensureNotificationsModule(){return ensureFeatureModule({key:'notifications',styleId:'notificationsCss',style:'css/notifications.css?v=20261007',script:'js/notifications.js?v=3',ready:()=>window.FBZNotifications});}
+function ensureNotificationsModule(){return ensureFeatureModule({key:'notifications',styleId:'notificationsCss',style:'css/notifications.css?v=20261007',script:'js/notifications.js?v=20261007-expectations',ready:()=>window.FBZNotifications});}
 function loadNotifications(){if(!CU)return;return window.FBZNotifications?.isOpen()?window.FBZNotifications.load():window.FBZNotificationCounter.refresh();}
 async function toggleNotif(){const user=CU?.id,route=routeVersion;if(!user)return;try{const notifications=await ensureNotificationsModule();if(CU?.id===user&&routeVersion===route)notifications.toggle();}catch{if(CU?.id===user)toast('Не удалось открыть уведомления. Попробуйте ещё раз.','err');}}
 function closeNotif(returnFocus=false){window.FBZNotifications?.close(returnFocus);}

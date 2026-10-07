@@ -6,7 +6,7 @@
 .rating-score-total{color:var(--text3);font-size:18px;font-weight:500;letter-spacing:0}
 .player-rating-output{display:flex;align-items:baseline;justify-content:flex-end;gap:3px;font-size:32px}
 .player-rating-output .rating-score-total{font-size:14px}
-.rate-score-panel{padding:22px 24px 14px}
+.rate-score-panel{padding:18px 24px 14px;border-radius:var(--radius-card)}
 .rate-label{min-height:24px;margin-top:5px;font-size:14px}
 .rating-supporter-options input:checked+span small{color:var(--text2)}
 .rating-rail{--rating-progress:0%;--rail-fill:currentColor;display:block;width:100%;height:48px;margin:12px 0 0;appearance:none;background:transparent;color:var(--text3);cursor:pointer;transition:color var(--motion-fast) var(--ease);touch-action:pan-y}
@@ -22,7 +22,8 @@
 .rating-rail::-moz-range-thumb{box-sizing:border-box;width:28px;height:28px;border:5px solid var(--bg2);border-radius:50%;background:currentColor;box-shadow:0 0 0 1px currentColor}
 .rating-rail:focus-visible{outline:2px solid var(--rating-elite);outline-offset:4px;border-radius:6px}
 .rating-rail:disabled{cursor:wait;opacity:.5}
-.rating-rail-labels{display:flex;justify-content:space-between;gap:12px;color:var(--text3);font-size:12px;font-weight:500;line-height:1.4}
+.rating-rail-labels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;color:var(--text3);font-size:12px;font-weight:500;line-height:1.4}
+.rating-rail-labels span:nth-child(2){text-align:center}
 .rating-rail-labels span:last-child{text-align:right}
 .rating-rail-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px}
 .rating-rail-hint{color:var(--text3);font-size:12px;line-height:1.5}
@@ -39,6 +40,16 @@
 .rating-score-clear{flex:0 0 auto;min-width:76px;min-height:44px;padding:0 12px;border:0;border-radius:6px;background:transparent;color:var(--text2);font:inherit;font-size:12px;cursor:pointer}
 .rating-score-clear:hover{background:var(--bg4);color:var(--snow)}
 .rating-score-clear:disabled{color:var(--text3);cursor:default;opacity:.5}
+.rate-box{border-radius:var(--radius-card)}
+.rate-steps[hidden],.rating-public-toggle[hidden],#rExpectationNote[hidden],#rExpectationDelete[hidden]{display:none}
+.rating-supporter-options label>span{min-height:76px;border-radius:var(--radius-control)}
+.rating-supporter-options b{overflow:visible;white-space:normal;overflow-wrap:anywhere}
+.is-expectation .rate-score-panel{margin-top:16px}
+.is-expectation .rating-supporter-options{grid-template-columns:repeat(3,minmax(0,1fr))}
+.is-expectation .rating-supporter-options label>span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px;text-align:center;min-height:88px}
+.is-expectation .rating-supporter-options small{display:none}
+#rExpectationNote{margin:12px 0;font-size:var(--type-meta);color:var(--text2)}
+#rExpectationDelete{margin-bottom:12px}
 .player-rating-editor-head button{width:44px;height:44px}
 .player-rating-editor-actions button{min-height:44px}
 .player-rating-label{margin:12px 0 0;font-size:14px;font-weight:600}

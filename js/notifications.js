@@ -16,9 +16,9 @@
       const date=new Date(item.created_at),label=date.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
       const group=day!==label?`<h3 class="notif-day">${esc(label)}</h3>`:'';day=label;
       const actor=item.actor?.display_name||item.actor?.username||'Болельщик';
-      const title={friend_request:item.friend_status==='pending'?'Заявка в друзья':item.friend_status==='accepted'?'Вы теперь друзья':'Заявка закрыта',friend_accepted:'Заявка в друзья принята',like:'Понравилась ваша оценка',comment:'Комментарий к вашей оценке',system:'Сообщение FOOTBAZED'}[item.type]||'Уведомление';
+      const title={friend_request:item.friend_status==='pending'?'Заявка в друзья':item.friend_status==='accepted'?'Вы теперь друзья':'Заявка закрыта',friend_accepted:'Заявка в друзья принята',like:'Понравилась ваша оценка',comment:'Комментарий к вашей оценке',system:'Сообщение FOOTBAZED',match_ready:'Матч завершён'}[item.type]||'Уведомление';
       const context=item.match?`${FBZDomain.matchTeamName(item.match,'home')} — ${FBZDomain.matchTeamName(item.match,'away')}`:item.type==='system'?item.message:actor;
-      return`${group}<div class="notif-item${item.read?'':' unread'}" data-notification-id="${Number(item.id)}"><button class="notif-open" type="button" aria-label="${esc(`${title}. ${item.match?actor+'. ':''}${context||''}`)}" ${FBZActions.attrs('notifications.open-item',[Number(item.id)])} ${pending.has(item.id)?'disabled':''}><span class="notif-ico">${ico({friend_request:'users',friend_accepted:'users',like:'heart',comment:'chat'}[item.type]||'bell',18)}</span><span class="notif-content"><strong class="notif-text">${esc(title)}</strong>${item.match?`<span class="notif-actor">${esc(actor)}</span>`:''}<span class="notif-context">${esc(context||'')}</span><time class="notif-time" datetime="${esc(item.created_at)}">${date.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}${item.target_available===false?' · Запись недоступна':''}</time></span></button><button class="notif-read" type="button" ${FBZActions.attrs('notifications.read',[Number(item.id),!item.read])} aria-label="${item.read?'Отметить непрочитанным':'Отметить прочитанным'}" title="${item.read?'Отметить непрочитанным':'Отметить прочитанным'}" ${pending.has(item.id)||writing?'disabled':''}><span class="notif-dot"></span></button></div>`;
+      return`${group}<div class="notif-item${item.read?'':' unread'}" data-notification-id="${Number(item.id)}"><button class="notif-open" type="button" aria-label="${esc(`${title}. ${item.match&&item.actor?actor+'. ':''}${context||''}`)}" ${FBZActions.attrs('notifications.open-item',[Number(item.id)])} ${pending.has(item.id)?'disabled':''}><span class="notif-ico">${ico({friend_request:'users',friend_accepted:'users',like:'heart',comment:'chat'}[item.type]||'bell',18)}</span><span class="notif-content"><strong class="notif-text">${esc(title)}</strong>${item.match&&item.actor?`<span class="notif-actor">${esc(actor)}</span>`:''}<span class="notif-context">${esc(context||'')}</span><time class="notif-time" datetime="${esc(item.created_at)}">${date.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}${item.target_available===false?' · Запись недоступна':''}</time></span></button><button class="notif-read" type="button" ${FBZActions.attrs('notifications.read',[Number(item.id),!item.read])} aria-label="${item.read?'Отметить непрочитанным':'Отметить прочитанным'}" title="${item.read?'Отметить непрочитанным':'Отметить прочитанным'}" ${pending.has(item.id)||writing?'disabled':''}><span class="notif-dot"></span></button></div>`;
     }).join(''):`<div class="notif-empty">${ico('bell',26)}<strong>${unreadOnly?(totalUnread?'Есть новые уведомления':'Всё прочитано'):'Пока тихо'}</strong><p>${unreadOnly?'Новые отклики появятся здесь.':'Заявки в друзья и отклики на ваши оценки появятся здесь.'}</p>${unreadOnly&&totalUnread?'<button class="btn btn-g" type="button" data-fbz-click="notifications.refresh">Показать новые</button>':''}</div>`;
     controls();
   }
@@ -28,7 +28,7 @@
     if(!append){view++;items=[];cursor=null;hasMore=false;throughId=null;el('notifUpdate').hidden=true;el('notifList').innerHTML='<div class="notif-empty"><span class="spin"></span>Загружаем уведомления</div>';}
     busy=true;controls();el('notifStatus').textContent='';
     try{
-      const result=await sb.rpc('get_notifications_page',{p_unread_only:unreadOnly,p_cursor_created_at:append?cursor?.created_at:null,p_cursor_id:append?cursor?.id:null,p_limit:20});
+      const result=await sb.rpc('get_notifications_page_v2',{p_unread_only:unreadOnly,p_cursor_created_at:append?cursor?.created_at:null,p_cursor_id:append?cursor?.id:null,p_limit:20});
       if(result.error)throw result.error;
       if(token!==request||epoch!==session||CU?.id!==user||!opened)return;
       const data=result.data||{},seen=new Set(items.map(item=>item.id));
@@ -65,6 +65,7 @@
         if(item.target_available===false){toast('Запись больше недоступна','err');return;}
         close(true);
         if(item.type==='friend_request'||item.type==='friend_accepted'){FT=item.friend_status==='pending'?'incoming':'list';go('friends');}
+        else if(item.type==='match_ready'&&item.match?.id)go('md',{mid:Number(item.match.id)});
         else if(item.rating_id)go('feed',{ratingId:item.rating_id,commentId:item.comment_id});
       }else if(unreadOnly&&value)items=items.filter(row=>row.id!==id);
     }catch{if(epoch===session&&CU?.id===user&&opened)toast('Не удалось отметить уведомление. Попробуйте ещё раз.','err');}

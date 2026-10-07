@@ -80,6 +80,11 @@
   async function getFootballStatistics(kind,{filters={},offset=0,limit=12}={}){
     const page=await rpc('get_football_statistics',{p_kind:kind,p_filters:filters,p_offset:offset,p_limit:limit});
     if(kind==='matches')await enrichMatchMedia(page?.items||[]);
+    if(kind==='clubs'&&page?.items?.some(item=>!item.media)){
+      const marks=page.items.map(item=>({home_club_id:Number(item.entity_id)}));
+      await enrichMatchMedia(marks);
+      page.items.forEach((item,index)=>{item.media=item.media||marks[index].home_club?.media||null;});
+    }
     return page;
   }
   async function getProfileComparisonPage(userId,{filters={},offset=0,limit=12}={}){

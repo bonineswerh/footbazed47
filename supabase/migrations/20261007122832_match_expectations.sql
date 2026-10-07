@@ -70,12 +70,13 @@ begin
   if viewer is null then raise exception using errcode='42501',message='auth_required'; end if;
   if p_rating is null or p_rating not between 1 and 10 then raise exception using errcode='22023',message='rating_out_of_range'; end if;
   if p_supporter_side is null or p_supporter_side not in ('home','away','neutral') then raise exception using errcode='22023',message='supporter_side_required'; end if;
+  -- Acquire the user lock before reading the deadline: waiting must not admit a late vote.
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('expectation:'||viewer::text,0));
   select * into fixture from public.matches where id=p_match_id for share;
   if not found then raise exception using errcode='22023',message='match_not_found'; end if;
   if fixture.status is distinct from 'scheduled' or fixture.match_date<=clock_timestamp() or fixture.expectations_closed_at is not null then
     raise exception using errcode='22023',message='expectation_closed';
   end if;
-  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('expectation:'||viewer::text,0));
   if exists(select 1 from private.match_expectations where user_id=viewer and match_id=p_match_id and updated_at>clock_timestamp()-interval '1 second')
     or (select count(*) from private.match_expectations where user_id=viewer and created_at>clock_timestamp()-interval '10 minutes')>=50
        and not exists(select 1 from private.match_expectations where user_id=viewer and match_id=p_match_id) then
@@ -95,12 +96,12 @@ returns jsonb language plpgsql volatile security definer set search_path='' as $
 declare viewer uuid:=auth.uid(); fixture public.matches%rowtype;
 begin
   if viewer is null then raise exception using errcode='42501',message='auth_required'; end if;
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('expectation:'||viewer::text,0));
   select * into fixture from public.matches where id=p_match_id for share;
   if not found then raise exception using errcode='22023',message='match_not_found'; end if;
   if fixture.status is distinct from 'scheduled' or fixture.match_date<=clock_timestamp() or fixture.expectations_closed_at is not null then
     raise exception using errcode='22023',message='expectation_closed';
   end if;
-  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('expectation:'||viewer::text,0));
   delete from private.match_expectations where user_id=viewer and match_id=p_match_id;
   return public.get_match_expectations(p_match_id);
 end

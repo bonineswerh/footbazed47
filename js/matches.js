@@ -104,7 +104,7 @@ function renderMCard(match){
         <span class="mc-meta-date">${ico('calendar',12)} ${fmtDate(match.match_date)}</span>
         <span class="mc-open-hint" aria-hidden="true">Подробнее <span>↗</span></span>
         <div class="mc-acts">
-          ${match.status==='finished'?`<button class="mbtn lime" ${FBZActions.attrs("matches.open-rate",[match.id])}>${ico('star',14)} Оценить</button>`:''}
+          ${match.status==='finished'||(match.status==='scheduled'&&Date.parse(match.match_date)>Date.now())?`<button class="mbtn lime" type="button" ${FBZActions.attrs("matches.open-rate",[match.id,match.status==='scheduled'?'expectation':'rating'])}>${ico('star',14)} ${match.status==='scheduled'?'Ожидание':'Оценить'}</button>`:''}
         </div>
       </div>
     </div>
@@ -124,6 +124,7 @@ async function loadHomeM(){
     const page=await window.FBZData.getMatchesPage({limit:6});
     const items=featuredMatches(page?.items||[]);
     window.FBZHome?.spotlight(page?.items||[]);
+    window.FBZHome?.leagues(page?.leagues||[]);
     target.innerHTML=items.length?items.map(renderMCard).join(''):'<div class="empty-state"><div class="empty-icon">🏟️</div><strong>Матчей пока нет</strong><span>Новые встречи появятся после обновления календаря.</span></div>';
   }catch(error){
     console.warn('loadHomeM:',error);
@@ -290,7 +291,7 @@ async function loadMD(id){
     activeMatchRatingSegments={segments,match,active:'all'};
     const topPlayers=Array.isArray(insights?.top_players)?insights.top_players:[];
     const statusLabel={live:'LIVE',finished:'Завершён',scheduled:'Предстоит'}[match.status]||match.status;
-    const prediction=match.status==='scheduled'?`<section class="md-prediction"><div class="mdcard-title">${ico('target',15)} Прогноз на матч</div>${renderPredBlock(match)}</section>`:'';
+    const presentation=FBZDomain.matchScorePresentation(match);
     const competitionMeta=[match.season?`Сезон ${match.season}`:'',match.matchday?(FBZLocale.language==='en'?`Matchweek ${match.matchday}`:`${match.matchday}-й тур`):''].filter(Boolean).join(' · ');
     const segmentControls=ratingCount?`<div class="md-segments" role="group" aria-label="Чьи оценки показать">
       ${[['all','Все'],['home',FBZNames.club(match.home_team_name)],['neutral','Нейтральные'],['away',FBZNames.club(match.away_team_name)]].map(([key,label])=>{const value=segments[key]||{};const segmentAverage=Number(value.average);const segmentHasAverage=Number(value.rating_count)>0&&Number.isFinite(segmentAverage);return`<button class="md-segment${key==='all'?' on':''}" type="button" data-segment="${key}" aria-pressed="${key==='all'}" ${FBZActions.attrs("matches.set-match-rating-segment",[key])}><span>${esc(label)}</span><b data-tone="${segmentHasAverage?window.FBZDomain.ratingTone(segmentAverage):''}">${segmentHasAverage?segmentAverage.toFixed(1):'—'}</b><small>${Number(value.rating_count)||0}</small></button>`;}).join('')}
@@ -319,20 +320,21 @@ async function loadMD(id){
       <section class="md-hero" style="${FBZDomain.matchPaletteStyle(match)}">
         <div class="md-lg"><span>${esc(FBZNames.competition(match.league_name))}</span><b class="md-status md-status-${esc(match.status)}">${esc(statusLabel)}</b></div>
         <div class="md-sl">
-          <div class="md-team">${matchClubMark(match,'home','md-team-mark','eager')}${match.home_club_id?`<button class="md-tname md-club-link" type="button" ${FBZActions.attrs("matches.go-club",[Number(match.home_club_id)])}>${esc(FBZNames.club(match.home_team_name))}</button>`:`<div class="md-tname">${esc(FBZNames.club(match.home_team_name))}</div>`}<div class="md-score">${esc(match.home_score??'—')}</div></div>
+          <div class="md-team">${matchClubMark(match,'home','md-team-mark','eager')}${match.home_club_id?`<button class="md-tname md-club-link" type="button" ${FBZActions.attrs("matches.go-club",[Number(match.home_club_id)])}>${esc(FBZNames.club(match.home_team_name))}</button>`:`<div class="md-tname">${esc(FBZNames.club(match.home_team_name))}</div>`}<div class="md-score">${esc(presentation.home)}</div></div>
           <div class="md-vs">VS</div>
-          <div class="md-team">${matchClubMark(match,'away','md-team-mark','eager')}${match.away_club_id?`<button class="md-tname md-club-link" type="button" ${FBZActions.attrs("matches.go-club",[Number(match.away_club_id)])}>${esc(FBZNames.club(match.away_team_name))}</button>`:`<div class="md-tname">${esc(FBZNames.club(match.away_team_name))}</div>`}<div class="md-score">${esc(match.away_score??'—')}</div></div>
+          <div class="md-team">${matchClubMark(match,'away','md-team-mark','eager')}${match.away_club_id?`<button class="md-tname md-club-link" type="button" ${FBZActions.attrs("matches.go-club",[Number(match.away_club_id)])}>${esc(FBZNames.club(match.away_team_name))}</button>`:`<div class="md-tname">${esc(FBZNames.club(match.away_team_name))}</div>`}<div class="md-score">${esc(presentation.away)}</div></div>
         </div>
         <div class="md-meta">${ico('calendar',12)} ${new Date(match.match_date).toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}${competitionMeta?`<span>·</span>${esc(competitionMeta)}`:''}</div>
-        ${communityMarkup}
+        ${match.status==='finished'?communityMarkup:''}
       </section>
-      ${prediction}
+      <div id="mdExpectations" aria-busy="true"></div>
       <div class="md-actions">
+        ${match.status==='scheduled'&&Date.parse(match.match_date)>Date.now()?`<button class="btn btn-l md-primary-action" type="button" data-expectation-action ${FBZActions.attrs('matches.open-rate',[match.id,'expectation'])}>${ico('star',16)} Оценить ожидание</button>`:''}
         ${match.status==='finished'?`<button class="btn btn-l md-primary-action" ${FBZActions.attrs("matches.open-rate",[match.id])}>${ico('star',16)} ${ownRating?'Изменить оценку':'Оценить матч'}</button>`:''}
         <button class="btn btn-g" ${FBZActions.attrs("matches.copy-app-link",[match.id])}>${ico('link',14)} Ссылка</button>
       </div>
       ${ownRatingMarkup}
-      <div class="md-grid">
+      <div class="md-grid" ${match.status!=='finished'?'hidden':''}>
         <div>
           <section class="mdcard"><div class="mdcard-title">Выбор болельщиков</div>${insights?.player_rating_scope==='confirmed_historical'&&Number(insights.unverified_player_rating_count)>0?`<p class="pr-evidence">Прежние оценки без подтверждения участия сохранены в истории игроков и не входят в этот выбор.</p>`:''}${topPlayers.length?topPlayers.map((player,index)=>{const presentation=window.FBZDomain.ratingPresentation(player.average,1);return`<button class="pr-row pr-row-link" data-tone="${presentation.tone}" type="button" ${FBZActions.attrs("matches.go-player",[Number(player.player_id)])}><span class="pr-rank">${index+1}</span><span class="pr-info"><span class="pr-name">${esc(player.name)}</span><span class="pr-team">${esc(FBZNames.club(player.team))} · ${FBZDomain.countLabel(Number(player.rating_count)||0,{one:'оценка',few:'оценки',many:'оценок'})}${Number(player.best_votes)?` · ${FBZDomain.countLabel(Number(player.best_votes),{one:'голос за лучшего игрока',few:'голоса за лучшего игрока',many:'голосов за лучшего игрока'})}`:''}</span>${Number(player.unverified_rating_count)>0?'<span class="pr-evidence">Участие в матче не подтверждено</span>':''}</span><span class="pr-r"><span class="pr-bar"><span class="pr-fill" style="width:${presentation.progress}%"></span></span><span class="pr-val">${presentation.value}<span class="score-denominator">/10</span></span></span></button>`;}).join(''):'<div class="empty-state compact"><strong>Оценок игроков пока нет</strong><span>Они появятся после оценок подтверждённых участников матча.</span></div>'}</section>
           <section class="mdcard"><div class="mdcard-title">Оценки болельщиков</div>${ratings?.length?ratings.slice(0,8).map(rating=>{const user=userMap[rating.user_id]||{};const sideLabel={home:FBZNames.club(match.home_team_name),away:FBZNames.club(match.away_team_name),neutral:'Нейтральный'}[rating.supporter_side]||'Нейтральный';return`<div class="rh-row"><div><button class="text-link rh-m" ${FBZActions.attrs("app.go-profile",[rating.user_id])}>${esc(user.username||'Аноним')}</button><div class="rh-l">@${esc(user.username||'user')} · ${esc(sideLabel)}${rating.comment?' · '+esc(rating.comment.substring(0,50)):''}</div></div><div class="rh-r"><div class="rh-bar"><div class="rh-fill" data-tone="${window.FBZDomain.ratingTone(rating.match_rating)}" style="width:${(rating.match_rating||0)*10}%"></div></div><div class="rh-v" data-tone="${window.FBZDomain.ratingTone(rating.match_rating)}">${rating.match_rating}<span class="score-denominator">/10</span></div></div></div>`;}).join(''):`<div class="empty-state compact"><strong>${match.status==='finished'?'Оценок пока нет':'Обсуждение начнётся после матча'}</strong><span>${match.status==='finished'?'Сформируйте первое мнение о матче.':'Здесь появятся оценки болельщиков.'}</span>${match.status==='finished'?`<button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs("matches.open-rate",[match.id])}>Оценить первым</button>`:''}</div>`}</section>
@@ -340,7 +342,7 @@ async function loadMD(id){
         <section class="mdcard"><div class="mdcard-title">Распределение оценок</div><div id="mdDistribution">${distributionMarkup}</div></section>
       </div>`;
 
-    if(match.status==='scheduled'&&CU)loadPrediction(match.id,document.getElementById(`pred-${match.id}`));
+    loadMatchExpectations(match,ownRating,isCurrent);
   }catch(error){
     if(!isCurrent())return;
     console.error('Match detail error:',error);
@@ -352,76 +354,21 @@ async function loadMD(id){
 
 window.setMatchRatingSegment=setMatchRatingSegment;
 
-async function loadPrediction(matchId,container){
-  if(!CU||!container)return;
-  const userId=CU.id;
-  const{data:prediction,error}=await sb.from('predictions').select('home_pred,away_pred').eq('user_id',userId).eq('match_id',matchId).maybeSingle();
-  if(CU?.id!==userId||!container.isConnected||CP!=='md'||Number(mdID)!==Number(matchId))return;
-  if(error){console.warn('Prediction load error:',error);return;}
-  if(!prediction)return;
-  container.querySelector('.pred-input[data-side="home"]').value=prediction.home_pred??'';
-  container.querySelector('.pred-input[data-side="away"]').value=prediction.away_pred??'';
-  const button=container.querySelector('.pred-btn');
-  if(button)button.innerHTML=ico('save',13)+' Обновить прогноз';
-}
-
-async function savePrediction(matchId,button){
-  if(!CU){openAuth();return;}
-  if(button.disabled)return;
-  const container=button.closest('.pred-wrap');
-  const inputValue=side=>{const value=container.querySelector('.pred-input[data-side="'+side+'"]').value.trim();return value===''?NaN:Number(value);};
-  const home=inputValue('home'),away=inputValue('away');
-  if(!Number.isInteger(home)||!Number.isInteger(away)||home<0||away<0||home>20||away>20){toast('Введите корректный счёт','err');return;}
-  const viewer=CU.id,version=routeVersion;
-  const current=()=>CU?.id===viewer&&routeVersion===version&&button.isConnected;
-  button.disabled=true;
-  button.textContent='Сохраняем...';
-  try{
-    const{error}=await sb.from('predictions').upsert({user_id:viewer,match_id:matchId,home_pred:home,away_pred:away},{onConflict:'user_id,match_id'});
-    if(!current())return;
-    if(error)throw error;
-    button.innerHTML=ico('save',13)+' Прогноз сохранён';
-    toast('Прогноз сохранён','ok');
-  }catch(error){
-    if(!current())return;
-    console.warn('Prediction save failed');
-    button.textContent='Повторить';
-    toast('Не удалось сохранить прогноз','err');
-  }finally{
-    button.disabled=false;
-  }
-}
-
-function renderPredBlock(match){
-  return`<div class="pred-wrap" id="pred-${match.id}">
-    <div class="pred-teams"><span>${esc(FBZNames.club(match.home_team_name))}</span><span>${esc(FBZNames.club(match.away_team_name))}</span></div>
-    <div class="pred-row">
-      <label class="sr-only" for="pred-home-${match.id}">Голы ${esc(FBZNames.club(match.home_team_name))}</label>
-      <input class="pred-input" id="pred-home-${match.id}" data-side="home" inputmode="numeric" type="number" min="0" max="20" placeholder="—">
-      <span class="pred-vs">:</span>
-      <label class="sr-only" for="pred-away-${match.id}">Голы ${esc(FBZNames.club(match.away_team_name))}</label>
-      <input class="pred-input" id="pred-away-${match.id}" data-side="away" inputmode="numeric" type="number" min="0" max="20" placeholder="—">
-    </div>
-    <button class="pred-btn" ${FBZActions.attrs("matches.save-prediction",[match.id])}>${ico('save',13)} ${CU?'Сохранить прогноз':'Войти и сохранить'}</button>
-  </div>`;
-}
-
-function renderPredResult(prediction,match){
-  if(!prediction||match.status!=='finished')return'';
-  const exact=prediction.home_pred===match.home_score&&prediction.away_pred===match.away_score;
-  const predictedDifference=prediction.home_pred-prediction.away_pred;
-  const realDifference=match.home_score-match.away_score;
-  const rightOutcome=(predictedDifference>0&&realDifference>0)||(predictedDifference<0&&realDifference<0)||(predictedDifference===0&&realDifference===0);
-  if(exact)return'<div class="pred-result correct">Точный счёт · 3 очка</div>';
-  if(rightOutcome)return'<div class="pred-result close">Верный исход · 1 очко</div>';
-  return'<div class="pred-result wrong">Прогноз не сыграл</div>';
+function loadMatchExpectations(match,ownRating,isCurrent){
+  FBZFeatures.load({key:'expectations',styleId:'expectationStyles',script:'js/match-expectations.js?v=20261007-expectations',style:'css/expectations.css?v=1',ready:()=>window.FBZExpectations}).then(()=>{
+    if(isCurrent())window.FBZExpectations.mount(match,ownRating);
+  }).catch(()=>{
+    if(!isCurrent())return;
+    document.getElementById('mdExpectations').setAttribute('aria-busy','false');
+    document.getElementById('mdExpectations').innerHTML='<div class="empty-state compact"><strong>Не удалось загрузить ожидания</strong><button type="button" class="btn btn-g btn-sm" '+FBZActions.attrs('matches.retry-match',[match.id])+'>Повторить</button></div>';
+  });
 }
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
   "matches.retry-match":(event,element,[id])=>loadMD(id),
   "matches.go-md":(event,element,[id])=>FBZActions.follow(event,element,()=>go('md',{mid:id})),
-  "matches.open-rate":(event,element,[id])=>openRate(id),
+  "matches.open-rate":(event,element,[id,mode])=>openRate(id,mode),
   "matches.load-home-m":()=>loadHomeM(),
   "matches.set-league":(event,element,[league])=>setLeague(league,element),
   "matches.load-more-matches":()=>loadMoreMatches(),
@@ -429,6 +376,5 @@ FBZActions.register({
   "matches.set-match-rating-segment":(event,element,[kind])=>setMatchRatingSegment(kind,element),
   "matches.go-club":(event,element,[id])=>go('club',{id:id}),
   "matches.copy-app-link":(event,element,[url])=>copyAppLink(("/match/"+url),'Ссылка на матч'),
-  "matches.go-player":(event,element,[id])=>go('player',{id:id}),
-  "matches.save-prediction":(event,element,[id])=>savePrediction(id,element)
+  "matches.go-player":(event,element,[id])=>go('player',{id:id})
 });

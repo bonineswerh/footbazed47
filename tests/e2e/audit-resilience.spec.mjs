@@ -69,21 +69,21 @@ test('keyboard skip link reaches content instead of every navigation item',async
   await expect(page.locator('#page-home')).toBeFocused();
 });
 
-test('predictions reject fractional scores and ignore a late result after navigation',async({page})=>{
+test('expectation save ignores a late result after closing the form and navigation',async({page})=>{
+  await installSupabaseMock(page,{matches:[{id:102,competition_id:8,league_name:'La Liga',home_team_name:'Real Madrid CF',away_team_name:'FC Barcelona',home_club_id:24,away_club_id:25,match_date:'2099-08-20T19:00:00Z',status:'scheduled',home_score:null,away_score:null}]});
   await page.goto('/match/102?__e2e=1');
-  const home=page.locator('.pred-input[data-side="home"]'),away=page.locator('.pred-input[data-side="away"]');
-  await home.fill('1.5');await away.fill('0');
-  await page.locator('.pred-btn').click();
-  await expect(page.getByText('Введите корректный счёт',{exact:true})).toBeVisible();
-  await expect(page.locator('.pred-btn')).toBeEnabled();
+  await page.locator('.md-primary-action').click();
+  await page.getByRole('slider',{name:'Ожидание от 1 до 10'}).press('End');
+  await page.locator('input[name="ratingSupporterSide"][value="neutral"]').locator('..').click();
   await page.evaluate(()=>{
-    const from=sb.from.bind(sb);
-    sb.from=name=>name==='predictions'?{upsert:()=>new Promise(resolve=>{window.finishPrediction=()=>resolve({error:null});})}:from(name);
+    const rpc=sb.rpc.bind(sb);
+    sb.rpc=(name,args)=>name==='save_match_expectation'?new Promise(resolve=>{window.finishExpectation=()=>resolve({data:{},error:null});}):rpc(name,args);
   });
-  await home.fill('2');await page.locator('.pred-btn').click();
-  await expect(page.locator('.pred-btn')).toBeDisabled();
+  await page.getByRole('button',{name:'Сохранить ожидание',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Сохранить ожидание',exact:true})).toBeDisabled();
+  await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Главная',exact:true}).click();
   await expect(page.locator('#homeDashboardTitle')).toBeVisible();
-  await page.evaluate(()=>window.finishPrediction());
-  await expect(page.getByText('Прогноз сохранён',{exact:true})).toHaveCount(0);
+  await page.evaluate(()=>window.finishExpectation());
+  await expect(page.getByText('Ожидание сохранено',{exact:true})).toHaveCount(0);
 });

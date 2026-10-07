@@ -3,6 +3,14 @@
 
   let requestVersion=0;
 
+  function leagues(names){
+    const target=document.getElementById('homeLeagueRibbon');if(!target)return;
+    const items=[...new Set((Array.isArray(names)?names:[]).filter(name=>typeof name==='string'&&name.trim()))].slice(0,12);
+    target.hidden=!items.length;
+    const batch=items.map(name=>`<span>${esc(FBZNames.competition(name))}</span>`).join('');
+    target.innerHTML=items.length?`<div class="home-league-track"><div>${batch}</div><div>${batch}</div></div>`:'';
+  }
+
   function preferredName(user){
     return String(user?.display_name||user?.username||'болельщик').trim();
   }
@@ -129,7 +137,7 @@
     root.refreshHomeDashboard?.();
   }
 
-  root.FBZHome=Object.freeze({reload,sync,spotlight});
+  root.FBZHome=Object.freeze({reload,sync,spotlight,leagues});
 })(window);
 
 // Explicit action bindings; parameters are JSON data, never executable code.

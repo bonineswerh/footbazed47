@@ -184,6 +184,13 @@ test('squad duplicates are deduplicated on the existing name/team contract',asyn
   assert.equal((await app.send({action:'sync_squads',league:'PL'})).body.processed,1);
   const write=app.calls.find(call=>call.url.includes('/players?'));assert.match(write.url,/on_conflict=name,team/);assert.equal(write.body[0].club_id,20);
 });
+test('squad imports preserve general positions without inventing specific player roles',async()=>{
+  const squad=['Goalkeeper','Defence','Midfield','Offence','Centre-Back','New role'].map((position,index)=>({name:'Player '+index,position}));
+  const app=api({route:call=>call.url.includes('football-data.org')?{data:{teams:[{id:2,name:'Team',squad}]}}:call.url.includes('/clubs?')?{data:[{id:20,external_id:2}]}:{data:{}}});
+  assert.equal((await app.send({action:'sync_squads',league:'PL'})).body.processed,6);
+  const rows=app.calls.find(call=>call.url.includes('/players?')).body;
+  assert.deepEqual(rows.map(row=>row.position),['GK','DF','MF','FW','CB','New role']);
+});
 test('malformed provider collections fail before any database import',async()=>{
   for(const [action,data]of [['sync_matches',{}],['sync_matches',{matches:[{id:1}]}],['sync_squads',{teams:[{id:2,name:'Team'}]}]]){
     const app=api({route:()=>({data})});

@@ -5,15 +5,15 @@
 
   function loadRatings(){
     if(loading)return loading;
-    loading=root.FBZFeatures.load({key:'ratings',styleId:'ratingsStyles',script:'js/ratings.js?v=20261007-details',style:'css/ratings.css?v=3',ready:()=>root.__FOOTBAZED_RATINGS_READY__}).catch(error=>{loading=null;throw error;});
+    loading=root.FBZFeatures.load({key:'ratings',styleId:'ratingsStyles',script:'js/ratings.js?v=20261007-expectations',style:'css/ratings.css?v=20261007-expectations',ready:()=>root.__FOOTBAZED_RATINGS_READY__}).catch(error=>{loading=null;throw error;});
     return loading;
   }
 
-  async function openRateLazy(matchId){
+  async function openRateLazy(matchId,mode='rating'){
     try{
       await loadRatings();
       if(!root.FBZRatings?.open)throw new Error('ratings_not_initialized');
-      return root.FBZRatings.open(matchId);
+      return root.FBZRatings.open(matchId,mode);
     }catch(error){
       console.error('Rating module error:',error);
       root.toast?.('Не удалось открыть форму оценки','err');

@@ -29,9 +29,9 @@
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
   <link rel="stylesheet" href="styles.css?v=20261007">
-  <link rel="stylesheet" href="css/match-editorial.css?v=20261007">
+  <link rel="stylesheet" href="css/match-editorial.css?v=20261007-expectations">
   <link rel="stylesheet" href="css/typography.css?v=20261006">
-  <link rel="stylesheet" href="css/club-palettes.css?v=20261007">
+  <link rel="stylesheet" href="css/club-palettes.css?v=20261007-expectations">
 </head>
 <body>
   <a class="skip-link" href="#page-home" id="skipContent">Перейти к содержимому</a>
@@ -82,6 +82,7 @@
   
   <!-- HOME -->
   <div class="page on" id="page-home">
+    <div class="home-league-ribbon" id="homeLeagueRibbon" aria-hidden="true" hidden></div>
     <section class="home-editorial" aria-labelledby="homeEditorialTitle">
       <section class="hero">
         <span class="hero-tag">ТВОЙ ВЗГЛЯД НА ФУТБОЛ</span>
@@ -531,8 +532,8 @@
           <div class="rate-score" id="rScoreDisp" data-tone="neutral">—</div>
           <div class="rate-label" id="rScoreLabel" aria-live="polite">Выберите оценку</div>
           <label class="sr-only" for="matchRatingRange">Оценка матча от 1 до 10</label>
-          <input class="rating-rail" id="matchRatingRange" type="range" min="1" max="10" step="1" value="5" disabled data-tone="neutral" data-fbz-input="ratings.select-match-score" data-fbz-click="ratings.select-match-score" data-fbz-keydown="ratings.commit-match-score" aria-describedby="matchRatingHint">
-          <div class="rating-rail-labels" aria-hidden="true"><span>1 · Не понравился</span><span>10 · Исключительный</span></div>
+          <input class="rating-rail" id="matchRatingRange" type="range" min="0" max="10" step="1" value="0" disabled data-tone="neutral" data-fbz-input="ratings.select-match-score" data-fbz-click="ratings.select-match-score" data-fbz-keydown="ratings.commit-match-score" aria-describedby="matchRatingHint">
+          <div class="rating-rail-labels" aria-hidden="true"><span>—</span><span>5</span><span>10</span></div>
           <div class="rate-stars" id="starsR" data-tone="neutral" role="group" aria-label="Оценка матча от 1 до 10"></div>
           <div class="rating-rail-footer">
             <p class="rating-rail-hint" id="matchRatingHint">Передвиньте ползунок или выберите число</p>
@@ -540,14 +541,15 @@
           </div>
         </section>
         <fieldset class="rating-supporter-choice">
-          <legend>С чьей позиции вы оцениваете матч?</legend>
-          <p>Так оценки болельщиков обеих команд и нейтральных зрителей можно сравнить честно.</p>
+          <legend>За кого болеете?</legend>
           <div class="rating-supporter-options">
             <label><input type="radio" name="ratingSupporterSide" value="home" data-fbz-change="shell.select-supporter-side"><span><i data-i="shield"></i><b id="rSupportHome">Первая команда</b><small>Болею за хозяев</small></span></label>
             <label><input type="radio" name="ratingSupporterSide" value="neutral" data-fbz-change="shell.select-supporter-side"><span><i data-i="football"></i><b>Нейтральный зритель</b><small>Смотрю без клубной стороны</small></span></label>
             <label><input type="radio" name="ratingSupporterSide" value="away" data-fbz-change="shell.select-supporter-side"><span><i data-i="shield"></i><b id="rSupportAway">Вторая команда</b><small>Болею за гостей</small></span></label>
           </div>
         </fieldset>
+        <p id="rExpectationNote" class="rating-rail-hint" hidden>Можно изменить до начала игры. В общий показатель входят ожидания открытых профилей.</p>
+        <button class="btn btn-g btn-sm" id="rExpectationDelete" type="button" data-fbz-click="ratings.delete-expectation" hidden>Удалить ожидание</button>
         
         <label class="rating-public-toggle">
           <span><b>Показывать в профиле и ленте</b><small>Оценку и отзыв смогут увидеть другие пользователи</small></span>
@@ -580,8 +582,8 @@
           </div>
           <div class="player-rating-label" id="playerRatingLabel" aria-live="polite">Передвиньте ползунок</div>
           <label class="sr-only" for="playerRatingRange">Оценка игрока от 1 до 10</label>
-          <input class="rating-rail" id="playerRatingRange" type="range" min="1" max="10" step="1" value="5" data-tone="neutral" data-fbz-input="shell.set-active-player-score" data-fbz-click="shell.set-active-player-score" data-fbz-keydown="ratings.commit-player-score">
-          <div class="rating-rail-labels" aria-hidden="true"><span>1 · Слабо</span><span>10 · Исключительно</span></div>
+          <input class="rating-rail" id="playerRatingRange" type="range" min="0" max="10" step="1" value="0" data-tone="neutral" data-fbz-input="shell.set-active-player-score" data-fbz-click="shell.set-active-player-score" data-fbz-keydown="ratings.commit-player-score">
+          <div class="rating-rail-labels" aria-hidden="true"><span>—</span><span>5</span><span>10</span></div>
           <div class="player-rating-editor-actions">
             <button class="player-rating-clear" type="button" data-fbz-click="shell.clear-active-player-rating">Сбросить</button>
             <button class="player-best-button" id="playerBestButton" type="button" data-fbz-click="shell.toggle-active-best" aria-pressed="false" disabled><span data-i="star"></span> Лучший игрок</button>
@@ -741,18 +743,18 @@
   <script src="js/core.js?v=54"></script>
   <script src="js/media.js?v=5"></script>
   <script src="js/seo.js?v=20261005"></script>
-  <script src="js/data.js?v=51"></script>
+  <script src="js/data.js?v=20261007-expectations"></script>
   <script src="js/overlays.js?v=43"></script>
   <script src="js/confirm.js?v=42"></script>
   <script src="js/actions.js?v=2"></script>
   <script src="js/shell-actions.js?v=3"></script>
-  <script src="js/home.js?v=20261007"></script>
+  <script src="js/home.js?v=20261007-expectations"></script>
   <script src="js/feature-loader.js?v=20261005"></script>
   <script src="js/notification-counter.js?v=2"></script>
-  <script src="app.js?v=20261007-details"></script>
+  <script src="app.js?v=20261007-expectations"></script>
   <script src="js/auth.js?v=46"></script>
-  <script src="js/rating-loader.js?v=20261007-details"></script>
-  <script src="js/matches.js?v=20261007"></script>
+  <script src="js/rating-loader.js?v=20261007-expectations"></script>
+  <script src="js/matches.js?v=20261007-expectations"></script>
   <script src="js/account.js?v=43"></script>
 </body>
 </html>

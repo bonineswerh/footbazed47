@@ -743,6 +743,7 @@ export type Database = {
           away_score: number | null
           away_team_name: string
           competition_id: number | null
+          expectations_closed_at: string | null
           external_id: number | null
           home_club_id: number | null
           home_score: number | null
@@ -761,6 +762,7 @@ export type Database = {
           away_score?: number | null
           away_team_name: string
           competition_id?: number | null
+          expectations_closed_at?: string | null
           external_id?: number | null
           home_club_id?: number | null
           home_score?: number | null
@@ -779,6 +781,7 @@ export type Database = {
           away_score?: number | null
           away_team_name?: string
           competition_id?: number | null
+          expectations_closed_at?: string | null
           external_id?: number | null
           home_club_id?: number | null
           home_score?: number | null
@@ -875,6 +878,7 @@ export type Database = {
           created_at: string | null
           from_user_id: string | null
           id: number
+          match_id: number | null
           message: string | null
           rating_id: number | null
           read: boolean | null
@@ -886,6 +890,7 @@ export type Database = {
           created_at?: string | null
           from_user_id?: string | null
           id?: number
+          match_id?: number | null
           message?: string | null
           rating_id?: number | null
           read?: boolean | null
@@ -897,6 +902,7 @@ export type Database = {
           created_at?: string | null
           from_user_id?: string | null
           id?: number
+          match_id?: number | null
           message?: string | null
           rating_id?: number | null
           read?: boolean | null
@@ -909,6 +915,13 @@ export type Database = {
             columns: ["comment_id"]
             isOneToOne: false
             referencedRelation: "rating_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
             referencedColumns: ["id"]
           },
           {
@@ -1404,6 +1417,7 @@ export type Database = {
         Args: { p_user_a: string; p_user_b: string }
         Returns: boolean
       }
+      delete_match_expectation: { Args: { p_match_id: number }; Returns: Json }
       delete_match_rating: {
         Args: { p_match_id: number }
         Returns: {
@@ -1461,6 +1475,7 @@ export type Database = {
         Args: { p_limit?: number; p_match_id: number }
         Returns: Json
       }
+      get_match_expectations: { Args: { p_match_id: number }; Returns: Json }
       get_match_insights: { Args: { p_match_id: number }; Returns: Json }
       get_match_lineup: { Args: { p_match_id: number }; Returns: Json }
       get_matches_page: {
@@ -1506,6 +1521,15 @@ export type Database = {
         Returns: Json
       }
       get_notifications_page: {
+        Args: {
+          p_cursor_created_at?: string
+          p_cursor_id?: number
+          p_limit?: number
+          p_unread_only?: boolean
+        }
+        Returns: Json
+      }
+      get_notifications_page_v2: {
         Args: {
           p_cursor_created_at?: string
           p_cursor_id?: number
@@ -1607,6 +1631,10 @@ export type Database = {
       }
       respond_friendship: {
         Args: { p_action: string; p_requester_id: string }
+        Returns: Json
+      }
+      save_match_expectation: {
+        Args: { p_match_id: number; p_rating: number; p_supporter_side: string }
         Returns: Json
       }
       save_match_rating: {

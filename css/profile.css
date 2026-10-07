@@ -1,6 +1,6 @@
 /* The profile is a diary of participation, not a ranking of people. */
 .phero{display:grid;grid-template-columns:88px minmax(0,1fr) auto;column-gap:24px;align-items:start;text-align:left;padding:32px}
-.phero>.phero-av,.phero>.phero-av-img{grid-column:1;grid-row:1/4;margin:0;box-shadow:none;border-radius:14px}
+.phero>.phero-av,.phero>.phero-av-img{grid-column:1;grid-row:1/4;margin:0;border:2px solid var(--accent2);border-radius:50%;box-shadow:0 0 0 5px var(--bg2),0 0 0 6px var(--b2),0 0 26px var(--accent4)}
 .phero-name{grid-column:2;grid-row:1;overflow-wrap:anywhere;line-height:1.15}
 .phero-hand{grid-column:2;grid-row:2;margin:6px 0 0;overflow-wrap:anywhere}
 .phero-bio{grid-column:2;grid-row:3;max-width:60ch;margin:12px 0 0;overflow-wrap:anywhere}
@@ -9,7 +9,10 @@
 .phero-badges .pbadge{padding:0;border:0;border-radius:0;background:none;color:var(--text3);font-size:var(--type-meta)}
 .phero-badges .pb-l{color:var(--accent2)}
 .phero-badges .pb-j::before{content:'·';margin-right:6px}
-.phero-acts{grid-column:3;grid-row:1/4;justify-content:flex-end;margin:0}
+.phero-acts{grid-column:3;grid-row:1/4;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;justify-content:flex-end;max-width:310px;margin:0}
+.phero-acts>.btn{min-height:44px;white-space:normal;line-height:1.35;justify-content:center;border-radius:var(--radius-control)}
+.phero-acts>.btn:first-child{grid-column:1/-1}
+.phero-acts>[data-fbz-click="app.manage-blocks"],.phero-acts>[data-fbz-click="app.report-content"]{color:var(--text2);background:transparent}
 .phero .pstats{grid-column:1/-1;grid-row:6;width:100%;max-width:none;background:none;border-radius:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:28px 0 0;border-top:1px solid var(--b2);padding-top:22px;gap:16px}
 .phero .pst{padding:0;border:0;background:none;text-align:left;min-width:0}
 .phero .pst-v{font-family:var(--font-ui);font-size:1.75rem;font-weight:650;font-variant-numeric:tabular-nums;background:none;color:var(--snow);-webkit-text-fill-color:currentColor}

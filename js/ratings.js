@@ -16,7 +16,7 @@ function isRatingCurrent(context){
 
 function setRatingLoading(loading){
   document.getElementById('rateOv').setAttribute('aria-busy',String(loading));
-  document.querySelectorAll('#rS1 input,.rate-star,#rS1 button[data-fbz-click="shell.r-next"],#rSave,#rDelete').forEach(control=>{control.disabled=loading;});
+  document.querySelectorAll('#rS1 input,.rate-star,#rS1 button[data-fbz-click="shell.r-next"],#rSave,#rDelete,#rExpectationDelete').forEach(control=>{control.disabled=loading;});
   document.getElementById('matchRatingClear').disabled=loading||rScore===null;
 }
 
@@ -29,12 +29,14 @@ const POSITION_GROUP={
 };
 const POSITION_LABEL={gk:'Вратари',def:'Защита',mid:'Полузащита',att:'Атака',other:'Другие'};
 const RATING_LABELS=['','Ужасно','Плохо','Слабо','Ниже среднего','Средне','Неплохо','Хорошо','Отлично','Великолепно','Исключительно'];
+const EXPECTATION_LABELS=['','Почти не жду','Низкие ожидания','Мало интереса','Ниже среднего','Средние ожидания','Есть интерес','Жду хорошую игру','Очень интересно','Большие ожидания','Не пропущу'];
+const matchRatingLabels=()=>ratingContext?.mode==='expectation'?EXPECTATION_LABELS:RATING_LABELS;
 
-async function openRatingForm(mid){
+async function openRatingForm(mid,mode='rating'){
   if(!CU){openAuth();return;}
   const matchId=Number(mid);
   if(!Number.isSafeInteger(matchId)||matchId<1)return;
-  const context={matchId,userId:CU.id,route:location.href,ready:false,saving:false};
+  const context={matchId,userId:CU.id,route:location.href,ready:false,saving:false,mode:mode==='expectation'?'expectation':'rating'};
   ratingContext=context;
   rMID=Number(mid);rScore=null;rPS={};rBest=null;rExisting=false;rSupporterSide=null;
   resetRatingForm();
@@ -42,23 +44,32 @@ async function openRatingForm(mid){
   window.FBZOverlay?.open('rateOv','.rate-close');
   try{
     const[{data:match,error:matchError},{data:existing,error:ratingError},{data:playerScores,error:playerError}]=await Promise.all([
-      sb.from('matches').select('home_team_name,away_team_name,status').eq('id',matchId).single(),
-      sb.from('ratings').select('match_rating,comment,is_public,supporter_side').eq('user_id',context.userId).eq('match_id',matchId).maybeSingle(),
-      sb.from('player_ratings').select('player_id,rating,is_best_player,player:players(name)').eq('user_id',context.userId).eq('match_id',matchId)
+      sb.from('matches').select('home_team_name,away_team_name,status,match_date').eq('id',matchId).single(),
+      context.mode==='expectation'?sb.rpc('get_match_expectations',{p_match_id:matchId}):sb.from('ratings').select('match_rating,comment,is_public,supporter_side').eq('user_id',context.userId).eq('match_id',matchId).maybeSingle(),
+      context.mode==='expectation'?Promise.resolve({data:[],error:null}):sb.from('player_ratings').select('player_id,rating,is_best_player,player:players(name)').eq('user_id',context.userId).eq('match_id',matchId)
     ]);
     if(!isRatingCurrent(context))return;
     if(matchError)throw matchError;
     if(ratingError)throw ratingError;
     if(playerError)throw playerError;
-    if(match.status!=='finished'){
+    if(context.mode==='expectation'?!existing?.is_open:match.status!=='finished'){
       closeRate();
-      toast('Оценить можно после завершения матча','err');
+      toast(context.mode==='expectation'?'Ожидания закрыты: матч уже начался или недоступен':'Оценить можно после завершения матча','err');
       return;
     }
 
     document.getElementById('rMI').textContent=FBZNames.matchTitle(match);
     document.getElementById('rSupportHome').textContent=FBZDomain.matchTeamName(match,'home');
     document.getElementById('rSupportAway').textContent=FBZDomain.matchTeamName(match,'away');
+    if(context.mode==='expectation'){
+      const own=existing?.own;
+      context.match=match;
+      setRatingMode(Boolean(own));
+      if(own){selScore(own.rating);selectSupporterSide(own.supporter_side);}
+      context.ready=true;
+      setRatingLoading(false);
+      return;
+    }
     setRatingMode(Boolean(existing));
     if(existing){
       selScore(existing.match_rating,RATING_LABELS);
@@ -80,7 +91,7 @@ async function openRatingForm(mid){
     if(!isRatingCurrent(context))return;
     console.error('Rating form error:',error);
     document.getElementById('rateOv').setAttribute('aria-busy','false');
-    document.getElementById('rMI').innerHTML=`<span role="status">Не удалось загрузить оценку.</span> <button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs("ratings.open-rate",[matchId])}>Повторить</button>`;
+    document.getElementById('rMI').innerHTML=`<span role="status">Не удалось загрузить оценку.</span> <button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs("ratings.open-rate",[matchId,context.mode])}>Повторить</button>`;
   }
 }
 
@@ -92,10 +103,10 @@ function resetRatingForm(){
     const button=document.createElement('button');
     button.className='rate-star';
     button.type='button';
-    button.setAttribute('aria-label',`${value} из 10 — ${RATING_LABELS[value]}`);
+    button.setAttribute('aria-label',`${value} из 10 — ${matchRatingLabels()[value]}`);
     button.setAttribute('aria-pressed','false');
     button.innerHTML=`<span class="rate-star-num">${value}</span>`;
-    button.onclick=()=>selScore(value,RATING_LABELS);
+    button.onclick=()=>selScore(value);
     row.appendChild(button);
   }
   document.getElementById('rScoreDisp').textContent='—';
@@ -113,18 +124,29 @@ function resetRatingForm(){
   closePlayerRatingEditor(false);
   updateRatingCommentCount();
   setRatingMode(false);
+  const expecting=ratingContext?.mode==='expectation';
+  document.querySelector('label[for="matchRatingRange"]').textContent=expecting?'Ожидание от 1 до 10':'Оценка матча от 1 до 10';
+  document.getElementById('starsR').setAttribute('aria-label',expecting?'Ожидание от 1 до 10':'Оценка матча от 1 до 10');
+  document.querySelector('.rate-box').classList.toggle('is-expectation',expecting);
+  document.querySelector('.rate-steps').hidden=expecting;
+  document.querySelector('.rating-public-toggle').hidden=expecting;
+  document.getElementById('rExpectationNote').hidden=!expecting;
+  document.getElementById('rateScorePrompt').textContent=expecting?'Насколько вы ждёте этот матч?':'Насколько вам понравился матч?';
+  document.querySelector('#rS1 button[data-fbz-click="shell.r-next"]').textContent=expecting?'Сохранить ожидание':'Продолжить →';
   rBack();
 }
 
 function setRatingMode(existing){
   rExisting=existing;
-  document.getElementById('rateTitle').textContent=existing?'Изменить оценку':'Оценить матч';
+  document.getElementById('rateTitle').textContent=ratingContext?.mode==='expectation'?(existing?'Изменить ожидание':'Оценить ожидание'):(existing?'Изменить оценку':'Оценить матч');
   document.getElementById('rDelete').hidden=!existing;
+  document.getElementById('rExpectationDelete').hidden=!(existing&&ratingContext?.mode==='expectation');
   document.getElementById('rSave').innerHTML=ico('save',13)+(existing?' Сохранить изменения':' Сохранить оценку');
 }
 
-function selScore(value,labels=RATING_LABELS){
+function selScore(value,labels=matchRatingLabels()){
   value=Number(value);
+  if(value===0){clearMatchScore();return;}
   if(!Number.isInteger(value)||value<1||value>10)return;
   rScore=value;
   document.querySelectorAll('.rate-star').forEach((button,index)=>{
@@ -154,17 +176,17 @@ function renderRatingValue(element,score){
   element.replaceChildren(number,total);
 }
 
-function syncRatingRail(range,score){
+function syncRatingRail(range,score,labels=RATING_LABELS){
   const selected=Number.isInteger(score)&&score>=1&&score<=10;
-  range.value=selected?score:5;
+  range.value=selected?score:0;
   range.dataset.tone=window.FBZDomain.ratingTone(selected?score:null);
   range.dataset.selected=String(selected);
-  range.style.setProperty('--rating-progress',`${((Number(range.value)-1)/9)*100}%`);
-  range.setAttribute('aria-valuetext',selected?`${score} из 10 — ${RATING_LABELS[score]}`:'Оценка не выбрана. Начальное положение — 5 из 10. Нажмите Enter, чтобы выбрать 5.');
+  range.style.setProperty('--rating-progress',`${Number(range.value)*10}%`);
+  range.setAttribute('aria-valuetext',selected?`${score} из 10 — ${labels[score]}`:'Оценка не выбрана. Выберите от 1 до 10.');
 }
 
 function updateMatchRatingRail(score){
-  syncRatingRail(document.getElementById('matchRatingRange'),score);
+  syncRatingRail(document.getElementById('matchRatingRange'),score,matchRatingLabels());
   document.getElementById('matchRatingClear').disabled=score===null||!ratingContext?.ready;
 }
 
@@ -187,7 +209,7 @@ function clearMatchScore(){
 function commitRailKey(event,element,setScore){
   if(element.disabled||event.ctrlKey||event.metaKey||event.altKey)return;
   const value=Number(element.value);
-  const keys={Home:1,End:10,ArrowLeft:Math.max(1,value-1),ArrowDown:Math.max(1,value-1),ArrowRight:Math.min(10,value+1),ArrowUp:Math.min(10,value+1),Enter:value,' ':value};
+  const keys={Home:0,End:10,ArrowLeft:Math.max(0,value-1),ArrowDown:Math.max(0,value-1),ArrowRight:Math.min(10,value+1),ArrowUp:Math.min(10,value+1),Enter:value,' ':value};
   if(!Object.hasOwn(keys,event.key))return;
   event.preventDefault();
   setScore(keys[event.key]);
@@ -212,6 +234,7 @@ function rBack(){
 
 function rNext(){
   if(!ratingContext?.ready)return;
+  if(ratingContext.mode==='expectation'){saveExpectation();return;}
   if(!rSupporterSide){toast('Выберите, за какую сторону вы болеете','err');document.querySelector('input[name="ratingSupporterSide"]')?.focus();return;}
   if(!rScore){toast('Выберите оценку','err');return;}
   document.querySelector('.rate-box').classList.remove('is-match-step');
@@ -357,6 +380,7 @@ function updatePlayerRatingEditor(score){
 
 function setActivePlayerScore(value){
   if(!rActivePlayer)return;
+  if(Number(value)===0){clearActivePlayerRating();return;}
   setPScore(rActivePlayer,value);
   updatePlayerRatingEditor(rPS[rActivePlayer]||null);
 }
@@ -364,7 +388,7 @@ function setActivePlayerScore(value){
 function clearActivePlayerRating(){
   if(!rActivePlayer)return;
   setPScore(rActivePlayer,'');
-  document.getElementById('playerRatingRange').value=5;
+  document.getElementById('playerRatingRange').value=0;
   updatePlayerRatingEditor(null);
 }
 
@@ -533,6 +557,43 @@ function refreshAfterRatingChange(matchId){
   else if(CP==='feed')loadFeed();
 }
 
+async function saveExpectation(){
+  const context=ratingContext;
+  if(!isRatingCurrent(context)||!context.ready||context.saving)return;
+  if(!rSupporterSide){toast('Выберите, за какую сторону вы болеете','err');return;}
+  if(!rScore){toast('Выберите оценку','err');return;}
+  context.saving=true;setRatingLoading(true);
+  try{
+    const {error}=await sb.rpc('save_match_expectation',{p_match_id:context.matchId,p_rating:rScore,p_supporter_side:rSupporterSide});
+    if(error)throw error;
+    if(CU?.id!==context.userId)return;
+    if(isRatingCurrent(context)){closeRate();toast('Ожидание сохранено','ok');}
+    if(CP==='md'&&Number(mdID)===context.matchId)loadMD(context.matchId);
+  }catch(error){
+    if(isRatingCurrent(context))toast(String(error?.message).includes('expectation_closed')?'Ожидания закрыты: матч уже начался или недоступен':String(error?.message).includes('expectation_rate_limit')?'Слишком часто. Повторите чуть позже.':'Не удалось сохранить ожидание. Попробуйте ещё раз.','err');
+  }finally{context.saving=false;if(isRatingCurrent(context))setRatingLoading(false);}
+}
+
+function requestDeleteExpectation(){
+  const context=ratingContext;
+  if(!isRatingCurrent(context)||!context.ready||context.saving||!rExisting||context.mode!=='expectation')return;
+  window.FBZConfirm.open({title:'Удалить ожидание?',message:'Ожидание не будет участвовать в сравнении после матча.',confirmText:'Удалить',onConfirm:async()=>{
+    if(!isRatingCurrent(context)||context.saving)return true;
+    context.saving=true;setRatingLoading(true);
+    try{
+      const {error}=await sb.rpc('delete_match_expectation',{p_match_id:context.matchId});
+      if(!isRatingCurrent(context))return true;
+      if(error)throw error;
+      closeRate();
+      if(CP==='md'&&Number(mdID)===context.matchId)loadMD(context.matchId);
+      toast('Ожидание удалено','ok');return true;
+    }catch(error){
+      if(!isRatingCurrent(context))return true;
+      toast(String(error?.message).includes('expectation_closed')?'Ожидания уже закрыты':'Не удалось удалить ожидание','err');return false;
+    }finally{context.saving=false;if(isRatingCurrent(context))setRatingLoading(false);}
+  }});
+}
+
 window.FBZRatings=Object.freeze({open:openRatingForm});
 window.__FOOTBAZED_RATINGS_READY__=true;
 window.selectSupporterSide=selectSupporterSide;
@@ -543,7 +604,8 @@ FBZActions.register({
   "ratings.clear-match-score":()=>clearMatchScore(),
   "ratings.commit-match-score":(event,element)=>commitRailKey(event,element,selScore),
   "ratings.commit-player-score":(event,element)=>commitRailKey(event,element,setActivePlayerScore),
-  "ratings.open-rate":(event,element,[id])=>window.openRate(id),
+  "ratings.open-rate":(event,element,[id,mode])=>window.openRate(id,mode),
+  "ratings.delete-expectation":()=>requestDeleteExpectation(),
   "ratings.retry-lineup":()=>retryLineup(),
   "ratings.clear-legacy":(event,element,[id])=>clearLegacyRating(id),
   "ratings.show-rating-team-home":(event,element)=>showRatingTeam('home',element),

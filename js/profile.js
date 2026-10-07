@@ -92,7 +92,7 @@ function renderFootballDiary(count,isOwner){
   const remaining=FBZDomain.countLabel(activity.remaining,{one:'матч',few:'матча',many:'матчей'});
   return '<section class="profile-diary" aria-label="Футбольный дневник"><span class="section-kicker">Футбольный дневник</span><h2>'+esc(activity.label)+'</h2><p>'+(isOwner?esc(activity.description):'История оценок этого болельщика.')+'</p>'
     +(isOwner?'<div class="diary-milestone"><div><span>Следующая отметка</span><strong>'+esc(FBZDomain.countLabel(activity.next,{one:'матч',few:'матча',many:'матчей'}))+'</strong></div><div class="diary-track" role="progressbar" aria-label="До следующей отметки в дневнике" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+activity.progress+'" aria-valuetext="Осталось '+esc(remaining)+'"><i style="width:'+activity.progress+'%"></i></div><small>Осталось '+esc(remaining)+'. В своём темпе.</small></div>':'')
-    +'<div class="diary-note">Количество записей показывает участие, а не уровень знаний о футболе.</div></section>';
+    +'</section>';
 }
 
 async function loadProfile(uid){

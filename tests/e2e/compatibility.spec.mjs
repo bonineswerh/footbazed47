@@ -26,6 +26,8 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await page.locator('#matchRatingRange').focus();
   await expect(page.locator('#matchRatingRange')).toBeFocused();
   await page.locator('#matchRatingRange').press('Home');
+  await expect(page.locator('#rScoreDisp')).toHaveText('—');
+  await page.locator('#matchRatingRange').press('ArrowRight');
   await expect(page.locator('#rScoreDisp')).toHaveText('1/10');
   await page.locator('#matchRatingRange').press('End');
   await expect(page.locator('#rScoreDisp')).toHaveText('10/10');
@@ -35,6 +37,8 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await page.getByRole('button',{name:/Продолжить/}).click();
   await page.locator('#rating-player-5292').click();
   await page.locator('#playerRatingRange').press('Home');
+  await expect(page.locator('#playerRatingValue')).toHaveText('—');
+  await page.locator('#playerRatingRange').press('ArrowRight');
   await expect(page.locator('#playerRatingValue')).toHaveText('1/10');
   await page.locator('#playerRatingRange').press('End');
   await expect(page.locator('#playerRatingValue')).toHaveText('10/10');

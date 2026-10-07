@@ -1,4 +1,5 @@
 const fixture={
+  expectations:[],
   userBlocks:[],
   sessionUser:{id:'3615141a-7700-46b8-9ba5-e4f4450537fc',email:'bazed@example.test'},
   profile:{
@@ -103,15 +104,43 @@ export async function installSupabaseMock(page,overrides={}){
       return result;
     }
 
+    function expectationSummary(matchId){
+      const match=state.matches.find(m=>Number(m.id)===Number(matchId));
+      if(!match)return null;
+      const votes=state.expectations.filter(v=>Number(v.match_id)===Number(matchId));
+      const publicVotes=votes.filter(v=>state.users.find(u=>u.id===v.user_id)?.is_public!==false);
+      const segments={};
+      for(const key of ['all','home','neutral','away']){
+        const rows=publicVotes.filter(v=>key==='all'||v.supporter_side===key);
+        const paired=rows.flatMap(v=>{const r=state.feed.find(r=>r.match_id===Number(matchId)&&r.user_id===v.user_id&&r.is_public!==false);return r?[{before:v.rating,after:r.match_rating}]:[];});
+        const average=(rows,get)=>rows.length?rows.reduce((sum,row)=>sum+get(row),0)/rows.length:null;
+        segments[key]={count:rows.length,average:average(rows,v=>v.rating),paired_count:paired.length,paired_expected:average(paired,v=>v.before),paired_rating:average(paired,v=>v.after),paired_delta:average(paired,v=>v.after-v.before)};
+      }
+      const own=votes.find(v=>v.user_id===state.sessionUser?.id)||null;
+      return{is_open:match.status==='scheduled'&&Date.parse(match.match_date)>Date.now()&&!match.expectations_closed_at,own,segments};
+    }
     function rpc(name,args={}){
-      if(name==='get_notifications_page'){
+      if(name==='get_match_expectations')return promiseResult(structuredClone(expectationSummary(args.p_match_id)),state.expectationError?{message:'temporarily_unavailable'}:null);
+      if(name==='save_match_expectation'||name==='delete_match_expectation'){
+        const data=expectationSummary(args.p_match_id);
+        if(!state.sessionUser||!data?.is_open)return promiseResult(null,{message:'expectations_closed'});
+        if(name==='save_match_expectation'){
+          if(!Number.isInteger(args.p_rating)||args.p_rating<1||args.p_rating>10||!['home','away','neutral'].includes(args.p_supporter_side))return promiseResult(null,{message:'invalid_expectation'});
+          state.lastExpectationPayload=structuredClone(args);
+          state.expectations=state.expectations.filter(v=>!(v.user_id===state.sessionUser.id&&v.match_id===args.p_match_id));
+          state.expectations.push({user_id:state.sessionUser.id,match_id:args.p_match_id,rating:args.p_rating,supporter_side:args.p_supporter_side});
+        }else state.expectations=state.expectations.filter(v=>!(v.user_id===state.sessionUser.id&&v.match_id===args.p_match_id));
+        return promiseResult(structuredClone(expectationSummary(args.p_match_id)));
+      }
+      if(name==='get_notifications_page'||name==='get_notifications_page_v2'){
         const visible=state.notifications.filter(n=>n.user_id===state.sessionUser?.id&&contactClear(n.from_user_id));
         const filtered=visible.filter(n=>(!args.p_unread_only||!n.read)&&(!args.p_cursor_created_at||n.created_at<args.p_cursor_created_at||(n.created_at===args.p_cursor_created_at&&n.id<args.p_cursor_id))).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id-a.id);
         const limit=Math.min(50,Math.max(1,args.p_limit||20)),rows=filtered.slice(0,limit),last=rows.at(-1);
         const items=rows.map(n=>{
           const rating=state.feed.find(r=>r.rating_id===n.rating_id&&r.user_id===state.sessionUser.id),actor=state.users.find(u=>u.id===n.from_user_id);
           const relation=state.friendships.find(f=>[f.user_id,f.friend_id].includes(state.sessionUser.id)&&[f.user_id,f.friend_id].includes(n.from_user_id));
-          return{...n,actor:actor?.is_public===false&&actor.id!==state.sessionUser.id?null:actor,match:rating?.match||null,target_available:!['like','comment'].includes(n.type)||Boolean(rating),friend_status:relation?.status==='accepted'?'accepted':relation?.status==='pending'&&relation.friend_id===state.sessionUser.id?'pending':'closed'};
+          const match=n.type==='match_ready'?state.matches.find(m=>m.id===n.match_id):rating?.match||null;
+          return{...n,actor:actor?.is_public===false&&actor.id!==state.sessionUser.id?null:actor,match,target_available:n.type==='match_ready'?Boolean(match):!['like','comment'].includes(n.type)||Boolean(rating),friend_status:relation?.status==='accepted'?'accepted':relation?.status==='pending'&&relation.friend_id===state.sessionUser.id?'pending':'closed'};
         });
         return promiseResult(structuredClone({items,has_more:filtered.length>limit,next_cursor:last?{id:last.id,created_at:last.created_at}:null,unread_count:visible.filter(n=>!n.read).length,through_id:visible.length?Math.max(...visible.map(n=>n.id)):null}));
       }
@@ -486,7 +515,8 @@ export async function installSupabaseMock(page,overrides={}){
       updatedUser:()=>structuredClone(state.updatedUser||null),
       storage:()=>structuredClone(state.storageUpload||null),
       profile:()=>structuredClone(state.profile),
-      lastRating:()=>structuredClone(state.lastRatingPayload||null)
+      lastRating:()=>structuredClone(state.lastRatingPayload||null),
+      lastExpectation:()=>structuredClone(state.lastExpectationPayload||null)
     };
   },{...fixture,...overrides});
 }

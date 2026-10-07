@@ -239,10 +239,10 @@ function mapStatus(status) {
 
 function mapPosition(position) {
   return {
-    Goalkeeper: 'GK', 'Centre-Back': 'CB', 'Left-Back': 'LB', 'Right-Back': 'RB', Defence: 'CB',
+    Goalkeeper: 'GK', 'Centre-Back': 'CB', 'Left-Back': 'LB', 'Right-Back': 'RB', Defence: 'DF',
     'Defensive Midfield': 'DM', 'Central Midfield': 'CM', 'Attacking Midfield': 'AM',
-    'Left Midfield': 'LM', 'Right Midfield': 'RM', Midfield: 'CM',
-    'Left Winger': 'LW', 'Right Winger': 'RW', 'Centre-Forward': 'ST', Offence: 'ST'
+    'Left Midfield': 'LM', 'Right Midfield': 'RM', Midfield: 'MF',
+    'Left Winger': 'LW', 'Right Winger': 'RW', 'Centre-Forward': 'ST', Offence: 'FW'
   }[position] || position || null;
 }
 

@@ -347,6 +347,7 @@
   function mount(){
     if (!CU?.is_admin) return;
     renderProviderPanel();
+    if(!document.querySelector('[data-admin-view="help"]'))document.querySelector('.admin-nav')?.insertAdjacentHTML('beforeend','<button class="admin-nav-item" type="button" data-admin-view="help" data-fbz-click="admin.help-open">'+ico('info',17)+'<span>Инструкция</span></button>');
     const from = document.getElementById('adminDateFrom');
     const to = document.getElementById('adminDateTo');
     if (from && !from.value) from.value = new Date().toISOString().slice(0,10);
@@ -665,6 +666,13 @@
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "admin.help-open":async(event,element)=>{
+    const user=CU?.id,version=routeVersion;
+    try{
+      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261007-expectations',ready:()=>window.FBZAdminGuide});
+      if(CU?.id===user&&CU?.is_admin&&CP==='admin'&&routeVersion===version){FBZAdminGuide.mount();FBZAdmin.showView('help',element);}
+    }catch{if(CU?.id===user&&CP==='admin')toast('Не удалось открыть инструкцию','err');}
+  },
   "admin.reports-open":(event,element)=>FBZAdmin.showView('reports',element),
   "admin.reports-retry":()=>FBZAdmin.loadReportQueue(),
   "admin.reports-previous":()=>FBZAdmin.reportPage(-1),

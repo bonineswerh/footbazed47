@@ -27,7 +27,7 @@ export function literalRanges(source,file){
       const swatchStart=source.indexOf('const CLUB_SWATCHES='),swatchEnd=source.indexOf(".split('\\n')",swatchStart);
       const objectKey=[SyntaxKind.OpenBraceToken,SyntaxKind.CommaToken].includes(previous)&&scanner.lookAhead(()=>scanner.scan())===SyntaxKind.ColonToken;
       const wireConstant=kind===SyntaxKind.StringLiteral&&(objectKey||[SyntaxKind.EqualsEqualsEqualsToken,SyntaxKind.ExclamationEqualsEqualsToken].includes(previous));
-      if(!wireConstant&&!(swatchStart>=0&&start>=swatchStart&&end<=swatchEnd))ranges.push([start+1,end-([SyntaxKind.TemplateHead,SyntaxKind.TemplateMiddle].includes(kind)?2:1)]);
+      if(!wireConstant&&!(swatchStart>=0&&start>=swatchStart&&end<=swatchEnd))ranges.push([start+1,end-([SyntaxKind.TemplateHead,SyntaxKind.TemplateMiddle].includes(kind)?2:1),kind===SyntaxKind.StringLiteral?source[start]:'`']);
       if(kind===SyntaxKind.TemplateHead)templates.push(0);
       if(kind===SyntaxKind.TemplateTail)templates.pop();
     }
@@ -51,9 +51,14 @@ export function inventory(){
 }
 export function englishSource(source,file,catalog){
   const replacements=[];
-  for(const [start,end] of literalRanges(source,file))for(const item of phrases(source.slice(start,end))){
+  for(const [start,end,quote] of literalRanges(source,file))for(const item of phrases(source.slice(start,end))){
     if(!Object.hasOwn(catalog,item.text))throw new Error(`Missing English text in ${file}: ${item.text}`);
-    replacements.push({start:start+item.offset,end:start+item.offset+item.text.length,text:catalog[item.text]});
+    let text=catalog[item.text];
+    if(file.endsWith('.js')){
+      text=text.replaceAll('\\','\\\\').replaceAll(quote,'\\'+quote).replaceAll('\r','\\r').replaceAll('\n','\\n');
+      if(quote==='`')text=text.replaceAll('${','\\${');
+    }
+    replacements.push({start:start+item.offset,end:start+item.offset+item.text.length,text});
   }
   for(const item of replacements.reverse())source=source.slice(0,item.start)+item.text+source.slice(item.end);
   if(file.endsWith('.js')){

@@ -25,7 +25,7 @@ test('полная история, одинаковое время, фильтр
 });
 test('новое событие после снимка не попадает в Прочитать все',async({page})=>{
   await start(page,{notifications:events()});
-  await page.evaluate(()=>{const original=sb.rpc.bind(sb);let first=true;sb.rpc=async(name,args)=>{const r=await original(name,args);if(name==='get_notifications_page'&&first){first=false;r.data.through_id=1025;r.data.unread_count=25;r.data.items=r.data.items.filter(n=>n.id!==1026);}return r;};});
+  await page.evaluate(()=>{const original=sb.rpc.bind(sb);let first=true;sb.rpc=async(name,args)=>{const r=await original(name,args);if(name==='get_notifications_page_v2'&&first){first=false;r.data.through_id=1025;r.data.unread_count=25;r.data.items=r.data.items.filter(n=>n.id!==1026);}return r;};});
   await page.locator('#notifBtn').click();await expect(page.locator('#notifBadge')).toHaveText('25');
   await page.locator('#notifMarkAll').click();await expect(page.locator('#notifBadge')).toHaveText('1');await expect(page.locator('#notifUpdate')).toBeVisible();
   await page.locator('#notifUpdate').click();await page.locator('#notifUnread').click();
@@ -33,7 +33,7 @@ test('новое событие после снимка не попадает в
 });
 test('ошибка следующей страницы сохраняет историю и курсор для повтора',async({page})=>{
   await start(page,{notifications:events()});await page.locator('#notifBtn').click();await expect(page.locator('.notif-item')).toHaveCount(20);
-  await page.evaluate(()=>{const original=sb.rpc.bind(sb);let fail=true;sb.rpc=(name,args)=>name==='get_notifications_page'&&args.p_cursor_id&&fail?(fail=false,Promise.resolve({error:{message:'offline'}})):original(name,args);});
+  await page.evaluate(()=>{const original=sb.rpc.bind(sb);let fail=true;sb.rpc=(name,args)=>name==='get_notifications_page_v2'&&args.p_cursor_id&&fail?(fail=false,Promise.resolve({error:{message:'offline'}})):original(name,args);});
   await page.locator('#notifMore').click();await expect(page.locator('#notifStatus')).toContainText('Не удалось');await expect(page.locator('.notif-item')).toHaveCount(20);
   await page.locator('#notifMore').click();await expect(page.locator('.notif-item')).toHaveCount(26);
 });

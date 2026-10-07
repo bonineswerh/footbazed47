@@ -31,6 +31,14 @@ test('compiler preserves user content, identity keys, regexes and wire constants
   assert.equal(result.comparison,false);assert.equal(result.output,'Ratings: Текст болельщика Match 1');
   assert.equal(vm.runInNewContext(englishSource('true?"Матч":"Оценки"','sample.js',{'Матч':'Match','Оценки':'Ratings'})),'Match');
 });
+test('translated quotes and template expressions remain literal text in every delimiter',async()=>{
+  const {englishSource}=await import('../scripts/localization.mjs');
+  const translation="Supporters' \"choice\" `today` ${danger()} \\ path\nNext line";
+  const source="const a='Описание'; const b=\"Описание\"; const c=`Описание ${value} Описание`; ({a,b,c})";
+  const result=vm.runInNewContext(englishSource(source,'sample.js',{'Описание':translation}),{value:'authored expression',danger:()=>{throw Error('Translation executed');}});
+  assert.equal(result.a,translation);assert.equal(result.b,translation);
+  assert.equal(result.c,translation+' authored expression '+translation);
+});
 test('curated club labels keep identities, full names, palettes and unknowns',()=>{
   assert.equal(names.club('Manchester City FC'),'Ман Сити');
   assert.equal(names.club('Manchester City FC','',true),'Манчестер Сити');

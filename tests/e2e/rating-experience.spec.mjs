@@ -64,13 +64,15 @@ test('match rail, direct choices and reset share one draft without assuming a de
   expect(assets).toContain('/css/ratings.css');
   await page.getByRole('button',{name:'Сбросить оценку матча'}).click();
   await expect(page.locator('#rScoreDisp')).toHaveText('—');
-  await expect(rail).toHaveValue('5');
+  await expect(rail).toHaveValue('0');
   await expect(rail).toHaveAttribute('data-selected','false');
   await page.getByRole('button',{name:/Продолжить/}).click();
   await expect(page.locator('#rS2')).toBeHidden();
   await expect(page.locator('#toast')).toContainText('Выберите оценку');
-  // An unchanged initial thumb is a real choice only after user confirmation.
+  // Zero is an empty draft, never an implicit vote or a stored score.
   await rail.press('Enter');
+  await expect(page.locator('#rScoreDisp')).toHaveText('—');
+  for(let step=0;step<5;step++)await rail.press('ArrowRight');
   await expect(page.locator('#rScoreDisp')).toHaveText('5/10');
   await expect(rail).toHaveAttribute('aria-valuetext','5 из 10 — Средне');
   await page.getByRole('button',{name:'9 из 10 — Великолепно',exact:true}).click();
@@ -92,6 +94,8 @@ test('an unrated player can explicitly receive 5 and clearing also removes the b
   await expect(page.locator('#playerRatingValue')).toHaveText('—');
   await expect(page.locator('#playerBestButton')).toBeDisabled();
   await rail.press('Enter');
+  await expect(page.locator('#playerRatingValue')).toHaveText('—');
+  for(let step=0;step<5;step++)await rail.press('ArrowRight');
   await expect(page.locator('#playerRatingValue')).toHaveText('5/10');
   await page.locator('#playerBestButton').click();
   await expect(page.locator('#rating-player-5291')).toHaveClass(/is-best/);
