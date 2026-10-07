@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path=public,extensions;
-select plan(25);
+select plan(29);
 insert into public.media_assets(id,asset_type,source_provider,source_url,usage_status,metadata)
 overriding system value values(985000,'club_logo','api-football','https://media.api-sports.io/football/teams/985000.png','identification','{"usage_scope":"club_identification","rights_status":"not_verified","terms_url":"https://www.api-football.com/terms"}');
 insert into public.clubs(id,name,tla,logo_asset_id) overriding system value
@@ -10,6 +10,13 @@ insert into public.players(id,name,team,club_id) overriding system value
 select 985000+n,'Pagedscope Player '||lpad(n::text,2,'0'),'Pagedscope Club 01',985001 from generate_series(1,20) n;
 insert into public.matches(id,home_team_name,away_team_name,league_name,match_date,status,home_score,away_score,home_club_id,away_club_id)
 overriding system value select 985000+n,'Pagedscope Club 01','Pagedscope Club 02','Pagedscope League','2026-09-01'::timestamptz+n*interval '1 day','finished',0,0,985001,985002 from generate_series(1,30) n;
+insert into public.clubs(id,name) overriding system value values(985101,'ZZZ Rankingclub'),(985102,'AAA RankingexactTail'),(985103,'AAA RankingprefixTail');
+insert into public.club_aliases(club_id,alias) values(985101,'Rankingexact'),(985101,'Rankingprefix Team');
+insert into public.matches(id,home_team_name,away_team_name,league_name,match_date,status,home_score,away_score,home_club_id)
+overriding system value values
+  (985101,'ZZZ Rankingclub','Other','SearchPriority League','2026-09-01','finished',1,0,985101),
+  (985102,'AAA RankingexactTail','Other','SearchPriority League','2026-09-01','finished',1,0,null),
+  (985103,'AAA RankingprefixTail','Other','SearchPriority League','2026-09-01','finished',1,0,null);
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)
 values('54000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','pagedscope@example.test',crypt('search-test',gen_salt('bf')),now(),'{"provider":"email","providers":["email"]}','{}',now(),now());
 insert into public.users(id,username,display_name,is_public) values('54000000-0000-0000-0000-000000000001','pagedscope_private','Ёж Pagedscope',false);
@@ -39,6 +46,10 @@ select is(search_footbazed_page('Pagedscope Club 01','club')#>'{items,0,visual,m
 select is(search_footbazed_page('Pagedscope','match')#>>'{items,0,home_score}','0','real zero score survives');
 select ok(search_footbazed_page('Pagedscope','match')#>>'{items,0,match_date}' is not null,'match date distinguishes repeated fixtures');
 select is(jsonb_array_length(search_footbazed_page('pagedscope_private','user')->'items'),0,'anonymous category search cannot reveal a private profile');
+select is(search_footbazed_page('Rankingexact','match')#>>'{items,0,title}','ZZZ Rankingclub — Other','exact club alias outranks a partial title even when alphabetic order disagrees');
+select is(search_footbazed_page('Rankingprefix','match')#>>'{items,0,title}','ZZZ Rankingclub — Other','club-name prefix outranks a substring in another team');
+select is(search_footbazed_page('Rankingprefix','club')#>>'{items,0,title}','ZZZ Rankingclub','localized club alias prefix has the same priority as canonical club-name prefix');
+select is(search_footbazed_page('Rankingexact','match',search_footbazed_page('Rankingexact','match',null,1)->'next_cursor',1)#>>'{items,0,title}','AAA RankingexactTail — Other','continuation retains lower-ranked matches without repeating the exact identity');
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"54000000-0000-0000-0000-000000000001","role":"authenticated"}',true);
 select is(search_footbazed_page('Еж Pagedscope','user')#>>'{items,0,title}','Ёж Pagedscope','owner can find own profile with normalized query and original title');
