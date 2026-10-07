@@ -1335,5 +1335,17 @@
   "Матчи, впечатления и разговоры о футболе.": "Matches, reactions and football conversations.",
   "Настройте FOOTBAZED под себя.": "Make FOOTBAZED your own.",
   "Подробнее": "Match details",
-  "Какие матчи запомнились болельщикам? Сравнивайте впечатления от игр, клубов и турниров.": "Which matches stayed with the fans? Compare reactions to games, clubs and competitions."
+  "Какие матчи запомнились болельщикам? Сравнивайте впечатления от игр, клубов и турниров.": "Which matches stayed with the fans? Compare reactions to games, clubs and competitions.",
+  "Категория поиска": "Search category",
+  "Лучшие совпадения · выберите категорию для полного поиска": "Top matches · choose a category to search further",
+  "Поиск в выбранной категории · по релевантности": "Searching this category · by relevance",
+  "Загружаем следующие результаты": "Loading more results",
+  "Не удалось загрузить продолжение": "Could not load more results",
+  "Показано:": "Shown:",
+  "Все совпадения загружены": "All matches loaded",
+  "Повторить загрузку": "Retry loading",
+  "Введите название, чтобы искать в этой категории.": "Enter a name to search this category.",
+  "Показано результатов:": "Results shown:",
+  "Попробуйте другое название или категорию.": "Try another name or category.",
+  "Продолжение поиска": "More search results"
 }

@@ -387,12 +387,13 @@ export async function installSupabaseMock(page,overrides={}){
         const others=state.feed.filter(r=>r.match_id===Number(args.p_match_id)&&r.is_public!==false&&r.user_id!==state.sessionUser?.id);
         return promiseResult({rating_count:2,average:8.5,distribution,others_rating_count:others.length,others_average:others.length?others.reduce((n,r)=>n+r.match_rating,0)/others.length:null,segments:{all:{rating_count:2,average:8.5,distribution},home:{rating_count:1,average:9,distribution},away:{rating_count:0,average:null,distribution:[]},neutral:{rating_count:1,average:8,distribution}},top_players:[{player_id:5290,name:'Thibaut Courtois',team:'Real Madrid CF',average:8.7,rating_count:3,best_votes:2,unverified_rating_count:participationVerified(args.p_match_id,5290)?0:3}],...structuredClone(state.matchInsights||{})});
       }
-      if(name==='search_footbazed'||name==='search_footbazed_v2'){
+      if(name==='search_footbazed'||name==='search_footbazed_v2'||name==='search_footbazed_page'){
         const query=String(args.p_query||'').toLocaleLowerCase();
         const results=[];
         if('champions league'.includes(query)||query.includes('champions'))results.push({entity_type:'competition',entity_id:'7',title:'Champions League',subtitle:'Europe',meta:'CL',relevance:0.99});
         if('real madrid cf'.includes(query)||query.includes('madrid'))results.push({entity_type:'club',entity_id:'24',title:'Real Madrid CF',subtitle:'Spain',meta:'RMA',relevance:0.98});
-        return promiseResult(results.slice(0,Number(args.p_limit)||14).map(item=>name==='search_footbazed_v2'?{...item,visual:item.entity_type==='club'?structuredClone(state.club.club):item.entity_type==='competition'?structuredClone(state.competition.competition):null}:item));
+        const items=results.filter(item=>name!=='search_footbazed_page'||item.entity_type===args.p_kind).slice(0,Number(args.p_limit)||14).map(item=>name!=='search_footbazed'?{...item,visual:item.entity_type==='club'?structuredClone(state.club.club):item.entity_type==='competition'?structuredClone(state.competition.competition):null}:item);
+        return promiseResult(name==='search_footbazed_page'?{items,next_cursor:null}:items);
       }
       return promiseResult(null);
     }

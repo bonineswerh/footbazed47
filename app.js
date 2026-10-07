@@ -73,7 +73,7 @@ function ensureFeedModule(){
   return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=20261007',script:'js/feed.js?v=20261007',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
-  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=20261007',script:'js/search.js?v=20261005',ready:()=>window.FBZSearch});
+  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=20261007-search',script:'js/search.js?v=20261007-search',ready:()=>window.FBZSearch});
 }
 let reportOpenVersion=0;
 function reportContent(type,id){

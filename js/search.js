@@ -7,12 +7,21 @@
   let activeIndex=-1;
   let currentResults=[];
   let initialized=false;
+  let category='all';
+  let nextCursor=null;
+  let loadingMore=false;
+  let loadedQuery='';
+  const categories={all:'Все',club:'Клубы',player:'Игроки',match:'Матчи',competition:'Турниры',user:'Болельщики'};
 
   function init(){
     if(initialized)return;
     const input=document.getElementById('globalSearchInput');
     if(!input)return;
     initialized=true;
+    const controls=document.createElement('div');
+    controls.className='search-categories';controls.setAttribute('role','group');controls.setAttribute('aria-label','Категория поиска');
+    controls.innerHTML=Object.entries(categories).map(([kind,label])=>`<button type="button" aria-pressed="${kind===category}" ${FBZActions.attrs('search.search-category',[kind])}>${label}</button>`).join('');
+    document.querySelector('.global-search-input-wrap').after(controls);
     input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');
     input.setAttribute('aria-expanded','false');input.setAttribute('aria-controls','globalSearchList');
     input.addEventListener('input',()=>{
@@ -31,13 +40,15 @@
   function syncInput(){
     const value=document.getElementById('globalSearchInput').value;
     document.querySelector('.global-search-clear').hidden=!value;
-    document.getElementById('globalSearchHint').textContent=window.FBZDomain.normalizeSearchQuery(value).length<2?'Введите хотя бы 2 символа':'Лучшие совпадения · уточните название, чтобы сузить поиск';
+    document.getElementById('globalSearchHint').textContent=window.FBZDomain.normalizeSearchQuery(value).length<2?'Введите хотя бы 2 символа':category==='all'?'Лучшие совпадения · выберите категорию для полного поиска':'Поиск в выбранной категории · по релевантности';
+    document.querySelectorAll('.search-categories button').forEach((button,index)=>button.setAttribute('aria-pressed',String(Object.keys(categories)[index]===category)));
   }
 
   function announce(message){document.getElementById('globalSearchStatus').textContent=message;}
 
   function cancelRequest(){
     requestVersion++;clearTimeout(timer);currentResults=[];activeIndex=-1;
+    nextCursor=null;loadingMore=false;loadedQuery='';
     const input=document.getElementById('globalSearchInput');
     input?.removeAttribute('aria-activedescendant');input?.setAttribute('aria-expanded','false');
   }
@@ -45,6 +56,7 @@
   function open(){
     window.FBZAccount?.close();
     cancelRequest();
+    category='all';
     const input=document.getElementById('globalSearchInput');
     input.value='';
     syncInput();announce('');
@@ -59,36 +71,58 @@
     window.FBZOverlay?.close('searchOv');
   }
 
-  async function run(rawQuery){
+  async function run(rawQuery,append=false){
+    if(append&&(!nextCursor||loadingMore))return;
     clearTimeout(timer);
     syncInput();
     const query=window.FBZDomain.normalizeSearchQuery(rawQuery);
-    activeIndex=-1;currentResults=[];
+    const previousCount=append?currentResults.length:0;
+    activeIndex=-1;
+    if(!append){currentResults=[];nextCursor=null;}
     document.getElementById('globalSearchInput').removeAttribute('aria-activedescendant');
     document.getElementById('globalSearchInput').setAttribute('aria-expanded','false');
     if(query.length<2){requestVersion++;renderStart();return;}
     const version=++requestVersion;
-    renderLoading();
+    if(append){loadingMore=true;document.getElementById('globalSearchResults').setAttribute('aria-busy','true');syncContinuation();announce('Загружаем следующие результаты');}
+    else renderLoading();
     try{
-      const args={p_query:query,p_limit:14};
-      let{data,error}=await sb.rpc('search_footbazed_v2',args);
+      const kind=category,args={p_query:query,p_limit:14};
+      if(kind!=='all')Object.assign(args,{p_kind:kind,p_cursor:append?nextCursor:null});
+      let{data,error}=await sb.rpc(kind==='all'?'search_footbazed_v2':'search_footbazed_page',args);
       if(version!==requestVersion)return;
       // Rolling deployments may still have the old reader; other failures stay errors.
-      if(error?.code==='PGRST202')({data,error}=await sb.rpc('search_footbazed',args));
+      if(kind==='all'&&error?.code==='PGRST202')({data,error}=await sb.rpc('search_footbazed',args));
       if(error)throw error;
       if(version!==requestVersion)return;
-      renderResults(data,query);
+      if(kind!=='all'&&!Array.isArray(data?.items))throw new Error('Invalid search page');
+      loadedQuery=query;loadingMore=false;
+      nextCursor=kind==='all'?null:data.next_cursor||null;
+      renderResults(append?[...currentResults,...data.items]:kind==='all'?data:data.items,query);
+      if(append)document.getElementById(`global-search-option-${Math.min(previousCount,currentResults.length-1)}`)?.focus({preventScroll:true});
     }catch(error){
       if(version!==requestVersion)return;
       console.error('Global search error:',error);
-      currentResults=[];
+      loadingMore=false;
       announce('Ошибка поиска. Можно повторить запрос.');
       document.getElementById('globalSearchResults').setAttribute('aria-busy','false');
+      if(append){syncContinuation(true);return;}
+      currentResults=[];
       document.getElementById('globalSearchResults').innerHTML='<div class="search-state"><strong>Поиск временно недоступен</strong><button class="btn btn-g btn-sm" type="button" data-fbz-click="search.search-retry">Повторить</button></div>';
     }
   }
 
   function retry(){run(document.getElementById('globalSearchInput').value);}
+  function chooseCategory(kind){
+    if(!Object.hasOwn(categories,kind)||kind===category)return;
+    cancelRequest();category=kind;syncInput();
+    const input=document.getElementById('globalSearchInput');
+    if(window.FBZDomain.normalizeSearchQuery(input.value).length<2)renderStart();else run(input.value);
+  }
+  function loadMore(){if(loadedQuery)run(loadedQuery,true);}
+  function syncContinuation(failed=false){
+    const target=document.querySelector('.search-continuation');if(!target)return;
+    target.innerHTML=`<span>${failed?'Не удалось загрузить продолжение':nextCursor?'Показано: '+currentResults.length:'Все совпадения загружены'}</span>${nextCursor?`<button type="button" class="btn btn-g" data-fbz-click="search.search-more" ${loadingMore?'disabled':''}>${loadingMore?'Загрузка…':failed?'Повторить загрузку':'Показать ещё'}</button>`:''}`;
+  }
 
   function renderLoading(){
     announce('Поиск выполняется');
@@ -113,6 +147,10 @@
     const target=document.getElementById('globalSearchResults');
     target.setAttribute('aria-busy','false');
     announce('');
+    if(category!=='all'){
+      target.innerHTML=`<div class="search-state search-category-start"><span class="search-category-symbol" aria-hidden="true">${ico(resultIcon(category),24)}</span><strong>${categories[category]}</strong><span>Введите название, чтобы искать в этой категории.</span></div>`;
+      return;
+    }
     if(recent.length){
       currentResults=[];
       target.innerHTML=`<div class="search-section-title"><span>Недавние</span><button type="button" data-fbz-click="search.search-clear-recent">Очистить</button></div><div class="search-recent">${recent.map(query=>`<button type="button" ${FBZActions.attrs("search.search-use-recent",[query])}>${ico('search',14)}<span>${esc(query)}</span></button>`).join('')}</div>`;
@@ -162,7 +200,11 @@
     const rawMeta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='player'?positionLabel(item.meta):(item.meta||resultLabel(item.entity_type)));
     const meta=rawMeta&&rawMeta!==subtitle&&rawMeta!==resultLabel(item.entity_type)?rawMeta:'';
     const visual=item.visual&&['club','player','competition'].includes(item.entity_type)?window.FBZMedia.visual({entity:item.visual,kind:item.entity_type,className:'search-mark',fallbackText:item.entity_type==='club'?item.visual.tla||'':''}):'';
-    return`<button class="search-result" id="global-search-option-${index}" type="button" role="option" aria-selected="false" data-index="${index}" ${FBZActions.attrs("search.search-select",[index])}><span class="search-result-icon${visual?' search-result-media':''}" aria-hidden="true">${visual||ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(title)}</strong><small>${esc(subtitle)}${meta?`<span>·</span>${esc(meta)}`:''}</small></span><span class="search-result-arrow">→</span></button>`;
+    const date=new Date(item.match_date),dateLabel=item.entity_type==='match'&&item.match_date&&Number.isFinite(date.getTime())?date.toLocaleDateString(window.FBZLocale?.intl||'ru-RU',{day:'numeric',month:'short',year:'numeric'}):'';
+    const score=item.entity_type==='match'?FBZDomain.matchScorePresentation({status:item.meta,home_score:item.home_score,away_score:item.away_score}):null;
+    const detail=dateLabel?`<small class="search-match-date">${esc(dateLabel)}</small>`:'';
+    const trailing=score?.hasScore?`<span class="search-match-score" aria-label="${esc(score.label)}: ${esc(score.home)}:${esc(score.away)}">${esc(score.home)}<span>:</span>${esc(score.away)}</span>`:'<span class="search-result-arrow" aria-hidden="true">→</span>';
+    return`<button class="search-result${dateLabel?' search-result-match':''}" id="global-search-option-${index}" type="button" role="option" aria-selected="false" data-index="${index}" ${FBZActions.attrs("search.search-select",[index])}><span class="search-result-icon${visual?' search-result-media':''}" aria-hidden="true">${visual||ico(resultIcon(item.entity_type),17)}</span><span class="search-result-copy"><strong>${esc(title)}</strong><small>${esc(subtitle)}${meta?`<span>·</span>${esc(meta)}`:''}</small>${detail}</span>${trailing}</button>`;
   }
 
   function renderResults(results,query){
@@ -171,14 +213,15 @@
     currentResults=groups.flatMap(group=>group.items);
     target.setAttribute('aria-busy','false');
     document.getElementById('globalSearchInput').setAttribute('aria-expanded',String(currentResults.length>0));
-    announce(currentResults.length?window.FBZDomain.countLabel(currentResults.length,{one:'совпадение в подборке',few:'совпадения в подборке',many:'совпадений в подборке'}):'Совпадений нет. Попробуйте другое название.');
+    announce(currentResults.length?category==='all'?window.FBZDomain.countLabel(currentResults.length,{one:'совпадение в подборке',few:'совпадения в подборке',many:'совпадений в подборке'}):'Показано результатов: '+currentResults.length:'Совпадений нет. Попробуйте другое название.');
     if(!currentResults.length){
-      target.innerHTML=`<div class="search-state"><strong>Ничего не найдено</strong><span>«${esc(query)}»</span></div>`;
+      target.innerHTML=`<div class="search-state"><strong>Ничего не найдено</strong><span>«${esc(query)}»</span><span>Попробуйте другое название или категорию.</span></div>`;
       return;
     }
     const labels={club:'Клубы',player:'Игроки',competition:'Турниры',match:'Матчи',user:'Болельщики'};
     let index=0;
     target.innerHTML=`<div class="search-result-list" id="globalSearchList" role="listbox" aria-label="Лучшие совпадения">${groups.map(group=>`<div class="search-result-group" role="group" aria-labelledby="search-group-${group.kind}"><div class="search-section-title" aria-hidden="true"><span id="search-group-${group.kind}">${labels[group.kind]}</span><small>${group.items.length}</small></div>${group.items.map(item=>searchResultMarkup(item,index++)).join('')}</div>`).join('')}</div>`;
+    if(category!=='all'){target.insertAdjacentHTML('beforeend','<div class="search-continuation" role="group" aria-label="Продолжение поиска"></div>');syncContinuation();}
   }
 
   function clearInput(){
@@ -250,11 +293,13 @@
 
   function resetSession(){close();document.getElementById('globalSearchResults').replaceChildren();document.getElementById('globalSearchInput').value='';syncInput();announce('');}
 
-  window.FBZSearch={clearRecent,clearInput,close,init,open,resetSession,retry,select,useRecent};
+  window.FBZSearch={chooseCategory,loadMore,clearRecent,clearInput,close,init,open,resetSession,retry,select,useRecent};
 })();
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "search.search-category":(event,element,[kind])=>FBZSearch.chooseCategory(kind),
+  "search.search-more":()=>FBZSearch.loadMore(),
   "search.search-retry":()=>FBZSearch.retry(),
   "search.search-clear-recent":()=>FBZSearch.clearRecent(),
   "search.search-clear-input":()=>FBZSearch.clearInput(),
