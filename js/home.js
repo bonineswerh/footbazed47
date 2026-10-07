@@ -37,7 +37,7 @@
     target.innerHTML=`<div class="home-club-empty">${root.ico('football',21)}<strong>Клубы пока не выбраны</strong><p>Добавьте любимые клубы в избранное, чтобы быстро открывать их составы и матчи.</p><button class="btn btn-g btn-sm" type="button" data-fbz-click="shell.open-global-search">Найти клуб</button></div>`;
   }
 
-  function spotlight(items){
+  function spotlight(items,error=false){
     const target=document.getElementById('homeMatchSpotlight');
     if(!target)return;
     const matches=Array.isArray(items)?items:[];
@@ -47,7 +47,7 @@
       ||matches.find(item=>item.status==='finished')
       ||matches[0];
     if(!match){
-      target.innerHTML=`<div class="home-spotlight-empty"><span class="section-kicker">Матч в фокусе</span><strong>Футбольный календарь готовится</strong><p>Когда появятся встречи, здесь будет главное событие для вас.</p><button class="btn btn-g" type="button" data-fbz-click="shell.go-matches">Открыть календарь</button></div>`;
+      target.innerHTML=`<div class="home-spotlight-empty"><span class="section-kicker">Матч в фокусе</span><strong>${error?'Не удалось загрузить матчи':'Футбольный календарь готовится'}</strong><p>${error?'Остальные разделы продолжают работать.':'Когда появятся встречи, здесь будет главное событие для вас.'}</p><button class="btn btn-g" type="button" data-fbz-click="${error?'matches.load-home-m':'shell.go-matches'}">${error?'Повторить':'Открыть календарь'}</button></div>`;
       return;
     }
     const id=Number(match.id);
@@ -55,21 +55,21 @@
     const date=new Date(match.match_date);
     const dateLabel=Number.isFinite(date.getTime())?date.toLocaleDateString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'Дата уточняется';
     const finished=match.status==='finished',live=match.status==='live';
+    const presentation=root.FBZDomain.matchScorePresentation(match);
     const homeName=root.FBZDomain.matchTeamName(match,'home');
     const awayName=root.FBZDomain.matchTeamName(match,'away');
-    const mark=name=>root.teamMonogram?root.teamMonogram(name):name.slice(0,2).toLocaleUpperCase('ru-RU');
     target.innerHTML=`<article class="home-spotlight${live?' is-live':''}" style="${root.FBZDomain.matchPaletteStyle(match)}" aria-label="Матч в фокусе: ${root.esc(homeName)} — ${root.esc(awayName)}">
       <div class="home-spotlight-main">
-        <div class="home-spotlight-top"><span class="home-spotlight-overline">FOOTBAZED <i></i> МАТЧ В ФОКУСЕ</span><span class="home-spotlight-status">${live?'<span class="live-dot"></span>LIVE':finished?'Финальный свисток':'В календаре'}</span></div>
-        <p class="home-spotlight-league">${root.esc(FBZNames.competition(match.league_name)||'Футбол')} <span>·</span> ${root.esc(dateLabel)}</p>
-        <h2 class="home-spotlight-title">${finished?'Недавний матч':live?'Игра идёт прямо сейчас':'Ближайший матч'}</h2>
-        <div class="home-spotlight-score" role="group" aria-label="${root.esc(homeName)} ${root.esc(match.home_score??'без счёта')}, ${root.esc(awayName)} ${root.esc(match.away_score??'без счёта')}">
-          <div class="home-spotlight-team">${root.matchClubMark(match,'home','home-spotlight-mark','eager')}<strong>${root.esc(homeName)}</strong><b>${root.esc(match.home_score??'—')}</b></div>
-          <div class="home-spotlight-team">${root.matchClubMark(match,'away','home-spotlight-mark','eager')}<strong>${root.esc(awayName)}</strong><b>${root.esc(match.away_score??'—')}</b></div>
-        </div>
-        <div class="home-spotlight-actions"><button class="home-spotlight-primary" type="button" ${FBZActions.attrs("home.go-md",[id])}>Открыть матч <span aria-hidden="true">↗</span></button><button class="home-spotlight-secondary" type="button" data-fbz-click="shell.go-matches">Весь календарь</button></div>
+        <div class="home-spotlight-top"><span class="home-spotlight-overline">Матч в фокусе</span><span class="home-spotlight-status">${live?'<span class="live-dot"></span>':''}${presentation.status}</span></div>
+        <p class="home-spotlight-league">${root.esc(FBZNames.competition(match.league_name)||'Футбол')}</p>
+        <button class="mc-score-block mc-score-link home-spotlight-score" type="button" ${FBZActions.attrs("home.go-md",[id])} aria-label="Открыть матч: ${root.esc(homeName)} против ${root.esc(awayName)}, ${presentation.label} ${presentation.home} : ${presentation.away}">
+          <span class="mc-score-team">${root.matchClubMark(match,'home','home-spotlight-mark','eager')}<span class="mc-score-name">${root.esc(homeName)}</span></span>
+          <span class="mc-score-result"><span class="mc-score-num">${presentation.home}<span class="mc-score-separator">:</span>${presentation.away}</span><span class="mc-score-vs">${presentation.label}</span></span>
+          <span class="mc-score-team">${root.matchClubMark(match,'away','home-spotlight-mark','eager')}<span class="mc-score-name">${root.esc(awayName)}</span></span>
+        </button>
+        <div class="home-spotlight-footer"><span class="home-spotlight-date">${root.ico('calendar',15)} ${root.esc(dateLabel)}</span><div class="home-spotlight-actions"><button class="home-spotlight-primary" type="button" ${FBZActions.attrs(finished?'home.open-rate':'home.go-md',[id])}>${finished?'Оценить матч':'Открыть матч'} <span aria-hidden="true">↗</span></button></div></div>
+        <p class="home-spotlight-caption">${finished?'Счёт — только часть истории. Какой была игра для вас?':live?'Матч идёт. Ваше впечатление можно будет сохранить после финального свистка.':'Откройте матч, чтобы посмотреть подробности встречи.'}</p>
       </div>
-      <div class="home-spotlight-art" aria-hidden="true"><div class="home-spotlight-field">${root.matchClubMark(match,'home','home-spotlight-art-mark','eager')}<span class="home-spotlight-art-cross">×</span>${root.matchClubMark(match,'away','home-spotlight-art-mark','eager')}</div><span class="home-spotlight-art-caption">ИГРА БОЛЕЛЬЩИКОВ</span></div>
     </article>`;
   }
 

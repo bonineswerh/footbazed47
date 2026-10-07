@@ -76,6 +76,17 @@
     return String(value||'').replace(/\s+/g,' ').trim().slice(0,80);
   }
 
+  // An absent result is different from a real 0:0. Provider placeholders for
+  // upcoming, postponed or unknown states must never look like played scores.
+  function matchScorePresentation(match={}){
+    const state=String(match.status||'');
+    const hasScore=['live','finished'].includes(state)&&[match.home_score,match.away_score].every(value=>Number.isInteger(value)&&value>=0);
+    const labels={live:'LIVE',finished:'Завершён',scheduled:'Предстоит',postponed:'Перенесён',cancelled:'Отменён'};
+    return{status:Object.hasOwn(labels,state)?labels[state]:'Статус уточняется',hasScore,
+      home:hasScore?String(match.home_score):'—',away:hasScore?String(match.away_score):'—',
+      label:hasScore?(state==='live'?'Текущий счёт':'Итоговый счёт'):['live','finished'].includes(state)?'Счёт уточняется':'Без счёта'};
+  }
+
   // Editorial matte swatches based on home-kit identities; sources in docs/sources/club-palettes.md.
   // Exact aliases only: unknown or untrusted names never become CSS.
   const CLUB_SWATCHES=`eee6d4|Real Madrid CF|Real Madrid|Реал Мадрид|Реал
@@ -293,5 +304,5 @@ c05958 e8e3dd|Спартак|Спартак Москва|Spartak Moscow
     return [...groups].map(([kind,items])=>({kind,items}));
   }
 
-  return Object.freeze({authErrorMessage,canonicalClubName,clubDisplayName,matchTeamName,ratingEvidence,searchResultGroups,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});
+  return Object.freeze({authErrorMessage,canonicalClubName,clubDisplayName,matchTeamName,matchScorePresentation,ratingEvidence,searchResultGroups,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});
 });

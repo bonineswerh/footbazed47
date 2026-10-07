@@ -133,7 +133,7 @@ for(const width of [320,390,1440]){
     await page.setViewportSize({width,height:900});
     await page.addInitScript(()=>{window.__FOOTBAZED_TEST_CLIENT__.auth.getSession=async()=>({data:{session:null},error:null});});
     await page.goto('/?__e2e=1');
-    await expect(page.locator('.hero h1')).toContainText('У каждого матча');
+    await expect(page.locator('.hero h1')).toContainText('Футбол, который');
     await expect(page.locator('.guest-guide')).toBeVisible();
     expect(await page.locator('.hero-btns button').first().evaluate(e=>e.getBoundingClientRect().height)).toBeLessThanOrEqual(64);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);

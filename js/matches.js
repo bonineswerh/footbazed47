@@ -86,7 +86,7 @@ async function fetchMatchPage({offset=0,limit=matchPageSize(),force=false}={}){
 }
 
 function renderMCard(match){
-  const statusLabel={live:'LIVE',finished:'Завершён',scheduled:'Предстоит'}[match.status]||match.status;
+  const presentation=FBZDomain.matchScorePresentation(match);
   const statusClass={live:'t-live',finished:'t-fin',scheduled:'t-sched'}[match.status]||'';
   const derby=isDerby(match.home_team_name,match.away_team_name);
   return`<article class="mcard mcard--${['live','finished','scheduled'].includes(match.status)?match.status:'other'}${derby?' derby':''}" style="${FBZDomain.matchPaletteStyle(match)}">
@@ -94,11 +94,11 @@ function renderMCard(match){
     <div class="mcard-body">
       <div class="mc-t">
         <span class="mc-lg">${esc(FBZNames.competition(match.league_name))}</span>
-        <div class="mc-tags">${derby?`<span class="tag t-derby">${ico('fire',12)} Дерби</span>`:''}<span class="tag ${statusClass}">${esc(statusLabel)}</span></div>
+        <div class="mc-tags">${derby?`<span class="tag t-derby">${ico('fire',12)} Дерби</span>`:''}<span class="tag ${statusClass}">${esc(presentation.status)}</span></div>
       </div>
       <button class="mc-score-block mc-score-link" type="button" aria-label="Открыть матч: ${esc(FBZNames.club(match.home_team_name))} против ${esc(FBZNames.club(match.away_team_name))}" ${FBZActions.attrs("matches.go-md",[match.id])}>
         <span class="mc-score-team">${matchClubMark(match,'home','mc-score-mark')}<span class="mc-score-name">${esc(FBZDomain.matchTeamName(match,'home'))}</span></span>
-        <span class="mc-score-result"><span class="mc-score-num">${esc(match.home_score??'—')}<span class="mc-score-separator">:</span>${esc(match.away_score??'—')}</span><span class="mc-score-vs">${match.status==='scheduled'?'НЕТ СЧЁТА':'СЧЁТ'}</span></span>
+        <span class="mc-score-result"><span class="mc-score-num">${presentation.home}<span class="mc-score-separator">:</span>${presentation.away}</span><span class="mc-score-vs">${presentation.label}</span></span>
         <span class="mc-score-team">${matchClubMark(match,'away','mc-score-mark')}<span class="mc-score-name">${esc(FBZDomain.matchTeamName(match,'away'))}</span></span>
       </button>
       <div class="mc-bottom">
@@ -127,7 +127,7 @@ async function loadHomeM(){
     target.innerHTML=items.length?items.map(renderMCard).join(''):'<div class="empty-state"><div class="empty-icon">🏟️</div><strong>Матчей пока нет</strong><span>Новые встречи появятся после обновления календаря.</span></div>';
   }catch(error){
     console.warn('loadHomeM:',error);
-    window.FBZHome?.spotlight([]);
+    window.FBZHome?.spotlight([],true);
     target.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><strong>Не удалось загрузить матчи</strong><button class="btn btn-g btn-sm" data-fbz-click="matches.load-home-m">Повторить</button></div>';
   }
 }

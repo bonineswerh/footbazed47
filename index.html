@@ -28,10 +28,10 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20261005">
-  <link rel="stylesheet" href="css/match-editorial.css?v=4">
-  <link rel="stylesheet" href="css/typography.css?v=7">
-  <link rel="stylesheet" href="css/club-palettes.css?v=20261005">
+  <link rel="stylesheet" href="styles.css?v=20261006">
+  <link rel="stylesheet" href="css/match-editorial.css?v=20261006">
+  <link rel="stylesheet" href="css/typography.css?v=20261006">
+  <link rel="stylesheet" href="css/club-palettes.css?v=20261006">
 </head>
 <body>
   <a class="skip-link" href="#page-home" id="skipContent">Перейти к содержимому</a>
@@ -82,15 +82,21 @@
   
   <!-- HOME -->
   <div class="page on" id="page-home">
-    <div class="guest-home-intro">
+    <section class="home-editorial" aria-labelledby="homeEditorialTitle">
       <section class="hero">
-        <span class="hero-tag">ФУТБОЛ ГЛАЗАМИ БОЛЕЛЬЩИКОВ</span>
-        <h1>У каждого матча<br>своё впечатление.</h1>
-        <p>Сохраните его. Оценивайте матчи и игроков, собирайте свою футбольную историю и обсуждайте игру с друзьями.</p>
+        <span class="hero-tag">ТВОЙ ВЗГЛЯД НА ФУТБОЛ</span>
+        <h1 id="homeEditorialTitle">Футбол, который<br>остаётся с тобой.</h1>
+        <p>Оценивай матчи, замечай игроков. Сохраняй моменты, о которых хочется спорить.</p>
         <div class="hero-btns" id="heroBtns">
           <button class="btn btn-l" data-fbz-click="shell.open-register">Начать свой дневник</button><button class="btn btn-g" data-fbz-click="shell.go-matches">Посмотреть матчи</button>
         </div>
-        <div class="hero-stats">
+      </section>
+      <div id="homeMatchSpotlight" class="home-spotlight-slot" aria-live="polite">
+        <div class="home-spotlight-skeleton" role="status"><span class="sr-only">Загружаем матч в фокусе</span></div>
+      </div>
+    </section>
+    <div class="guest-home-intro">
+        <div class="hero-stats home-public-stats">
           <div class="hstat">
             <div class="hstat-v" id="hU">—</div>
             <div class="hstat-l">Пользователей</div>
@@ -104,8 +110,6 @@
             <div class="hstat-l">Матчей</div>
           </div>
         </div>
-      </section>
-
       <div class="guest-guide" aria-label="Как работает FOOTBAZED">
         <div><span>01</span><strong>Смотрите</strong><p>Выберите матч из календаря.</p></div>
         <div><span>02</span><strong>Оценивайте</strong><p>Сохраните мнение об игре и игроках.</p></div>
@@ -117,16 +121,13 @@
       <div class="home-dashboard-head">
         <div>
           <span class="section-kicker">Мой FOOTBAZED</span>
-          <h1 id="homeDashboardTitle">Футбольный день</h1>
+          <h2 id="homeDashboardTitle">Футбольный день</h2>
           <p id="homeDashboardLead">Собираем ваши матчи и оценки.</p>
         </div>
         <div class="home-dashboard-actions">
           <button class="btn btn-l" type="button" data-fbz-click="shell.go-matches"><span data-i="football"></span> Матчи</button>
           <button class="btn btn-g" type="button" data-fbz-click="shell.go-own-profile"><span data-i="users"></span> Профиль</button>
         </div>
-      </div>
-      <div id="homeMatchSpotlight" class="home-spotlight-slot" aria-live="polite">
-        <div class="home-spotlight-skeleton" role="status"><span class="sr-only">Загружаем матч в фокусе</span></div>
       </div>
       <div class="home-overview" id="homeOverview" aria-live="polite">
         <div class="home-overview-skeleton"></div>
@@ -732,7 +733,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- APP JS -->
-  <script src="js/domain.js?v=20261005"></script>
+  <script src="js/domain.js?v=20261006"></script>
   <script src="js/football-names.js?v=20261005"></script>
   <script src="js/appearance.js?v=40"></script>
   <script src="js/performance.js?v=1"></script>
@@ -744,13 +745,13 @@
   <script src="js/confirm.js?v=42"></script>
   <script src="js/actions.js?v=1"></script>
   <script src="js/shell-actions.js?v=3"></script>
-  <script src="js/home.js?v=20261005"></script>
+  <script src="js/home.js?v=20261006"></script>
   <script src="js/feature-loader.js?v=20261005"></script>
   <script src="js/notification-counter.js?v=2"></script>
   <script src="app.js?v=20261005"></script>
   <script src="js/auth.js?v=46"></script>
   <script src="js/rating-loader.js?v=12"></script>
-  <script src="js/matches.js?v=20261005"></script>
+  <script src="js/matches.js?v=20261006"></script>
   <script src="js/account.js?v=43"></script>
 </body>
 </html>

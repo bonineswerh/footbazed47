@@ -4,6 +4,30 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const domain=require('../js/domain.js');
 
+test('match presentation distinguishes a real goalless draw from missing scores',()=>{
+  const draw=domain.matchScorePresentation({status:'finished',home_score:0,away_score:0});
+  assert.equal(draw.hasScore,true);
+  assert.equal(draw.home,'0');
+  assert.equal(draw.away,'0');
+  for(const scores of [[null,null],[2,null],[-1,0],[NaN,1],[1.5,2],['0','0']]){
+    const result=domain.matchScorePresentation({status:'live',home_score:scores[0],away_score:scores[1]});
+    assert.equal(result.hasScore,false);
+    assert.equal(result.home,'—');
+    assert.equal(result.away,'—');
+    assert.equal(result.label,'Счёт уточняется');
+  }
+});
+
+test('upcoming, postponed and unknown matches never publish placeholder scores or raw status',()=>{
+  for(const status of ['scheduled','postponed','cancelled','__proto__','<script>']){
+    const result=domain.matchScorePresentation({status,home_score:0,away_score:0});
+    assert.equal(result.hasScore,false);
+    assert.equal(result.home,'—');
+    assert.notEqual(result.status,status);
+  }
+  assert.equal(domain.matchScorePresentation().status,'Статус уточняется');
+});
+
 test('search groups preserve the strongest category and per-category relevance without mutating results',()=>{
   const items=[{entity_type:'player',entity_id:'1'},{entity_type:'club',entity_id:'2'},{entity_type:'player',entity_id:'3'},{entity_type:'club',entity_id:'4'},{entity_type:'user',entity_id:'5'}];
   const before=structuredClone(items),groups=domain.searchResultGroups(items);

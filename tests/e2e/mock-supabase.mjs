@@ -384,7 +384,7 @@ export async function installSupabaseMock(page,overrides={}){
       if(name==='get_competition_page')return promiseResult(Number(args.p_competition_id)===7?structuredClone(state.competition):null);
       if(name==='get_match_insights'){
         const distribution=Array.from({length:10},(_,index)=>({score:10-index,count:index===1?1:index===2?1:0}));
-        const others=state.feed.filter(r=>r.match_id===Number(args.p_match_id)&&r.is_public!==false&&r.user_id!==state.sessionUser.id);
+        const others=state.feed.filter(r=>r.match_id===Number(args.p_match_id)&&r.is_public!==false&&r.user_id!==state.sessionUser?.id);
         return promiseResult({rating_count:2,average:8.5,distribution,others_rating_count:others.length,others_average:others.length?others.reduce((n,r)=>n+r.match_rating,0)/others.length:null,segments:{all:{rating_count:2,average:8.5,distribution},home:{rating_count:1,average:9,distribution},away:{rating_count:0,average:null,distribution:[]},neutral:{rating_count:1,average:8,distribution}},top_players:[{player_id:5290,name:'Thibaut Courtois',team:'Real Madrid CF',average:8.7,rating_count:3,best_votes:2,unverified_rating_count:participationVerified(args.p_match_id,5290)?0:3}],...structuredClone(state.matchInsights||{})});
       }
       if(name==='search_footbazed'||name==='search_footbazed_v2'){

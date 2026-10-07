@@ -39,7 +39,8 @@ for(const theme of ['light','dark'])test('club gradients and long names preserve
       const painted=range.getBoundingClientRect(),mark=n.parentElement.querySelector('.mc-score-mark').getBoundingClientRect();
       return painted.bottom>r.bottom+1||painted.top<r.top-1||painted.top<mark.bottom-1||painted.left<box.left||painted.right>box.right;
     });
-    return {errors,background:getComputedStyle(el.querySelector('.mc-score-block')).backgroundImage};
+    // The accepted poster design places the club paint on the entire card.
+    return {errors,background:getComputedStyle(el).backgroundImage};
   });
   expect(geometry.errors).toEqual([false,false]);
   expect(geometry.background).toContain('linear-gradient');
@@ -53,7 +54,7 @@ for(const theme of ['light','dark'])test('club gradients and long names preserve
   await expect(page).toHaveURL(/\/match\/101/);
   await page.goto('/matches?__e2e=1');
   await page.getByRole('button',{name:'Предстоящие',exact:true}).click();
-  const second=page.locator('#matchG .mc-score-block').first();
+  const second=page.locator('#matchG .mcard').first();
   await expect(second).toBeVisible();
   expect(await second.evaluate(e=>getComputedStyle(e).backgroundImage)).not.toBe(firstBackground);
 });

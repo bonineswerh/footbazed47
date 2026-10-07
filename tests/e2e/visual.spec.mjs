@@ -74,7 +74,7 @@ test('матч в фокусе открывает тот же матч из ка
   const spotlight=page.locator('#homeMatchSpotlight .home-spotlight');
   await expect(spotlight).toContainText('Реал Мадрид');
   await expect(spotlight).toContainText('Ман Сити');
-  await expect(spotlight.locator('.home-spotlight-team b')).toHaveText(['2','1']);
+  await expect(spotlight.locator('.mc-score-num')).toHaveText('2:1');
   await spotlight.getByRole('button',{name:'Открыть матч'}).click();
   await expect(page).toHaveURL(/\/match\/101\?__e2e=1$/u);
   await expect(page.locator('.md-hero')).toContainText('Ман Сити');
