@@ -3,8 +3,9 @@
 .home-league-ribbon[hidden]{display:none}
 .home-league-track{display:flex;width:max-content;animation:league-ribbon 42s linear infinite}
 .home-league-track>div{display:flex;align-items:center;gap:32px;padding:14px 16px;font-size:var(--type-meta);font-weight:500;white-space:nowrap}
-.home-league-track span::before{content:'·';margin-right:32px;color:var(--accent2)}
-.home-league-ribbon:hover .home-league-track{animation-play-state:paused}
+.home-league-track span{display:inline-flex;align-items:center;gap:8px}.home-league-track .ico{color:var(--accent2);opacity:.7}
+.home-pending-club{display:flex;align-items:center;gap:6px;min-width:0}.home-pending-club>span:last-child{min-width:0;overflow-wrap:anywhere}.home-pending-club .home-club-mark{flex:none;width:24px;height:24px}.home-pending-club:last-child{justify-content:flex-end}
+.home-league-ribbon:hover{color:var(--text2)}
 @keyframes league-ribbon{to{transform:translateX(-50%)}}
 @media(prefers-reduced-motion:reduce){.home-league-track{animation:none;width:auto}.home-league-track>div{flex-wrap:wrap;justify-content:center;gap:16px;white-space:normal}.home-league-track>div+div{display:none}.home-league-track span::before{margin-right:16px}}
 .home-editorial{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:center;gap:32px;max-width:1260px;margin:0 auto;padding:48px 32px}
@@ -67,6 +68,7 @@
 .mc-score-team{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:0;text-align:center}
 .mc-score-mark{display:grid;place-items:center;flex:0 0 auto;width:40px;height:40px;border:1px solid var(--b2);border-radius:8px;background:var(--bg2);color:var(--accent2);font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.5px}
 .mc-score-name{margin:0;max-width:100%;overflow-wrap:anywhere;color:var(--snow);font-family:'Onest Variable',system-ui,sans-serif;font-size:var(--type-meta);font-weight:760;letter-spacing:-.15px;line-height:1.24}
+body .mc-score-name{hyphens:none}
 .mc-score-result{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:74px}
 .mc-score-num{display:flex;align-items:center;gap:3px;background:none;color:var(--snow);font-size:36px;letter-spacing:0;-webkit-text-fill-color:currentColor;filter:none}
 .mc-score-separator{padding-bottom:7px;color:var(--accent2);font-family:'Onest Variable',system-ui,sans-serif;font-size:17px;font-weight:700}

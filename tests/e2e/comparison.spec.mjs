@@ -2,11 +2,11 @@ import {expect,test} from '@playwright/test';
 import {installSupabaseMock} from './mock-supabase.mjs';
 const target='cd291181-2db6-42cb-9f3d-ef84ab3a9660';
 const common=Array.from({length:18},(_,i)=>({match_id:101,competition_id:i<9?7:8,home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',home_club_id:24,away_club_id:31,league_name:i<9?'Champions League':'La Liga',match_date:`2026-09-${String(20-i).padStart(2,'0')}T19:00:00Z`,home_score:2,away_score:1,my_score:9,their_score:i<3?9:i<6?8:5,gap:i<3?0:i<6?1:4}));
-async function prepare(page,overrides={}){await installSupabaseMock(page,{comparisonItems:common,...overrides});await page.goto(`/profile/${target}?__e2e=1`);await expect(page.getByRole('button',{name:'Сравнить',exact:true})).toBeVisible();}
+async function prepare(page,overrides={}){await installSupabaseMock(page,{comparisonItems:common,...overrides});await page.goto(`/profile/${target}?__e2e=1`);await expect(page.getByRole('button',{name:'Сравнить оценки',exact:true})).toBeVisible();}
 test('сравнение загружается по нажатию, имеет реальные метрики, страницы и фильтры',async({page})=>{
   await prepare(page);
   expect(await page.locator('script[src*="js/comparison.js"]').count()).toBe(0);
-  await page.getByRole('button',{name:'Сравнить',exact:true}).click();
+  await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();
   await expect(page.locator('.comparison-match')).toHaveCount(12);
   await expect(page.locator('.comparison-summary')).toContainText('33%');
   await expect(page.locator('.comparison-summary')).toContainText('2.8');
@@ -24,17 +24,17 @@ test('сравнение загружается по нажатию, имеет 
   await expect(page.locator('.comparison-match').first()).toContainText('Одинаково');
   await page.keyboard.press('Escape');
   await expect(page.locator('#comparisonOverlay')).toHaveAttribute('aria-hidden','true');
-  await expect(page.getByRole('button',{name:'Сравнить',exact:true})).toBeFocused();
+  await expect(page.getByRole('button',{name:'Сравнить оценки',exact:true})).toBeFocused();
 });
 test('недоступный профиль, пустая выборка и повтор после ошибки имеют честные состояния',async({page})=>{
-  await prepare(page,{comparisonUnavailable:true});await page.getByRole('button',{name:'Сравнить',exact:true}).click();
+  await prepare(page,{comparisonUnavailable:true});await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();
   await expect(page.locator('#comparisonContent')).toContainText('Сравнение недоступно');
   await page.keyboard.press('Escape');
-  await prepare(page,{comparisonItems:[]});await page.getByRole('button',{name:'Сравнить',exact:true}).click();
+  await prepare(page,{comparisonItems:[]});await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();
   await expect(page.locator('#comparisonContent')).toContainText('Общих оценок пока нет');
   await expect(page.locator('.comparison-summary')).not.toContainText('0%');
   await page.keyboard.press('Escape');
-  await prepare(page,{comparisonError:true});await page.getByRole('button',{name:'Сравнить',exact:true}).click();
+  await prepare(page,{comparisonError:true});await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();
   await expect(page.locator('#comparisonContent')).toContainText('Не удалось загрузить сравнение');
   await page.evaluate(()=>{const rpc=window.__FOOTBAZED_TEST_CLIENT__.rpc;window.__FOOTBAZED_TEST_CLIENT__.rpc=(name,args)=>name==='get_profile_comparison_page'?Promise.resolve({data:{profile:{username:'gamlet'},summary:{},total:0,items:[],competitions:[],has_more:false,favorites:[],tournaments:[],players:[]},error:null}):rpc(name,args);});
   await page.getByRole('button',{name:'Повторить',exact:true}).click();await expect(page.locator('#comparisonContent')).toContainText('Общих оценок пока нет');
@@ -42,24 +42,24 @@ test('недоступный профиль, пустая выборка и по
 test('запоздавший ответ не восстанавливает закрытую панель или прежний фильтр',async({page})=>{
   await prepare(page);
   await page.evaluate(()=>{const rpc=window.__FOOTBAZED_TEST_CLIENT__.rpc;window.__FOOTBAZED_TEST_CLIENT__.rpc=async(name,args)=>{const r=await rpc(name,args);if(name==='get_profile_comparison_page'&&args.p_filters.sort==='different')await new Promise(resolve=>setTimeout(resolve,600));return r;};});
-  await page.getByRole('button',{name:'Сравнить',exact:true}).click();
+  await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();
   await page.getByLabel('Порядок матчей').selectOption('different');await page.getByLabel('Порядок матчей').selectOption('closest');
   await expect(page.locator('.comparison-match').first()).toContainText('Одинаково');await page.waitForTimeout(700);
   await expect(page.locator('.comparison-match').first()).toContainText('Одинаково');
   await page.getByLabel('Порядок матчей').selectOption('different');await page.keyboard.press('Escape');await page.waitForTimeout(700);
   await expect(page.locator('#comparisonOverlay')).toHaveAttribute('aria-hidden','true');await expect(page.locator('#comparisonContent')).toBeEmpty();
-  await page.getByRole('button',{name:'Сравнить',exact:true}).click();await expect(page.locator('.comparison-match')).toHaveCount(12);
+  await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();await expect(page.locator('.comparison-match')).toHaveCount(12);
   await page.evaluate(()=>window.dispatchEvent(new Event('fbz:session-change')));
   await expect(page.locator('#comparisonOverlay')).toHaveAttribute('aria-hidden','true');await expect(page.locator('#comparisonContent')).toBeEmpty();
 });
 test('общий матч открывается из сравнения и панель закрывается при переходе',async({page})=>{
-  await prepare(page);await page.getByRole('button',{name:'Сравнить',exact:true}).click();await page.locator('.comparison-match').first().click();
+  await prepare(page);await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();await page.locator('.comparison-match').first().click();
   await expect(page.locator('.md-hero')).toBeVisible();await expect(page.locator('#comparisonOverlay')).toHaveAttribute('aria-hidden','true');
 });
 for(const theme of ['dark','light'])for(const width of [320,390,1440])test(`сравнение: адаптивность, фокус и контраст ${theme} ${width}`,async({page})=>{
   await page.setViewportSize({width,height:width===1440?1000:844});
   await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);
-  await prepare(page);await page.getByRole('button',{name:'Сравнить',exact:true}).click();await expect(page.locator('.comparison-match')).toHaveCount(12);
+  await prepare(page);await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();await expect(page.locator('.comparison-match')).toHaveCount(12);
   await expect(page.getByRole('button',{name:'Закрыть сравнение'})).toBeInViewport();
   await expect(page.getByRole('button',{name:'Закрыть сравнение'})).toBeFocused();
   await page.keyboard.press('Shift+Tab');expect(await page.evaluate(()=>document.querySelector('#comparisonOverlay').contains(document.activeElement))).toBe(true);

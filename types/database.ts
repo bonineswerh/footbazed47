@@ -1373,6 +1373,10 @@ export type Database = {
         Args: { p_confirmation: string; p_scope: string }
         Returns: Json
       }
+      admin_community_experts: {
+        Args: { p_actor: string; p_enabled?: boolean; p_username?: string }
+        Returns: Json
+      }
       admin_get_community_reports: {
         Args: {
           p_actor: string
@@ -1446,6 +1450,10 @@ export type Database = {
       }
       get_club_marks: { Args: { p_ids: number[] }; Returns: Json }
       get_club_page: { Args: { p_club_id: number }; Returns: Json }
+      get_community_suggestions: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       get_competition_page: {
         Args: { p_competition_id: number }
         Returns: Json

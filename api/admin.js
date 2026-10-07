@@ -552,6 +552,11 @@ module.exports = async function handler(req, res) {
 
     const body = await readBody(req);
     const action = String(body.action || '');
+    if (action === 'community_experts') {
+      if ((body.enabled != null && typeof body.enabled !== 'boolean') || (body.username != null && (typeof body.username !== 'string' || body.username.trim().length > 30))) return sendJson(res,400,{error:'invalid_expert_input'});
+      const response = await supabase('/rest/v1/rpc/admin_community_experts',{method:'POST',body:{p_actor:administrator.id,p_username:body.username??null,p_enabled:body.enabled??null}});
+      return sendJson(res,200,parseJson(response.raw,{}));
+    }
     if (action === 'moderation_queue') {
       const status = body.status ?? 'open', targetType = body.target_type ?? 'all', offset = body.offset ?? 0;
       if (!['all','open','reviewed','dismissed'].includes(status) || !['all','rating','comment','profile'].includes(targetType) ||

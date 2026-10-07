@@ -188,7 +188,7 @@ async function loadM(reset=true){
   target.innerHTML='<div class="loading"><div class="spin"></div><span>Загружаем календарь</span></div>';
   try{
     await FBZFeatures.load({key:'calendar-model',script:'js/calendar-model.js?v=20261007',ready:()=>window.FBZCalendarModel});
-    const calendar=await FBZFeatures.load({key:'match-calendar',styleId:'calendarStyles',style:'css/calendar.css?v=20261007',script:'js/match-calendar.js?v=20261007',ready:()=>window.FBZMatchCalendar});
+    const calendar=await FBZFeatures.load({key:'match-calendar',styleId:'calendarStyles',style:'css/calendar.css?v=20261007-community',script:'js/match-calendar.js?v=20261007',ready:()=>window.FBZMatchCalendar});
     if(!current())return;
     calendar.mount();
     const page=await fetchMatchPage({offset:0,force:reset});

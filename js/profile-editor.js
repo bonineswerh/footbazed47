@@ -2,12 +2,14 @@
   'use strict';
   let generation=0,avatarGeneration=0,avatar=null,avatarUrl='',saving=false;
   const el=id=>document.getElementById(id);
-  function resetSession(){generation++;avatarGeneration++;avatar=null;saving=false;if(avatarUrl)URL.revokeObjectURL(avatarUrl);avatarUrl='';}
+  function resetSession(){generation++;avatarGeneration++;avatar=null;saving=false;if(avatarUrl)URL.revokeObjectURL(avatarUrl);avatarUrl='';FBZOverlay.close('profileEditOv');el('profileEditOv')?.replaceChildren();}
   function open(){
     if(!CU){openAuth();return;}
     resetSession();
     const src=safeImageUrl(CU.avatar_url);
-    el('profileW').innerHTML=`<div class="profile-editor"><header><span class="section-kicker">Мой профиль</span><h1>Ваш футбольный профиль</h1><p>Так вас видят другие болельщики.</p></header><form data-fbz-submit="profile-editor.profile-editor-save">
+    let overlay=el('profileEditOv');
+    if(!overlay){overlay=document.createElement('div');overlay.id='profileEditOv';overlay.className='overlay';overlay.tabIndex=-1;overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-hidden','true');overlay.setAttribute('aria-labelledby','profileEditTitle');overlay.dataset.closeBackdrop='true';document.body.append(overlay);overlay.addEventListener('fbz:overlay-close',resetSession);}
+    overlay.innerHTML=`<div class="profile-editor"><header><div><span class="section-kicker">Мой профиль</span><h2 id="profileEditTitle">Редактировать профиль</h2></div><button class="btn btn-g" type="button" data-fbz-click="profile-editor.profile-editor-cancel" aria-label="Закрыть редактирование">${ico('close',18)}</button></header><form data-fbz-submit="profile-editor.profile-editor-save">
       <div class="profile-photo"><button class="profile-photo-button" type="button" data-fbz-click="profile-editor.choose-avatar" aria-label="Выбрать фотографию профиля"><span id="avPreview">${src?`<img src="${src}" alt="">`:`<span class="phero-av ${avColor(CU.username)}">${esc((CU.username||'U')[0].toUpperCase())}</span>`}</span><span class="profile-photo-edit">${ico('photo',16)}</span></button><div><strong>Фото профиля</strong><p>JPG, PNG или WebP, до 5 МБ.<br>Сохраним квадратный аватар.</p></div><input id="avFile" type="file" accept="image/jpeg,image/png,image/webp" hidden data-fbz-change="profile-editor.profile-editor-preview"></div>
       <label for="ep_user">Никнейм</label><input class="input" id="ep_user" value="${esc(CU.username)}" minlength="3" maxlength="30" required autocomplete="nickname" aria-describedby="usernameHint"><p class="field-hint" id="usernameHint">3–30 символов: буквы, цифры и нижнее подчёркивание.</p>
       <label for="ep_name">Имя в профиле</label><input class="input" id="ep_name" value="${esc(CU.display_name||CU.username)}" maxlength="60" autocomplete="name" aria-describedby="displayNameHint"><p class="field-hint" id="displayNameHint">Подпись, которую видят болельщики. Никнейм остаётся вашим уникальным именем.</p>
@@ -18,11 +20,11 @@
       <p class="form-error" id="profileEditError" role="alert" hidden></p>
       <div class="profile-editor-actions"><button class="btn btn-g" type="button" data-fbz-click="profile-editor.profile-editor-cancel">Отмена</button><button class="btn btn-l" id="epSaveBtn" type="submit">Сохранить</button></div>
     </form></div>`;
-    el('ep_user').focus({preventScroll:true});
+    FBZOverlay.open('profileEditOv','#ep_user');
   }
   function error(message){const target=el('profileEditError');if(target){target.textContent=message;target.hidden=!message;}}
   function updateCount(){el('bioCount').textContent=`${el('ep_bio').value.length}/120`;}
-  function cancel(){if(saving)return;resetSession();loadProfile(CU?.id);}
+  function cancel(){if(saving)return;resetSession();}
   async function preview(input){
     const file=input.files?.[0];if(!file)return;
     const token=++avatarGeneration,view=generation;
@@ -53,7 +55,7 @@
     const current=()=>view===generation&&CU?.id===user;
     saving=true;error('');
     const button=el('epSaveBtn');button.disabled=true;button.textContent='Сохраняем…';
-    const controls=[...el('profileW').querySelectorAll('input,textarea,button')];controls.forEach(control=>control.disabled=true);
+    const controls=[...el('profileEditOv').querySelectorAll('input,textarea,button')];controls.forEach(control=>control.disabled=true);
     try{
       const update={username:name,display_name:displayName,bio:bio||null,is_public:isPublic};
       if(photo){

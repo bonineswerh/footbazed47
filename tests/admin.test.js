@@ -52,6 +52,17 @@ test('admin reads verify the bearer token and protected database role independen
   assert.match(app.calls[1].url,/select=id,is_admin/);
   assert.equal(app.calls[1].headers.Authorization,'Bearer server-only-test-key');
 });
+test('expert roles require protected administrator identity and ignore client-supplied actor',async()=>{
+  for(const scenario of [{authorization:''},{authStatus:401},{admin:false}]){
+    const app=api(scenario);assert.equal((await app.send({action:'community_experts',username:'writer',enabled:true},scenario)).status,403);
+    assert.equal(app.calls.some(c=>c.method==='POST'),false);
+  }
+  const app=api();await app.send({action:'community_experts',username:'writer',enabled:true,p_actor:'forged-user'});
+  const rpc=app.calls.find(c=>c.url.endsWith('/rpc/admin_community_experts'));
+  assert.equal(rpc.body.p_actor,'12000000-0000-0000-0000-000000000001');assert.equal(rpc.body.p_username,'writer');assert.equal(rpc.body.p_enabled,true);
+  for(const input of [{enabled:'true'},{username:[]},{username:'a'.repeat(31)}])assert.equal((await app.send({action:'community_experts',...input})).status,400);
+  assert.equal(app.calls.filter(c=>c.method==='POST').length,1);
+});
 
 test('moderation queue and decisions derive actor only from verified administrator',async()=>{
   const app=api(),report_id='55000000-0000-4000-8000-000000000001';

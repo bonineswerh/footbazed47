@@ -50,7 +50,7 @@ test('жалобы на комментарий и профиль использ�
   await setup(page);await page.goto('/feed?__e2e=1');await page.getByRole('button',{name:'Обсудить оценку',exact:true}).first().click();
   await page.getByRole('button',{name:'Пожаловаться на комментарий',exact:true}).click();await expect(page.getByRole('dialog',{name:'Жалоба на комментарий'})).toBeVisible();await submit(page);
   expect(await page.evaluate(()=>window.__reportCalls)).toEqual([{p_target_type:'comment',p_target_id:'702',p_reason:'spam',p_details:'<script>Untrusted details</script>'}]);
-  await page.goto('/profile/'+other+'?__e2e=1');await page.getByRole('button',{name:'Пожаловаться на профиль',exact:true}).click();await submit(page);
+  await page.goto('/profile/'+other+'?__e2e=1');await page.getByRole('button',{name:'Действия с пользователем',exact:true}).click();await page.getByRole('button',{name:'Пожаловаться',exact:true}).click();await submit(page);
   expect(await page.evaluate(()=>window.__reportCalls)).toEqual([{p_target_type:'profile',p_target_id:other,p_reason:'spam',p_details:'<script>Untrusted details</script>'}]);
 });
 test('повтор после лимита не теряет текст, дубликат остаётся одним обращением',async({page})=>{

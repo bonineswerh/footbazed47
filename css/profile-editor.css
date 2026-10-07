@@ -10,3 +10,9 @@
 .profile-editor .profile-visibility label{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;cursor:pointer}
 .profile-visibility input[type="checkbox"]{width:20px;height:20px;accent-color:var(--accent)}
 .profile-visibility p{font-size:var(--type-small);line-height:1.55;color:var(--text2);margin:8px 0 0}
+#profileEditOv{padding:20px}.profile-editor{width:min(620px,100%);max-height:calc(100dvh - 40px);overflow-y:auto;margin:0;border-radius:var(--radius-card);box-shadow:var(--shadow)}
+.profile-editor header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:18px;margin-bottom:20px}.profile-editor header .btn{flex:none;width:44px;height:44px;padding:0;justify-content:center}.profile-editor h2{font-size:1.5rem;font-weight:650;letter-spacing:-.035em}.profile-editor .section-kicker{display:block;margin-bottom:5px}
+.profile-editor header .btn{min-width:44px;max-width:44px}
+.profile-photo-button,.profile-photo-button #avPreview{border-radius:50%}.profile-photo-button img,.profile-photo-button .phero-av{border-radius:50%}.profile-photo-button{border-color:var(--accent2);box-shadow:0 0 18px var(--accent4)}.profile-editor .input,.profile-visibility{border-radius:var(--radius-control)}
+.profile-editor-actions{position:sticky;bottom:-30px;padding:16px 0 0;background:var(--bg2)}
+@media(max-width:620px){#profileEditOv{padding:12px}.profile-editor{max-height:calc(100dvh - 24px);padding:20px}.profile-editor-actions{bottom:-20px}}

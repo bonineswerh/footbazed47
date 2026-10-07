@@ -49,12 +49,12 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
   await expect(page.locator('.pstats .pst-v').first()).toHaveText('60');
   await expect(page.locator('.prdist-note')).toContainText('Вся публичная история');
   await expect(page.getByRole('button',{name:'Меню аккаунта bazed',exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Сравнить',exact:true}).click();
+  await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();
   await expect(page.locator('.comparison-match')).toHaveCount(1);
   await page.getByLabel('Порядок матчей').selectOption('different');
   await expect(page.locator('.comparison-gap')).toHaveText('Разница 2');
   await page.getByRole('button',{name:'Закрыть сравнение'}).click();
-  await expect(page.getByRole('button',{name:'Сравнить',exact:true})).toBeFocused();
+  await expect(page.getByRole('button',{name:'Сравнить оценки',exact:true})).toBeFocused();
   await page.getByRole('button',{name:'Поиск',exact:true}).click();
   await page.locator('#globalSearchInput').fill('Real');
   await expect(page.getByRole('option').first().locator('.search-mark')).toBeVisible();
@@ -74,7 +74,7 @@ for(const theme of ['dark','light'])test(`${theme}: navigation, filters, ratings
 
 for(const theme of ['dark','light'])test(`${theme}: report dialog and own history in each browser`,async({page})=>{
   await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);await page.setViewportSize({width:390,height:844});
-  await page.goto('/profile/cd291181-2db6-42cb-9f3d-ef84ab3a9660?__e2e=1');const trigger=page.getByRole('button',{name:'Пожаловаться на профиль',exact:true});await trigger.click();
+  await page.goto('/profile/cd291181-2db6-42cb-9f3d-ef84ab3a9660?__e2e=1');const trigger=page.getByRole('button',{name:'Действия с пользователем',exact:true});await trigger.click();await page.getByRole('button',{name:'Пожаловаться',exact:true}).click();
   await expect(page.getByRole('dialog',{name:'Жалоба на профиль'})).toBeVisible();await expect(page.getByLabel('Причина',{exact:true})).toBeFocused();await page.getByLabel('Причина',{exact:true}).selectOption('other');await page.keyboard.press('Escape');await expect(trigger).toBeFocused();
   await page.goto('/profile/3615141a-7700-46b8-9ba5-e4f4450537fc?__e2e=1');await page.getByRole('button',{name:'Мои обращения',exact:true}).click();await expect(page.getByRole('dialog',{name:'Мои обращения'})).toContainText('Обращений пока нет');await expect(page.getByRole('button',{name:'Закрыть обращения',exact:true})).toBeFocused();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Мои обращения',exact:true})).toBeFocused();
@@ -82,7 +82,7 @@ for(const theme of ['dark','light'])test(`${theme}: report dialog and own histor
 
 for(const theme of ['dark','light'])test(`${theme}: personal blocking dialogs and keyboard in each browser`,async({page})=>{
   await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'emerald'})),theme);await page.setViewportSize({width:390,height:844});
-  await page.goto('/profile/cd291181-2db6-42cb-9f3d-ef84ab3a9660?__e2e=1');const trigger=page.getByRole('button',{name:'Заблокировать',exact:true});await trigger.click();await expect(page.locator('#confirmAction')).toBeFocused();await page.keyboard.press('Escape');await expect(trigger).toBeFocused();
+  await page.goto('/profile/cd291181-2db6-42cb-9f3d-ef84ab3a9660?__e2e=1');const trigger=page.getByRole('button',{name:'Действия с пользователем',exact:true});await trigger.click();await page.getByRole('button',{name:'Заблокировать',exact:true}).click();await expect(page.locator('#confirmAction')).toBeFocused();await page.keyboard.press('Escape');await expect(trigger).toBeFocused();
   await page.goto('/profile/3615141a-7700-46b8-9ba5-e4f4450537fc?__e2e=1');await page.getByRole('button',{name:'Заблокированные',exact:true}).click();await expect(page.getByRole('button',{name:'Закрыть блокировки'})).toBeFocused();await page.keyboard.press('Shift+Tab');await expect(page.getByRole('button',{name:'Закрыть блокировки'})).toBeFocused();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Заблокированные',exact:true})).toBeFocused();
 });

@@ -20,12 +20,12 @@ async function setup(page,options={}){
   },options);
 }
 async function ownList(page){await page.goto('/profile/'+owner+'?__e2e=1');await page.getByRole('button',{name:'Заблокированные',exact:true}).click();await expect(page.getByRole('dialog',{name:'Заблокированные',exact:true})).toBeVisible();}
-async function confirmation(page){await page.goto('/profile/'+other+'?__e2e=1');await page.getByRole('button',{name:'Заблокировать',exact:true}).click();await expect(page.getByRole('alertdialog')).toBeVisible();}
+async function confirmation(page){await page.goto('/profile/'+other+'?__e2e=1');await page.getByRole('button',{name:'Действия с пользователем',exact:true}).click();await page.getByRole('button',{name:'Заблокировать',exact:true}).click();await expect(page.getByRole('alertdialog')).toBeVisible();}
 
 test('block feature loads only on explicit click; Escape returns focus without a mutation',async({page})=>{
-  await setup(page);await page.goto('/profile/'+other+'?__e2e=1');const trigger=page.getByRole('button',{name:'Заблокировать',exact:true});await expect(trigger).toBeVisible();
+  await setup(page);await page.goto('/profile/'+other+'?__e2e=1');const trigger=page.getByRole('button',{name:'Действия с пользователем',exact:true});await expect(trigger).toBeVisible();
   expect(await page.evaluate(()=>Boolean(window.FBZCommunityBlocks))).toBe(false);await expect(page.locator('#communityBlockStyles')).toHaveCount(0);
-  await trigger.click();await expect(page.getByRole('alertdialog')).toContainText('История оценок сохраняется');await expect(page.locator('#confirmAction')).toBeFocused();
+  await trigger.click();await page.getByRole('button',{name:'Заблокировать',exact:true}).click();await expect(page.getByRole('alertdialog')).toContainText('История оценок сохраняется');await expect(page.locator('#confirmAction')).toBeFocused();
   await page.keyboard.press('Escape');await expect(trigger).toBeFocused();expect(await page.evaluate(()=>window.__blockCalls)).toEqual([]);
 });
 test('successful block invalidates cached profile, feed and notifications while preserving identity',async({page})=>{

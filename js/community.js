@@ -32,7 +32,7 @@
     else if(rel?.status==='pending'&&rel.friend_id===CU?.id)actions=action('accept','Принять','check')+action('reject','','close','aria-label="Отклонить заявку" title="Отклонить заявку"');
     else if(rel?.status==='pending')actions=action('cancel','Отменить');
     else actions=action('add','Добавить','plus');
-    const sub=rel?.status==='pending'?(rel.friend_id===CU?.id?'Хочет добавить вас в друзья':'Заявка отправлена'):`${Number(user.ratings_count)||0} оценок`;
+    const sub=Number(user.mutual_count)>0?FBZDomain.countLabel(user.mutual_count,{one:'общий друг',few:'общих друга',many:'общих друзей'}):rel?.status==='pending'?(rel.friend_id===CU?.id?'Хочет добавить вас в друзья':'Заявка отправлена'):`${Number(user.ratings_count)||0} оценок`;
     return `<article class="friend-card"><a class="friend-profile" href="${esc(FBZLocale.path('/profile/'+encodeURIComponent(user.id)))}" ${FBZActions.attrs("community.open-profile",[id])}>${avatar(user)}<span class="fcard-info"><span class="fcard-name">${esc(name)}</span><span class="fcard-sub">@${esc(name)} · ${esc(sub)}</span></span></a><div class="fcard-action">${actions}</div></article>`;
   }
   async function loadRelations(user){
@@ -62,8 +62,9 @@
       relationships=relations;
       let users=[],nextOffset=offset,nextHasMore=false;
       if(FT==='suggest'){
-        const top=await rows(sb.from('users').select(PUBLIC_USER_FIELDS).neq('id',user).order('ratings_count',{ascending:false}).limit(48));
-        users=top.filter(item=>!relation(item.id)).slice(0,PAGE_SIZE);
+        const result=await sb.rpc('get_community_suggestions',{p_offset:offset,p_limit:PAGE_SIZE});
+        if(result.error)throw result.error;
+        users=result.data?.items||[];nextOffset=Number(result.data?.next_offset)||offset;nextHasMore=Boolean(result.data?.has_more);
       }else{
         const incoming=FT==='incoming';
         const matches=relations.filter(item=>incoming?item.friend_id===user&&item.status==='pending':item.user_id===user&&item.status===(FT==='list'?'accepted':'pending'));
@@ -76,7 +77,7 @@
       offset=nextOffset;hasMore=nextHasMore;
       if(users.length){if(append)target.insertAdjacentHTML('beforeend',users.map(card).join(''));else target.innerHTML=users.map(card).join('');}
       else if(!append){
-        const messages={list:['Ваша футбольная компания','Найдите друзей по никнейму или пригласите их по ссылке.'],incoming:['Все заявки разобраны','Новые приглашения появятся здесь.'],outgoing:['Нет отправленных заявок','Найдите знакомых через поиск и добавьте их в друзья.'],suggest:['Вы уже знакомы','Новые болельщики появятся здесь. Попробуйте поиск по никнейму.']};
+        const messages={list:['Ваша футбольная компания','Найдите друзей по никнейму или пригласите их по ссылке.'],incoming:['Все заявки разобраны','Новые приглашения появятся здесь.'],outgoing:['Нет отправленных заявок','Найдите знакомых через поиск и добавьте их в друзья.'],suggest:['Пока нет рекомендаций','Здесь появятся люди, с которыми у вас есть общие друзья. Найти человека по никнейму можно выше.']};
         target.innerHTML=state(...messages[FT],FT==='list'?'<button class="btn btn-g" type="button" data-fbz-click="community.focus-friend-search">Найти друзей</button>':'');
       }
       el('friendsMore').innerHTML=hasMore?'<button class="btn btn-g" type="button" data-fbz-click="community.load-more">Показать ещё</button>':'';

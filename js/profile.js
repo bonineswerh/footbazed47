@@ -51,20 +51,20 @@ function renderProfileInsights(ratings,matchMap,summary){
   if(summary){
     const total=Number(summary.total)||0,tournaments=summary.tournaments||[];
     const scope=summary.scope==='own'?'По всей вашей истории, включая оценки «Только вам».':'По всей публичной истории оценок этого болельщика.';
-    return '<section class="pcard" aria-labelledby="profileInsightsTitle"><h2 class="pcard-title" id="profileInsightsTitle">Футбол в деталях</h2>'
+    return '<section class="pcard" aria-labelledby="profileInsightsTitle"><h2 class="pcard-title" id="profileInsightsTitle">Статистика оценок</h2>'
       +'<p class="profile-sample">'+esc(scope)+'</p>'
       +(total?'<div class="p-insight-grid"><div class="p-mini"><span>'+Number(summary.reviewed)+'</span><small>с комментарием</small></div><div class="p-mini"><span>'+Number(summary.tournament_count)+'</span><small>турниров</small></div><div class="p-mini"><span>'+Number(summary.minimum)+'–'+Number(summary.maximum)+'</span><small>диапазон оценок</small></div></div>'
         +(tournaments.length?'<h3 class="profile-subtitle">'+(Number(summary.tournament_count)>tournaments.length?'Чаще всего оценивает':'Оценки по турнирам')+'</h3><div class="p-leagues">'+tournaments.map(t=>'<button class="p-league profile-tournament" type="button" '+FBZActions.attrs('profile.go-competition',[Number(t.id)])+'><span>'+esc(FBZNames.competition(t.name))+'<small>'+esc(FBZDomain.countLabel(Number(t.votes),{one:'оценка',few:'оценки',many:'оценок'}))+'</small></span><span class="profile-tournament-average rating-ink" data-tone="'+FBZDomain.ratingTone(Number(t.average))+'">'+FBZDomain.ratingPresentation(t.average,1).value+'<span class="sr-only"> — средняя оценка</span></span></button>').join('')+'</div>':'')
         :'<div class="profile-empty"><strong>У каждой истории есть первый матч</strong><p>Здесь появятся турниры и впечатления из доступных оценок.</p></div>')+'</section>';
   }
   const list=ratings||[];
-  if(!list.length)return '<section class="pcard"><h2 class="pcard-title">Футбол в деталях</h2><div class="profile-empty"><strong>У каждой истории есть первый матч</strong><p>Здесь появятся турниры и впечатления из доступных оценок.</p></div></section>';
+  if(!list.length)return '<section class="pcard"><h2 class="pcard-title">Статистика оценок</h2><div class="profile-empty"><strong>У каждой истории есть первый матч</strong><p>Здесь появятся турниры и впечатления из доступных оценок.</p></div></section>';
   const leagueMap={};
   list.forEach(r=>{const league=matchMap[r.match_id]?.league_name;if(league)leagueMap[league]=(leagueMap[league]||0)+1;});
   const leagues=Object.entries(leagueMap).sort((a,b)=>b[1]-a[1]);
   const reviewed=list.filter(r=>String(r.comment||'').trim()).length;
   const nums=list.map(r=>Number(r.match_rating)).filter(n=>n>=1&&n<=10);
-  return '<section class="pcard"><h2 class="pcard-title">Футбол в деталях</h2>'
+  return '<section class="pcard"><h2 class="pcard-title">Статистика оценок</h2>'
     +'<p class="profile-sample">По '+esc(FBZDomain.countLabel(list.length,{one:'доступной оценке',few:'доступным оценкам',many:'доступным оценкам'}))+'. Это часть истории, видимая в профиле.</p>'
     +'<div class="p-insight-grid"><div class="p-mini"><span>'+reviewed+'</span><small>с комментарием</small></div><div class="p-mini"><span>'+leagues.length+'</span><small>турниров</small></div><div class="p-mini"><span>'+(nums.length?Math.min(...nums)+'–'+Math.max(...nums):'—')+'</span><small>диапазон оценок</small></div></div>'
     +(leagues.length?'<h3 class="profile-subtitle">Турниры в этой выборке</h3><div class="p-leagues">'+leagues.slice(0,3).map(([league,count])=>'<div class="p-league"><span>'+esc(FBZNames.competition(league))+'</span><b>'+count+'</b></div>').join('')+'</div>':'')+'</section>';
@@ -90,7 +90,7 @@ function renderRatingDistribution(ratings,summary){
 function renderFootballDiary(count,isOwner){
   const activity=FBZDomain.profileActivity(count);
   const remaining=FBZDomain.countLabel(activity.remaining,{one:'матч',few:'матча',many:'матчей'});
-  return '<section class="profile-diary" aria-label="Футбольный дневник"><span class="section-kicker">Футбольный дневник</span><h2>'+esc(activity.label)+'</h2><p>'+(isOwner?esc(activity.description):'История оценок этого болельщика.')+'</p>'
+  return '<section class="profile-diary" aria-label="Матчи в истории"><span class="section-kicker">Матчи в истории</span><h2>'+esc(activity.label)+'</h2><p>'+(isOwner?esc(activity.description):'История оценок этого болельщика.')+'</p>'
     +(isOwner?'<div class="diary-milestone"><div><span>Следующая отметка</span><strong>'+esc(FBZDomain.countLabel(activity.next,{one:'матч',few:'матча',many:'матчей'}))+'</strong></div><div class="diary-track" role="progressbar" aria-label="До следующей отметки в дневнике" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+activity.progress+'" aria-valuetext="Осталось '+esc(remaining)+'"><i style="width:'+activity.progress+'%"></i></div><small>Осталось '+esc(remaining)+'. В своём темпе.</small></div>':'')
     +'</section>';
 }
@@ -135,7 +135,7 @@ async function loadProfile(uid){
     let friendBtn='';
     if(!isMe&&CU){
       const fr=payload.friendship;
-      if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.7;cursor:default">${ico('users',13)} В друзьях</button>`;
+      if(fr?.status==='accepted')friendBtn=`<button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs("profile.relationship-menu",[uid,u.display_name||u.username,true])} aria-haspopup="dialog">${ico('users',16)} В друзьях ${ico('chevron',12)}</button>`;
       else if(fr?.status==='pending'&&fr.direction==='outgoing')friendBtn=`<button class="btn btn-g btn-sm" disabled style="opacity:0.6;cursor:default">⏳ Заявка отправлена</button>`;
       else if(fr?.status==='pending')friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" ${FBZActions.attrs("profile.accept-friend-from-profile",[uid])}>${ico('users',13)} Принять заявку</button>`;
       else friendBtn=`<button class="btn btn-l btn-sm" id="profAddBtn" ${FBZActions.attrs("profile.add-friend-from-profile",[uid])}>${ico('users',13)} Добавить в друзья</button>`;
@@ -162,11 +162,9 @@ async function loadProfile(uid){
         ${isMe?`<button class="pst pst-link" type="button" data-fbz-click="shell.go-friends" aria-label="Открыть друзей: ${friendCount}"><span class="pst-v">${friendCount}</span><span class="pst-l">Друзей</span></button>`:`<div class="pst"><div class="pst-v">${friendCount}</div><div class="pst-l">Друзей</div></div>`}
       </div>
       <div class="phero-acts">
-        ${ownerActions}
-        ${!isMe&&CU?`<button class="btn btn-g btn-sm" ${FBZActions.attrs('profile.compare',[uid])}>${ico('chart',14)} Сравнить</button>`:''}
-        ${!isMe&&CU?`<button class="btn btn-g btn-sm" ${FBZActions.attrs('app.report-content',['profile',uid])} aria-label="Пожаловаться на профиль" title="Пожаловаться на профиль">${ico('shield',14)} Жалоба</button>`:''}
-        ${!isMe&&CU?`<button class="btn btn-g btn-sm" type="button" ${FBZActions.attrs('app.manage-blocks',[uid,u.display_name||u.username||'Пользователь'])}>${ico('close',14)} Заблокировать</button>`:''}
-        <button class="btn btn-g btn-sm" ${FBZActions.attrs("profile.copy-app-link",['/profile/'+encodeURIComponent(uid)])}>${ico('link',13)} Ссылка</button>
+        <div class="profile-relationship">${ownerActions}${!isMe&&CU&&payload.friendship?.status!=='accepted'?`<button class="btn btn-g profile-more" type="button" ${FBZActions.attrs('profile.relationship-menu',[uid,u.display_name||u.username,false])} aria-label="Действия с пользователем" aria-haspopup="dialog">${ico('settings',16)}</button>`:''}</div>
+        ${!isMe&&CU?`<button class="btn btn-l profile-compare" type="button" ${FBZActions.attrs('profile.compare',[uid])}>${ico('chart',18)} Сравнить оценки</button>`:''}
+        <button class="btn btn-g profile-link" type="button" ${FBZActions.attrs("profile.copy-app-link",['/profile/'+encodeURIComponent(uid)])} aria-label="Скопировать ссылку на профиль" title="Скопировать ссылку на профиль">${ico('link',18)}</button>
       </div>
     </div>
     <div class="pgrid">
@@ -211,6 +209,24 @@ async function mutateProfileFriendship(fid,accept){
   finally{profileFriendActions.delete(key);if(button?.isConnected)button.disabled=false;}
 }
 
+  function relationshipMenu(uid,name,accepted){
+    if(!CU||uid===CU.id||CP!=='profile')return;
+    let overlay=document.getElementById('profileActionsOv');
+    if(!overlay){overlay=document.createElement('div');overlay.id='profileActionsOv';overlay.className='overlay';overlay.tabIndex=-1;overlay.setAttribute('aria-hidden','true');overlay.dataset.closeBackdrop='true';document.body.append(overlay);}
+    overlay.innerHTML=`<div class="profile-actions-panel" role="dialog" aria-modal="true" aria-labelledby="profileActionsTitle"><header><h2 id="profileActionsTitle">${esc(name)}</h2><button class="btn btn-g profile-more" type="button" data-fbz-click="profile.actions-close" aria-label="Закрыть действия">${ico('close',18)}</button></header>${accepted?`<button class="btn btn-g" type="button" ${FBZActions.attrs('profile.remove-friend',[uid])}>${ico('users',18)} Удалить из друзей</button>`:''}<button class="btn btn-g" type="button" ${FBZActions.attrs('profile.block',[uid,name])}>${ico('close',18)} Заблокировать</button><button class="btn btn-g" type="button" ${FBZActions.attrs('profile.report',[uid])}>${ico('shield',18)} Пожаловаться</button></div>`;
+    FBZOverlay.open(overlay.id);
+  }
+  function removeFriend(uid){
+    FBZOverlay.close('profileActionsOv');
+    const user=CU?.id,route=routeVersion;
+    FBZConfirm.open({title:'Удалить из друзей?',message:'Оценки этого пользователя больше не будут входить в ленту друзей. Вы сможете отправить новую заявку позже.',confirmText:'Удалить',onConfirm:async()=>{
+      const result=await sb.rpc('remove_friendship',{p_other_id:uid});
+      if(result.error){if(CU?.id===user)toast('Не удалось удалить из друзей','err');return false;}
+      if(CU?.id!==user)return true;
+      FBZData.invalidate('profile:');loadNotifications();
+      if(route===routeVersion&&CP==='profile'){await loadProfile(uid);toast('Пользователь удалён из друзей');}return true;
+    }});
+  }
   async function compare(uid,button){
     if(!CU||uid===CU.id||CP!=='profile'||button.disabled)return;
     const user=CU.id,route=routeVersion,profile=profileVersion;button.disabled=true;
@@ -220,11 +236,16 @@ async function mutateProfileFriendship(fid,accept){
     }catch(error){if(CU?.id===user&&route===routeVersion)toast('Не удалось открыть сравнение. Попробуйте ещё раз.','err');}
     finally{if(button.isConnected)button.disabled=false;}
   }
-  root.FBZProfile=Object.freeze({mount:loadProfile,mutateFriendship:mutateProfileFriendship,diaryPage:changeDiaryPage,retryDiary:loadDiary,compare});
+  root.FBZProfile=Object.freeze({mount:loadProfile,mutateFriendship:mutateProfileFriendship,diaryPage:changeDiaryPage,retryDiary:loadDiary,compare,relationshipMenu,removeFriend});
 })(window);
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "profile.relationship-menu":(event,element,[uid,name,accepted])=>{element.focus({preventScroll:true});FBZProfile.relationshipMenu(uid,name,accepted);},
+  "profile.actions-close":()=>FBZOverlay.close('profileActionsOv'),
+  "profile.remove-friend":(event,element,[uid])=>FBZProfile.removeFriend(uid),
+  "profile.block":(event,element,[uid,name])=>{FBZOverlay.close('profileActionsOv');manageUserBlocks(uid,name);},
+  "profile.report":(event,element,[uid])=>{FBZOverlay.close('profileActionsOv');reportContent('profile',uid);},
   "profile.compare":(event,element,[uid])=>FBZProfile.compare(uid,element),
   "profile.diary-previous":()=>FBZProfile.diaryPage(-1),
   "profile.diary-next":()=>FBZProfile.diaryPage(1),
@@ -232,7 +253,7 @@ FBZActions.register({
   "profile.retry-diary":()=>FBZProfile.retryDiary(),
   "profile.accept-friend-from-profile":(event,element,[userId])=>acceptFriendFromProfile(userId),
   "profile.add-friend-from-profile":(event,element,[userId])=>addFriendFromProfile(userId),
-  "profile.edit-profile":()=>editProfile(),
+  "profile.edit-profile":(event,element)=>{element.focus({preventScroll:true});editProfile();},
   "profile.go-club":(event,element,[id])=>go('club',{id:id}),
   "profile.go-competition":(event,element,[id])=>go('competition',{id:id}),
   "profile.copy-app-link":(event,element,[url])=>copyAppLink(url,'Ссылка на профиль'),

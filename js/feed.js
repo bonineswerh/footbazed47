@@ -63,7 +63,7 @@
       <header class="feed-entry-head">
         <button class="feed-author" type="button" ${FBZActions.attrs("app.go-profile",[item.user_id])}>
           ${avatar(item)}
-          <span><strong>${esc(displayName(item))}</strong><small>@${esc(item.user?.username||'user')}</small></span>
+          <span><strong>${esc(displayName(item))}</strong><small>@${esc(item.user?.username||'user')}${item.user?.is_expert===true?'<span class="feed-expert-label">Эксперт FOOTBAZED</span>':''}</small></span>
         </button>
         <time datetime="${esc(item.created_at)}">${esc(relativeDate(item.created_at))}</time>
       </header>
@@ -98,11 +98,12 @@
   function emptyState(){
     if((scope==='friends'||scope==='mine')&&!CU)return`<div class="feed-empty"><strong>Войди в профиль</strong><span>Этот раздел доступен авторизованным пользователям.</span><button class="btn btn-l" type="button" data-fbz-click="shell.open-auth">Войти</button></div>`;
     if(scope==='friends')return`<div class="feed-empty"><strong>Лента друзей пока пуста</strong><span>Найди знакомых в сообществе и следи за их футбольными оценками.</span><button class="btn btn-g" type="button" data-fbz-click="shell.go-friends">Найти друзей</button></div>`;
+    if(scope==='experts')return`<div class="feed-empty"><strong>Экспертные оценки скоро появятся</strong><span>Здесь будут публичные оценки авторов, приглашённых FOOTBAZED.</span></div>`;
     if(scope==='mine')return`<div class="feed-empty"><strong>У тебя ещё нет публичных оценок</strong><span>Оцени завершённый матч, и запись появится здесь.</span><button class="btn btn-l" type="button" data-fbz-click="shell.go-matches">Открыть матчи</button></div>`;
     return`<div class="feed-empty"><strong>Лента пока пуста</strong><span>Первые публичные оценки появятся здесь.</span><button class="btn btn-l" type="button" data-fbz-click="shell.go-matches">Открыть матчи</button></div>`;
   }
 
-  function scopeLabel(){return{all:'Все оценки',friends:'Оценки друзей',popular:'Популярное сейчас',mine:'Мои публикации'}[scope];}
+  function scopeLabel(){return{all:'Все оценки',friends:'Оценки друзей',experts:'Оценки экспертов FOOTBAZED',mine:'Мои публикации'}[scope];}
 
   function renderMore(){
     const target=document.getElementById('feedMore');
@@ -200,7 +201,7 @@
   }
 
   function setScope(next,button){
-    if(!['all','friends','popular','mine'].includes(next))return;
+    if(!['all','friends','experts','mine'].includes(next))return;
     if((next==='friends'||next==='mine')&&!CU){openAuth();return;}
     scope=next;
     document.querySelectorAll('#feedT .feed-filter').forEach(item=>{
@@ -214,10 +215,12 @@
   async function toggleLike(ratingId,button){
     if(!CU){openAuth();return;}
     if(button.disabled)return;
+    const user=CU.id,session=sessionVersion;
     button.disabled=true;
     try{
       const{data,error}=await sb.rpc('toggle_rating_like',{p_rating_id:Number(ratingId)});
       if(error)throw error;
+      if(user!==CU?.id||session!==sessionVersion||!button.isConnected)return;
       button.classList.toggle('on',Boolean(data?.liked));
       button.setAttribute('aria-pressed',String(Boolean(data?.liked)));
       const count=button.querySelector('span');

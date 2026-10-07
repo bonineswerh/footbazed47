@@ -347,6 +347,7 @@
   function mount(){
     if (!CU?.is_admin) return;
     renderProviderPanel();
+    if(!document.querySelector('[data-admin-view="experts"]'))document.querySelector('.admin-nav')?.insertAdjacentHTML('beforeend','<button class="admin-nav-item" type="button" data-admin-view="experts" data-fbz-click="admin.experts-open">'+ico('shield',17)+'<span>Эксперты</span></button>');
     if(!document.querySelector('[data-admin-view="help"]'))document.querySelector('.admin-nav')?.insertAdjacentHTML('beforeend','<button class="admin-nav-item" type="button" data-admin-view="help" data-fbz-click="admin.help-open">'+ico('info',17)+'<span>Инструкция</span></button>');
     const from = document.getElementById('adminDateFrom');
     const to = document.getElementById('adminDateTo');
@@ -661,15 +662,21 @@
     }
   }
 
-  window.FBZAdmin = {mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup,resetEmblems,loadReportQueue,reportPage,reviewReport};
+  window.FBZAdmin = {request,mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup,resetEmblems,loadReportQueue,reportPage,reviewReport};
 })();
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "admin.experts-open":async(event,element)=>{
+    const user=CU?.id,route=routeVersion;
+    try{await FBZFeatures.load({key:'adminExperts',script:'js/admin-experts.js?v=20261007-community',ready:()=>window.FBZAdminExperts});
+      if(CU?.is_admin&&user===CU.id&&route===routeVersion&&CP==='admin'){FBZAdminExperts.mount();FBZAdmin.showView('experts',element);FBZAdminExperts.load();}
+    }catch{if(user===CU?.id&&CP==='admin')toast('Не удалось открыть экспертов','err');}
+  },
   "admin.help-open":async(event,element)=>{
     const user=CU?.id,version=routeVersion;
     try{
-      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261007-expectations',ready:()=>window.FBZAdminGuide});
+      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261007-community',ready:()=>window.FBZAdminGuide});
       if(CU?.id===user&&CU?.is_admin&&CP==='admin'&&routeVersion===version){FBZAdminGuide.mount();FBZAdmin.showView('help',element);}
     }catch{if(CU?.id===user&&CP==='admin')toast('Не удалось открыть инструкцию','err');}
   },
@@ -691,3 +698,4 @@ FBZActions.register({
   "admin.admin-open-editor":(event,element,[id])=>FBZAdmin.openEditor(id),
   "admin.admin-refresh":()=>FBZAdmin.refresh(true)
 });
+

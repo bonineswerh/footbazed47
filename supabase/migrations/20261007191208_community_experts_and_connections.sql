@@ -47,7 +47,6 @@ begin
     select case when f.user_id=m.id then f.friend_id else f.user_id end id,count(distinct m.id)::integer mutual_count
     from mutuals m join public.friendships f on m.id in(f.user_id,f.friend_id) and f.status='accepted'
       and private.community_pair_is_clear(m.id,case when f.user_id=m.id then f.friend_id else f.user_id end)
-      and private.community_pair_is_clear(m.id,case when f.user_id=m.id then f.friend_id else f.user_id end)
     group by 1
   ), visible as materialized (
     select u.id,u.username,u.display_name,case when u.avatar_url ~ '^https?://' and char_length(u.avatar_url)<=2048 then u.avatar_url end avatar_url,

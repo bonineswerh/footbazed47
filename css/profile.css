@@ -1,3 +1,21 @@
+.phero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 28px;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r);margin-bottom:20px;position:relative;overflow:hidden}
+.phero::before{content:none}
+.phero-av{width:88px;height:88px;border-radius:22px;background:var(--grad);color:var(--onAccent);font-family:'Bebas Neue',sans-serif;font-size:38px;display:flex;align-items:center;justify-content:center;box-shadow:0 18px 42px rgba(0,0,0,0.22);margin-bottom:14px;position:relative;z-index:1}
+.phero-av-img{width:88px;height:88px;border-radius:22px;object-fit:cover;box-shadow:0 18px 42px rgba(0,0,0,0.22);margin-bottom:14px;position:relative;z-index:1}
+.av-overlay{position:absolute;inset:0;width:88px;height:88px;border-radius:22px;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity var(--motion-normal) var(--ease);color:#fff;z-index:2}.av-overlay:hover{opacity:1}
+.phero-name{font-family:'Bebas Neue',sans-serif;font-size:30px;margin-bottom:2px}
+.phero-email{font-size:var(--type-small);color:var(--text3);margin-bottom:8px}
+.phero-hand{font-size:var(--type-small);color:var(--text2);margin-bottom:10px}
+.phero-bio{font-size:var(--type-small);color:var(--text2);margin-bottom:14px;max-width:400px;line-height:1.6}
+.phero-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;justify-content:center}
+.pbadge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:16px;font-size:var(--type-meta);font-weight:600}
+.pb-l{background:var(--accent3);color:var(--accent2);border:1px solid var(--b2)}.pb-s{background:rgba(255,100,50,0.06);color:#ff6432;border:1px solid rgba(255,100,50,0.12)}.pb-j{background:var(--bg3);color:var(--text2);border:1px solid var(--b1)}
+.phero-acts{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;justify-content:center}
+.pstats{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--b1);border-radius:var(--r);overflow:hidden;margin-top:16px;width:100%;max-width:480px}
+.pst{background:var(--bg3);padding:16px 10px;text-align:center}
+.pst-v{font-family:'Bebas Neue',sans-serif;font-size:28px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.pst-l{font-size:var(--type-meta);color:var(--text3);margin-top:2px;text-transform:uppercase}
+.pgrid{display:grid;grid-template-columns:1fr 340px;gap:16px}
+
 /* The profile is a diary of participation, not a ranking of people. */
 .phero{display:grid;grid-template-columns:88px minmax(0,1fr) auto;column-gap:24px;align-items:start;text-align:left;padding:32px}
 .phero>.phero-av,.phero>.phero-av-img{grid-column:1;grid-row:1/4;margin:0;border:2px solid var(--accent2);border-radius:50%;box-shadow:0 0 0 5px var(--bg2),0 0 0 6px var(--b2),0 0 26px var(--accent4)}
@@ -58,3 +76,16 @@
 .profile-tournament,.rh-row{border-radius:10px;transition:background var(--motion-fast) var(--ease)}
 @media(hover:hover){.profile-tournament:hover,.rh-row:hover{background:var(--bg3)}}
 @media(max-width:620px){.phero,.pcard,.profile-diary{border-radius:16px}.phero .pst{padding:12px}.phero-badges{gap:6px}}
+.phero{grid-template-columns:88px minmax(0,1fr)}
+.phero-name{font-family:var(--font-ui);font-weight:650;letter-spacing:-.035em}
+.phero-acts{grid-column:1/-1;grid-row:6;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);max-width:none;align-items:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--b1)}
+.profile-relationship{display:flex;align-items:center;gap:8px;min-width:0}.profile-relationship>.btn{min-height:44px;border-radius:var(--radius-control)}.profile-relationship>.btn:not(.profile-more){flex:1;min-width:0;white-space:normal;line-height:1.4}.profile-relationship>.profile-more{flex:0 0 44px}
+.phero-acts>.profile-compare{grid-column:2;min-width:200px;box-shadow:0 0 22px var(--accent4)}.phero-acts>.profile-link{grid-column:3;justify-self:end;width:44px;padding:0}
+.phero .pstats{grid-row:7;margin-top:20px;border-top:0;padding-top:0}.phero .pst-v:not(.rating-ink){color:var(--accent2)}.phero .pst-l{color:var(--text2);font-weight:550}
+.phero .profile-more,.phero-acts>.profile-link{width:44px;min-width:44px;max-width:44px;flex:none}
+.profile-more{min-height:44px;padding:0;justify-content:center}
+.profile-actions-panel{width:min(400px,calc(100% - 24px));padding:22px;border:1px solid var(--surface-edge);border-radius:var(--radius-card);background:var(--bg2);box-shadow:var(--shadow)}
+.profile-actions-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.profile-actions-panel h2{font-size:1.25rem;overflow-wrap:anywhere}.profile-actions-panel>.btn{display:flex;width:100%;min-height:48px;border-radius:var(--radius-control);margin-top:8px;justify-content:flex-start}
+.profile-actions-panel header .profile-more{width:44px;min-width:44px;height:44px;flex:none;justify-content:center}
+@media(max-width:900px){.phero{grid-template-columns:72px minmax(0,1fr)}}
+@media(max-width:620px){.phero{grid-template-columns:56px minmax(0,1fr)}.phero-acts{grid-template-columns:minmax(0,1fr) 44px;gap:12px}.profile-relationship{grid-column:1;grid-row:1}.phero-acts>.profile-link{grid-column:2;grid-row:1}.phero-acts>.profile-compare{grid-column:1/-1;grid-row:2;width:100%;min-width:0}.profile-relationship>.btn{white-space:normal;line-height:1.4}.phero .pstats{grid-row:7}}

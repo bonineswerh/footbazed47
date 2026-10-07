@@ -19,7 +19,7 @@ FBZActions.register({
   "shell.set-league-all":(event,element)=>setLeague('all',element),
   "shell.feed-set-scope-all":(event,element)=>FBZFeed.setScope('all',element),
   "shell.feed-set-scope-friends":(event,element)=>FBZFeed.setScope('friends',element),
-  "shell.feed-set-scope-popular":(event,element)=>FBZFeed.setScope('popular',element),
+  "shell.feed-set-scope-experts":(event,element)=>FBZFeed.setScope('experts',element),
   "shell.feed-set-scope-mine":(event,element)=>FBZFeed.setScope('mine',element),
   "shell.invite-friend":()=>inviteFriend(),
   "shell.search-friends":()=>searchFriends(),

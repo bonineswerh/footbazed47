@@ -28,10 +28,10 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20261007-calendar">
-  <link rel="stylesheet" href="css/match-editorial.css?v=20261007-calendar">
+  <link rel="stylesheet" href="styles.css?v=20261007-community">
+  <link rel="stylesheet" href="css/match-editorial.css?v=20261007-community">
   <link rel="stylesheet" href="css/typography.css?v=20261006">
-  <link rel="stylesheet" href="css/club-palettes.css?v=20261007-calendar">
+  <link rel="stylesheet" href="css/club-palettes.css?v=20261007-community">
 </head>
 <body>
   <a class="skip-link" href="#page-home" id="skipContent">Перейти к содержимому</a>
@@ -208,8 +208,8 @@
       </header>
       <div class="feed-filters" id="feedT" role="group" aria-label="Фильтр ленты">
         <button class="feed-filter on" type="button" aria-pressed="true" data-fbz-click="shell.feed-set-scope-all">Все</button>
+        <button class="feed-filter" type="button" aria-pressed="false" data-fbz-click="shell.feed-set-scope-experts">Эксперты</button>
         <button class="feed-filter" type="button" aria-pressed="false" data-fbz-click="shell.feed-set-scope-friends">Друзья</button>
-        <button class="feed-filter" type="button" aria-pressed="false" data-fbz-click="shell.feed-set-scope-popular">Популярное</button>
         <button class="feed-filter" type="button" aria-pressed="false" data-fbz-click="shell.feed-set-scope-mine">Мои</button>
       </div>
       <div class="feed-stream" id="feedG"></div>
@@ -235,7 +235,7 @@
           <button class="ftab2 on" data-tab="list" type="button" aria-pressed="true" data-fbz-click="shell.set-ftab-list">Мои друзья</button>
           <button class="ftab2" data-tab="incoming" type="button" aria-pressed="false" data-fbz-click="shell.set-ftab-incoming">Входящие <span id="inBadge" class="community-badge" hidden>0</span></button>
           <button class="ftab2" data-tab="outgoing" type="button" aria-pressed="false" data-fbz-click="shell.set-ftab-outgoing">Исходящие</button>
-          <button class="ftab2" data-tab="suggest" type="button" aria-pressed="false" data-fbz-click="shell.set-ftab-suggest">Найти друзей</button>
+          <button class="ftab2" data-tab="suggest" type="button" aria-pressed="false" data-fbz-click="shell.set-ftab-suggest">Знакомые</button>
         </div>
         <div id="friendsContent" aria-live="polite"></div>
         <div id="friendsMore" class="community-more"></div>
@@ -747,14 +747,14 @@
   <script src="js/overlays.js?v=43"></script>
   <script src="js/confirm.js?v=42"></script>
   <script src="js/actions.js?v=2"></script>
-  <script src="js/shell-actions.js?v=3"></script>
-  <script src="js/home.js?v=20261007-expectations"></script>
+  <script src="js/shell-actions.js?v=20261007-community"></script>
+  <script src="js/home.js?v=20261007-community"></script>
   <script src="js/feature-loader.js?v=20261005"></script>
   <script src="js/notification-counter.js?v=2"></script>
-  <script src="app.js?v=20261007-calendar"></script>
+  <script src="app.js?v=20261007-community"></script>
   <script src="js/auth.js?v=46"></script>
   <script src="js/rating-loader.js?v=20261007-calendar"></script>
-  <script src="js/matches.js?v=20261007-calendar"></script>
+  <script src="js/matches.js?v=20261007-community"></script>
   <script src="js/account.js?v=43"></script>
 </body>
 </html>

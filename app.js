@@ -64,13 +64,13 @@ window.addEventListener('fbz:session-change',()=>{
 function ensureFeatureModule(options){return window.FBZFeatures.load(options);}
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=20261007-expectations',script:'js/admin.js?v=20261007-expectations',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=20261007-expectations',script:'js/admin.js?v=20261007-community',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=20261007-details',script:'js/entities.js?v=20261007-details',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=20261007-community',script:'js/entities.js?v=20261007-details',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=20261007',script:'js/feed.js?v=20261007',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=20261007-community',script:'js/feed.js?v=20261007-community',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
   return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=20261007-search',script:'js/search.js?v=20261007-details',ready:()=>window.FBZSearch});
@@ -387,7 +387,7 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261007-expectations2',script:'js/profile.js?v=20261007-expectations',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261007-community',script:'js/profile.js?v=20261007-community',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});
@@ -416,13 +416,13 @@ async function expStats(c,a,u){
 function editProfile(){
   profileVersion++;
   const user=CU?.id,route=routeVersion,profile=profileVersion;
-  ensureFeatureModule({key:'profile-editor',styleId:'profileEditorCss',style:'css/profile-editor.css?v=3',script:'js/profile-editor.js?v=3',ready:()=>window.FBZProfileEditor})
+  ensureFeatureModule({key:'profile-editor',styleId:'profileEditorCss',style:'css/profile-editor.css?v=20261007-community',script:'js/profile-editor.js?v=20261007-community',ready:()=>window.FBZProfileEditor})
     .then(editor=>{if(CP==='profile'&&user&&CU?.id===user&&routeVersion===route&&profileVersion===profile)editor.open();}).catch(()=>{});
 }
 
 // ─── COMMUNITY LOADER ───
 function ensureCommunityModule(){
-  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=3',script:'js/community.js?v=20261005',ready:()=>window.FBZCommunity});
+  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=3',script:'js/community.js?v=20261007-community',ready:()=>window.FBZCommunity});
 }
 function loadFriendsTab(tab){
   FT=tab;
@@ -495,7 +495,7 @@ function setupReveal(){
   const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('shown');});},{threshold:0.08});
   document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 }
-let toastTimer=null;
+let toastTimer=null,toastVersion=0;
 function toast(msg,type='ok'){
   const el=document.getElementById('toast');
   if(!el)return;
@@ -503,16 +503,21 @@ function toast(msg,type='ok'){
   if(toastTimer){clearTimeout(toastTimer);toastTimer=null;}
   // Reset state
   el.classList.remove('show');
-  el.textContent=msg;
+  const version=++toastVersion;
+  type=type==='err'?'err':'ok';
+  el.innerHTML=ico(type==='err'?'info':'check',18)+'<span></span>';
+  el.querySelector('span').textContent=msg;
   el.className='toast '+type;
+  el.setAttribute('aria-live',type==='err'?'assertive':'polite');
   // Show after tiny delay (force reflow)
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
+      if(version!==toastVersion)return;
       el.classList.add('show');
       toastTimer=setTimeout(()=>{
         el.classList.remove('show');
         toastTimer=null;
-      },3000);
+      },type==='err'?6000:4500);
     });
   });
 }

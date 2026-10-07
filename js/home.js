@@ -7,7 +7,7 @@
     const target=document.getElementById('homeLeagueRibbon');if(!target)return;
     const items=[...new Set((Array.isArray(names)?names:[]).filter(name=>typeof name==='string'&&name.trim()))].slice(0,12);
     target.hidden=!items.length;
-    const batch=items.map(name=>`<span>${esc(FBZNames.competition(name))}</span>`).join('');
+    const batch=items.map(name=>`<span>${root.ico('football',14)} ${esc(FBZNames.competition(name))}</span>`).join('');
     target.innerHTML=items.length?`<div class="home-league-track"><div>${batch}</div><div>${batch}</div></div>`:'';
   }
 
@@ -86,7 +86,7 @@
     return`<article class="home-pending-match">
       <button type="button" ${FBZActions.attrs("home.go-md",[Number(match.id)])}>
         <span class="home-pending-meta">${root.esc(FBZNames.competition(match.league_name))} · ${root.esc(date)}</span>
-        <strong><span>${root.esc(FBZNames.club(match.home_team_name))}</span><b>${root.esc(match.home_score??'—')} : ${root.esc(match.away_score??'—')}</b><span>${root.esc(FBZNames.club(match.away_team_name))}</span></strong>
+        <strong><span class="home-pending-club">${root.matchClubMark(match,'home','home-club-mark')}<span>${root.esc(FBZNames.club(match.home_team_name))}</span></span><b>${root.esc(match.home_score??'—')} : ${root.esc(match.away_score??'—')}</b><span class="home-pending-club">${root.matchClubMark(match,'away','home-club-mark')}<span>${root.esc(FBZNames.club(match.away_team_name))}</span></span></strong>
       </button>
       <button class="home-pending-rate" type="button" ${FBZActions.attrs("home.open-rate",[Number(match.id)])}>${root.ico('star',15)} Оценить</button>
     </article>`;

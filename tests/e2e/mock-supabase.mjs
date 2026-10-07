@@ -376,10 +376,19 @@ export async function installSupabaseMock(page,overrides={}){
           tournaments:[{id:7,name:'Champions League',my_votes:12,their_votes:9}],players:state.comparisonPlayers||[]});
       }
       if(name==='get_profile_comparison')return promiseResult({common_matches:1,agreement_score:89,average_gap:1,exact_matches:0,closest:[],contrasts:[]});
+      if(name==='get_community_suggestions'){
+        const user=state.sessionUser?.id;
+        const friends=new Set(state.friendships.filter(f=>f.status==='accepted'&&(f.user_id===user||f.friend_id===user)).map(f=>f.user_id===user?f.friend_id:f.user_id));
+        const connected=new Set(state.friendships.filter(f=>f.user_id===user||f.friend_id===user).map(f=>f.user_id===user?f.friend_id:f.user_id));
+        const suggestions=state.users.filter(u=>u.id!==user&&u.is_public&&contactClear(u.id)&&!connected.has(u.id)).map(u=>({...u,mutual_count:[...friends].filter(id=>state.friendships.some(f=>f.status==='accepted'&&((f.user_id===id&&f.friend_id===u.id)||(f.friend_id===id&&f.user_id===u.id)))).length})).filter(u=>u.mutual_count).sort((a,b)=>b.mutual_count-a.mutual_count||a.username.localeCompare(b.username));
+        const offset=args.p_offset||0,limit=args.p_limit||24;
+        return promiseResult({items:suggestions.slice(offset,offset+limit),has_more:offset+limit<suggestions.length,next_offset:offset+Math.min(limit,suggestions.length-offset)});
+      }
       if(name==='get_social_feed_page'||name==='get_social_feed'){
         let items=structuredClone(state.feed).filter(item=>contactClear(item.user_id));
         if(args.p_scope==='mine')items=items.filter(item=>item.user_id===state.sessionUser.id);
         if(args.p_scope==='friends')items=items.filter(item=>item.user_id!==state.sessionUser.id);
+        if(args.p_scope==='experts')items=items.filter(item=>item.user?.is_expert===true);
         const score=item=>Number(item.like_count||0)*3+Number(item.comment_count||0)*2+(item.comment?1:0);
         items.sort((a,b)=>args.p_scope==='popular'
           ?score(b)-score(a)||String(b.created_at).localeCompare(String(a.created_at))||Number(b.rating_id)-Number(a.rating_id)

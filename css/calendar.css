@@ -12,12 +12,13 @@
 .calendar-toolbar button,.calendar-arrow,.calendar-day{min-height:44px;border:1px solid var(--b2);border-radius:12px;background:var(--bg2);color:var(--text2);font:inherit;font-size:var(--type-small);cursor:pointer;transition:border-color var(--motion-normal) var(--ease),box-shadow var(--motion-normal) var(--ease),color var(--motion-normal) var(--ease)}
 .calendar-toolbar button{padding:10px 15px;font-weight:600}
 .calendar-toolbar .on{border-color:var(--accent);background:var(--accent4);color:var(--snow)}
-.calendar-favorites{display:flex;gap:8px;align-items:center;margin-left:auto}.calendar-favorites.on .ico{color:var(--accent2)}
+.calendar-favorites{display:flex;gap:8px;align-items:center;margin-left:auto}.calendar-favorites.on .ico{color:var(--rating-elite);fill:currentColor}
+#matchG .grid3{grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))}.calendar-days::-webkit-scrollbar{display:none}
 .calendar-date{min-width:0}.calendar-date input{width:160px;min-width:0;min-height:44px;margin:0;border:1px solid var(--b2);border-radius:12px;padding:8px 10px;background:var(--bg2);color:var(--snow);font:inherit;font-size:var(--type-small);color-scheme:dark}
 :root[data-theme="light"] .calendar-date input{color-scheme:light}
 .calendar-navigation{display:flex;align-items:stretch;gap:8px;min-width:0;max-width:600px}
 .calendar-arrow{flex:0 0 44px;align-self:center;font-size:1.6rem;line-height:1}
-.calendar-days{display:flex;gap:6px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin;overscroll-behavior-x:contain;padding:2px 1px 5px}
+.calendar-days{display:flex;gap:6px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain;padding:2px 1px 5px}
 .calendar-day{flex:1 0 56px;display:grid;gap:3px;justify-items:center;padding:8px 6px;min-height:60px}
 .calendar-day span{font-size:var(--type-meta);color:var(--text3)}.calendar-day b{font-size:1.125rem;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.2}
 .calendar-day.today:not(.on){border-color:var(--b3)}.calendar-day.today span{color:var(--accent2)}
@@ -26,3 +27,4 @@
 @media(hover:hover){.calendar-toolbar button:hover,.calendar-arrow:hover,.calendar-day:hover{border-color:var(--accent);color:var(--snow);box-shadow:0 0 12px var(--accent4)}}
 @media(max-width:900px){.match-results-summary{margin-bottom:16px}.league-tabs,.filters{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.league-tabs::-webkit-scrollbar,.filters::-webkit-scrollbar{display:none}.league-tab,.filters .btn{white-space:nowrap;flex-shrink:0}}
 @media(max-width:560px){.calendar-favorites span{display:none}.calendar-toolbar .calendar-favorites{padding:10px;min-width:44px;justify-content:center}.calendar-toolbar{gap:6px}.calendar-toolbar .calendar-all{padding:10px}.calendar-date input{width:145px}.calendar-navigation{gap:5px}}
+
