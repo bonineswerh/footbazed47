@@ -1637,6 +1637,15 @@ export type Database = {
           title: string
         }[]
       }
+      search_footbazed_page: {
+        Args: {
+          p_cursor?: Json
+          p_kind: string
+          p_limit?: number
+          p_query: string
+        }
+        Returns: Json
+      }
       search_footbazed_v2: {
         Args: { p_limit?: number; p_query: string }
         Returns: Json
