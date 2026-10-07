@@ -161,5 +161,59 @@ Krasnodar|Краснодар`.split('\n').map(row=>{const values=row.split('|');
     if(typeof value==='object')return club(value.home_club,value.home_team_name,false,lang)+' — '+club(value.away_club,value.away_team_name,false,lang);
     return String(value||'').replaceAll(' вЂ” ',' — ').split(' — ').map(name=>club(name,'',false,lang)).join(' — ');
   }
-  return Object.freeze({club,competition,canonical,matchTitle,rows});
+  // Only provider metadata goes through these presenters; fan text and IDs do not.
+  const areas=[['England','Англия'],['Scotland','Шотландия'],['Wales','Уэльс'],['Northern Ireland','Северная Ирландия'],['Europe','Европа'],['World','Мир']];
+  const areaNames=new Map(areas.flatMap(row=>row.map(name=>[key(name),row])));
+  const regionAliases={'czech republic':'CZ',turkey:'TR','ivory coast':'CI','cape verde':'CV','korea republic':'KR','republic of ireland':'IE','bosnia-herzegovina':'BA'};
+  let regionIndex,regionLabels;
+  function country(value,lang=language()){
+    const raw=String(value||'').trim(),custom=areaNames.get(key(raw));
+    if(custom)return custom[lang==='en'?0:1];
+    if(!raw||typeof Intl.DisplayNames!=='function')return raw;
+    if(!regionIndex){
+      regionIndex=new Map();
+      regionLabels={ru:new Intl.DisplayNames(['ru'],{type:'region',fallback:'none'}),en:new Intl.DisplayNames(['en'],{type:'region',fallback:'none'})};
+      // Bounded, lazy local lookup. No country dictionary download or API calls.
+      for(let a=65;a<=90;a++)for(let b=65;b<=90;b++){
+        const code=String.fromCharCode(a,b);
+        if(code==='ZZ')continue;
+        const label=regionLabels.en.of(code);
+        if(!label)continue;
+        [code,label,regionLabels.ru.of(code)].filter(Boolean).forEach(name=>regionIndex.set(key(name),code));
+      }
+    }
+    const code=Object.hasOwn(regionAliases,key(raw))?regionAliases[key(raw)]:regionIndex.get(key(raw));
+    return code?regionLabels[lang==='en'?'en':'ru'].of(code)||raw:raw;
+  }
+  const positions=`GK|Вратарь|Goalkeeper|G
+DF|Защитник|Defender|D|Defence|Defense
+MF|Полузащитник|Midfielder|M|Midfield
+FW|Нападающий|Forward|F|Offence|Offense|Attacker
+LB|Левый защитник|Left-back
+LWB|Левый латераль|Left wing-back
+CB|Центральный защитник|Centre-back|Center-back
+RB|Правый защитник|Right-back
+RWB|Правый латераль|Right wing-back
+DM|Опорный полузащитник|Defensive midfielder|CDM|Defensive Midfield
+CM|Центральный полузащитник|Central midfielder|Central Midfield
+AM|Атакующий полузащитник|Attacking midfielder|CAM|Attacking Midfield
+LM|Левый полузащитник|Left midfielder|Left Midfield
+RM|Правый полузащитник|Right midfielder|Right Midfield
+LW|Левый вингер|Left winger
+RW|Правый вингер|Right winger
+CF|Центральный нападающий|Centre-forward|Center-forward
+ST|Нападающий|Striker
+SS|Второй нападающий|Second striker`.split('\n').map(row=>row.split('|'));
+  const positionNames=new Map();
+  positions.forEach(row=>row.forEach(name=>{if(!positionNames.has(key(name)))positionNames.set(key(name),row);}));
+  function positionCode(value){return positionNames.get(key(value))?.[0]||String(value||'');}
+  function position(value,fallback='',lang=language()){
+    const row=positionNames.get(key(value));
+    return row?row[lang==='en'?2:1]:String(value||fallback);
+  }
+  function competitionType(value,lang=language()){
+    const labels={CUP:['Кубок','Cup'],LEAGUE:['Лига','League']};
+    return Object.hasOwn(labels,value)?labels[value][lang==='en'?1:0]:'';
+  }
+  return Object.freeze({club,competition,canonical,matchTitle,country,position,positionCode,competitionType,rows});
 });

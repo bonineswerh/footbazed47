@@ -187,17 +187,14 @@
     return{live:'LIVE',finished:'Завершён',scheduled:'Предстоит'}[status]||'';
   }
 
-  function positionLabel(position){
-    return{GK:'Вратарь',LB:'Левый защитник',LWB:'Левый латераль',CB:'Центральный защитник',RB:'Правый защитник',RWB:'Правый латераль',DM:'Опорный полузащитник',CDM:'Опорный полузащитник',CM:'Центральный полузащитник',AM:'Атакующий полузащитник',CAM:'Атакующий полузащитник',LM:'Левый полузащитник',RM:'Правый полузащитник',LW:'Левый вингер',RW:'Правый вингер',CF:'Нападающий',ST:'Нападающий'}[position]||position||'';
-  }
-
   function searchResultMarkup(item,index){
     // Older hosted RPC definitions emitted these UTF-8 labels as Windows-1251.
     // Repair only known service text, never attempt to decode user names.
-    const service=({'РљР»СѓР±':'Клуб','РўСѓСЂРЅРёСЂ':'Турнир','Клуб':'Клуб','Турнир':'Турнир','Профиль':'Профиль'})[item.subtitle]||item.subtitle||'';
-    const subtitle=item.entity_type==='player'?FBZNames.club(service):item.entity_type==='match'?FBZNames.competition(service):service;
+    const serviceLabels={'РљР»СѓР±':'Клуб','РўСѓСЂРЅРёСЂ':'Турнир','Клуб':'Клуб','Турнир':'Турнир','Профиль':'Профиль'};
+    const service=Object.hasOwn(serviceLabels,item.subtitle)?serviceLabels[item.subtitle]:item.subtitle||'';
+    const subtitle=item.entity_type==='player'?FBZNames.club(service):item.entity_type==='match'?FBZNames.competition(service):['club','competition'].includes(item.entity_type)?FBZNames.country(service):service;
     const title=item.entity_type==='match'?FBZNames.matchTitle(item.title):item.entity_type==='club'?FBZNames.club(item.title):item.entity_type==='competition'?FBZNames.competition(item.title):item.title;
-    const rawMeta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='player'?positionLabel(item.meta):(item.meta||resultLabel(item.entity_type)));
+    const rawMeta=item.entity_type==='match'?statusLabel(item.meta):(item.entity_type==='player'?FBZNames.position(item.meta):(Object.hasOwn(serviceLabels,item.meta)?serviceLabels[item.meta]:item.meta||resultLabel(item.entity_type)));
     const meta=rawMeta&&rawMeta!==subtitle&&rawMeta!==resultLabel(item.entity_type)?rawMeta:'';
     const visual=item.visual&&['club','player','competition'].includes(item.entity_type)?window.FBZMedia.visual({entity:item.visual,kind:item.entity_type,className:'search-mark',fallbackText:item.entity_type==='club'?item.visual.tla||'':''}):'';
     const date=new Date(item.match_date),dateLabel=item.entity_type==='match'&&item.match_date&&Number.isFinite(date.getTime())?date.toLocaleDateString(window.FBZLocale?.intl||'ru-RU',{day:'numeric',month:'short',year:'numeric'}):'';

@@ -67,13 +67,13 @@ function ensureAdminModule(){
   return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=52',script:'js/admin.js?v=54',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
-  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=20261007',script:'js/entities.js?v=20261005',ready:()=>window.FBZEntities});
+  return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=20261007-details',script:'js/entities.js?v=20261007-details',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
   return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=20261007',script:'js/feed.js?v=20261007',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
-  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=20261007-search',script:'js/search.js?v=20261007-search',ready:()=>window.FBZSearch});
+  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=20261007-search',script:'js/search.js?v=20261007-details',ready:()=>window.FBZSearch});
 }
 let reportOpenVersion=0;
 function reportContent(type,id){

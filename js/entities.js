@@ -7,7 +7,6 @@
     {key:'midfielders',label:'Полузащитники',codes:['DM','CDM','CM','AM','CAM','LM','RM','MF']},
     {key:'forwards',label:'Нападающие',codes:['LW','RW','CF','ST','SS','FW']}
   ];
-  const positionNames={GK:'Вратарь',LB:'Левый защитник',LWB:'Левый латераль',CB:'Центральный защитник',RB:'Правый защитник',RWB:'Правый латераль',DM:'Опорный полузащитник',CDM:'Опорный полузащитник',CM:'Центральный полузащитник',AM:'Атакующий полузащитник',CAM:'Атакующий полузащитник',LM:'Левый полузащитник',RM:'Правый полузащитник',LW:'Левый вингер',RW:'Правый вингер',CF:'Оттянутый нападающий',ST:'Нападающий',SS:'Второй нападающий'};
   let clubPayload=null;
   let clubTab='overview';
   let entityRequest=0;
@@ -28,8 +27,8 @@
     return window.FBZMedia.visual({entity:{...entity,name:name||entity.name,media:media||entity.media},kind,className,loading});
   }
 
-  function positionCode(value){return {'Вратарь':'GK','Защитник':'DF','Полузащитник':'MF','Нападающий':'FW'}[value]||value;}
-  function positionLabel(value){const code=positionCode(value);return positionNames[code]||({DF:'Защитник',MF:'Полузащитник',FW:'Нападающий'})[code]||value||'Позиция не указана';}
+  function positionCode(value){return FBZNames.positionCode(value);}
+  function positionLabel(value){return FBZNames.position(value,'Позиция не указана');}
 
   function ratingValue(value){
     return ratingData(value).value;
@@ -55,42 +54,46 @@
   function clubRoute(id,label){
     label=FBZNames.club(label);
     if(!id)return`<span>${esc(label||'Клуб')}</span>`;
-    return`<button class="entity-text-link" type="button" ${FBZActions.attrs("entities.go-club",[Number(id)])}>${esc(label||'Клуб')}</button>`;
+    return`<a href="${FBZLocale.path('/club/'+Number(id))}" class="entity-text-link" ${FBZActions.attrs("entities.go-club",[Number(id)])}>${esc(label||'Клуб')}</a>`;
   }
 
   function playerRoute(id,label){
-    return`<button class="entity-text-link" type="button" ${FBZActions.attrs("entities.go-player",[Number(id)])}>${esc(label)}</button>`;
+    return`<a href="${FBZLocale.path('/player/'+Number(id))}" class="entity-text-link" ${FBZActions.attrs("entities.go-player",[Number(id)])}>${esc(label)}</a>`;
   }
 
   function competitionRoute(id,label){
     label=FBZNames.competition(label);
     if(!id)return`<span>${esc(label||'Турнир')}</span>`;
-    return`<button class="entity-text-link" type="button" ${FBZActions.attrs("entities.go-competition",[Number(id)])}>${esc(label||'Турнир')}</button>`;
+    return`<a href="${FBZLocale.path('/competition/'+Number(id))}" class="entity-text-link" ${FBZActions.attrs("entities.go-competition",[Number(id)])}>${esc(label||'Турнир')}</a>`;
   }
 
   function matchStatus(match){
-    return{live:'LIVE',finished:'Завершён',scheduled:'Предстоит'}[match.status]||match.status||'';
+    return FBZDomain.matchScorePresentation(match).status;
   }
 
   function matchDate(value){
-    return new Date(value).toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
+    const date=value?new Date(value):null;
+    return date&&Number.isFinite(date.getTime())?date.toLocaleDateString(FBZLocale.intl,{day:'numeric',month:'short',year:'numeric'}):'Дата уточняется';
+  }
+
+  function scoreMarkup(match,reverse=false){
+    const score=FBZDomain.matchScorePresentation(match);
+    const home=reverse?score.away:score.home,away=reverse?score.home:score.away;
+    return`<b class="entity-result-score" data-has-score="${score.hasScore}" aria-label="${esc(score.label)}${score.hasScore?`: ${home}:${away}`:''}">${score.hasScore?`<span>${home}</span><i aria-hidden="true">:</i><span>${away}</span>`:'—'}</b>`;
   }
 
   function renderMatchRow(match,clubId){
     const isHome=Number(match.home_club_id)===Number(clubId);
     const opponent=FBZDomain.matchTeamName(match,isHome?'away':'home');
     const opponentId=isHome?match.away_club_id:match.home_club_id;
-    const scored=isHome?match.home_score:match.away_score;
-    const conceded=isHome?match.away_score:match.home_score;
-    const score=match.status==='finished'||match.status==='live'?`${scored??'—'} : ${conceded??'—'}`:'—';
     return`<article class="entity-match-row">
-      <button class="entity-match-main" type="button" ${FBZActions.attrs("entities.go-md",[Number(match.id)])}>
+      <a href="${FBZLocale.path('/match/'+Number(match.id))}" class="entity-match-main" ${FBZActions.attrs("entities.go-md",[Number(match.id)])}>
         <span class="entity-match-date">${matchDate(match.match_date)}</span>
         <span class="entity-match-opponent"><small>${isHome?'Дома':'В гостях'} · ${esc(FBZNames.competition(match.league_name)||'')}</small><strong>${esc(opponent||'Соперник')}</strong></span>
-        <span class="entity-match-score">${esc(score)}</span>
+        <span class="entity-match-score">${scoreMarkup(match,!isHome)}</span>
         <span class="entity-match-status status-${esc(match.status||'')}">${esc(matchStatus(match))}</span>
-      </button>
-      ${opponentId?`<button class="entity-match-club" type="button" ${FBZActions.attrs("entities.go-club",[Number(opponentId)])} aria-label="Открыть ${esc(opponent)}">→</button>`:''}
+      </a>
+      ${opponentId?`<a href="${FBZLocale.path('/club/'+Number(opponentId))}" class="entity-match-club" ${FBZActions.attrs("entities.go-club",[Number(opponentId)])} aria-label="Открыть ${esc(opponent)}">→</a>`:''}
     </article>`;
   }
 
@@ -100,13 +103,13 @@
 
   function renderPlayerRow(player){
     const rating=ratingData(player.average);
-    return`<button class="squad-player" type="button" ${FBZActions.attrs("entities.go-player",[Number(player.id)])}>
+    return`<a href="${FBZLocale.path('/player/'+Number(player.id))}" class="squad-player" ${FBZActions.attrs("entities.go-player",[Number(player.id)])}>
       ${identityVisual({entity:player,kind:'player',className:'squad-player-photo'})}
       <span class="squad-player-copy"><strong>${esc(player.name)}</strong><small>${esc(positionLabel(player.position))}</small>${Number(player.unverified_rating_count)>0?'<small class="entity-evidence">Есть оценки без подтверждения участия</small>':''}</span>
       <span class="squad-player-number">${player.shirt_number?`#${esc(player.shirt_number)}`:'—'}</span>
       <span class="squad-player-rating" data-tone="${rating.tone}"><b>${rating.value}</b><small>${Number(player.rating_count)||0} ${plural(player.rating_count,'оценка','оценки','оценок')}</small></span>
       <span class="squad-player-arrow">→</span>
-    </button>`;
+    </a>`;
   }
 
   function renderSquad(squad){
@@ -181,7 +184,7 @@
         <div class="entity-identity">
           <div class="entity-eyebrow"><span>Клуб</span>${club.tla?`<b>${esc(club.tla)}</b>`:''}</div>
           <h1>${esc(FBZNames.club(club,'',true))}</h1>
-          <div class="entity-meta">${[club.area_name,club.venue,club.founded?`Основан в ${club.founded}`:''].filter(Boolean).map(item=>`<span>${esc(item)}</span>`).join('')}</div>
+          <div class="entity-meta">${[FBZNames.country(club.area_name),club.venue,club.founded?`Основан в ${club.founded}`:''].filter(Boolean).map(item=>`<span>${esc(item)}</span>`).join('')}</div>
           ${competitions.length?`<div class="entity-chips">${competitions.map(item=>competitionRoute(item.id,item.name)).join('')}</div>`:''}
         </div>
         <div class="entity-hero-actions">
@@ -279,19 +282,19 @@
 
   function performanceRow(item){
     const rating=ratingData(item.average);
-    return`<button class="performance-row" type="button" ${FBZActions.attrs("entities.go-md",[Number(item.match_id)])}>
-      <span class="performance-match"><small>${matchDate(item.match_date)} · ${esc(FBZNames.competition(item.league_name)||'')}</small><strong>${esc(FBZNames.club(item.home_team_name))} <b>${esc(item.home_score??'—')} : ${esc(item.away_score??'—')}</b> ${esc(FBZNames.club(item.away_team_name))}</strong>${item.historical_team?`<small>Выступление за ${esc(FBZNames.club(item.historical_team))}</small>`:''}${item.participation_verified===false?'<small class="entity-evidence">Участие в матче не подтверждено</small>':''}</span>
+    return`<a href="${FBZLocale.path('/match/'+Number(item.match_id))}" class="performance-row" ${FBZActions.attrs("entities.go-md",[Number(item.match_id)])}>
+      <span class="performance-match"><small>${matchDate(item.match_date)} · ${esc(FBZNames.competition(item.league_name)||'')}</small><strong>${esc(FBZNames.club(item.home_team_name))} ${scoreMarkup({...item,status:item.status||'finished'})} ${esc(FBZNames.club(item.away_team_name))}</strong>${item.historical_team?`<small>Выступление за ${esc(FBZNames.club(item.historical_team))}</small>`:''}${item.participation_verified===false?'<small class="entity-evidence">Участие в матче не подтверждено</small>':''}</span>
       <span class="performance-community" data-tone="${rating.tone}"><b>${rating.value}</b><small>${Number(item.rating_count)||0} ${plural(item.rating_count,'оценка','оценки','оценок')}</small></span>
       <span class="squad-player-arrow">→</span>
-    </button>`;
+    </a>`;
   }
 
   function teammateCard(player){
-    return`<button class="teammate-card" type="button" ${FBZActions.attrs("entities.go-player",[Number(player.id)])}>
+    return`<a href="${FBZLocale.path('/player/'+Number(player.id))}" class="teammate-card" ${FBZActions.attrs("entities.go-player",[Number(player.id)])}>
       ${identityVisual({entity:player,kind:'player',className:'teammate-photo'})}
       <span><strong>${esc(player.name)}</strong><small>${esc(positionLabel(player.position))}</small></span>
       <b>${player.shirt_number?`#${esc(player.shirt_number)}`:'→'}</b>
-    </button>`;
+    </a>`;
   }
 
   function renderPlayer(payload){
@@ -354,12 +357,11 @@
   }
 
   function competitionMatchRow(match){
-    const score=match.status==='finished'||match.status==='live'?`${match.home_score??'—'} : ${match.away_score??'—'}`:'—';
-    return`<button class="competition-match-row" type="button" ${FBZActions.attrs("entities.go-md",[Number(match.id)])}>
+    return`<a href="${FBZLocale.path('/match/'+Number(match.id))}" class="competition-match-row" ${FBZActions.attrs("entities.go-md",[Number(match.id)])}>
       <time>${matchDate(match.match_date)}</time>
-      <span><strong>${esc(FBZNames.club(match.home_team_name))}</strong><b>${esc(score)}</b><strong>${esc(FBZNames.club(match.away_team_name))}</strong></span>
+      <span><strong>${esc(FBZNames.club(match.home_team_name))}</strong>${scoreMarkup(match)}<strong>${esc(FBZNames.club(match.away_team_name))}</strong></span>
       <small class="status-${esc(match.status||'')}">${esc(matchStatus(match))}</small><i>→</i>
-    </button>`;
+    </a>`;
   }
 
   function renderCompetition(payload){
@@ -372,7 +374,7 @@
         <div class="entity-identity">
           <div class="entity-eyebrow"><span>Турнир</span>${competition.code?`<b>${esc(competition.code)}</b>`:''}</div>
           <h1>${esc(FBZNames.competition(competition))}</h1>
-          <div class="entity-meta">${[competition.area_name,competition.competition_type].filter(Boolean).map(item=>`<span>${esc(item)}</span>`).join('')}</div>
+          <div class="entity-meta">${[FBZNames.country(competition.area_name),FBZNames.competitionType(competition.competition_type)].filter(Boolean).map(item=>`<span>${esc(item)}</span>`).join('')}</div>
         </div>
         <button class="entity-share" type="button" ${FBZActions.attrs("entities.share-competition",[Number(competition.id)])} aria-label="Поделиться турниром" title="Поделиться">${ico('share',18)}</button>
       </header>
@@ -385,7 +387,7 @@
       <div class="entity-body competition-body">
         <section class="entity-section">
           <header class="entity-section-head"><div><span>Участники</span><h2>Клубы турнира</h2></div><strong>${clubs.length}</strong></header>
-          <div class="competition-club-grid">${clubs.length?clubs.map(club=>`<button type="button" ${FBZActions.attrs("entities.go-club",[Number(club.id)])}>${identityVisual({entity:club,kind:'club',className:'competition-club-mark'})}<span><strong>${esc(FBZNames.club(club))}</strong><small>${esc(club.tla||club.short_name||'Клуб')}</small></span><i>→</i></button>`).join(''):'<div class="entity-inline-empty">Клубы пока не добавлены</div>'}</div>
+          <div class="competition-club-grid">${clubs.length?clubs.map(club=>`<a href="${FBZLocale.path('/club/'+Number(club.id))}" ${FBZActions.attrs("entities.go-club",[Number(club.id)])}>${identityVisual({entity:club,kind:'club',className:'competition-club-mark'})}<span><strong>${esc(FBZNames.club(club))}</strong><small>${esc(club.tla||club.short_name||'Клуб')}</small></span><i>→</i></a>`).join(''):'<div class="entity-inline-empty">Клубы пока не добавлены</div>'}</div>
         </section>
         <section class="entity-section">
           <header class="entity-section-head"><div><span>Календарь</span><h2>Матчи турнира</h2></div><strong>${matches.length}</strong></header>
@@ -422,10 +424,10 @@
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
   "entities.retry":(event,element,[kind,id])=>({club:FBZEntities.loadClub,player:FBZEntities.loadPlayer,competition:FBZEntities.loadCompetition}[kind]?.(id)),
-  "entities.go-club":(event,element,[id])=>go('club',{id:id}),
-  "entities.go-player":(event,element,[id])=>go('player',{id:id}),
-  "entities.go-competition":(event,element,[id])=>go('competition',{id:id}),
-  "entities.go-md":(event,element,[id])=>go('md',{mid:id}),
+  "entities.go-club":(event,element,[id])=>FBZActions.follow(event,element,()=>go('club',{id:id})),
+  "entities.go-player":(event,element,[id])=>FBZActions.follow(event,element,()=>go('player',{id:id})),
+  "entities.go-competition":(event,element,[id])=>FBZActions.follow(event,element,()=>go('competition',{id:id})),
+  "entities.go-md":(event,element,[id])=>FBZActions.follow(event,element,()=>go('md',{mid:id})),
   "entities.set-club-tab-matches":()=>FBZEntities.setClubTab('matches'),
   "entities.toggle-favorite":()=>FBZEntities.toggleFavorite(),
   "entities.share-club":(event,element,[id])=>copyAppLink(("/club/"+id),'Ссылка на клуб'),

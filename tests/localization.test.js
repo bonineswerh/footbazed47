@@ -55,3 +55,27 @@ test('English public metadata, alternate languages and sitemap agree without que
   const sitemap=buildSitemap({clubs:[{id:24}]});
   assert.match(sitemap,/\/en\/club\/24<\/loc>/);assert.match(sitemap,/xmlns:xhtml/);
 });
+
+test('country metadata localizes recognized regions and keeps football nations distinct',()=>{
+  for(const [source,ru,en] of [['Spain','Испания','Spain'],['ES','Испания','Spain'],['Германия','Германия','Germany'],['England','Англия','England'],['Scotland','Шотландия','Scotland'],['Northern Ireland','Северная Ирландия','Northern Ireland'],['Europe','Европа','Europe'],['World','Мир','World'],['Czech Republic','Чехия','Czechia'],['Korea Republic','Республика Корея','South Korea']]){
+    assert.equal(names.country(source,'ru'),ru);
+    assert.equal(names.country(source,'en'),en);
+  }
+  assert.notEqual(names.country('England'),names.country('United Kingdom'));
+  assert.equal(names.country('Unlisted territory'),'Unlisted territory');
+  assert.equal(names.country('<img src=x>'),'<img src=x>'); // Escaping belongs to the HTML boundary.
+  assert.equal(names.country('__proto__'),'__proto__');assert.equal(names.country('constructor'),'constructor');
+  assert.equal(names.country(null),'');
+  assert.equal(names.competitionType('CUP'),'Кубок');assert.equal(names.competitionType('LEAGUE','en'),'League');
+  assert.equal(names.competitionType('UNRECOGNIZED'),'');
+  assert.equal(names.competitionType('__proto__'),'');
+});
+
+test('position names preserve provider codes and resolve aliases consistently in either language',()=>{
+  for(const [source,code,ru,en] of [['Вратарь','GK','Вратарь','Goalkeeper'],['G','GK','Вратарь','Goalkeeper'],['Defence','DF','Защитник','Defender'],['Defensive Midfield','DM','Опорный полузащитник','Defensive midfielder'],['CDM','DM','Опорный полузащитник','Defensive midfielder'],['Centre-Back','CB','Центральный защитник','Centre-back'],['CF','CF','Центральный нападающий','Centre-forward'],['SS','SS','Второй нападающий','Second striker'],['Нападающий','FW','Нападающий','Forward']]){
+    assert.equal(names.positionCode(source),code);
+    assert.equal(names.position(source,'','ru'),ru);assert.equal(names.position(source,'','en'),en);
+  }
+  assert.equal(names.position('New provider role'),'New provider role');
+  assert.equal(names.position(null,'—'),'—');assert.equal(names.positionCode(null),'');
+});

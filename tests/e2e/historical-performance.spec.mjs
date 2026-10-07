@@ -37,7 +37,7 @@ test('club historical performers remain visible independently of current squad',
   await installSupabaseMock(page,{club:{club:{id:24,name:'Real Madrid CF',short_name:'Real Madrid'},stats:{performance_scope:'confirmed_historical',squad_count:0,match_count:2,upcoming_count:0,player_rating:9,player_rating_count:2,rated_player_count:1,player_match_count:1,unverified_player_rating_count:3},competitions:[],squad:[],matches:[],rated_performers:[{id:5290,name:'Thibaut Courtois',average:9,rating_count:2}]}});
   await page.goto('/club/24?__e2e=1');await expect(page.getByRole('heading',{name:'Выступления за клуб',exact:true})).toBeVisible();
   await expect(page.locator('.entity-rating-context')).toContainText('на дату матча');await expect(page.locator('.entity-rating-context')).toContainText('не приписываются ни одной команде');
-  await page.getByRole('button',{name:'Thibaut Courtois',exact:true}).click();await expect(page).toHaveURL(/\/player\/5290/);
+  await page.getByRole('link',{name:'Thibaut Courtois',exact:true}).click();await expect(page).toHaveURL(/\/player\/5290/);
 });
 
 test('player legacy scores are preserved separately from confirmed statistics',async({page})=>{

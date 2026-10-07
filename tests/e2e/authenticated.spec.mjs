@@ -104,12 +104,12 @@ test('страница клуба открывает игрока и возвр�
   expect(await page.locator('#fbzStructuredData').textContent()).toContain('SportsTeam');
   await expect(page.getByText('Santiago Bernabéu')).toBeVisible();
   await page.getByRole('tab',{name:/Состав/}).click();
-  await page.getByRole('button',{name:/Thibaut Courtois/}).click();
+  await page.getByRole('link',{name:/Thibaut Courtois/}).click();
 
   await expect(page).toHaveURL(/\/player\/5290\?__e2e=1$/u);
   await expect(page.getByRole('heading',{name:'Thibaut Courtois',exact:true})).toBeVisible();
   await expect(page.getByText('Средняя оценка')).toBeVisible();
-  await page.getByRole('button',{name:'Реал Мадрид',exact:true}).click();
+  await page.getByRole('link',{name:'Реал Мадрид',exact:true}).click();
   await expect(page).toHaveURL(/\/club\/24\?__e2e=1$/u);
   await expect(page.getByRole('heading',{name:'Реал Мадрид',exact:true})).toBeVisible();
 });
@@ -136,7 +136,7 @@ test('клуб, игрок и турнир работают без production me
   await page.goto('/competition/7?__e2e=1');
   await expect(page.getByRole('heading',{name:'Лига чемпионов',exact:true})).toBeVisible();
   await expect(page.locator('.entity-mark.is-fallback')).toContainText('CL');
-  await expect(page.locator('.competition-club-grid>button')).toHaveCount(2);
+  await expect(page.locator('.competition-club-grid>a')).toHaveCount(2);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href','https://footbazed47.vercel.app/competition/7');
   expect(pageErrors).toEqual([]);
 });

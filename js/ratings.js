@@ -23,9 +23,9 @@ function setRatingLoading(loading){
 document.getElementById('rateOv')?.addEventListener('fbz:overlay-close',()=>{ratingContext=null;});
 
 const POSITION_GROUP={
-  G:'gk',D:'def',M:'mid',F:'att',GK:'gk',Goalkeeper:'gk',CB:'def','Centre-Back':'def',LB:'def','Left-Back':'def',RB:'def','Right-Back':'def',Defence:'def',
-  DM:'mid','Defensive Midfield':'mid',CM:'mid','Central Midfield':'mid',AM:'mid','Attacking Midfield':'mid',LM:'mid','Left Midfield':'mid',RM:'mid','Right Midfield':'mid',Midfield:'mid',
-  LW:'att','Left Winger':'att',RW:'att','Right Winger':'att',ST:'att','Centre-Forward':'att',Offence:'att'
+  GK:'gk',DF:'def',CB:'def',LB:'def',LWB:'def',RB:'def',RWB:'def',
+  MF:'mid',DM:'mid',CM:'mid',AM:'mid',LM:'mid',RM:'mid',
+  FW:'att',LW:'att',RW:'att',ST:'att',CF:'att',SS:'att'
 };
 const POSITION_LABEL={gk:'Вратари',def:'Защита',mid:'Полузащита',att:'Атака',other:'Другие'};
 const RATING_LABELS=['','Ужасно','Плохо','Слабо','Ниже среднего','Средне','Неплохо','Хорошо','Отлично','Великолепно','Исключительно'];
@@ -270,12 +270,12 @@ function renderTeamSquad(teamName,players,side,formation){
   const starters=players.filter(p=>p.participation==='starter'),substitutes=players.filter(p=>p.participation==='substitute');
   const groups={};
   const onGrid=starters.length>0&&starters.every(p=>/^[1-6]:[1-5]$/u.test(p.grid||''));
-  starters.forEach(player=>{const key=onGrid?player.grid.split(':')[0]:POSITION_GROUP[player.position]||'other';(groups[key]??=[]).push(player);});
+  starters.forEach(player=>{const key=onGrid?player.grid.split(':')[0]:POSITION_GROUP[FBZNames.positionCode(player.position)]||'other';(groups[key]??=[]).push(player);});
   let html=`<section id="rating-squad-${side}" class="rating-squad${side==='home'?' is-active':''}" data-side="${side}" aria-label="Состав ${esc(FBZNames.club(teamName))}"><header class="rating-team-head"><div><span>${side==='home'?'Хозяева':'Гости'} · Стартовый состав</span><h3>${esc(FBZNames.club(teamName))}</h3></div><small>${esc(formation||'Схема недоступна')}</small></header><div class="rating-pitch">`;
   (onGrid?Object.keys(groups).sort((a,b)=>Number(a)-Number(b)):['gk','def','mid','att','other']).forEach(group=>{
     if(!groups[group]?.length)return;
     groups[group].sort((a,b)=>onGrid?Number(a.grid.split(':')[1])-Number(b.grid.split(':')[1]):String(a.name).localeCompare(String(b.name),'ru'));
-    const positions=[...new Set(groups[group].map(p=>POSITION_GROUP[p.position]))];
+    const positions=[...new Set(groups[group].map(p=>POSITION_GROUP[FBZNames.positionCode(p.position)]||'other'))];
     const label=onGrid?(positions.length===1?POSITION_LABEL[positions[0]]:'Стартовый состав'):POSITION_LABEL[group];
     html+=`<div class="rating-pitch-line rating-line-${group}" aria-label="${label}"><span class="rating-position">${label}</span><div class="rating-player-row" style="--player-count:${Math.min(groups[group].length,5)}">${groups[group].map(renderPlayerRating).join('')}</div></div>`;
   });
@@ -303,7 +303,7 @@ function renderPlayerRating(player){
     <span class="rating-player-best" aria-hidden="true">${ico('star',12)} <b>MOTM</b></span>
     <span class="rating-player-avatar" aria-hidden="true">${FBZMedia.visual({entity:player,kind:'player',className:'rating-player-portrait'})}${number}</span>
     <span class="rating-player-name">${esc(player.name)}</span>
-    <span class="rating-player-position">${esc(POSITION_LABEL[POSITION_GROUP[player.position]]||({G:'Вратарь',D:'Защитник',M:'Полузащитник',F:'Нападающий'})[player.position]||player.position||'—')}</span>
+    <span class="rating-player-position">${esc(FBZNames.position(player.position,'—'))}</span>
     ${details.length?`<span class="rating-player-events">${esc(details.join(' · '))}</span>`:''}
   </button>`;
 }
@@ -321,7 +321,7 @@ function openPlayerRating(id){
   document.getElementById('rPlayers').inert=true;
   document.getElementById('playerRatingInitials').textContent=playerInitials(player.name);
   document.getElementById('playerRatingName').textContent=player.name;
-  document.getElementById('playerRatingMeta').textContent=`${player.team?FBZNames.club(player.team):''}${player.position?' · '+player.position:''}`;
+  document.getElementById('playerRatingMeta').textContent=[player.team?FBZNames.club(player.team):'',FBZNames.position(player.position)].filter(Boolean).join(' · ');
   const score=rPS[rActivePlayer]||null;
   document.getElementById('playerRatingRange').value=score||5;
   updatePlayerRatingEditor(score);
