@@ -72,8 +72,14 @@ test('match link preserves native modified click and English deep link',async({p
   const popupPromise=page.context().waitForEvent('page',{timeout:5000});
   await link.click({modifiers:['Control']});
   const popup=await popupPromise;
-  await expect(popup).toHaveURL(new RegExp(destination+'$'));
+  // A native link commits before SDK/CDN resources finish; those are outside this fixture.
+  await popup.waitForURL(new RegExp(destination+'$'),{waitUntil:'commit',timeout:7000});
+  expect(new URL(popup.url()).pathname).toBe(destination);
   await expect(page).toHaveURL(/\/en\/matches/);
+  await installSupabaseMock(popup);
+  await popup.goto(destination+'?__e2e=1');
+  await expect(popup.locator('.md-hero')).toBeVisible();
+  await expect(popup.getByRole('button',{name:'Edit rating',exact:true})).toBeVisible();
   await popup.close();
 });
 
