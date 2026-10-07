@@ -100,6 +100,8 @@ for(const scenario of [
     const scoreType=await card.locator('.mc-score-num').evaluate(element=>({family:getComputedStyle(element).fontFamily,numbers:getComputedStyle(element).fontVariantNumeric}));
     expect(scoreType.family).toContain('Onest Variable');
     expect(scoreType.numbers).toContain('tabular-nums');
+    // The calendar adds height above cards; center the subject clear of fixed nav.
+    await card.evaluate(element=>element.scrollIntoView({block:'center',behavior:'instant'}));
     await expect(card).toHaveScreenshot(`match-card-${scenario.theme}-${scenario.width}.png`,{animations:'disabled',maxDiffPixelRatio:0.03});
   });
 }
