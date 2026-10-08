@@ -1,5 +1,6 @@
 import {cpSync,existsSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync} from 'node:fs';
 import {localeSources,englishResource} from './localization.mjs';
+import {enforceProductionRelease} from './check-release.mjs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -15,6 +16,9 @@ const publicFiles=[
 ];
 const publicDirectories=['assets','css','js'];
 
+// Fail before replacing the bundle. Preview/local builds do not wait for CI;
+// production uses only the exact Vercel Git identity and successful required jobs.
+const release=await enforceProductionRelease();
 rmSync(output,{recursive:true,force:true});
 mkdirSync(output,{recursive:true});
 
@@ -23,6 +27,7 @@ for(const relativePath of [...publicFiles,...publicDirectories]){
   if(!existsSync(source))throw new Error(`Missing public build input: ${relativePath}`);
   cpSync(source,path.join(output,relativePath),{recursive:true});
 }
+writeFileSync(path.join(output,'release.json'),JSON.stringify(release)+'\n');
 // Language variants contain only their own authored UI text. No runtime
 // translation observer, extra dictionary fetch or evaluation is involved.
 const english=JSON.parse(readFileSync(path.join(root,'locales/en.json'),'utf8'));

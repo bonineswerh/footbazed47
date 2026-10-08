@@ -257,6 +257,9 @@
 
 ## 17. Git и release workflow
 
+- main защищена активным ruleset FOOTBAZED main quality gate (24746363): PR, актуальная относительно main ветка и три required checks с источником GitHub Actions; удаления/force push запрещены, bypass list пуст. Required approvals=0 для одного владельца. Работать в feature/**, открывать PR и сливать после CI, затем проверять отдельный main-push CI и Production. Не обходить правила прямым push или отключением ruleset.
+- Production-сборка в `scripts/build-static.mjs` вызывает `scripts/check-release.mjs` до записи bundle: требуется успешный push-run `.github/workflows/ci.yml` именно для `VERCEL_GIT_COMMIT_SHA` ветки main и три успешные jobs application/database/secrets. Preview/local не ждут CI. Нет bypass-переменной: отказ/таймаут 25 минут останавливает публикацию. `/release.json` содержит только verified, commit и qualityRunId; ручной upload без Git identity не публикуется этим build path. Изменяемость build command/ветки владельцем остаётся отдельной границей, это не замена защиты main.
+- `scripts/check-production.mjs` читает только публичные RU/EN shell, release.json, стартовый JS/CSS и проверяет отказ guest admin. Workflow Production availability выполняет его каждые 30 минут по расписанию GitHub (возможны задержки). Не читать ключи, provider payload, отзывы или сессии ради мониторинга; ошибка содержит только безопасный код. Это проверка доступности, не RUM/сборщик runtime errors и не контроль актуальности каталога.
 - Перед изменениями проверяй `git status`. Не откатывай и не перезаписывай несвязанные пользовательские изменения.
 - Коммиты должны быть небольшими и тематическими; сообщения — короткие, в повелительной форме, в стиле существующей истории (`Build ...`, `Align ...`, `Index ...`).
 - Не коммить `node_modules`, `.env`, `.vercel`, `playwright-report`, `test-results`, debug logs и database CSV exports.
