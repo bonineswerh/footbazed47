@@ -226,7 +226,7 @@ export async function installSupabaseMock(page,overrides={}){
             add(p.id,p.name,team,r,pr.rating);
           }
         }
-        const rows=[...groups.values()].map(g=>({...g,average:g.scores.reduce((a,b)=>a+b,0)/g.scores.length,votes:g.scores.length,voters:g.people.size})).filter(g=>g.votes>=Number(f.min_votes||1)&&(!f.query||`${g.title} ${g.subtitle}`.toLowerCase().includes(f.query.toLowerCase()))).sort((a,b)=>f.sort==='votes'?b.votes-a.votes:b.average-a.average).map((g,i)=>({...g,rank:i+1}));
+        const rows=[...groups.values()].map(g=>({...g,average:g.scores.reduce((a,b)=>a+b,0)/g.scores.length,matches:g.matchIds.size,votes:g.scores.length,voters:g.people.size})).filter(g=>g.votes>=Number(f.min_votes||1)&&(!f.query||`${g.title} ${g.subtitle}`.toLowerCase().includes(f.query.toLowerCase()))).sort((a,b)=>f.sort==='votes'?b.votes-a.votes:b.average-a.average).map((g,i)=>({...g,rank:i+1}));
         const competitions=[...new Map(catalogue.map(m=>[m.competition_id,{id:m.competition_id,name:m.league_name}])).values()];
         const clubs=[...new Set(catalogue.flatMap(m=>[m.home_club_id,m.away_club_id]))].map(id=>{const matches=catalogue.filter(m=>[m.home_club_id,m.away_club_id].includes(id)),m=matches[0];return{id,name:m.home_club_id===id?m.home_team_name:m.away_team_name,competition_ids:[...new Set(matches.map(m=>m.competition_id))]};});
         return promiseResult({items:rows.slice(offset,offset+limit),total:rows.length,has_more:rows.length>offset+limit,next_offset:offset+limit,summary:{votes:new Set(rows.flatMap(g=>[...g.voteKeys])).size,matches:new Set(rows.flatMap(g=>[...g.matchIds])).size,voters:new Set(rows.flatMap(g=>[...g.people])).size,performance_votes:kind==='players'?rows.reduce((n,g)=>n+g.votes,0):null,unverified_performance_votes:kind==='players'?rows.reduce((n,g)=>n+g.unverified_votes,0):null,confirmed_only:kind==='players'&&Boolean(f.confirmed_only),excluded_unverified_performance_votes:excludedUnverified},competitions,clubs});
@@ -475,9 +475,10 @@ export async function installSupabaseMock(page,overrides={}){
           return Promise.resolve({data:structuredClone(rows.slice(query.offset,query.offset+query.limit)),count:rows.length,error:null}).then(resolve,reject);
         }};return builder;
       }
-      const query={filters:[],limitValue:null,head:false,countMode:null,orderBy:null,writeData:null,operation:'select'};
+      const query={filters:[],limitValue:null,head:false,countMode:null,orderBy:null,writeData:null,operation:'select',signal:null};
       const builder={
         select(_fields,options={}){query.head=Boolean(options.head);query.countMode=options.count||null;return builder;},
+        abortSignal(signal){query.signal=signal;return builder;},
         eq(column,value){query.filters.push(row=>String(row[column])===String(value));return builder;},
         neq(column,value){query.filters.push(row=>String(row[column])!==String(value));return builder;},
         in(column,values){query.filters.push(row=>values.map(String).includes(String(row[column])));return builder;},
@@ -493,6 +494,7 @@ export async function installSupabaseMock(page,overrides={}){
         then(onFulfilled,onRejected){return resolve(false).then(onFulfilled,onRejected);}
       };
       function resolve(single){
+        if(query.signal?.aborted)return Promise.resolve({data:null,error:{name:'AbortError'},count:null});
         let rows=rowsFor(table).filter(row=>query.filters.every(filter=>filter(row)));
         if(query.orderBy)rows.sort((a,b)=>String(a[query.orderBy.column]||'').localeCompare(String(b[query.orderBy.column]||''))*(query.orderBy.ascending?1:-1));
         if(query.limitValue!==null)rows=rows.slice(0,query.limitValue);

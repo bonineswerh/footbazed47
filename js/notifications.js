@@ -1,13 +1,16 @@
 (function(){
   'use strict';
   const el=id=>document.getElementById(id),pending=new Set();
-  let session=0,view=0,request=0,opened=false,items=[],cursor=null,hasMore=false,throughId=null,unreadOnly=false,busy=false,writing=false,totalUnread=0;
+  let session=0,view=0,request=0,opened=false,items=[],cursor=null,hasMore=false,throughId=null,unreadOnly=false,busy=false,writing=false,totalUnread=0,loadedFilter=null,countChangedDuringLoad=false;
   function controls(){
     el('notifSummary').textContent=totalUnread?`Непрочитанных: ${totalUnread}`:'Всё прочитано';
     el('notifAll').setAttribute('aria-pressed',String(!unreadOnly));el('notifUnread').setAttribute('aria-pressed',String(unreadOnly));
     for(const id of ['notifAll','notifUnread','notifRefresh'])el(id).disabled=writing||pending.size>0;
+    el('notifRefresh').disabled=busy||writing||pending.size>0;
+    el('notifUpdate').disabled=busy||writing||pending.size>0;
     el('notifMore').hidden=!hasMore;el('notifMore').disabled=busy||writing||pending.size>0;
     el('notifMarkAll').disabled=!throughId||!totalUnread||busy||writing||pending.size>0;
+    for(const button of el('notifList').querySelectorAll('.notif-open,.notif-read'))button.disabled=busy||writing||pending.size>0;
     el('notifList').setAttribute('aria-busy',String(busy));
   }
   function render(){
@@ -24,32 +27,35 @@
   }
   async function load(append=false){
     if(!opened||!CU||writing||pending.size||(append&&busy))return;
-    const user=CU.id,token=++request,epoch=session;
-    if(!append){view++;items=[];cursor=null;hasMore=false;throughId=null;el('notifUpdate').hidden=true;el('notifList').innerHTML='<div class="notif-empty"><span class="spin"></span>Загружаем уведомления</div>';}
+    const user=CU.id,token=++request,epoch=session,preserve=!append&&loadedFilter===unreadOnly&&items.length>0;
+    countChangedDuringLoad=false;
+    if(!append){view++;if(!preserve){items=[];cursor=null;hasMore=false;throughId=null;el('notifList').innerHTML='<div class="notif-empty"><span class="spin"></span>Загружаем уведомления</div>';}}
     busy=true;controls();el('notifStatus').textContent='';
     try{
       const result=await sb.rpc('get_notifications_page_v2',{p_unread_only:unreadOnly,p_cursor_created_at:append?cursor?.created_at:null,p_cursor_id:append?cursor?.id:null,p_limit:20});
       if(result.error)throw result.error;
       if(token!==request||epoch!==session||CU?.id!==user||!opened)return;
-      const data=result.data||{},seen=new Set(items.map(item=>item.id));
+      const data=result.data||{},seen=new Set(append?items.map(item=>item.id):[]);
+      if(!append)items=[];
       items.push(...(data.items||[]).filter(item=>!seen.has(item.id)));
       cursor=data.next_cursor;hasMore=Boolean(data.has_more&&cursor);
-      if(!append)throughId=data.through_id;
+      if(!append){throughId=data.through_id;loadedFilter=unreadOnly;el('notifUpdate').hidden=!countChangedDuringLoad;}
       totalUnread=Number(data.unread_count)||0;window.FBZNotificationCounter.set(totalUnread);
       render();if(!append)el('notifList').scrollTop=0;
       el('notifStatus').textContent=hasMore?`Показано: ${items.length}`:items.length?'Вся история':'';
+      if(countChangedDuringLoad)window.FBZNotificationCounter.refresh();
     }catch{
       if(token!==request||epoch!==session||CU?.id!==user||!opened)return;
       el('notifStatus').textContent='Не удалось загрузить уведомления. Повторите попытку.';
-      if(!append)el('notifList').innerHTML='<div class="notif-empty"><strong>Не удалось загрузить уведомления</strong><p>Попробуйте ещё раз.</p><button class="btn btn-g" type="button" data-fbz-click="notifications.refresh">Повторить</button></div>';
+      if(!append&&!preserve)el('notifList').innerHTML='<div class="notif-empty"><strong>Не удалось загрузить уведомления</strong><p>Попробуйте ещё раз.</p><button class="btn btn-g" type="button" data-fbz-click="notifications.refresh">Повторить</button></div>';
     }finally{if(token===request){busy=false;controls();}}
   }
   function toggle(){
     if(opened){close(true);return;}if(!CU)return;
-    window.FBZAccount?.close();opened=true;window.FBZOverlay.open('notifPanel');el('notifBtn')?.setAttribute('aria-expanded','true');injectIcons();load();
+    window.FBZAccount?.close();opened=true;window.FBZNotificationCounter.setFastPolling(true);window.FBZOverlay.open('notifPanel');el('notifBtn')?.setAttribute('aria-expanded','true');injectIcons();load();
   }
   function close(returnFocus=false){window.FBZOverlay.close('notifPanel',returnFocus);}
-  el('notifPanel').addEventListener('fbz:overlay-close',()=>{opened=false;view++;request++;busy=false;el('notifBtn')?.setAttribute('aria-expanded','false');});
+  el('notifPanel').addEventListener('fbz:overlay-close',()=>{opened=false;view++;request++;busy=false;window.FBZNotificationCounter.setFastPolling(false);el('notifBtn')?.setAttribute('aria-expanded','false');});
   async function read(id,value){
     const result=await sb.rpc('set_notification_read',{p_notification_id:id,p_read:value});
     if(result.error)throw result.error;return result.data;
@@ -85,8 +91,8 @@
     finally{if(epoch===session){writing=false;if(opened){if(intent!==view)load();else render();}}}
   }
   function filter(value){if(writing||pending.size)return;unreadOnly=Boolean(value);load();}
-  function resetSession(){session++;request++;view++;items=[];cursor=null;hasMore=false;throughId=null;unreadOnly=false;totalUnread=0;pending.clear();writing=false;busy=false;close();render();}
-  document.addEventListener('fbz:notification-count',event=>{if(opened&&!busy&&!writing&&!pending.size&&event.detail.count!==totalUnread)el('notifUpdate').hidden=false;});
+  function resetSession(){session++;request++;view++;items=[];cursor=null;hasMore=false;throughId=null;unreadOnly=false;loadedFilter=null;totalUnread=0;countChangedDuringLoad=false;pending.clear();writing=false;busy=false;close();el('notifUpdate').hidden=true;render();}
+  document.addEventListener('fbz:notification-count',event=>{if(opened&&event.detail.count!==totalUnread){el('notifUpdate').hidden=false;if(busy)countChangedDuringLoad=true;}});
   window.FBZNotifications={load,toggle,close,markAll,resetSession,isOpen:()=>opened};
   FBZActions.register({
     'notifications.open-item':(event,element,[id])=>update(id,true,true),

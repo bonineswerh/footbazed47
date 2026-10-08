@@ -30,7 +30,8 @@ test('invalid first filter can be reset and stale counts disappear on failure',a
   await page.getByLabel('Матчи с',{exact:true}).fill('2026-09-20');
   await page.getByLabel('Матчи по',{exact:true}).fill('2026-09-01');
   await expect(page.locator('.explore-validation')).toContainText('Начало периода');
-  await expect(page.getByRole('button',{name:'Сбросить фильтры'})).toBeEnabled();
+  await expect(page.getByRole('dialog',{name:'Фильтры'}).getByRole('button',{name:'Сбросить',exact:true})).toBeEnabled();
+  await expect(page.getByRole('button',{name:'Сбросить фильтры',exact:true})).toHaveCount(0);
   await expect(page.locator('#statisticsList')).toHaveAttribute('aria-busy','false');
   await page.getByRole('button',{name:'Закрыть фильтры'}).click();
   await page.getByRole('button',{name:'Клубы',exact:true}).click();

@@ -360,7 +360,7 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=20261007-expectations3',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=20261008-overview',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
   }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" data-fbz-click="app.load-lb">Повторить</button></div>';}
 }
@@ -391,7 +391,7 @@ function ensureProfileModule(){
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});
-  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=20261007-expectations3',script:'js/explore.js?v=20261005',ready:()=>window.FBZExplore});
+  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=20261008-overview',script:'js/explore.js?v=20261005',ready:()=>window.FBZExplore});
 }
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
@@ -442,7 +442,7 @@ async function handleInvite(code){
 }
 
 // ─── NOTIFICATIONS LOADER ───
-function ensureNotificationsModule(){return ensureFeatureModule({key:'notifications',styleId:'notificationsCss',style:'css/notifications.css?v=20261007',script:'js/notifications.js?v=20261007-expectations',ready:()=>window.FBZNotifications});}
+function ensureNotificationsModule(){return ensureFeatureModule({key:'notifications',styleId:'notificationsCss',style:'css/notifications.css?v=20261007',script:'js/notifications.js?v=20261008-delivery',ready:()=>window.FBZNotifications});}
 function loadNotifications(){if(!CU)return;return window.FBZNotifications?.isOpen()?window.FBZNotifications.load():window.FBZNotificationCounter.refresh();}
 async function toggleNotif(){const user=CU?.id,route=routeVersion;if(!user)return;try{const notifications=await ensureNotificationsModule();if(CU?.id===user&&routeVersion===route)notifications.toggle();}catch{if(CU?.id===user)toast('Не удалось открыть уведомления. Попробуйте ещё раз.','err');}}
 function closeNotif(returnFocus=false){window.FBZNotifications?.close(returnFocus);}
