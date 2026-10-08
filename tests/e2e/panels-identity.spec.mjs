@@ -39,10 +39,11 @@ for(const theme of ['dark','light'])for(const width of [320,390,1440])test(`pane
   if(width!==320)await expect(page.locator('.calendar-panel')).toHaveScreenshot(`calendar-${theme}-${width}.png`,{animations:'disabled',maxDiffPixelRatio:.01});
   await page.addStyleTag({content:'html{font-size:200%}'});await noOverflow(page);await expect(page.locator('#calendarDateOv footer')).toBeInViewport();await page.keyboard.press('Escape');
   await page.goto('/profile/'+own+'?__e2e=1');await page.getByRole('button',{name:'Редактировать',exact:true}).click();
+  await page.evaluate(()=>document.fonts.ready);expect(await page.evaluate(()=>document.fonts.check('16px "Onest Variable"','Редактировать профиль'))).toBe(true);
   await expect(page.locator('#epSaveBtn')).toBeInViewport();await accessible(page,'#profileEditOv');await noOverflow(page);
   await page.locator('.profile-editor-body').evaluate(el=>el.scrollTop=el.scrollHeight);await expect(page.locator('#epSaveBtn')).toBeInViewport();
   await info.attach('profile-editor.png',{body:await page.locator('.profile-editor').screenshot(),contentType:'image/png'});
-  if(width!==320)await expect(page.locator('.profile-editor')).toHaveScreenshot(`profile-editor-${theme}-${width}.png`,{animations:'disabled',maxDiffPixelRatio:.01});
+  if(width!==320)await expect(page.locator('.profile-editor')).toHaveScreenshot(`profile-editor-${theme}-${width}${process.platform==='linux'?'-linux':''}.png`,{animations:'disabled',maxDiffPixelRatio:.01});
   await page.addStyleTag({content:'html{font-size:200%}'});await noOverflow(page);await expect(page.locator('#epSaveBtn')).toBeInViewport();await page.keyboard.press('Escape');
 });
 for(const width of [320,390,1440])test(`scores and crests occupy separate central cells ${width}`,async({page})=>{
