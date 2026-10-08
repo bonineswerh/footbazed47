@@ -1369,6 +1369,10 @@ export type Database = {
         Args: { p_batch: string; p_confirmation: string }
         Returns: Json
       }
+      admin_auth_session_state: {
+        Args: { p_actor: string; p_session: string }
+        Returns: Json
+      }
       admin_cleanup_development_data: {
         Args: { p_confirmation: string; p_scope: string }
         Returns: Json

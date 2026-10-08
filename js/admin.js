@@ -31,8 +31,9 @@
   function sleep(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
 
   async function request(action = 'overview', body){
+    const user=CU?.id;
     const {data:{session}} = await sb.auth.getSession();
-    if (!session) throw new Error('Сессия завершена. Войдите снова.');
+    if (!session||user!==CU?.id) throw new Error('Сессия завершена. Войдите снова.');
     const response = await fetch(`/api/admin${body ? '' : `?action=${encodeURIComponent(action)}`}`, {
       method: body ? 'POST' : 'GET',
       headers: {
@@ -42,7 +43,12 @@
       body: body ? JSON.stringify({action, ...body}) : undefined
     });
     const payload = await response.json().catch(() => ({}));
+    if(user!==CU?.id)throw new Error('Сессия завершена. Войдите снова.');
     if (!response.ok) {
+      if(['admin_mfa_required','admin_mfa_recent_required','admin_session_invalid'].includes(payload.code)){
+        if(action!=='access_status')window.FBZAdminSecurity?.required(payload.code);
+        throw Object.assign(new Error(payload.code==='admin_session_invalid'?'Сессия завершена. Войдите снова.':'Подтвердите защиту администратора и повторите действие.'),{code:payload.code});
+      }
       const translated = ({
         400:'Проверьте параметры операции: даты, лиги и значения полей.',
         403:'У аккаунта нет доступа к админ-панели.',
@@ -387,8 +393,19 @@
     }
   }
 
-  function mount(){
+  async function mount(){
     if (!CU?.is_admin) return;
+    const console=document.getElementById('adminConsole');if(console){console.hidden=true;console.inert=true;}
+    const user=CU.id,route=routeVersion;
+    try{
+      const security=await FBZFeatures.load({key:'adminSecurity',script:'js/admin-security.js?v=20261008-admin-mfa',ready:()=>window.FBZAdminSecurity});
+      if(user!==CU?.id||CP!=='admin'||route!==routeVersion||!await security.mount())return;
+    }catch{
+      if(user===CU?.id&&CP==='admin'){
+        document.getElementById('adminSecurityGate')?.remove();
+        console?.insertAdjacentHTML('beforebegin','<section class="admin-security-gate" id="adminSecurityGate"><h1>Защита администратора</h1><p>Не удалось загрузить защиту администратора. Повторите вход в раздел.</p><button type="button" class="btn btn-l admin-security-primary" data-fbz-click="admin.security-retry">Повторить</button></section>');
+      }return;
+    }
     renderProviderPanel();
     if(!document.querySelector('[data-admin-view="experts"]'))document.querySelector('.admin-nav')?.insertAdjacentHTML('beforeend','<button class="admin-nav-item" type="button" data-admin-view="experts" data-fbz-click="admin.experts-open">'+ico('shield',17)+'<span>Эксперты</span></button>');
     if(!document.querySelector('[data-admin-view="help"]'))document.querySelector('.admin-nav')?.insertAdjacentHTML('beforeend','<button class="admin-nav-item" type="button" data-admin-view="help" data-fbz-click="admin.help-open">'+ico('info',17)+'<span>Инструкция</span></button>');
@@ -707,11 +724,13 @@
     }
   }
 
-  window.FBZAdmin = {request,mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup,resetEmblems,loadReportQueue,reportPage,reviewReport,moreAudit};
+  function resetSession(){state.loaded=false;state.matches=[];state.activities=[];audit.version++;audit.items=[];reports.version++;reports.items=[];emblemBatch=null;lineupBatch=null;catalogBatch=null;catalogReady=false;}
+  window.FBZAdmin = {request,mount,resetSession, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup,resetEmblems,loadReportQueue,reportPage,reviewReport,moreAudit};
 })();
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "admin.security-retry":()=>FBZAdmin.mount(),
   "admin.audit-more":()=>FBZAdmin.moreAudit(),
   "admin.audit-open":(event,element)=>FBZAdmin.showView('audit',element),
   "admin.experts-open":async(event,element)=>{
@@ -723,7 +742,7 @@ FBZActions.register({
   "admin.help-open":async(event,element)=>{
     const user=CU?.id,version=routeVersion;
     try{
-      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261008-data-health',ready:()=>window.FBZAdminGuide});
+      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261008-admin-mfa',ready:()=>window.FBZAdminGuide});
       if(CU?.id===user&&CU?.is_admin&&CP==='admin'&&routeVersion===version){FBZAdminGuide.mount();FBZAdmin.showView('help',element);}
     }catch{if(CU?.id===user&&CP==='admin')toast('Не удалось открыть инструкцию','err');}
   },

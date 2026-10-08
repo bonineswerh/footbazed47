@@ -30,7 +30,7 @@ export default defineConfig({
   },
   projects:[
     {name:'chromium',use:{browserName:'chromium'}},
-    {name:'firefox',testMatch:['compatibility.spec.mjs','csp.spec.mjs'],use:{browserName:'firefox'}},
-    {name:'webkit',testMatch:['compatibility.spec.mjs','csp.spec.mjs'],use:{browserName:'webkit'}}
+    {name:'firefox',testMatch:['compatibility.spec.mjs','csp.spec.mjs','admin-mfa.spec.mjs'],use:{browserName:'firefox'}},
+    {name:'webkit',testMatch:['compatibility.spec.mjs','csp.spec.mjs','admin-mfa.spec.mjs'],use:{browserName:'webkit'}}
   ]
 });
