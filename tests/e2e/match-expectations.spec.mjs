@@ -33,6 +33,7 @@ for(const language of ['ru','en'])test(`expectations use one short form, explici
   await expect(page.locator('.md-grid')).toBeHidden();await expect(page.locator('.pred-input')).toHaveCount(0);
   await page.locator('.md-primary-action').click();
   await expect(page.locator('#rateTitle')).toHaveText(language==='ru'?'Оценить ожидание':'Rate your expectation');
+  await expect(page.locator('#rateScorePrompt')).toHaveText(language==='ru'?'Какой игры вы ожидаете?':'What quality of game do you expect?');
   await expect(page.locator('#rS2')).toBeHidden();await expect(page.locator('.rate-steps')).toBeHidden();await expect(page.locator('.rating-public-toggle')).toBeHidden();
   const rail=page.locator('#matchRatingRange'),save=page.locator('#rS1 button[data-fbz-click="shell.r-next"]');
   await expect(rail).toHaveValue('0');await expect(page.locator('#rScoreDisp')).toHaveText('—');
@@ -79,6 +80,9 @@ test('finished comparison uses the same voters and private expectations stay per
   await page.goto('/match/101?__e2e=1');
   await expect(page.locator('.expectation-comparison')).toContainText('Обе оценки поставили: 2');
   await expect(page.locator('.expectation-comparison .expectation-delta')).toHaveText('+2.0');
+  await expect(page.locator('.expectation-community')).toContainText('7.0');
+  await expect(page.locator('.md-rating-comparison')).toHaveCount(0);
+  await page.locator('.expectation-comparison summary').click();await expect(page.locator('.expectation-comparison')).toHaveAttribute('open','');
   await expect(page.locator('.expectation-personal .expectation-delta')).toHaveText('-1.0');
   await page.locator('.expectation-segments button').filter({hasText:'Реал Мадрид'}).click();
   await expect(page.locator('.expectation-comparison .expectation-delta')).toHaveText('-1.0');

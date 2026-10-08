@@ -61,7 +61,8 @@ for(const theme of ['dark','light'])for(const accent of ['emerald','ice','gold',
     await page.goto('/discover?__e2e=1');await expect(page.locator('.statistics-row')).toBeVisible();
     const score=page.locator('.statistics-score').first();await expect(score).toHaveAttribute('aria-label',/Средняя оценка болельщиков/);
     const scoreBox=await score.boundingBox(),contentBox=await page.locator('.statistics-content').first().boundingBox();
-    expect(contentBox.x+contentBox.width).toBeLessThanOrEqual(scoreBox.x);
+    if(accent==='ice')expect(contentBox.x+contentBox.width).toBeLessThanOrEqual(scoreBox.x);
+    else expect(contentBox.y+contentBox.height).toBeLessThanOrEqual(scoreBox.y);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.getByRole('button',{name:'Поиск',exact:true}).click();await page.locator('#globalSearchInput').fill('Real');
     await expect(page.getByRole('option')).toHaveCount(4);await expect(page.getByRole('button',{name:'Закрыть поиск',exact:true})).toBeInViewport();

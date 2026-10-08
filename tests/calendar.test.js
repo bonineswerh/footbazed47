@@ -13,6 +13,20 @@ test('day navigation crosses leap, month and year boundaries',()=>{
   assert.equal(model.shift('1000-01-01',-1),null);
   assert.equal(model.shift('9999-12-31',1),null);
 });
+test('month navigation begins on the first day and respects the supported range',()=>{
+  assert.equal(model.month('2024-03-31',-1),'2024-02-01');
+  assert.equal(model.month('2026-12-31',1),'2027-01-01');
+  assert.equal(model.month('1000-01-01',-1),null);
+  assert.equal(model.month('9999-12-31',1),null);
+  assert.equal(model.month('invalid'),null);
+});
+test('month cells use Monday first, include leap day and never roll past the bounds',()=>{
+  const cells=model.monthDays('2024-02-29');assert.equal(cells.length,42);
+  assert.equal(cells[0],'2024-01-29');assert.equal(cells[3],'2024-02-01');
+  assert.ok(cells.includes('2024-02-29'));assert.equal(cells.at(-1),'2024-03-10');
+  assert.ok(model.monthDays('1000-01-01').some(day=>day===null));
+  assert.ok(model.monthDays('9999-12-31').some(day=>day===null));
+});
 for(const [zone,day,hours,from] of [
   ['UTC','2026-10-07',24,'2026-10-07T00:00:00.000Z'],
   ['Europe/Moscow','2026-10-07',24,'2026-10-06T21:00:00.000Z'],

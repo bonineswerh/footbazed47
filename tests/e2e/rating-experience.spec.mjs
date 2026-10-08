@@ -110,6 +110,13 @@ test('an unrated player can explicitly receive 5 and clearing also removes the b
   expect(payload.p_player_ratings.some(item=>item.player_id===5291)).toBe(false);
   expect(payload.p_player_ratings.every(item=>!item.is_best_player)).toBe(true);
 });
+for(const width of [320,390,1440])test(`player rail aligns its labels and actual values at ${width}px`,async({page})=>{
+  await page.setViewportSize({width,height:1000});await page.goto('/match/101?__e2e=1');await page.locator('.md-primary-action').click();await page.getByRole('button',{name:/Продолжить/}).click();await page.locator('#rating-player-5291').click();
+  const rail=page.locator('#playerRatingRange');await expect(rail).toBeVisible();const box=await rail.boundingBox();
+  const centres=await page.locator('#playerRatingEditor .rating-rail-labels span').evaluateAll(nodes=>nodes.map(node=>{const box=node.getBoundingClientRect();return box.x+box.width/2;}));
+  for(const [i,value] of [0,5,10].entries()){const x=box.x+14+(box.width-28)*value/10;expect(Math.abs(x-centres[i])).toBeLessThanOrEqual(1);await page.mouse.click(x,box.y+box.height/2);await expect(rail).toHaveValue(String(value));}
+  await expect(page.locator('#playerRatingValue')).toHaveAttribute('data-tone','elite');
+});
 
 for(const theme of ['dark','light'])test(`${theme}: narrow screens keep the next action visible and player names readable`,async({page})=>{
   await page.setViewportSize({width:320,height:700});

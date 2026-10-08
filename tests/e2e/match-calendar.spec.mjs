@@ -10,6 +10,7 @@ test('calendar date and favorites filter the complete catalogue before paging',a
   await installSupabaseMock(page,{matches:fixtures()});
   await page.goto('/matches?__e2e=1');
   await expect(page.locator('#matchG .mcard')).toHaveCount(24);
+  await page.getByRole('button',{name:'Выбрать дату',exact:true}).click();
   await page.locator('#matchDay').fill('2099-10-07');
   await expect(page.locator('.calendar-caption')).toContainText('7 октября 2099');
   await page.getByRole('button',{name:'Матчи любимых клубов',exact:true}).click();

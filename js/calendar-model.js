@@ -18,7 +18,16 @@ function bounds(day){
   const end=new Date(start.getFullYear(),start.getMonth(),start.getDate()+1);
   return {from:start.toISOString(),until:end.toISOString()};
 }
-const api=Object.freeze({parse,key,shift,bounds});
+function month(day,amount=0){
+  const date=parse(day);if(!date||!Number.isInteger(amount))return null;
+  date.setDate(1);date.setMonth(date.getMonth()+amount);return parse(key(date))?key(date):null;
+}
+function monthDays(day){
+  const first=parse(month(day));if(!first)return [];
+  const offset=(first.getDay()+6)%7,start=key(first);
+  return Array.from({length:42},(_,index)=>shift(start,index-offset));
+}
+const api=Object.freeze({parse,key,shift,bounds,month,monthDays});
 if(typeof module==='object'&&module.exports)module.exports=api;
 else root.FBZCalendarModel=api;
 })(globalThis);

@@ -29,7 +29,7 @@ const POSITION_GROUP={
 };
 const POSITION_LABEL={gk:'Вратари',def:'Защита',mid:'Полузащита',att:'Атака',other:'Другие'};
 const RATING_LABELS=['','Ужасно','Плохо','Слабо','Ниже среднего','Средне','Неплохо','Хорошо','Отлично','Великолепно','Исключительно'];
-const EXPECTATION_LABELS=['','Почти не жду','Низкие ожидания','Мало интереса','Ниже среднего','Средние ожидания','Есть интерес','Жду хорошую игру','Очень интересно','Большие ожидания','Не пропущу'];
+const EXPECTATION_LABELS=['','Жду очень слабую игру','Жду слабую игру','Жду невыразительную игру','Жду игру ниже среднего','Жду среднюю игру','Жду неплохую игру','Жду хорошую игру','Жду отличную игру','Жду великолепную игру','Жду исключительную игру'];
 const matchRatingLabels=()=>ratingContext?.mode==='expectation'?EXPECTATION_LABELS:RATING_LABELS;
 
 async function openRatingForm(mid,mode='rating'){
@@ -131,7 +131,7 @@ function resetRatingForm(){
   document.querySelector('.rate-steps').hidden=expecting;
   document.querySelector('.rating-public-toggle').hidden=expecting;
   document.getElementById('rExpectationNote').hidden=!expecting;
-  document.getElementById('rateScorePrompt').textContent=expecting?'Насколько вы ждёте этот матч?':'Насколько вам понравился матч?';
+  document.getElementById('rateScorePrompt').textContent=expecting?'Какой игры вы ожидаете?':'Насколько вам понравился матч?';
   document.querySelector('#rS1 button[data-fbz-click="shell.r-next"]').textContent=expecting?'Сохранить ожидание':'Продолжить →';
   rBack();
 }
@@ -183,6 +183,7 @@ function syncRatingRail(range,score,labels=RATING_LABELS){
   range.dataset.tone=window.FBZDomain.ratingTone(selected?score:null);
   range.dataset.selected=String(selected);
   range.style.setProperty('--rating-progress',`${Number(range.value)*10}%`);
+  range.style.setProperty('--rating-offset',`${14-Number(range.value)*2.8}px`);
   range.setAttribute('aria-valuetext',selected?`${score} из 10 — ${labels[score]}`:'Оценка не выбрана. Выберите от 1 до 10.');
 }
 

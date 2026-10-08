@@ -15,19 +15,19 @@
 .rating-rail[data-tone="mid"]{color:var(--rating-mid)}
 .rating-rail[data-tone="high"]{color:var(--rating-high)}
 .rating-rail[data-tone="elite"]{color:var(--rating-elite)}
-.rating-rail::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:linear-gradient(to right,var(--rail-fill) 0 var(--rating-progress),var(--bg5) var(--rating-progress) 100%)}
-.rating-rail::-webkit-slider-thumb{width:28px;height:28px;margin-top:-10px;appearance:none;border:5px solid var(--bg2);border-radius:50%;background:currentColor;box-shadow:0 0 0 1px currentColor}
+.rating-rail::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:linear-gradient(to right,var(--rail-fill) 0 calc(var(--rating-progress) + var(--rating-offset,14px)),var(--bg5) calc(var(--rating-progress) + var(--rating-offset,14px)) 100%)}
+.rating-rail::-webkit-slider-thumb{box-sizing:border-box;width:28px;height:28px;margin-top:-10px;appearance:none;border:5px solid var(--bg2);border-radius:50%;background:currentColor;box-shadow:0 0 0 1px currentColor}
 .rating-rail::-moz-range-track{height:8px;border-radius:4px;background:var(--bg5)}
 .rating-rail::-moz-range-progress{height:8px;border-radius:4px;background:var(--rail-fill)}
 .rating-rail::-moz-range-thumb{box-sizing:border-box;width:28px;height:28px;border:5px solid var(--bg2);border-radius:50%;background:currentColor;box-shadow:0 0 0 1px currentColor}
 .rating-rail:focus-visible{outline:2px solid var(--rating-elite);outline-offset:4px;border-radius:6px}
 .rating-rail:disabled{cursor:wait;opacity:.5}
-.rating-rail-labels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;color:var(--text3);font-size:12px;font-weight:500;line-height:1.4}
-.rating-rail-labels span:nth-child(2){text-align:center}
-.rating-rail-labels span:last-child{text-align:right}
+.rating-rail-labels{position:relative;height:1.4em;margin-inline:14px;color:var(--text3);font-size:12px;font-weight:500;line-height:1.4}
+.rating-rail-labels span{position:absolute;left:0;transform:translateX(-50%)}.rating-rail-labels span:nth-child(2){left:50%}.rating-rail-labels span:last-child{left:100%}
 .rating-rail-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px}
 .rating-rail-hint{color:var(--text3);font-size:12px;line-height:1.5}
-.rate-stars{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px;margin-top:8px}
+.rate-stars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:8px}
+.rating-direct-label{display:block;margin-top:18px;padding-top:14px;border-top:1px solid var(--b1);color:var(--text2);font-size:var(--type-meta);text-align:left}
 .rate-star{display:flex;align-items:center;justify-content:center;min-width:0;height:44px;border:1px solid var(--b1);border-radius:6px;background:transparent;color:var(--text2);font-family:var(--font-ui);font-size:14px;font-weight:650;font-variant-numeric:tabular-nums;cursor:pointer;transition:color var(--motion-fast) var(--ease),border-color var(--motion-fast) var(--ease),background var(--motion-fast) var(--ease)}
 .rate-star:hover{border-color:var(--b3);background:var(--bg4)}
 .rate-star-num{font-size:14px;pointer-events:none}

@@ -238,6 +238,7 @@ function go(p,d){
   if(!page)return;
   routeVersion++;
   window.FBZExplore?.closePanels();
+  window.FBZMatchCalendar?.close();
   window.FBZComparison?.close(false);
   reportOpenVersion++;window.FBZCommunityReports?.close(false);
   blockOpenVersion++;window.FBZCommunityBlocks?.close(false);
@@ -360,7 +361,7 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=20261008-overview',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=20261008-sheets',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
   }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" data-fbz-click="app.load-lb">Повторить</button></div>';}
 }
@@ -391,7 +392,7 @@ function ensureProfileModule(){
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});
-  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=20261008-overview',script:'js/explore.js?v=20261005',ready:()=>window.FBZExplore});
+  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=20261008-sheets',script:'js/explore.js?v=20261005',ready:()=>window.FBZExplore});
 }
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
@@ -416,7 +417,7 @@ async function expStats(c,a,u){
 function editProfile(){
   profileVersion++;
   const user=CU?.id,route=routeVersion,profile=profileVersion;
-  ensureFeatureModule({key:'profile-editor',styleId:'profileEditorCss',style:'css/profile-editor.css?v=20261007-community',script:'js/profile-editor.js?v=20261007-community',ready:()=>window.FBZProfileEditor})
+  ensureFeatureModule({key:'profile-editor',styleId:'profileEditorCss',style:'css/profile-editor.css?v=20261008-sheets',script:'js/profile-editor.js?v=20261008-sheets',ready:()=>window.FBZProfileEditor})
     .then(editor=>{if(CP==='profile'&&user&&CU?.id===user&&routeVersion===route&&profileVersion===profile)editor.open();}).catch(()=>{});
 }
 

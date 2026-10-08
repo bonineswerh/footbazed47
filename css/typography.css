@@ -53,14 +53,14 @@ body :is(.mc-score-mark,.home-spotlight-mark,.md-team-mark){font-family:var(--fo
 body .mc-score-block{grid-template-columns:minmax(0,1fr) minmax(64px,auto) minmax(0,1fr);gap:10px;padding-inline:12px}
 body .mc-score-name{font-family:var(--font-ui);font-size:.9375rem;font-weight:600;line-height:1.35;letter-spacing:-.02em;overflow-wrap:normal;word-break:normal;hyphens:auto;min-height:2.7em}
 @media(max-width:400px){body :is(.pr-bar,.rh-bar){width:44px;flex-basis:44px}body :is(.pr-r,.rh-r){gap:8px}body :is(.pr-val,.rh-v){font-size:1.125rem;min-width:4rem}}
-@media(max-width:620px){.hero-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;gap:12px}.hstat{padding:0;border:0}.hstat-l{overflow-wrap:anywhere}.rating-player-row{grid-template-columns:repeat(auto-fit,minmax(82px,1fr))}.rating-player-name{font-size:var(--type-meta)}.md-comparison-values{flex-wrap:wrap}.md-comparison-values span{font-size:var(--type-meta)}}
+@media(max-width:620px){.hero-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;gap:12px}.hstat{padding:0;border:0}.hstat-l{overflow-wrap:anywhere}.rating-player-row{grid-template-columns:repeat(auto-fit,minmax(82px,1fr))}.rating-player-name{font-size:var(--type-meta)}}
 
 .score-denominator{font-family:inherit;font-size:.75rem;font-weight:500;letter-spacing:0;margin-left:2px;color:var(--text2)}
 body .mc-score-name{flex:0 0 auto;display:block;overflow-wrap:anywhere}
 .mc-score-vs{max-width:12ch;text-align:center;line-height:1.4}
 
 /* Numeric hierarchy: display lettering is reserved for the brand. */
-body :is(.home-overview-item strong,.home-pending-match strong b,.pst-v,.entity-stat-strip strong,.entity-metric strong,.squad-player-rating b,.squad-player-number,.performance-community b,.entity-ranking-row b,.entity-ranking-row>span,.teammate-card>b,.entity-match-score,.pr-rank,.md-comparison-values b,.md-score,.mc-score-num,.feed-rating strong,.feed-players strong,.rate-score,.rd-l,.prdist-row span,.prdist-row b,.pred-input,.player-rating-output){font-family:var(--font-ui);font-weight:650;font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.025em;line-height:1.2}
+body :is(.home-overview-item strong,.home-pending-match strong b,.pst-v,.entity-stat-strip strong,.entity-metric strong,.squad-player-rating b,.squad-player-number,.performance-community b,.entity-ranking-row b,.entity-ranking-row>span,.teammate-card>b,.entity-match-score,.pr-rank,.md-own-rating strong,.md-score,.mc-score-num,.feed-rating strong,.feed-players strong,.rate-score,.rd-l,.prdist-row span,.prdist-row b,.pred-input,.player-rating-output){font-family:var(--font-ui);font-weight:650;font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.025em;line-height:1.2}
 body .feed-rating{align-items:baseline;gap:4px}
 body .feed-rating strong{font-size:2rem;min-width:2ch}
 body .rate-score{font-size:clamp(3rem,7vw,4rem);line-height:1.1}

@@ -28,9 +28,9 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20261007-community">
+  <link rel="stylesheet" href="styles.css?v=20261008-sheets">
   <link rel="stylesheet" href="css/match-editorial.css?v=20261007-community">
-  <link rel="stylesheet" href="css/typography.css?v=20261006">
+  <link rel="stylesheet" href="css/typography.css?v=20261008-sheets">
   <link rel="stylesheet" href="css/club-palettes.css?v=20261007-community">
 </head>
 <body>
@@ -534,7 +534,7 @@
           <label class="sr-only" for="matchRatingRange">Оценка матча от 1 до 10</label>
           <input class="rating-rail" id="matchRatingRange" type="range" min="0" max="10" step="1" value="0" disabled data-tone="neutral" data-fbz-input="ratings.select-match-score" data-fbz-click="ratings.select-match-score" data-fbz-keydown="ratings.commit-match-score" aria-describedby="matchRatingHint">
           <div class="rating-rail-labels" aria-hidden="true"><span>—</span><span>5</span><span>10</span></div>
-          <div class="rate-stars" id="starsR" data-tone="neutral" role="group" aria-label="Оценка матча от 1 до 10"></div>
+          <span class="rating-direct-label">Или выберите число</span><div class="rate-stars" id="starsR" data-tone="neutral" role="group" aria-label="Оценка матча от 1 до 10"></div>
           <div class="rating-rail-footer">
             <p class="rating-rail-hint" id="matchRatingHint">Передвиньте ползунок или выберите число</p>
             <button class="rating-score-clear" id="matchRatingClear" type="button" data-fbz-click="ratings.clear-match-score" aria-label="Сбросить оценку матча" disabled>Сбросить</button>
@@ -751,10 +751,10 @@
   <script src="js/home.js?v=20261007-community"></script>
   <script src="js/feature-loader.js?v=20261005"></script>
   <script src="js/notification-counter.js?v=20261008"></script>
-  <script src="app.js?v=20261008-overview"></script>
+  <script src="app.js?v=20261008-sheets"></script>
   <script src="js/auth.js?v=46"></script>
-  <script src="js/rating-loader.js?v=20261007-calendar"></script>
-  <script src="js/matches.js?v=20261007-community"></script>
+  <script src="js/rating-loader.js?v=20261008-sheets"></script>
+  <script src="js/matches.js?v=20261008-sheets"></script>
   <script src="js/account.js?v=43"></script>
 </body>
 </html>

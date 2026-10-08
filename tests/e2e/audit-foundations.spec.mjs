@@ -62,9 +62,9 @@ for(const theme of ['light','dark'])test('club gradients and long names preserve
 test('an only owner vote cannot create comparison with other supporters',async({page})=>{
   await installSupabaseMock(page,{feed:[own],matchInsights:{rating_count:1,average:8,others_rating_count:0,others_average:null}});
   await page.goto('/match/101?__e2e=1');
-  const comparison=page.locator('.md-rating-comparison');
-  await expect(comparison).toContainText('Пока есть только ваша оценка');
-  await expect(comparison.locator('.md-comparison-values b')).toHaveText(['8','—','—']);
+  await expect(page.locator('.md-own-rating')).toContainText('8/10');
+  await expect(page.locator('.md-rating-comparison')).toHaveCount(0);
+  await expect(page.locator('.md-own-rating')).not.toContainText('Разница');
 });
 
 test('overview counts player performances and labels a one-author sample',async({page})=>{

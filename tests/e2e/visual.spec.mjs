@@ -54,7 +54,7 @@ for(const viewport of [{width:390,height:844},{width:1280,height:720}]){
     await prepare(page);
     await page.goto('/match/101?__e2e=1');
     await page.evaluate(()=>document.fonts.ready);
-    await expect(page.locator('.md-rating-comparison')).toBeVisible();
+    await expect(page.locator('.md-own-rating')).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     const scoreSize=await page.locator('.md-score').first().evaluate(element=>getComputedStyle(element).fontSize);
     expect(Number.parseFloat(scoreSize)).toBeGreaterThanOrEqual(viewport.width<620?47:65);
