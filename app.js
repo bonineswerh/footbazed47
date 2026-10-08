@@ -83,7 +83,7 @@ document.addEventListener('keydown',openFormControl,true);
 document.addEventListener('keydown',event=>{if(event.key==='Escape')controlIntent++;},true);
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=20261008-data-health2',script:'js/admin.js?v=20261008-data-health',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=20261008-admin-mfa',script:'js/admin.js?v=20261008-admin-mfa',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=20261007-community',script:'js/entities.js?v=20261007-details',ready:()=>window.FBZEntities});
@@ -209,6 +209,7 @@ async function init(){
 }
 
 function renderNav(){
+  window.FBZAdminSecurity?.syncSession(CU?.id||null);
   window.FBZMatchCalendar?.syncSession(CU?.id||null);
   window.FBZNotificationCounter?.syncSession(CU?.id||null);
   const nr=document.getElementById('navRight');
@@ -256,6 +257,7 @@ function go(p,d){
   const page=document.getElementById(`page-${p}`);
   if(!page)return;
   routeVersion++;
+  if(p!=='admin')window.FBZAdminSecurity?.syncRoute(p);
   controlIntent++;window.FBZFormControls?.close(false);
   window.FBZExplore?.closePanels();
   window.FBZMatchCalendar?.close();

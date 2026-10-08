@@ -92,6 +92,7 @@
 - `api/admin.js` остаётся CommonJS Vercel Function и возвращает JSON с `Cache-Control: no-store` и `X-Content-Type-Options: nosniff`.
 - Каждый административный запрос обязан передавать Supabase access token в `Authorization: Bearer ...`.
 - Сервер обязан самостоятельно проверить token через Supabase Auth и затем проверить `users.is_admin`. Проверка `CU.is_admin` на клиенте — только UX, не авторизация.
+- После проверки подписи Auth сервер привязывает JWT к пользователю, issuer, audience, expiry и session_id. Service-only `admin_auth_session_state` проверяет живую Auth session, защищённый флаг администратора и действующий TOTP factor. Все административные данные/операции требуют JWT и session AAL2; очистка дополнительно требует TOTP amr не старше пяти минут. AAL1 допускает только собственный access_status, без каталога/жалоб/поставщика. Не добавлять MFA bypass. `js/admin-security.js` загружается только в админке, использует SDK MFA и общие overlays; QR/ключ/код не попадают в storage/logs, очищаются при закрытии, выходе и смене маршрута. Код и настоящий QR вводит/сканирует владелец сам. Заблокированная очистка никогда не повторяется автоматически.
 - `SUPABASE_SERVICE_ROLE_KEY` используется только на сервере и только после успешной проверки администратора.
 - Все действия API должны находиться в явном allowlist, проверять method, типы, диапазоны, даты и перечисления. Сохраняй ограничение тела запроса и timeout внешнего API.
 - Ошибки 500 не должны раскрывать детали базы, ключи, SQL или upstream response. Подробности допустимы только в server log.

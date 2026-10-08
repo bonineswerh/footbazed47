@@ -516,6 +516,13 @@ export async function installSupabaseMock(page,overrides={}){
 
     window.__FOOTBAZED_TEST_CLIENT__={
       auth:{
+        mfa:{
+          getAuthenticatorAssuranceLevel:()=>promiseResult({currentLevel:state.mfaLevel||'aal2',nextLevel:'aal2'},state.mfaUnavailable?{code:'unavailable'}:null),
+          listFactors:()=>promiseResult({all:structuredClone(state.mfaFactors||[{id:'22000000-0000-0000-0000-000000000001',factor_type:'totp',status:'verified',friendly_name:'Test device'}])}),
+          enroll:params=>{state.mfaCalls=(state.mfaCalls||[]).concat({method:'enroll',params});const id='22000000-0000-0000-0000-000000000002';state.mfaFactors=(state.mfaFactors||[]).concat({id,factor_type:'totp',status:'unverified',friendly_name:params.friendlyName});return promiseResult({id,type:'totp',totp:{qr_code:state.mfaQr||'data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><rect width="220" height="220" fill="white"/><rect x="30" y="30" width="160" height="160" fill="black"/></svg>',secret:'LOCAL-TEST-ONLY'}});},
+          challengeAndVerify:params=>{state.mfaCalls=(state.mfaCalls||[]).concat({method:'verify',factorId:params.factorId});if(state.mfaVerifyError)return promiseResult(null,{code:state.mfaVerifyError});state.mfaLevel='aal2';state.mfaFactors=(state.mfaFactors||[]).map(f=>f.id===params.factorId?{...f,status:'verified'}:f);return promiseResult({});},
+          unenroll:params=>{state.mfaCalls=(state.mfaCalls||[]).concat({method:'unenroll',params});state.mfaFactors=(state.mfaFactors||[]).filter(f=>f.id!==params.factorId);return promiseResult({});}
+        },
         getSession:()=>promiseResult({session:state.sessionUser?{user:structuredClone(state.sessionUser)}:null}),
         getUser:()=>promiseResult({user:structuredClone(state.sessionUser)}),
         onAuthStateChange:callback=>{authListener=callback;return{data:{subscription:{unsubscribe(){authListener=null;}}}};},
@@ -538,6 +545,8 @@ export async function installSupabaseMock(page,overrides={}){
       })}
     };
     window.__FOOTBAZED_TEST_AUTH__={
+      mfa:()=>({level:state.mfaLevel||'aal2',calls:structuredClone(state.mfaCalls||[])}),
+      mfaError:code=>{state.mfaVerifyError=code;},
       emit:(event,session)=>authListener?.(event,session),
       session:()=>({user:structuredClone(state.sessionUser)}),
       recovery:()=>structuredClone(state.passwordRecovery||null),

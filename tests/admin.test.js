@@ -6,7 +6,12 @@ const {join}=require('node:path');
 const {EventEmitter}=require('node:events');
 const vm=require('node:vm');
 
-function api({admin=true,authStatus=200,apiFootballKey='football-api-test-placeholder',route=()=>({data:[]})}={}){
+function bearer(overrides={}){
+  const now=Math.floor(Date.now()/1000);
+  const claims={sub:'12000000-0000-0000-0000-000000000001',session_id:'12000000-0000-0000-0000-000000000002',iss:'https://database.example.test/auth/v1',aud:'authenticated',role:'authenticated',aal:'aal2',iat:now,exp:now+3600,amr:[{method:'totp',timestamp:now}],...overrides};
+  return `Bearer ${Buffer.from('{"alg":"ES256"}').toString('base64url')}.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.test-signature`;
+}
+function api({admin=true,authStatus=200,sessionState={active:true,aal:'aal2',factor_verified:true},sessionStatus=200,apiFootballKey='football-api-test-placeholder',route=()=>({data:[]})}={}){
   const calls=[];
   const https={request(url,options,callback){
     url=String(url);
@@ -16,6 +21,7 @@ function api({admin=true,authStatus=200,apiFootballKey='football-api-test-placeh
       const call={url,method:options.method||'GET',headers:options.headers,body:body?JSON.parse(body):undefined};calls.push(call);
       const result=url.endsWith('/auth/v1/user')?{status:authStatus,data:{id:'12000000-0000-0000-0000-000000000001'}}
         :url.includes('/rest/v1/users?id=')?{data:[{id:'12000000-0000-0000-0000-000000000001',is_admin:admin}]}
+        :url.includes('/rpc/admin_auth_session_state?')?{status:sessionStatus,data:sessionState}
         :route(call);
       const response=new EventEmitter();response.statusCode=result.status||200;response.headers=result.headers||{};response.setEncoding=()=>{};
       callback(response);response.emit('data',JSON.stringify(result.data));response.emit('end');
@@ -29,11 +35,11 @@ function api({admin=true,authStatus=200,apiFootballKey='football-api-test-placeh
   vm.runInNewContext(readFileSync(join(__dirname,'../server/football/club-emblems.js'),'utf8'),emblemContext);
   const lineupContext={module:{exports:{}},require:name=>{assert.equal(name,'./api-football');return providerContext.module.exports;}};
   vm.runInNewContext(readFileSync(join(__dirname,'../server/football/match-lineups.js'),'utf8'),lineupContext);
-  const context={module:{exports:{}},require:name=>{if(name==='../server/football/catalog-status')return require(name);if(name==='../server/football/api-football')return providerContext.module.exports;if(name==='../server/football/club-emblems')return emblemContext.module.exports;if(name==='../server/football/match-lineups')return lineupContext.module.exports;assert.equal(name,'https');return https;},process:{env},Buffer,URL,URLSearchParams,console:{error(){}}};
+  const context={module:{exports:{}},require:name=>{if(['../server/security/admin-session','../server/football/catalog-status'].includes(name))return require(name);if(name==='../server/football/api-football')return providerContext.module.exports;if(name==='../server/football/club-emblems')return emblemContext.module.exports;if(name==='../server/football/match-lineups')return lineupContext.module.exports;assert.equal(name,'https');return https;},process:{env},Buffer,URL,URLSearchParams,console:{error(){}}};
   vm.runInNewContext(readFileSync(join(__dirname,'../api/admin.js'),'utf8'),context);
-  return {calls,async send(body,{method='POST',authorization='Bearer user-test-token',raw=false}={}){
+  return {calls,async send(body,{method='POST',authorization=bearer(),raw=false,query={}}={}){
     const headers={};let result;
-    const req={method,headers:{authorization},query:{},body:raw?JSON.stringify(body):body};
+    const req={method,headers:{authorization},query,body:raw?JSON.stringify(body):body};
     const res={status(code){this.statusCode=code;},setHeader(key,value){headers[key]=value;},end(value){result={status:this.statusCode,headers,body:JSON.parse(value)};}};
     await context.module.exports(req,res);return result;
   }};
@@ -47,10 +53,50 @@ test('admin API rejects missing, invalid and non-admin identity before privilege
   }
 });
 test('admin reads verify the bearer token and protected database role independently',async()=>{
-  const app=api();await app.send(undefined,{method:'GET'});
-  assert.equal(app.calls[0].headers.Authorization,'Bearer user-test-token');
+  const app=api(),authorization=bearer();await app.send(undefined,{method:'GET',authorization});
+  assert.equal(app.calls[0].headers.Authorization,authorization);
   assert.match(app.calls[1].url,/select=id,is_admin/);
   assert.equal(app.calls[1].headers.Authorization,'Bearer server-only-test-key');
+});
+
+test('AAL1 has only safe setup status, never administrative reads, writes or provider access',async()=>{
+  const app=api({sessionState:{active:true,aal:'aal1',factor_verified:false}}),authorization=bearer({aal:'aal1'});
+  const access=await app.send(undefined,{method:'GET',authorization,query:{action:'access_status'}});
+  assert.deepEqual(access.body,{mfaRequired:true});
+  assert.equal(app.calls.length,3); // Auth, protected role, narrow session metadata only
+  assert.equal((await app.send(undefined,{method:'GET',authorization})).body.code,'admin_mfa_required');
+  for(const action of ['community_experts','moderation_queue','review_community_report','api_football_status','api_football_competition','prepare_missing_club_emblem','prepare_club_emblems','prepare_match_lineup','apply_match_lineup','apply_club_emblems','rollback_club_emblems','prepare_catalog','audit_history','sync_matches','sync_squads','update_match','migrate_legacy_avatars','cleanup_development_data','test_connection']){
+    const result=await app.send({action}, {authorization});assert.equal(result.status,403,action);assert.equal(result.body.code,'admin_mfa_required',action);
+  }
+  assert.equal(app.calls.some(c=>c.method!=='GET'||c.url.includes('api-sports.io')||c.url.includes('football-data.org')),false);
+  assert.equal(app.calls.some(c=>/\/rest\/v1\/(matches|players|ratings|admin_audit_logs)/.test(c.url)),false);
+});
+test('signed identity must match issuer, user, audience, expiry and session before MFA',async()=>{
+  const now=Math.floor(Date.now()/1000);
+  for(const claims of [{iss:'https://attacker.test/auth/v1'},{sub:'forged-user'},{aud:'service_role'},{role:'service_role'},{exp:now-1},{iat:now+120},{session_id:'invalid'},{aal:'forged'}]){
+    const app=api(),result=await app.send({action:'sync_matches'},{authorization:bearer(claims)});
+    assert.equal(result.status,403);assert.equal(result.body.code,'admin_session_invalid');assert.equal(app.calls.length,2);
+  }
+  const invalid=api({authStatus:401});await invalid.send({action:'cleanup_development_data'},{authorization:bearer()});
+  assert.equal(invalid.calls.length,1); // Auth signature validation cannot be skipped by forged claims.
+});
+test('deleted or expired session and disconnected factor reject stale AAL2 tokens',async()=>{
+  for(const [sessionState,code] of [[{active:false,aal:'aal2',factor_verified:true},'admin_session_invalid'],[{active:true,aal:'aal1',factor_verified:true},'admin_mfa_required'],[{active:true,aal:'aal2',factor_verified:false},'admin_mfa_required']]){
+    const app=api({sessionState}),result=await app.send({action:'update_match'});
+    assert.equal(result.status,403);assert.equal(result.body.code,code);assert.equal(app.calls.length,3);
+  }
+  const unavailable=api({sessionStatus:503}),result=await unavailable.send({action:'sync_matches'});
+  assert.equal(result.status,503);assert.equal(unavailable.calls.some(c=>c.method==='POST'),false);
+});
+test('cleanup requires recent TOTP even with active AAL2, never trusts password or future timestamps',async()=>{
+  const now=Math.floor(Date.now()/1000);
+  for(const amr of [[],null,{},[{method:'totp',timestamp:now-301}],[{method:'password',timestamp:now}],[{method:'totp',timestamp:now+1}]]){
+    const app=api(),result=await app.send({action:'cleanup_development_data',scope:'ratings',confirmation:'DELETE FOOTBAZED DATA'},{authorization:bearer({amr})});
+    assert.equal(result.status,403);assert.equal(result.body.code,'admin_mfa_recent_required');assert.equal(app.calls.some(c=>c.method==='POST'),false);
+    assert.equal((await app.send(undefined,{method:'GET',authorization:bearer({amr})})).status,200); // Reading does not require a fresh code.
+  }
+  const app=api(),result=await app.send({action:'cleanup_development_data',scope:'ratings',confirmation:'DELETE FOOTBAZED DATA'},{authorization:bearer({amr:[{method:'totp',timestamp:now-299}]})});
+  assert.equal(result.status,200);assert.equal(app.calls.filter(c=>c.url.endsWith('/rpc/admin_cleanup_development_data')).length,1);
 });
 test('expert roles require protected administrator identity and ignore client-supplied actor',async()=>{
   for(const scenario of [{authorization:''},{authStatus:401},{admin:false}]){

@@ -3,6 +3,7 @@
 // and FOOTBALL_DATA_API_KEY (or FOOTBALL_API_KEY) for football-data.org sync.
 
 const https = require('https');
+const {trustedClaims,requireMfa,denied} = require('../server/security/admin-session');
 const {createApiFootballClient} = require('../server/football/api-football');
 const {prepareClubEmblems,prepareMissingClubEmblem} = require('../server/football/club-emblems');
 const {prepareMatchLineup} = require('../server/football/match-lineups');
@@ -112,7 +113,7 @@ async function supabase(path, { method = 'GET', body, headers = {} } = {}) {
 }
 
 async function requireAdministrator(authorization) {
-  if (!authorization || !authorization.startsWith('Bearer ')) return null;
+  if (typeof authorization!=='string'||authorization.length>16007||!authorization.startsWith('Bearer ')) return null;
   const authResponse = await request(`${process.env.SUPABASE_URL}/auth/v1/user`, {
     headers: {
       apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -127,7 +128,12 @@ async function requireAdministrator(authorization) {
     `/rest/v1/users?id=eq.${encodeURIComponent(user.id)}&select=id,is_admin`
   );
   const profile = parseJson(profileResponse.raw, [])[0];
-  return profile?.is_admin === true ? user : null;
+  if(profile?.is_admin!==true)return null;
+  const claims=trustedClaims(authorization,user.id,process.env.SUPABASE_URL);
+  const sessionResponse=await supabase(`/rest/v1/rpc/admin_auth_session_state?p_actor=${encodeURIComponent(user.id)}&p_session=${encodeURIComponent(claims.session_id)}`);
+  const session=parseJson(sessionResponse.raw,{});
+  if(session.active!==true)throw denied('admin_session_invalid');
+  return {...user,adminClaims:claims,adminSession:session};
 }
 
 function exactCount(response) {
@@ -584,12 +590,15 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'GET') {
       const action = String(req.query?.action || 'overview');
+      if(action==='access_status')return sendJson(res,200,{mfaRequired:administrator.adminClaims.aal!=='aal2'||administrator.adminSession.aal!=='aal2'||administrator.adminSession.factor_verified!==true});
+      requireMfa(administrator.adminClaims,administrator.adminSession);
       if (action !== 'overview') return sendJson(res, 400, { error: 'Unsupported action' });
       return sendJson(res, 200, await getOverview());
     }
 
     const body = await readBody(req);
     const action = String(body.action || '');
+    requireMfa(administrator.adminClaims,administrator.adminSession,{recent:action==='cleanup_development_data'});
     if (action === 'community_experts') {
       if ((body.enabled != null && typeof body.enabled !== 'boolean') || (body.username != null && (typeof body.username !== 'string' || body.username.trim().length > 30))) return sendJson(res,400,{error:'invalid_expert_input'});
       const response = await supabase('/rest/v1/rpc/admin_community_experts',{method:'POST',body:{p_actor:administrator.id,p_username:body.username??null,p_enabled:body.enabled??null}});
@@ -725,6 +734,6 @@ module.exports = async function handler(req, res) {
     const safeStatus = [400, 403, 404, 413, 429, 502, 503].includes(status) ? status : 500;
     const messages = {400:'Invalid administrative request',403:'Administrator access required',404:'Record not found',413:'Request body is too large',429:'Upstream rate limit reached',502:'Football data service is unavailable',503:'Administrative service is not configured',500:'Administrative service is unavailable'};
     const message = messages[safeStatus];
-    return sendJson(res, safeStatus, { error: message, ...(error.name==='FootballProviderError'?{code:error.code}: {}) });
+    return sendJson(res, safeStatus, { error: message, ...(['FootballProviderError','AdminAccessError'].includes(error.name)?{code:error.code}: {}) });
   }
 };
