@@ -16,7 +16,7 @@ function isRatingCurrent(context){
 
 function setRatingLoading(loading){
   document.getElementById('rateOv').setAttribute('aria-busy',String(loading));
-  document.querySelectorAll('#rS1 input,.rate-star,#rS1 button[data-fbz-click="shell.r-next"],#rSave,#rDelete,#rExpectationDelete').forEach(control=>{control.disabled=loading;});
+  document.querySelectorAll('#rS1 input,#starsR,#rS1 button[data-fbz-click="shell.r-next"],#rSave,#rDelete,#rExpectationDelete').forEach(control=>{control.disabled=loading;});
   document.getElementById('matchRatingClear').disabled=loading||rScore===null;
 }
 
@@ -98,17 +98,8 @@ async function openRatingForm(mid,mode='rating'){
 function resetRatingForm(){
   document.getElementById('rMI').textContent='Загружаем матч...';
   const row=document.getElementById('starsR');
-  row.innerHTML='';
-  for(let value=1;value<=10;value++){
-    const button=document.createElement('button');
-    button.className='rate-star';
-    button.type='button';
-    button.setAttribute('aria-label',`${value} из 10 — ${matchRatingLabels()[value]}`);
-    button.setAttribute('aria-pressed','false');
-    button.innerHTML=`<span class="rate-star-num">${value}</span>`;
-    button.onclick=()=>selScore(value);
-    row.appendChild(button);
-  }
+  row.replaceChildren(new Option('Выбрать число','0'));
+  for(let value=1;value<=10;value++)row.add(new Option(`${value} / 10 — ${matchRatingLabels()[value]}`,String(value)));
   document.getElementById('rScoreDisp').textContent='—';
   document.getElementById('rScoreDisp').classList.remove('active');
   document.getElementById('rScoreDisp').dataset.tone='neutral';
@@ -126,7 +117,7 @@ function resetRatingForm(){
   setRatingMode(false);
   const expecting=ratingContext?.mode==='expectation';
   document.querySelector('label[for="matchRatingRange"]').textContent=expecting?'Ожидание от 1 до 10':'Оценка матча от 1 до 10';
-  document.getElementById('starsR').setAttribute('aria-label',expecting?'Ожидание от 1 до 10':'Оценка матча от 1 до 10');
+  document.getElementById('starsR').setAttribute('aria-label',expecting?'Точное ожидание':'Точная оценка матча');
   document.querySelector('.rate-box').classList.toggle('is-expectation',expecting);
   document.querySelector('.rate-steps').hidden=expecting;
   document.querySelector('.rating-public-toggle').hidden=expecting;
@@ -150,13 +141,7 @@ function selScore(value,labels=matchRatingLabels()){
   if(value===0){clearMatchScore();return;}
   if(!Number.isInteger(value)||value<1||value>10)return;
   rScore=value;
-  document.querySelectorAll('.rate-star').forEach((button,index)=>{
-    const filled=index<value;
-    const selected=index===value-1;
-    button.classList.toggle('on',filled);
-    button.classList.toggle('selected',selected);
-    button.setAttribute('aria-pressed',String(selected));
-  });
+  document.getElementById('starsR').value=String(value);
   const display=document.getElementById('rScoreDisp');
   renderRatingValue(display,value);
   display.classList.add('active');
@@ -194,10 +179,7 @@ function updateMatchRatingRail(score){
 
 function clearMatchScore(){
   rScore=null;
-  document.querySelectorAll('.rate-star').forEach(button=>{
-    button.classList.remove('on','selected');
-    button.setAttribute('aria-pressed','false');
-  });
+  document.getElementById('starsR').value='0';
   document.getElementById('starsR').dataset.tone='neutral';
   const display=document.getElementById('rScoreDisp');
   renderRatingValue(display,null);
@@ -375,6 +357,8 @@ function updatePlayerRatingEditor(score){
   value.dataset.tone=tone;
   label.textContent=hasScore?RATING_LABELS[score]:'Выберите оценку на шкале';
   syncRatingRail(range,score);
+  document.getElementById('playerExactScore').value=hasScore?String(score):'0';
+  document.getElementById('playerExactScore').dataset.tone=tone;
   best.disabled=!hasScore;
   best.classList.toggle('on',Number(rBest)===Number(rActivePlayer));
   best.setAttribute('aria-pressed',String(Number(rBest)===Number(rActivePlayer)));

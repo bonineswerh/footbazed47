@@ -41,7 +41,7 @@ for(const language of ['ru','en'])test(`expectations use one short form, explici
   expect(await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastExpectation())).toBeNull();
   for(let i=0;i<5;i++)await rail.press('ArrowRight');
   await expect(rail).toHaveValue('5');expect(await rail.evaluate(el=>el.style.getPropertyValue('--rating-progress'))).toBe('50%');
-  const labels=await page.locator('#rS1 .rating-rail-labels').evaluate(el=>{const parent=el.getBoundingClientRect(),middle=el.children[1].getBoundingClientRect();return{centre:parent.x+parent.width/2,label:middle.x+middle.width/2};});
+  const labels=await page.locator('#rS1 .rating-rail-labels').evaluate(el=>{const parent=el.getBoundingClientRect(),middle=el.children[5].getBoundingClientRect();return{centre:parent.x+parent.width/2,label:middle.x+middle.width/2};});
   expect(Math.abs(labels.centre-labels.label)).toBeLessThanOrEqual(1);
   await expectAccessible(page,'#rateOv');await testInfo.attach('expectation-form.png',{body:await page.screenshot(),contentType:'image/png'});
   await save.click();await expect(page.locator('#rateOv')).toBeHidden();

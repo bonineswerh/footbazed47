@@ -22,21 +22,12 @@
 .rating-rail::-moz-range-thumb{box-sizing:border-box;width:28px;height:28px;border:5px solid var(--bg2);border-radius:50%;background:currentColor;box-shadow:0 0 0 1px currentColor}
 .rating-rail:focus-visible{outline:2px solid var(--rating-elite);outline-offset:4px;border-radius:6px}
 .rating-rail:disabled{cursor:wait;opacity:.5}
-.rating-rail-labels{position:relative;height:1.4em;margin-inline:14px;color:var(--text3);font-size:12px;font-weight:500;line-height:1.4}
-.rating-rail-labels span{position:absolute;left:0;transform:translateX(-50%)}.rating-rail-labels span:nth-child(2){left:50%}.rating-rail-labels span:last-child{left:100%}
+.rating-rail-labels{display:flex;justify-content:space-between;align-items:center;height:1.8em;margin-inline:14px;color:var(--text2);font-size:12px;font-weight:500;line-height:1.4}
+.rating-rail-labels span{width:0;display:flex;justify-content:center;white-space:nowrap}
 .rating-rail-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px}
 .rating-rail-hint{color:var(--text3);font-size:12px;line-height:1.5}
-.rate-stars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:8px}
-.rating-direct-label{display:block;margin-top:18px;padding-top:14px;border-top:1px solid var(--b1);color:var(--text2);font-size:var(--type-meta);text-align:left}
-.rate-star{display:flex;align-items:center;justify-content:center;min-width:0;height:44px;border:1px solid var(--b1);border-radius:6px;background:transparent;color:var(--text2);font-family:var(--font-ui);font-size:14px;font-weight:650;font-variant-numeric:tabular-nums;cursor:pointer;transition:color var(--motion-fast) var(--ease),border-color var(--motion-fast) var(--ease),background var(--motion-fast) var(--ease)}
-.rate-star:hover{border-color:var(--b3);background:var(--bg4)}
-.rate-star-num{font-size:14px;pointer-events:none}
-.rate-stars[data-tone] .rate-star.on{border-color:var(--b1);background:transparent;color:var(--text2)}
-.rate-stars[data-tone] .rate-star.selected{border-color:var(--rating-ink);background:color-mix(in srgb,var(--rating-ink) 12%,var(--bg3));color:var(--rating-ink);box-shadow:none}
-.rate-stars[data-tone="low"]{--rating-ink:var(--rating-low)}
-.rate-stars[data-tone="mid"]{--rating-ink:var(--rating-mid)}
-.rate-stars[data-tone="high"]{--rating-ink:var(--rating-high)}
-.rate-stars[data-tone="elite"]{--rating-ink:var(--rating-elite)}
+.rating-exact-score.input{width:170px;min-width:0;max-width:100%;min-height:44px;margin:12px 0 0;padding:10px 32px 10px 12px;border-radius:var(--radius-control);font-size:14px;color:var(--snow);background-color:var(--bg3);border-color:var(--b2)}
+.rating-rail-footer .rating-exact-score{margin:0}.rating-exact-score[data-tone="elite"]{border-color:var(--rating-elite)}
 .rating-score-clear{flex:0 0 auto;min-width:76px;min-height:44px;padding:0 12px;border:0;border-radius:6px;background:transparent;color:var(--text2);font:inherit;font-size:12px;cursor:pointer}
 .rating-score-clear:hover{background:var(--bg4);color:var(--snow)}
 .rating-score-clear:disabled{color:var(--text3);cursor:default;opacity:.5}
@@ -58,7 +49,7 @@
 .rating-player[data-tone="mid"] .rating-player-score{color:var(--rating-mid)}
 .rating-player[data-tone="high"] .rating-player-score{color:var(--rating-high)}
 .rating-player[data-tone="elite"] .rating-player-score{color:var(--rating-elite)}
-@media(max-width:620px){.rating-actions-primary{bottom:-16px;margin-bottom:-16px;padding-bottom:16px}.rate-score-panel{padding:18px 12px 12px}.rate-score{font-size:56px}.player-rating-output{font-size:28px}.rate-stars{grid-template-columns:repeat(5,minmax(44px,1fr));gap:5px}.rating-rail{margin-top:8px}}
+@media(max-width:620px){.rating-actions-primary{bottom:-16px;margin-bottom:-16px;padding-bottom:16px}.rate-score-panel{padding:18px 12px 12px}.rate-score{font-size:56px}.player-rating-output{font-size:28px}.rating-rail{margin-top:8px}}
 @media(max-width:620px){
   .rating-squad{--pitch-bg:var(--bg2);--pitch-line:var(--b1);--pitch-ink:var(--snow);--pitch-muted:var(--text3)}
   .rating-actions-primary .btn{padding-inline:12px}
@@ -116,3 +107,5 @@
   .rating-player-best b{display:none}
   .rating-substitutes .rating-player-row{grid-template-columns:1fr}
 }
+
+.rating-exact-score[data-tone=low]{color:var(--rating-low)}.rating-exact-score[data-tone=mid]{color:var(--rating-mid)}.rating-exact-score[data-tone=high]{color:var(--rating-high)}.rating-exact-score[data-tone=elite]{color:var(--rating-elite)}

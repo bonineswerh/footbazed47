@@ -116,3 +116,10 @@ test('text at 200 percent preserves controls and content',async({page})=>{
   await page.getByRole('button',{name:'Игроки',exact:true}).click();
   await expect(page.locator('#statisticsList')).toContainText('Jude Bellingham');
 });
+test('branded pickers select dates and exact ratings in each browser',async({page})=>{
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));await page.setViewportSize({width:390,height:844});
+  await page.goto('/discover?__e2e=1');await page.getByLabel('Порядок').click();await page.locator('.fbz-control-panel').getByRole('option',{name:'По числу оценок',exact:true}).click();await expect(page).toHaveURL(/ov_sort=votes/);
+  await page.locator('#statisticsFilters-open').click();const date=page.getByLabel('Матчи с');await date.fill('2024-03-31');await date.click();await page.keyboard.press('PageUp');await expect(page.locator('.fbz-control-panel [data-day="2024-02-29"]')).toBeFocused();await page.keyboard.press('Enter');await expect(date).toHaveValue('2024-02-29');await expect(date).toBeFocused();await page.keyboard.press('Escape');
+  await page.goto('/match/101?__e2e=1');await page.locator('.md-primary-action').click();await page.locator('#starsR').click();await page.getByRole('searchbox',{name:'Поиск вариантов'}).fill('Великолепно');await page.locator('.fbz-control-panel').getByRole('option').click();await expect(page.locator('#matchRatingRange')).toHaveValue('9');await expect(page.locator('#starsR')).toHaveAttribute('data-tone','elite');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);expect(errors).toEqual([]);
+});

@@ -75,11 +75,11 @@ test('match rail, direct choices and reset share one draft without assuming a de
   for(let step=0;step<5;step++)await rail.press('ArrowRight');
   await expect(page.locator('#rScoreDisp')).toHaveText('5/10');
   await expect(rail).toHaveAttribute('aria-valuetext','5 из 10 — Средне');
-  await page.getByRole('button',{name:'9 из 10 — Великолепно',exact:true}).click();
+  await page.locator('#starsR').click();await page.locator('.fbz-control-panel').getByRole('option',{name:'9 / 10 — Великолепно',exact:true}).click();
   await expect(rail).toHaveValue('9');
   await expect(rail).toHaveAttribute('data-tone','elite');
   await rail.press('End');
-  await expect(page.getByRole('button',{name:'10 из 10 — Исключительно',exact:true})).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#starsR')).toHaveValue('10');
   await page.getByRole('button',{name:/Продолжить/}).click();
   await page.locator('#rSave').click();
   expect((await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastRating())).p_match_rating).toBe(10);
@@ -114,7 +114,7 @@ for(const width of [320,390,1440])test(`player rail aligns its labels and actual
   await page.setViewportSize({width,height:1000});await page.goto('/match/101?__e2e=1');await page.locator('.md-primary-action').click();await page.getByRole('button',{name:/Продолжить/}).click();await page.locator('#rating-player-5291').click();
   const rail=page.locator('#playerRatingRange');await expect(rail).toBeVisible();const box=await rail.boundingBox();
   const centres=await page.locator('#playerRatingEditor .rating-rail-labels span').evaluateAll(nodes=>nodes.map(node=>{const box=node.getBoundingClientRect();return box.x+box.width/2;}));
-  for(const [i,value] of [0,5,10].entries()){const x=box.x+14+(box.width-28)*value/10;expect(Math.abs(x-centres[i])).toBeLessThanOrEqual(1);await page.mouse.click(x,box.y+box.height/2);await expect(rail).toHaveValue(String(value));}
+  for(const value of [0,1,2,3,4,5,6,7,8,9,10]){const x=box.x+14+(box.width-28)*value/10;expect(Math.abs(x-centres[value])).toBeLessThanOrEqual(1);await page.mouse.click(x,box.y+box.height/2);await expect(rail).toHaveValue(String(value));}
   await expect(page.locator('#playerRatingValue')).toHaveAttribute('data-tone','elite');
 });
 

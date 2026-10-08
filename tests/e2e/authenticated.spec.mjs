@@ -209,7 +209,7 @@ test('оценка матча использует поле игроков и с
 
   await expect(page.locator('#rateOv')).toBeVisible();
   await expect(page.locator('#rScoreDisp')).toHaveText('8/10');
-  await page.locator('.rate-star').nth(8).click();
+  await page.locator('#starsR').selectOption('9');
   await expect(page.locator('#rScoreDisp')).toHaveText('9/10');
   await page.getByRole('button',{name:/Продолжить/}).click();
 

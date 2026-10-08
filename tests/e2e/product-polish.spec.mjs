@@ -164,10 +164,10 @@ for(const width of [390,1440]){
 test('девятка и десятка используют одинаковый голубой для матча и игрока',async({page})=>{
   await page.goto('/match/101?__e2e=1');
   await page.locator('.md-primary-action').click();
-  await page.locator('.rate-star').nth(8).click();
+  await page.locator('#starsR').selectOption('9');
   await expect(page.locator('#rScoreDisp')).toHaveAttribute('data-tone','elite');
   await expect(page.locator('#rScoreDisp')).toHaveCSS('color','rgb(56, 189, 248)');
-  await page.locator('.rate-star').nth(9).click();
+  await page.locator('#starsR').selectOption('10');
   await expect(page.locator('#rScoreDisp')).toHaveCSS('color','rgb(56, 189, 248)');
   await page.getByRole('button',{name:/Продолжить/}).click();
   await page.locator('#rating-player-5292').click();

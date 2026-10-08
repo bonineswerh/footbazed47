@@ -28,9 +28,9 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20261008-sheets">
+  <link rel="stylesheet" href="styles.css?v=20261008-controls">
   <link rel="stylesheet" href="css/match-editorial.css?v=20261007-community">
-  <link rel="stylesheet" href="css/typography.css?v=20261008-sheets">
+  <link rel="stylesheet" href="css/typography.css?v=20261008-controls">
   <link rel="stylesheet" href="css/club-palettes.css?v=20261007-community">
 </head>
 <body>
@@ -533,10 +533,9 @@
           <div class="rate-label" id="rScoreLabel" aria-live="polite">Выберите оценку</div>
           <label class="sr-only" for="matchRatingRange">Оценка матча от 1 до 10</label>
           <input class="rating-rail" id="matchRatingRange" type="range" min="0" max="10" step="1" value="0" disabled data-tone="neutral" data-fbz-input="ratings.select-match-score" data-fbz-click="ratings.select-match-score" data-fbz-keydown="ratings.commit-match-score" aria-describedby="matchRatingHint">
-          <div class="rating-rail-labels" aria-hidden="true"><span>—</span><span>5</span><span>10</span></div>
-          <span class="rating-direct-label">Или выберите число</span><div class="rate-stars" id="starsR" data-tone="neutral" role="group" aria-label="Оценка матча от 1 до 10"></div>
+          <div class="rating-rail-labels" aria-hidden="true"><span>—</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
           <div class="rating-rail-footer">
-            <p class="rating-rail-hint" id="matchRatingHint">Передвиньте ползунок или выберите число</p>
+            <label class="sr-only" for="starsR">Точная оценка матча</label><select class="input rating-exact-score" id="starsR" data-tone="neutral" data-fbz-change="ratings.select-match-score"><option value="0">Выбрать число</option></select><p class="sr-only" id="matchRatingHint">Передвиньте ползунок или выберите число</p>
             <button class="rating-score-clear" id="matchRatingClear" type="button" data-fbz-click="ratings.clear-match-score" aria-label="Сбросить оценку матча" disabled>Сбросить</button>
           </div>
         </section>
@@ -583,7 +582,8 @@
           <div class="player-rating-label" id="playerRatingLabel" aria-live="polite">Передвиньте ползунок</div>
           <label class="sr-only" for="playerRatingRange">Оценка игрока от 1 до 10</label>
           <input class="rating-rail" id="playerRatingRange" type="range" min="0" max="10" step="1" value="0" data-tone="neutral" data-fbz-input="shell.set-active-player-score" data-fbz-click="shell.set-active-player-score" data-fbz-keydown="ratings.commit-player-score">
-          <div class="rating-rail-labels" aria-hidden="true"><span>—</span><span>5</span><span>10</span></div>
+          <div class="rating-rail-labels" aria-hidden="true"><span>—</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span></div>
+          <label class="sr-only" for="playerExactScore">Точная оценка игрока</label><select class="input rating-exact-score" id="playerExactScore" data-fbz-change="shell.set-active-player-score"><option value="0">Выбрать число</option><option value="1">1 / 10</option><option value="2">2 / 10</option><option value="3">3 / 10</option><option value="4">4 / 10</option><option value="5">5 / 10</option><option value="6">6 / 10</option><option value="7">7 / 10</option><option value="8">8 / 10</option><option value="9">9 / 10</option><option value="10">10 / 10</option></select>
           <div class="player-rating-editor-actions">
             <button class="player-rating-clear" type="button" data-fbz-click="shell.clear-active-player-rating">Сбросить</button>
             <button class="player-best-button" id="playerBestButton" type="button" data-fbz-click="shell.toggle-active-best" aria-pressed="false" disabled><span data-i="star"></span> Лучший игрок</button>
@@ -751,10 +751,10 @@
   <script src="js/home.js?v=20261007-community"></script>
   <script src="js/feature-loader.js?v=20261005"></script>
   <script src="js/notification-counter.js?v=20261008"></script>
-  <script src="app.js?v=20261008-sheets"></script>
+  <script src="app.js?v=20261008-controls"></script>
   <script src="js/auth.js?v=46"></script>
-  <script src="js/rating-loader.js?v=20261008-sheets"></script>
-  <script src="js/matches.js?v=20261008-sheets"></script>
+  <script src="js/rating-loader.js?v=20261008-controls"></script>
+  <script src="js/matches.js?v=20261008-controls"></script>
   <script src="js/account.js?v=43"></script>
 </body>
 </html>

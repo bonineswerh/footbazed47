@@ -60,14 +60,14 @@ test('long names do not move either crest or the central score',async({page})=>{
   await page.addInitScript(()=>{const rpc=window.__FOOTBAZED_TEST_CLIENT__.rpc;window.__FOOTBAZED_TEST_CLIENT__.rpc=async(name,args)=>{const result=await rpc(name,args);if(name==='get_football_statistics')result.data.items[0]={...result.data.items[0],home_team_name:'Tottenham Hotspur FC',away_team_name:'Borussia Mönchengladbach'};return result;};});
   await page.goto('/discover?__e2e=1');const row=page.locator('.statistics-row').first();await expect(row).toBeVisible();
   const marks=await row.locator('.collection-mark').all(),a=await marks[0].boundingBox(),b=await marks[1].boundingBox(),score=await row.locator('.statistics-result').boundingBox();
-  expect(Math.abs(a.y-b.y)).toBeLessThanOrEqual(1);expect(Math.abs(a.y+a.height/2-score.y-score.height/2)).toBeLessThanOrEqual(1);
+  expect(Math.abs(a.y-b.y)).toBeLessThanOrEqual(1);const title=await row.locator('.statistics-match-title').boundingBox();expect(Math.abs(title.y+title.height/2-score.y-score.height/2)).toBeLessThanOrEqual(1);
   await noOverflow(page);await accessible(page,'#statisticsRoot');
 });
 for(const width of [320,390,1440])test(`rail ticks agree with actual slider positions ${width}`,async({page})=>{
   await installSupabaseMock(page);await page.setViewportSize({width,height:1000});await page.goto('/match/101?__e2e=1');await page.locator('.md-primary-action').click();
   const rail=page.locator('#matchRatingRange');await expect(rail).toBeVisible();const box=await rail.boundingBox();
   const centres=await page.locator('#rS1 .rating-rail-labels span').evaluateAll(nodes=>nodes.map(node=>{const box=node.getBoundingClientRect();return box.x+box.width/2;}));
-  for(const [i,value] of [0,5,10].entries()){const x=box.x+14+(box.width-28)*value/10;expect(Math.abs(x-centres[i])).toBeLessThanOrEqual(1);await page.mouse.click(x,box.y+box.height/2);await expect(rail).toHaveValue(String(value));}
+  for(const value of [0,1,2,3,4,5,6,7,8,9,10]){const x=box.x+14+(box.width-28)*value/10;expect(Math.abs(x-centres[value])).toBeLessThanOrEqual(1);await page.mouse.click(x,box.y+box.height/2);await expect(rail).toHaveValue(String(value));}
   await page.mouse.click(box.x+14+(box.width-28)/10,box.y+box.height/2);await expect(rail).toHaveValue('1');
-  await page.locator('#starsR .rate-star').filter({hasText:/^10$/}).click();await expect(rail).toHaveValue('10');await expect(page.locator('#rScoreDisp')).toHaveAttribute('data-tone','elite');await noOverflow(page);
+  await page.locator('#starsR').selectOption('10');await expect(rail).toHaveValue('10');await expect(page.locator('#rScoreDisp')).toHaveAttribute('data-tone','elite');await noOverflow(page);
 });

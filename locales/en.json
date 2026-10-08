@@ -1519,5 +1519,12 @@
   "Жду невыразительную игру": "Expect an uninspiring game",
   "Перейти к дате": "Jump to date",
   "Жду слабую игру": "Expect a poor game",
-  "Жду отличную игру": "Expect an excellent game"
+  "Жду отличную игру": "Expect an excellent game",
+  "Точная оценка матча": "Exact match rating",
+  "Точная оценка игрока": "Exact player rating",
+  "Выбрать число": "Choose a score",
+  "Найти вариант": "Find an option",
+  "Поиск вариантов": "Search options",
+  "Выбор": "Selection",
+  "Точное ожидание": "Exact expectation"
 }
