@@ -13,6 +13,8 @@
   let emblemBatch=null,emblemApplied=false,missingEmblemId=null;
   let lineupBatch=null;
   let catalogBatch=null,catalogReady=false;
+  const audit={items:[],nextCursor:null,hasMore:false,busy:false,version:0};
+  let apiCheck=null;
   const reports={version:0,offset:0,total:0,hasMore:false,status:'open',type:'all',items:[],busy:false};
   const STATUS_LABELS = {
     scheduled: 'Запланирован', live: 'LIVE', finished: 'Завершен',
@@ -62,7 +64,7 @@
   function formatDate(value, withTime = true){
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '—';
-    return new Intl.DateTimeFormat('ru-RU', {
+    return new Intl.DateTimeFormat(window.FBZLocale?.intl || 'ru-RU', {
       day:'2-digit', month:'short',
       ...(withTime ? {hour:'2-digit', minute:'2-digit'} : {})
     }).format(date).replace(',', '');
@@ -139,17 +141,50 @@
     renderActivity();
   }
 
-  function setApiState(configured){
+  const auditLabels={sync_matches:'Импорт матчей',sync_squads:'Каталог игроков',sync_matches_failed:'Ошибка импорта матчей',sync_squads_failed:'Ошибка импорта игроков',test_connection:'Проверка football-data.org',update_match:'Ручное изменение матча',apply_club_emblems:'Публикация эмблем',apply_match_lineup:'Публикация состава',prepare_catalog:'Подготовка каталога',cleanup_development_data:'Очистка тестовых данных',migrate_legacy_avatars:'Перенос аватаров',other:'Административная операция'};
+  function auditText(item){
+    return (auditLabels[item.action] || auditLabels.other)+(item.league?' · '+item.league:'')+(Number.isSafeInteger(item.processed)?' · '+item.processed+' записей':'');
+  }
+  function renderAudit(){
+    const panel=document.getElementById('adminAuditPanel');if(!panel)return;
+    panel.hidden=false;
+    document.getElementById('adminAuditList').innerHTML=audit.items.length?audit.items.map(item=>`<div class="admin-audit-row${item.failed?' failed':''}"><span>${ico(item.failed?'shield':'check',16)}</span><div><strong>${esc(auditText(item))}</strong>${item.dateFrom&&item.dateTo?`<small>${esc(item.dateFrom)} — ${esc(item.dateTo)} · UTC</small>`:''}</div><time datetime="${esc(item.at)}">${esc(formatDate(item.at))}</time></div>`).join(''):'<p class="admin-empty-compact">Операций пока нет.</p>';
+    const more=document.getElementById('adminAuditMore');more.hidden=!audit.hasMore;more.disabled=audit.busy;
+    more.textContent=audit.busy?'Загружаем…':'Ещё операции';
+  }
+  async function moreAudit(){
+    if(audit.busy||!audit.hasMore||!audit.nextCursor)return;
+    const user=CU?.id,route=routeVersion,version=audit.version;
+    audit.busy=true;renderAudit();
+    try{
+      const data=await request('audit_history',{before_id:audit.nextCursor});
+      if(user!==CU?.id||!CU?.is_admin||CP!=='admin'||route!==routeVersion||version!==audit.version)return;
+      const seen=new Set(audit.items.map(item=>item.id));
+      audit.items.push(...(data.items||[]).filter(item=>!seen.has(item.id)));
+      audit.hasMore=Boolean(data.hasMore);audit.nextCursor=data.nextCursor;
+    }catch(error){if(user===CU?.id&&CP==='admin')toast('Не удалось загрузить журнал. '+error.message,'err');}
+    finally{audit.busy=false;if(user===CU?.id&&CP==='admin')renderAudit();}
+  }
+  function renderFreshness(data){
+    const host=document.getElementById('adminFreshness');if(!host||!data)return;
+    host.hidden=false;
+    const last=data.latestImport;
+    host.innerHTML=`<div class="admin-panel-head"><h3>Актуальность данных</h3><span>Обновление запускается вручную</span></div><div class="admin-freshness-grid"><div><small>Последний импорт матчей</small><strong>${last?esc(formatDate(last.at)):'Ещё не зафиксирован'}</strong><span>${last?esc(last.league||'')+(last.dateFrom?' · '+esc(last.dateFrom)+' — '+esc(last.dateTo):' · период не записан'):''}</span></div><div><small>Последний завершённый матч</small><strong>${data.latestFinishedAt?esc(formatDate(data.latestFinishedAt)):'Нет данных'}</strong><span>Дата игры, не время импорта</span></div><div><small>Ближайший матч</small><strong>${data.nextMatchAt?esc(formatDate(data.nextMatchAt)):'В календаре нет'}</strong><span>По сохранённому календарю</span></div><div><small>Подтверждённые составы</small><strong>${Number(data.confirmedLineups)||0}</strong><span>Историческое участие игроков</span></div></div>${Number(data.overdueMatches)>0?`<p class="admin-freshness-warning">Проверьте статусы: ${Number(data.overdueMatches)} матчей начались более 6 часов назад и ещё не завершены в базе.</p>`:''}`;
+  }
+
+  function setApiState(configured, checked){
+    if(checked)apiCheck={state:checked,at:Date.now()};
+    const verified=configured&&apiCheck&&Date.now()-apiCheck.at<5*60*1000?apiCheck.state:null;
     const badge = document.getElementById('adminApiState');
     const status = document.getElementById('adminFootballStatus');
     if (badge) {
-      badge.textContent = configured ? 'API подключен' : 'API не настроен';
-      badge.classList.toggle('ok', configured);
-      badge.classList.toggle('bad', !configured);
+      badge.textContent = !configured?'API не настроен':verified==='ok'?'API отвечает':verified==='bad'?'Ошибка проверки':'Ключ настроен · API не проверен';
+      badge.classList.toggle('ok', verified==='ok');
+      badge.classList.toggle('bad', !configured||verified==='bad');
     }
     if (status) {
-      status.textContent = configured ? 'Подключен' : 'Не настроен';
-      status.className = configured ? 'ok' : 'bad';
+      status.textContent = !configured?'Не настроен':verified==='ok'?'Отвечает':verified==='bad'?'Проверка не прошла':'Не проверен';
+      status.className = verified==='ok'?'ok':!configured||verified==='bad'?'bad':'';
     }
   }
 
@@ -316,9 +351,11 @@
   async function refresh(force = false){
     if (state.loading || (!force && state.loaded)) return;
     state.loading = true;
+    const user=CU?.id,route=routeVersion;
     setHealth('Обновляем данные', 'loading');
     try {
       const data = await request('overview');
+      if(user!==CU?.id||!CU?.is_admin||CP!=='admin'||route!==routeVersion)return;
       state.matches = data.recentMatches || [];
       const lineupSelect=document.getElementById('adminLineupMatch');
       const missingSelect=document.getElementById('adminMissingEmblemClub');
@@ -330,10 +367,16 @@
       setApiState(Boolean(data.footballApiConfigured));
       setProviderConfigured(Boolean(data.apiFootballConfigured));
       setLegacyAvatarState(data.counts?.legacyAvatars);
+      renderFreshness(data.freshness);
+      if(data.activity){
+        audit.version++;audit.items=data.activity.items||[];audit.hasMore=Boolean(data.activity.hasMore);audit.nextCursor=data.activity.nextCursor;renderAudit();
+        state.activities=audit.items.slice(0,6).map(item=>({text:auditText(item),status:item.failed?'bad':'ok',time:formatDate(item.at)}));renderActivity();
+      }
       const updated = document.getElementById('adminUpdatedAt');
-      if (updated) updated.textContent = `Обновлено ${formatDate(data.checkedAt)}`;
+      if (updated) updated.textContent = `Проверено ${formatDate(data.checkedAt)}`;
       setHealth('База данных доступна', 'ok');
     } catch (error) {
+      if(user!==CU?.id||CP!=='admin'||route!==routeVersion)return;
       console.error('Admin overview error:', error);
       setHealth('Требуется внимание', 'bad');
       addActivity(error.message, 'bad');
@@ -551,6 +594,7 @@
           processed += Number(data.processed || 0);
           updateTask(league, 'done', `${Number(data.processed || 0).toLocaleString('ru-RU')} записей`);
           addActivity(`${data.leagueName}: обновлено ${data.processed} ${mode === 'matches' ? 'матчей' : 'игроков'}`);
+          if(data.auditRecorded===false)toast('Данные сохранены, но запись в журнал не удалась. Не запускайте импорт повторно только из-за журнала.','err');
         } catch (error) {
           failed = true;
           updateTask(league, 'failed', 'Ошибка');
@@ -575,12 +619,13 @@
     setHealth('Проверяем football-data.org', 'loading');
     try {
       const result = await request('test_connection', {league:selectedLeagues()[0] || 'PL'});
-      setApiState(true);
-      setHealth('Все системы доступны', 'ok');
+      setApiState(true,'ok');
+      setHealth('football-data.org отвечает', 'ok');
       addActivity(`API отвечает: ${result.competition}`);
       toast('Подключение работает','ok');
     } catch (error) {
       setHealth('Football API недоступен', 'bad');
+      setApiState(true,'bad');
       addActivity(error.message, 'bad');
       toast(error.message,'err');
     }
@@ -662,11 +707,13 @@
     }
   }
 
-  window.FBZAdmin = {request,mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup,resetEmblems,loadReportQueue,reportPage,reviewReport};
+  window.FBZAdmin = {request,mount, refresh:() => refresh(true), showView, filterMatches, sync, testConnection, migrateLegacyAvatars, openEditor, closeEditor, saveMatch, cleanup, updateCleanupState,prepareCatalog,inspectProvider,clubEmblems,matchLineup,resetLineup,resetEmblems,loadReportQueue,reportPage,reviewReport,moreAudit};
 })();
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "admin.audit-more":()=>FBZAdmin.moreAudit(),
+  "admin.audit-open":(event,element)=>FBZAdmin.showView('audit',element),
   "admin.experts-open":async(event,element)=>{
     const user=CU?.id,route=routeVersion;
     try{await FBZFeatures.load({key:'adminExperts',script:'js/admin-experts.js?v=20261007-community',ready:()=>window.FBZAdminExperts});
@@ -676,7 +723,7 @@ FBZActions.register({
   "admin.help-open":async(event,element)=>{
     const user=CU?.id,version=routeVersion;
     try{
-      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261007-community',ready:()=>window.FBZAdminGuide});
+      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261008-data-health',ready:()=>window.FBZAdminGuide});
       if(CU?.id===user&&CU?.is_admin&&CP==='admin'&&routeVersion===version){FBZAdminGuide.mount();FBZAdmin.showView('help',element);}
     }catch{if(CU?.id===user&&CP==='admin')toast('Не удалось открыть инструкцию','err');}
   },

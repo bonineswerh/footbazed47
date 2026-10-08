@@ -314,20 +314,30 @@
           <button class="admin-nav-item" type="button" data-admin-view="sync" data-fbz-click="shell.admin-show-view-sync"><span data-i="sync"></span><span>Синхронизация</span></button>
           <button class="admin-nav-item" type="button" data-admin-view="matches" data-fbz-click="shell.admin-show-view-matches"><span data-i="calendar"></span><span>Матчи</span></button>
           <button class="admin-nav-item" type="button" data-admin-view="maintenance" data-fbz-click="shell.admin-show-view-maintenance"><span data-i="shield"></span><span>Очистка</span></button>
+          <button class="admin-nav-item" type="button" data-admin-view="audit" data-fbz-click="admin.audit-open"><span data-i="clock"></span><span>Журнал</span></button>
         </nav>
 
         <main class="admin-workspace">
           <section class="admin-view on" id="admin-view-overview">
             <div class="admin-section-head">
               <div><h2>Состояние продукта</h2><p>Ключевые данные и последние изменения в каталоге</p></div>
-              <button class="admin-text-button" type="button" data-fbz-click="shell.admin-open-sync">Обновить данные <span>→</span></button>
+              <button class="admin-text-button" type="button" data-fbz-click="shell.admin-open-sync">Загрузить матчи <span>→</span></button>
             </div>
+            <section class="admin-panel admin-freshness" id="adminFreshness" aria-label="Актуальность футбольных данных" hidden></section>
             <div class="admin-panel admin-table-panel">
               <div class="admin-panel-head"><h3>Последние матчи</h3><span id="adminUpdatedAt">—</span></div>
               <div class="admin-match-list" id="adminRecentMatches">
                 <div class="admin-loading"><span></span>Загружаем данные</div>
               </div>
             </div>
+          </section>
+
+          <section class="admin-view" id="admin-view-audit" aria-labelledby="adminAuditTitle">
+            <section class="admin-panel admin-audit-panel" id="adminAuditPanel" hidden>
+              <div class="admin-panel-head"><h3 id="adminAuditTitle">Журнал операций</h3><span>Сохраняется в базе</span></div>
+              <div id="adminAuditList" class="admin-audit-list"></div>
+              <button type="button" class="btn btn-l" id="adminAuditMore" data-fbz-click="admin.audit-more" hidden>Ещё операции</button>
+            </section>
           </section>
 
           <section class="admin-view" id="admin-view-sync">
@@ -751,7 +761,7 @@
   <script src="js/home.js?v=20261007-community"></script>
   <script src="js/feature-loader.js?v=20261005"></script>
   <script src="js/notification-counter.js?v=20261008"></script>
-  <script src="app.js?v=20261008-refine"></script>
+  <script src="app.js?v=20261008-data-health"></script>
   <script src="js/auth.js?v=46"></script>
   <script src="js/rating-loader.js?v=20261008-refine"></script>
   <script src="js/matches.js?v=20261008-refine"></script>

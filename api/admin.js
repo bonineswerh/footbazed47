@@ -6,6 +6,7 @@ const https = require('https');
 const {createApiFootballClient} = require('../server/football/api-football');
 const {prepareClubEmblems,prepareMissingClubEmblem} = require('../server/football/club-emblems');
 const {prepareMatchLineup} = require('../server/football/match-lineups');
+const {auditItem,auditPage,timestamp} = require('../server/football/catalog-status');
 
 const LEAGUES = Object.freeze({
   PL: 'Premier League',
@@ -135,8 +136,8 @@ function exactCount(response) {
   return match ? Number(match[1]) : 0;
 }
 
-async function tableCount(table, filter = '') {
-  const response = await supabase(`/rest/v1/${table}?select=id${filter}&limit=1`, {
+async function tableCount(table, filter = '', key = 'id') {
+  const response = await supabase(`/rest/v1/${table}?select=${key}${filter}&limit=1`, {
     headers: { Prefer: 'count=exact' }
   });
   return exactCount(response);
@@ -144,7 +145,7 @@ async function tableCount(table, filter = '') {
 
 async function getOverview() {
   const now = new Date().toISOString();
-  const [matches, players, ratings, users, predictions, upcoming, legacyAvatars, recentResponse, missingEmblems] = await Promise.all([
+  const [matches, players, ratings, users, predictions, upcoming, legacyAvatars, recentResponse, missingEmblems, latestFinished, nextMatch, overdue, lineups, latestImport, activity] = await Promise.all([
     tableCount('matches'),
     tableCount('players'),
     tableCount('ratings'),
@@ -153,7 +154,13 @@ async function getOverview() {
     tableCount('matches', `&match_date=gte.${encodeURIComponent(now)}&status=in.(scheduled,live)`),
     tableCount('users', '&avatar_url=like.data:image/*'),
     supabase('/rest/v1/matches?select=id,league_name,league_code,home_team_name,away_team_name,match_date,status,home_score,away_score,external_id&order=match_date.desc&limit=120'),
-    supabase('/rest/v1/clubs?logo_asset_id=is.null&select=id,name,area_name&order=name&limit=500')
+    supabase('/rest/v1/clubs?logo_asset_id=is.null&select=id,name,area_name&order=name&limit=500'),
+    supabase('/rest/v1/matches?status=eq.finished&select=match_date&order=match_date.desc&limit=1'),
+    supabase(`/rest/v1/matches?status=in.(scheduled,live)&match_date=gte.${encodeURIComponent(now)}&select=match_date&order=match_date.asc&limit=1`),
+    tableCount('matches', `&status=in.(scheduled,live)&match_date=lt.${encodeURIComponent(new Date(Date.parse(now)-6*3600000).toISOString())}`),
+    tableCount('match_lineups', '', 'match_id'),
+    supabase('/rest/v1/admin_audit_logs?action=eq.sync_matches&select=id,action,target_type,target_id,metadata,created_at&order=id.desc&limit=1'),
+    getAuditPage()
   ]);
 
   return {
@@ -162,8 +169,22 @@ async function getOverview() {
     missingEmblemClubs: parseJson(missingEmblems.raw, []),
     footballApiConfigured: Boolean(process.env.FOOTBALL_DATA_API_KEY || process.env.FOOTBALL_API_KEY),
     apiFootballConfigured: Boolean(process.env.API_FOOTBALL_KEY),
+    freshness: {
+      latestFinishedAt:timestamp(parseJson(latestFinished.raw,[])[0]?.match_date),
+      nextMatchAt:timestamp(parseJson(nextMatch.raw,[])[0]?.match_date),
+      overdueMatches:overdue,
+      confirmedLineups:lineups,
+      latestImport:auditItem(parseJson(latestImport.raw,[])[0])
+    },
+    activity,
     checkedAt: new Date().toISOString()
   };
+}
+
+async function getAuditPage(beforeId) {
+  const cursor = beforeId == null ? '' : `&id=lt.${beforeId}`;
+  const response = await supabase(`/rest/v1/admin_audit_logs?select=id,action,target_type,target_id,metadata,created_at&order=id.desc&limit=21${cursor}`);
+  return auditPage(parseJson(response.raw,null));
 }
 
 async function cleanupDevelopmentData(body) {
@@ -259,8 +280,10 @@ async function recordAdminAction(actorId, action, {targetType = null, targetId =
       },
       headers: { Prefer: 'return=minimal' }
     });
+    return true;
   } catch (error) {
-    console.error('Admin audit write failed:', error.message);
+    console.error('Admin audit write failed');
+    return false;
   }
 }
 
@@ -409,24 +432,40 @@ async function syncMatches(input) {
   }
 
   const payload = await football(`/competitions/${league}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`);
-  if (!Array.isArray(payload.matches)) throw Object.assign(new Error('invalid_matches_response'), {status:502});
+  if (!Array.isArray(payload.matches) || payload.matches.length > 1000 ||
+      (payload.competition?.code != null && payload.competition.code !== league)) throw Object.assign(new Error('invalid_matches_response'), {status:502});
   const unique = new Map();
   for (const match of payload.matches) {
     if (!Number.isSafeInteger(match?.id) || match.id <= 0 ||
         !Number.isSafeInteger(match.homeTeam?.id) || match.homeTeam.id <= 0 || !Number.isSafeInteger(match.awayTeam?.id) || match.awayTeam.id <= 0 ||
-        typeof match.homeTeam?.name !== 'string' || !match.homeTeam.name.trim() ||
-        typeof match.awayTeam?.name !== 'string' || !match.awayTeam.name.trim() ||
-        typeof match.utcDate !== 'string' || Number.isNaN(Date.parse(match.utcDate))) {
+        match.homeTeam.id === match.awayTeam.id ||
+        typeof match.homeTeam?.name !== 'string' || !match.homeTeam.name.trim() || match.homeTeam.name.length > 160 ||
+        typeof match.awayTeam?.name !== 'string' || !match.awayTeam.name.trim() || match.awayTeam.name.length > 160 ||
+        typeof match.utcDate !== 'string' || !/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(match.utcDate) || Number.isNaN(Date.parse(match.utcDate)) ||
+        Date.parse(match.utcDate)<start || Date.parse(match.utcDate)>=end+86400000 ||
+        !['SCHEDULED','TIMED','IN_PLAY','PAUSED','LIVE','FINISHED','AWARDED','POSTPONED','SUSPENDED','CANCELLED'].includes(match.status) ||
+        ['home','away'].some(side => {const score=match.score?.fullTime?.[side];return score!=null?(!Number.isInteger(score)||score<0||score>99):['FINISHED','AWARDED'].includes(match.status);})) {
       throw Object.assign(new Error('invalid_match_response'), {status:502});
     }
+    if (unique.has(match.id) && JSON.stringify(unique.get(match.id)) !== JSON.stringify(match)) throw Object.assign(new Error('conflicting_match_response'), {status:502});
     unique.set(match.id, match);
   }
   const matches = [...unique.values()];
+  if (!matches.length) return {league,leagueName:LEAGUES[league],processed:0,dateFrom,dateTo};
+  const competitionResponse = await supabase(`/rest/v1/competitions?code=eq.${league}&select=id&limit=2`);
+  const competitions = parseJson(competitionResponse.raw,[]);
+  if (competitions.length !== 1 || !Number.isSafeInteger(Number(competitions[0].id)) || Number(competitions[0].id) < 1) throw Object.assign(new Error('competition_identity_missing'),{status:502});
   const clubIds = await upsertClubs(matches.flatMap(match => [match.homeTeam, match.awayTeam]));
+  if (matches.some(match=>!clubIds.has(match.homeTeam.id)||!clubIds.has(match.awayTeam.id))) throw Object.assign(new Error('club_identity_missing'),{status:502});
+  await supabase('/rest/v1/club_competitions?on_conflict=club_id,competition_id',{
+    method:'POST',body:[...new Set([...clubIds.values()])].map(club_id=>({club_id,competition_id:Number(competitions[0].id)})),
+    headers:{Prefer:'resolution=ignore-duplicates,return=minimal'}
+  });
   const rows = matches.map(match => ({
     external_id: match.id,
     league_code: league,
     league_name: LEAGUES[league],
+    competition_id: Number(competitions[0].id),
     home_team_name: match.homeTeam.name,
     away_team_name: match.awayTeam.name,
     home_club_id: clubIds.get(Number(match.homeTeam.id)) || null,
@@ -436,9 +475,8 @@ async function syncMatches(input) {
     home_score: match.score?.fullTime?.home ?? null,
     away_score: match.score?.fullTime?.away ?? null,
     matchday: match.matchday ?? null,
-    season: payload.competition?.code && match.season?.startDate
-      ? String(new Date(match.season.startDate).getUTCFullYear())
-      : null
+    ...(match.season?.startDate && Number.isFinite(Date.parse(match.season.startDate))
+      ? {season:String(new Date(match.season.startDate).getUTCFullYear())} : {})
   }));
 
   if (rows.length) {
@@ -448,7 +486,7 @@ async function syncMatches(input) {
       headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }
     });
   }
-  return { league, leagueName: LEAGUES[league], processed: rows.length };
+  return { league, leagueName: LEAGUES[league], processed: rows.length, dateFrom, dateTo };
 }
 
 async function syncSquads(input) {
@@ -636,10 +674,20 @@ module.exports = async function handler(req, res) {
       await recordAdminAction(administrator.id,action,{targetType:'league',targetId:result.league,metadata:{batch:result.batch,matches:result.matches,players:result.players}});
       return sendJson(res,200,result);
     }
+    if (action === 'audit_history') {
+      if (body.before_id != null && (!Number.isSafeInteger(body.before_id) || body.before_id < 1)) return sendJson(res,400,{error:'Invalid audit cursor'});
+      return sendJson(res,200,await getAuditPage(body.before_id));
+    }
     if (action === 'sync_matches') {
-      const result = await syncMatches(body);
-      await recordAdminAction(administrator.id, action, {targetType:'league', targetId:result.league, metadata:{processed:result.processed}});
-      return sendJson(res, 200, result);
+      try {
+        const result = await syncMatches(body);
+        const auditRecorded=await recordAdminAction(administrator.id, action, {targetType:'league', targetId:result.league, metadata:{processed:result.processed,dateFrom:result.dateFrom,dateTo:result.dateTo}});
+        return sendJson(res, 200, {...result,auditRecorded});
+      } catch (error) {
+        const failureStatus=Number(error.status)||500;
+        if ([429,500,502,503].includes(failureStatus) && Object.hasOwn(LEAGUES,body.league)) await recordAdminAction(administrator.id,'sync_matches_failed',{targetType:'league',targetId:body.league,metadata:{status:failureStatus}});
+        throw error;
+      }
     }
     if (action === 'sync_squads') {
       const result = await syncSquads(body);
