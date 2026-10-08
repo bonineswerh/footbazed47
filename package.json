@@ -12,6 +12,7 @@
     "test:e2e": "node scripts/run-e2e.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "check:environment": "node scripts/check-environment.mjs",
+    "check:production": "node scripts/check-production.mjs",
     "check": "node scripts/check-environment.mjs && node scripts/check-static.mjs && node scripts/check-migrations.mjs && tsc -p tsconfig.json && node --test tests/*.test.js",
     "check:all": "node scripts/check-environment.mjs && node scripts/check-static.mjs && node scripts/check-migrations.mjs && tsc -p tsconfig.json && node --test tests/*.test.js && node scripts/run-e2e.mjs"
   },
