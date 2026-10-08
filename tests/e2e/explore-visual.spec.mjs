@@ -11,7 +11,8 @@ for(const theme of ['dark','light'])for(const width of [390,1440]){
     await expect(page.locator('#statisticsRoot')).toHaveScreenshot(`overview-${theme}-${width}.png`,{animations:'disabled',maxDiffPixelRatio:.03});
     await page.locator('#statisticsFilters-open').click();
     await expect(page.getByRole('button',{name:'Готово'})).toBeInViewport();
-    await expect(page.getByRole('dialog',{name:'Фильтры'})).toHaveScreenshot(`filters-${theme}-${width}.png`,{animations:'disabled',maxDiffPixelRatio:.03});
+    // Date fields and select text retain platform-specific rendering.
+    await expect(page.getByRole('dialog',{name:'Фильтры'})).toHaveScreenshot(`filters-${theme}-${width}-${process.platform}.png`,{animations:'disabled',maxDiffPixelRatio:.03});
     await page.keyboard.press('Escape');
     await page.goto(`/profile/${owner}?__e2e=1`);
     await expect(page.locator('.diary-month')).toBeVisible();
