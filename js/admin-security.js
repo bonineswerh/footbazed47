@@ -110,5 +110,5 @@
   document.addEventListener('fbz:overlay-close',event=>{if(event.target.id==='adminMfaModal'){setup=null;event.target.querySelector('img')?.remove();event.target.querySelector('code')?.replaceChildren();event.target.querySelectorAll('input').forEach(input=>input.value='');version++;busy=false;}});
   document.addEventListener('fbz:session-change',event=>syncSession(event.detail?.userId||null));
   root.FBZAdminSecurity=Object.freeze({mount,syncSession,syncRoute,required});
-  FBZActions.register({'admin-security.open':()=>open(),'admin-security.close':()=>clear(),'admin-security.enroll':()=>enroll(),'admin-security.verify':event=>verify(event),'admin-security.discard':(event,element,[id])=>discard(id)});
+  FBZActions.register({'admin-security.open':(event,element)=>{element.focus({preventScroll:true});return open();},'admin-security.close':()=>clear(),'admin-security.enroll':()=>enroll(),'admin-security.verify':event=>verify(event),'admin-security.discard':(event,element,[id])=>discard(id)});
 })(window);
