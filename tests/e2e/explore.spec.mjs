@@ -84,9 +84,10 @@ test('клубы зависят от турнира, поиск варианто
   await page.getByLabel('Турнир',{exact:true}).selectOption('8');
   await expect(page.getByLabel('Клуб',{exact:true})).toHaveValue('');
   await expect(page.getByLabel('Клуб',{exact:true}).locator('option[value="31"]')).toHaveCount(0);
-  await page.getByRole('searchbox',{name:'Найти клуб в фильтрах'}).fill('barc');
-  await expect(page.getByLabel('Клуб',{exact:true}).locator('option')).toHaveCount(2);
-  await page.getByLabel('Клуб',{exact:true}).selectOption('25');
+  await page.getByLabel('Клуб',{exact:true}).click();
+  await page.getByRole('searchbox',{name:'Поиск клубов'}).fill('barc');
+  await expect(page.locator('.fbz-control-panel').getByRole('option')).toHaveCount(1);
+  await page.getByRole('option',{name:'Барселона',exact:true}).click();
   await page.getByRole('button',{name:'Готово'}).click();
   await expect(page).toHaveURL(/ov_competition_id=8.*ov_club_id=25/);
   await expect(page.getByRole('button',{name:'Убрать фильтр Клуб: Барселона'})).toBeVisible();

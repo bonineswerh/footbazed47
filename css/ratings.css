@@ -24,7 +24,7 @@
 .rating-rail:disabled{cursor:wait;opacity:.5}
 .rating-rail-labels{display:flex;justify-content:space-between;align-items:center;height:1.8em;margin-inline:14px;color:var(--text2);font-size:12px;font-weight:500;line-height:1.4}
 .rating-rail-labels span{width:0;display:flex;justify-content:center;white-space:nowrap}
-.rating-rail-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px}
+.rating-rail-footer{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:4px}
 .rating-rail-hint{color:var(--text3);font-size:12px;line-height:1.5}
 .rating-exact-score.input{width:170px;min-width:0;max-width:100%;min-height:44px;margin:12px 0 0;padding:10px 32px 10px 12px;border-radius:var(--radius-control);font-size:14px;color:var(--snow);background-color:var(--bg3);border-color:var(--b2)}
 .rating-rail-footer .rating-exact-score{margin:0}.rating-exact-score[data-tone="elite"]{border-color:var(--rating-elite)}

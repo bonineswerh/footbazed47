@@ -7,9 +7,8 @@ async function accessible(page,selector){
 test.beforeEach(async({page})=>{await installSupabaseMock(page);});
 test('one rating axis has eleven aligned ticks; exact choice updates both editors',async({page})=>{
   await page.goto('/match/101?__e2e=1');await page.locator('.md-primary-action').click();
-  await page.locator('#starsR').click();const panel=page.locator('.fbz-control-panel');await expect(panel).toBeVisible();
-  await page.getByRole('option',{name:/^9 \/ 10/}).click();await expect(page.locator('#matchRatingRange')).toHaveValue('9');await expect(page.locator('#rScoreDisp')).toHaveText('9/10');await expect(page.locator('#starsR')).toBeFocused();
-  await page.getByRole('button',{name:/Продолжить/}).click();await page.locator('#rating-player-5291').click();await page.locator('#playerExactScore').click();await page.getByRole('option',{name:'10 / 10',exact:true}).click();await expect(page.locator('#playerRatingRange')).toHaveValue('10');await expect(page.locator('#playerRatingValue')).toHaveText('10/10');
+  await page.locator('#matchRatingRange').fill('9');await expect(page.locator('#matchRatingRange')).toHaveValue('9');await expect(page.locator('#rScoreDisp')).toHaveText('9/10');await expect(page.locator('#starsR')).toHaveCount(0);
+  await page.getByRole('button',{name:/Продолжить/}).click();await page.locator('#rating-player-5291').click();await page.locator('#playerExactScore').click();await expect(page.locator('.fbz-control-panel')).toBeVisible();await page.locator('.fbz-control-panel').getByRole('option',{name:'10 / 10',exact:true}).click();await expect(page.locator('#playerRatingRange')).toHaveValue('10');await expect(page.locator('#playerRatingValue')).toHaveText('10/10');
   await page.locator('#playerRatingRange').press('ArrowLeft');await expect(page.locator('#playerExactScore')).toHaveValue('9');
 });
 test('keyboard selects a filter and Escape closes only its picker',async({page})=>{
@@ -43,12 +42,14 @@ test('outside click and route changes release the picker without stale selection
   await page.goto('/discover?__e2e=1');await page.getByLabel('Порядок').click();await page.getByRole('heading',{name:'Обзор',exact:true}).click();await expect(page.locator('.fbz-control-panel')).toHaveCount(0);
   await page.getByLabel('Порядок').click();await page.evaluate(()=>go('matches'));await expect(page.locator('.fbz-control-panel')).toHaveCount(0);await expect(page.locator('body')).not.toHaveClass(/modal-open/);
 });
-test('long select lists support search without changing the current value',async({page})=>{
-  await page.goto('/match/101?__e2e=1');await page.locator('.md-primary-action').click();await page.locator('#matchRatingClear').click();await page.locator('#starsR').click();await page.getByRole('searchbox',{name:'Поиск вариантов'}).fill('Великолепно');await expect(page.getByRole('option')).toHaveCount(1);await expect(page.locator('#matchRatingRange')).toHaveValue('0');await page.getByRole('option').click();await expect(page.locator('#matchRatingRange')).toHaveValue('9');
+test('player numeric choices retain an exact value without duplicate match descriptions',async({page})=>{
+  await page.goto('/match/101?__e2e=1');await page.locator('.md-primary-action').click();await page.locator('#matchRatingRange').fill('9');await expect(page.locator('#rScoreLabel')).toHaveText('Великолепно');await expect(page.locator('#rS1 select')).toHaveCount(0);
+  await page.getByRole('button',{name:/Продолжить/}).click();await page.locator('#rating-player-5291').click();await page.locator('#playerExactScore').click();await page.getByRole('searchbox',{name:'Поиск вариантов'}).fill('9 / 10');await expect(page.getByRole('option')).toHaveCount(1);await page.getByRole('option').click();await expect(page.locator('#playerRatingRange')).toHaveValue('9');
 });
+
 test('search inside a picker does not reload football statistics',async({page})=>{
   await page.addInitScript(()=>{const rpc=window.__FOOTBAZED_TEST_CLIENT__.rpc;window.__controlStatsCalls=0;window.__FOOTBAZED_TEST_CLIENT__.rpc=async(name,args)=>{const result=await rpc(name,args);if(name==='get_football_statistics'){window.__controlStatsCalls++;result.data.clubs.push(...Array.from({length:8},(_,i)=>({id:900+i,name:'Club '+i,competition_ids:[7]})));}return result;};});
-  await page.goto('/discover?__e2e=1');await expect(page.locator('.statistics-row')).toBeVisible();const calls=await page.evaluate(()=>window.__controlStatsCalls);await page.locator('#statisticsFilters-open').click();await page.getByLabel('Клуб',{exact:true}).click();await page.getByRole('searchbox',{name:'Поиск вариантов'}).fill('Club 5');await expect(page.locator('.fbz-control-panel').getByRole('option')).toHaveCount(1);await page.waitForTimeout(450);expect(await page.evaluate(()=>window.__controlStatsCalls)).toBe(calls);
+  await page.goto('/discover?__e2e=1');await expect(page.locator('.statistics-row')).toBeVisible();const calls=await page.evaluate(()=>window.__controlStatsCalls);await page.locator('#statisticsFilters-open').click();await page.getByLabel('Клуб',{exact:true}).click();await page.getByRole('searchbox',{name:'Поиск клубов'}).fill('Club 5');await expect(page.locator('.fbz-control-panel').getByRole('option')).toHaveCount(1);await page.waitForTimeout(450);expect(await page.evaluate(()=>window.__controlStatsCalls)).toBe(calls);
 });
 test('Escape cancels a picker still loading without a late popup',async({page})=>{
   let release;await page.route('**/js/form-controls.js?*',async route=>{await new Promise(resolve=>release=resolve);await route.continue();});

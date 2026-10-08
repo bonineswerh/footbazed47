@@ -6,7 +6,7 @@
   function filters(id,{diary=false}={}){
     const field=(name,label,type='text',extra='')=>`<label for="${id}-${name}"><span>${label}</span><input class="input" id="${id}-${name}" name="${name}" type="${type}" ${extra}></label>`;
     const select=(name,label,options)=>`<label for="${id}-${name}"><span>${label}</span><select class="input" id="${id}-${name}" name="${name}">${options}</select></label>`;
-    const picker=(name,label,all)=>`<fieldset class="explore-picker"><legend>${label}</legend><label class="sr-only" for="${id}-${name}-search">Найти ${name==='club_id'?'клуб':'турнир'} в фильтрах</label><input class="input" id="${id}-${name}-search" type="search" placeholder="Поиск ${name==='club_id'?'клуба':'турнира'}" data-options-query="${name}" autocomplete="off"><label class="sr-only" for="${id}-${name}">${label}</label><select class="input" id="${id}-${name}" name="${name}"><option value="">${all}</option></select><span class="explore-option-count" data-options-count="${name}" aria-live="polite"></span></fieldset>`;
+    const picker=(name,label,all)=>`<div class="explore-picker"><label for="${id}-${name}">${label}</label><select class="input" id="${id}-${name}" name="${name}" data-choice-kind="${name==='club_id'?'club':'competition'}"><option value="">${all}</option></select><span class="explore-option-count" data-options-count="${name}" aria-live="polite"></span></div>`;
     return `<form class="explore-filters" id="${id}" data-diary="${diary}" data-scope="${diary?'di':'ov'}" novalidate aria-label="${diary?'Фильтры дневника':'Фильтры обзора'}">
       <div class="explore-toolbar"><div class="explore-search">${root.ico('search',18)}<label class="sr-only" for="${id}-query">${diary?'Найти оценённый матч':'Поиск в обзоре'}</label><input id="${id}-query" name="query" type="search" maxlength="80" placeholder="${diary?'Найти в своей истории':'Матч, клуб или игрок'}" autocomplete="off"></div><button class="btn btn-g explore-open" id="${id}-open" type="button" aria-haspopup="dialog" aria-controls="${id}-sheet">${root.ico('filter',16)} Фильтры <span class="explore-active-count"></span></button></div>
       <div class="explore-filter-footer"><div class="explore-chips" aria-label="Выбранные фильтры"></div><button class="text-action" type="reset">Сбросить фильтры</button></div>
@@ -34,11 +34,16 @@
     const data=catalogues.get(form)||{},select=form.elements.namedItem(name),selected=select.value;
     let rows=name==='competition_id'?(data.competitions||[]):model.clubsForCompetition(data.clubs,form.elements.namedItem('competition_id').value);
     rows=rows.map(row=>({...row,source_name:row.name,name:name==='club_id'?FBZNames.club(row):FBZNames.competition(row)})).sort((a,b)=>a.name.localeCompare(b.name,root.FBZLocale?.intl||'ru-RU'));
-    const query=sheet(form).querySelector(`[data-options-query="${name}"]`).value.trim().toLocaleLowerCase('ru-RU'),available=rows.length;
-    rows=rows.filter(row=>String(row.id)===selected||String(row.name+' '+row.source_name).toLocaleLowerCase('ru-RU').includes(query));
     select.innerHTML=`<option value="">${name==='club_id'?'Все клубы':'Все турниры'}</option>`+rows.map(row=>`<option value="${escape(row.id)}">${escape(row.name)}</option>`).join('');
+    // Choice metadata stays in memory; native option values remain provider IDs.
+    rows.forEach((row,index)=>{
+      const kind=name==='club_id'?'club':'competition',present=kind==='club'?FBZNames.club:FBZNames.competition;
+      const entity={...row,name:row.source_name,media:data.marks?.get(String(row.id))||row.media};
+      const names=kind==='club'?[present(entity,'',true,'ru'),present(entity,'',true,'en')]:[present(entity,'ru'),present(entity,'en')];
+      select.options[index+1].fbzChoice={entity,kind,keywords:[row.name,row.source_name,row.short_name,...names].filter(Boolean).join(' ')};
+    });
     if(selected&&!rows.some(row=>String(row.id)===selected))select.add(new Option('Недоступный '+(name==='club_id'?'клуб':'турнир')+' #'+selected,selected));select.value=selected;
-    sheet(form).querySelector(`[data-options-count="${name}"]`).textContent=query?'Найдено: '+rows.length:name==='club_id'?'Клубов в выборке: '+available:'';
+    sheet(form).querySelector(`[data-options-count="${name}"]`).textContent=name==='club_id'?'Клубов в выборке: '+rows.length:'';
   }
   function sync(form){
     const f=entered(form),count=activeCount(form),data=catalogues.get(form)||{};
@@ -58,13 +63,28 @@
     document.body.append(panel);
     const listen=(name,handler)=>{form.addEventListener(name,handler,eventOptions);panel.addEventListener(name,handler,eventOptions);};
     const run=(mode='push')=>{clearTimeout(timer);timer=null;sync(form);if(valid(form))onChange(read(form),mode);else onInvalid();};
-    listen('input',event=>{if(event.target.dataset.optionsQuery){options(form,event.target.dataset.optionsQuery);return;}sync(form);onInvalidate();clearTimeout(timer);timer=setTimeout(()=>run(event.target.name==='query'?'replace':'push'),event.target.name==='query'?250:350);});
+    listen('input',event=>{sync(form);onInvalidate();clearTimeout(timer);timer=setTimeout(()=>run(event.target.name==='query'?'replace':'push'),event.target.name==='query'?250:350);});
+    listen('fbz:choices-visible',async event=>{
+      const field=event.target,data=catalogues.get(form);
+      if(field.name!=='club_id'||!data)return;
+      const ids=(event.detail?.values||[]).filter(id=>id&&!data.marks.has(id)&&Date.now()-(data.attempted.get(id)||0)>30_000).slice(0,48);
+      if(!ids.length)return;
+      ids.forEach(id=>data.attempted.set(id,Date.now()));
+      const matches=ids.map(id=>({home_club_id:Number(id)}));
+      try{
+        await root.FBZData.enrichMatchMedia(matches);
+        if(controller.signal.aborted||!field.isConnected)return;
+        matches.forEach((match,index)=>{if(match.home_club?.media)data.marks.set(ids[index],match.home_club.media);});
+        for(const option of field.options)if(option.fbzChoice&&data.marks.has(option.value))option.fbzChoice.entity.media=data.marks.get(option.value);
+        root.FBZFormControls?.refresh(field);
+      }catch(error){if(error.name!=='AbortError')ids.forEach(id=>data.attempted.delete(id));}
+    });
     listen('change',event=>{
       if(event.target.tagName!=='SELECT')return;
       if(event.target.name==='competition_id'){
         const club=form.elements.namedItem('club_id'),data=catalogues.get(form);
         if(club.value&&data&&!model.clubsForCompetition(data.clubs,event.target.value).some(c=>String(c.id)===club.value))club.value='';
-        panel.querySelector('[data-options-query="club_id"]').value='';options(form,'club_id');
+        options(form,'club_id');
       }onInvalidate();run();
     });
     form.addEventListener('submit',event=>{event.preventDefault();run();},eventOptions);
@@ -80,7 +100,7 @@
     panel.addEventListener('fbz:overlay-close',()=>valid(form),eventOptions);
     sync(form);return ()=>{clearTimeout(timer);controller.abort();root.FBZOverlay.close(panel.id,false);panel.remove();};
   }
-  function populate(form,data){catalogues.set(form,{competitions:data.competitions||[],clubs:data.clubs||[]});options(form,'competition_id');options(form,'club_id');sync(form);}
+  function populate(form,data){const previous=catalogues.get(form);catalogues.set(form,{competitions:data.competitions||[],clubs:data.clubs||[],marks:previous?.marks||new Map(),attempted:previous?.attempted||new Map()});options(form,'competition_id');options(form,'club_id');sync(form);}
   function writeLocation(form,filters,extras={},mode='push'){
     const query=model.searchParams(root.location.search,form.dataset.scope,filters,extras),url=root.location.pathname+(query?'?'+query:'');if(url===root.location.pathname+root.location.search)return;
     const state={...root.history.state,fbzIndex:(Number(root.history.state?.fbzIndex)||0)+(mode==='push'?1:0)};root.history[mode==='replace'?'replaceState':'pushState'](state,'',url);

@@ -75,11 +75,11 @@ test('match rail, direct choices and reset share one draft without assuming a de
   for(let step=0;step<5;step++)await rail.press('ArrowRight');
   await expect(page.locator('#rScoreDisp')).toHaveText('5/10');
   await expect(rail).toHaveAttribute('aria-valuetext','5 из 10 — Средне');
-  await page.locator('#starsR').click();await page.locator('.fbz-control-panel').getByRole('option',{name:'9 / 10 — Великолепно',exact:true}).click();
+  await rail.fill('9');
   await expect(rail).toHaveValue('9');
   await expect(rail).toHaveAttribute('data-tone','elite');
   await rail.press('End');
-  await expect(page.locator('#starsR')).toHaveValue('10');
+  await expect(page.locator('#matchRatingRange')).toHaveValue('10');
   await page.getByRole('button',{name:/Продолжить/}).click();
   await page.locator('#rSave').click();
   expect((await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastRating())).p_match_rating).toBe(10);

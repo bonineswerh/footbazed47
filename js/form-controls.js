@@ -3,6 +3,7 @@
   const model=root.FBZCalendarModel;
   let active=null,sequence=0;
   const language=()=>root.FBZLocale?.intl||'ru-RU';
+  const searchKey=value=>String(value||'').normalize('NFKD').toLocaleLowerCase(language()).replace(/\p{M}/gu,'').trim();
   function close(focus=true){
     if(!active)return;
     const {field,panel,abort,expanded,controls,hidden,tabindex}=active;active=null;abort.abort();panel.remove();
@@ -28,22 +29,32 @@
   function selectPanel(field,panel){
     const list=document.createElement('div');list.className='fbz-control-list';list.id=panel.id+'-list';list.setAttribute('role','listbox');list.setAttribute('aria-label',active.label);
     field.setAttribute('aria-controls',list.id);let query='',focused=field.value;
-    const search=field.options.length>7?document.createElement('input'):null;
-    if(search){search.type='search';search.className='input fbz-control-search';search.placeholder='Найти вариант';search.setAttribute('aria-label','Поиск вариантов');panel.append(search);}
+    const kind=field.dataset.choiceKind,search=kind||field.options.length>7?document.createElement('input'):null;
+    if(search){search.type='search';search.className='input fbz-control-search';search.placeholder=kind==='club'?'Найти клуб':kind==='competition'?'Найти турнир':'Найти вариант';search.setAttribute('aria-label',kind==='club'?'Поиск клубов':kind==='competition'?'Поиск турниров':'Поиск вариантов');panel.append(search);}
     panel.append(list);
+    function requestMedia(){
+      if(active?.field!==field)return;
+      const box=list.getBoundingClientRect(),values=[...list.querySelectorAll('[role="option"]')].filter(item=>{const b=item.getBoundingClientRect();return b.bottom>box.top&&b.top<box.bottom;}).map(item=>item.dataset.value);
+      field.dispatchEvent(new CustomEvent('fbz:choices-visible',{bubbles:true,detail:{values}}));
+    }
     function render(){
+      const offset=list.scrollTop;
       list.replaceChildren();
-      const rows=[...field.options].filter(option=>!option.hidden&&option.textContent.toLocaleLowerCase(language()).includes(query));
+      const rows=[...field.options].filter(option=>!option.hidden&&searchKey(option.fbzChoice?.keywords||option.textContent).includes(query));
       for(const option of rows){
         const item=button(option.textContent,()=>commit(option.value));item.dataset.value=option.value;item.setAttribute('role','option');item.setAttribute('aria-selected',String(option.value===field.value));item.disabled=option.disabled||option.parentElement.disabled===true;item.tabIndex=-1;
         if(option.value===field.value)item.classList.add('selected');list.append(item);
+        if(option.fbzChoice){
+          const mark=document.createElement('span'),label=document.createElement('span');mark.className='fbz-control-mark';mark.setAttribute('aria-hidden','true');mark.innerHTML=root.FBZMedia.visual({entity:option.fbzChoice.entity,kind:option.fbzChoice.kind,className:'fbz-choice-mark',loading:'eager'});label.className='fbz-control-choice-name';label.textContent=option.textContent;item.replaceChildren(mark,label);item.classList.add('has-mark');
+        }
         if(field.classList.contains('rating-exact-score')&&Number(option.value)>0)item.dataset.tone=root.FBZDomain.ratingTone(Number(option.value));
       }
       if(!rows.length){const empty=document.createElement('p');empty.className='fbz-control-empty';empty.setAttribute('role','status');empty.textContent='Ничего не найдено';list.append(empty);}
-      position();
+      position();list.scrollTop=offset;requestMedia();
     }
     function focusItem(value){const items=[...list.querySelectorAll('button:not(:disabled)')],item=items.find(item=>item.dataset.value===value)||items[0];if(item){focused=item.dataset.value;item.focus({preventScroll:true});const a=item.getBoundingClientRect(),b=list.getBoundingClientRect();if(a.top<b.top)list.scrollTop-=b.top-a.top;else if(a.bottom>b.bottom)list.scrollTop+=a.bottom-b.bottom;}}
-    search?.addEventListener('input',event=>{event.stopPropagation();query=search.value.trim().toLocaleLowerCase(language());render();});
+    search?.addEventListener('input',event=>{event.stopPropagation();query=searchKey(search.value);list.scrollTop=0;render();});
+    let frame;list.addEventListener('scroll',()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(requestMedia);});active.abort.signal.addEventListener('abort',()=>cancelAnimationFrame(frame),{once:true});
     let typeahead='',typeTime=0;
     panel.addEventListener('keydown',event=>{
       if(event.target===search&&!['ArrowDown','ArrowUp'].includes(event.key))return;
@@ -54,13 +65,14 @@
       else if(event.key==='Home')index=0;
       else if(event.key==='End')index=items.length-1;
       else if(event.key.length===1&&!event.ctrlKey&&!event.metaKey&&event.key!==' '){
-        const now=Date.now();typeahead=(now-typeTime>700?'':typeahead)+event.key.toLocaleLowerCase(language());typeTime=now;index=items.findIndex(item=>item.textContent.toLocaleLowerCase(language()).startsWith(typeahead));
+        const now=Date.now();typeahead=(now-typeTime>700?'':typeahead)+searchKey(event.key);typeTime=now;index=items.findIndex(item=>searchKey(item.querySelector('.fbz-control-choice-name')?.textContent||item.textContent).startsWith(typeahead));
       }else return;
       event.preventDefault();if(items[index])focusItem(items[index].dataset.value);
     });
+    active.refresh=()=>{const hadFocus=list.contains(document.activeElement);render();if(hadFocus)focusItem(focused);};
     render();if(search)search.focus({preventScroll:true});else focusItem(focused);
     // Observe only the open select: catalogues can arrive or change while it is open.
-    const observer=new MutationObserver(()=>{if(active?.field!==field)return;const hadFocus=list.contains(document.activeElement);render();if(hadFocus)focusItem(focused);});
+    const observer=new MutationObserver(()=>{if(active?.field===field)active.refresh();});
     observer.observe(field,{childList:true,subtree:true,characterData:true});active.abort.signal.addEventListener('abort',()=>observer.disconnect(),{once:true});
   }
   function datePanel(field,panel){
@@ -110,5 +122,5 @@
     root.addEventListener('resize',position,{signal});root.addEventListener('scroll',event=>{if(!panel.contains(event.target))position();},{capture:true,signal});
   }
   root.addEventListener('fbz:session-change',()=>close(false));
-  root.FBZFormControls=Object.freeze({open,close});
+  root.FBZFormControls=Object.freeze({open,close,refresh:field=>{if(active?.field===field)active.refresh?.();}});
 })(window);

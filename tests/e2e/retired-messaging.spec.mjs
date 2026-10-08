@@ -56,7 +56,7 @@ test('saving a new rating does not offer a retired forwarding action',async({pag
   await page.locator('.md-primary-action').click();
   await expect(page.locator('#rateTitle')).toHaveText('Оценить матч');
   await page.locator('.rating-supporter-options label').filter({has:page.locator('input[value="neutral"]')}).click();
-  await page.locator('#starsR').selectOption('9');
+  await page.locator('#matchRatingRange').fill('9');
   await page.getByRole('button',{name:/Продолжить/}).click();
   await page.clock.install();
   await page.locator('#rSave').click();

@@ -69,5 +69,5 @@ for(const width of [320,390,1440])test(`rail ticks agree with actual slider posi
   const centres=await page.locator('#rS1 .rating-rail-labels span').evaluateAll(nodes=>nodes.map(node=>{const box=node.getBoundingClientRect();return box.x+box.width/2;}));
   for(const value of [0,1,2,3,4,5,6,7,8,9,10]){const x=box.x+14+(box.width-28)*value/10;expect(Math.abs(x-centres[value])).toBeLessThanOrEqual(1);await page.mouse.click(x,box.y+box.height/2);await expect(rail).toHaveValue(String(value));}
   await page.mouse.click(box.x+14+(box.width-28)/10,box.y+box.height/2);await expect(rail).toHaveValue('1');
-  await page.locator('#starsR').selectOption('10');await expect(rail).toHaveValue('10');await expect(page.locator('#rScoreDisp')).toHaveAttribute('data-tone','elite');await noOverflow(page);
+  await page.locator('#matchRatingRange').fill('10');await expect(rail).toHaveValue('10');await expect(page.locator('#rScoreDisp')).toHaveAttribute('data-tone','elite');await noOverflow(page);
 });

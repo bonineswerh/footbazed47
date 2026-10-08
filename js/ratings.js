@@ -16,7 +16,7 @@ function isRatingCurrent(context){
 
 function setRatingLoading(loading){
   document.getElementById('rateOv').setAttribute('aria-busy',String(loading));
-  document.querySelectorAll('#rS1 input,#starsR,#rS1 button[data-fbz-click="shell.r-next"],#rSave,#rDelete,#rExpectationDelete').forEach(control=>{control.disabled=loading;});
+  document.querySelectorAll('#rS1 input,#rS1 button[data-fbz-click="shell.r-next"],#rSave,#rDelete,#rExpectationDelete').forEach(control=>{control.disabled=loading;});
   document.getElementById('matchRatingClear').disabled=loading||rScore===null;
 }
 
@@ -29,7 +29,7 @@ const POSITION_GROUP={
 };
 const POSITION_LABEL={gk:'Вратари',def:'Защита',mid:'Полузащита',att:'Атака',other:'Другие'};
 const RATING_LABELS=['','Ужасно','Плохо','Слабо','Ниже среднего','Средне','Неплохо','Хорошо','Отлично','Великолепно','Исключительно'];
-const EXPECTATION_LABELS=['','Жду очень слабую игру','Жду слабую игру','Жду невыразительную игру','Жду игру ниже среднего','Жду среднюю игру','Жду неплохую игру','Жду хорошую игру','Жду отличную игру','Жду великолепную игру','Жду исключительную игру'];
+const EXPECTATION_LABELS=['','Очень слабую игру','Слабую игру','Невыразительную игру','Игру ниже среднего','Среднюю игру','Неплохую игру','Хорошую игру','Отличную игру','Великолепную игру','Исключительную игру'];
 const matchRatingLabels=()=>ratingContext?.mode==='expectation'?EXPECTATION_LABELS:RATING_LABELS;
 
 async function openRatingForm(mid,mode='rating'){
@@ -97,9 +97,6 @@ async function openRatingForm(mid,mode='rating'){
 
 function resetRatingForm(){
   document.getElementById('rMI').textContent='Загружаем матч...';
-  const row=document.getElementById('starsR');
-  row.replaceChildren(new Option('Выбрать число','0'));
-  for(let value=1;value<=10;value++)row.add(new Option(`${value} / 10 — ${matchRatingLabels()[value]}`,String(value)));
   document.getElementById('rScoreDisp').textContent='—';
   document.getElementById('rScoreDisp').classList.remove('active');
   document.getElementById('rScoreDisp').dataset.tone='neutral';
@@ -117,12 +114,11 @@ function resetRatingForm(){
   setRatingMode(false);
   const expecting=ratingContext?.mode==='expectation';
   document.querySelector('label[for="matchRatingRange"]').textContent=expecting?'Ожидание от 1 до 10':'Оценка матча от 1 до 10';
-  document.getElementById('starsR').setAttribute('aria-label',expecting?'Точное ожидание':'Точная оценка матча');
   document.querySelector('.rate-box').classList.toggle('is-expectation',expecting);
   document.querySelector('.rate-steps').hidden=expecting;
   document.querySelector('.rating-public-toggle').hidden=expecting;
   document.getElementById('rExpectationNote').hidden=!expecting;
-  document.getElementById('rateScorePrompt').textContent=expecting?'Какой игры вы ожидаете?':'Насколько вам понравился матч?';
+  document.getElementById('rateScorePrompt').textContent=expecting?'Какую игру вы ожидаете?':'Насколько вам понравился матч?';
   document.querySelector('#rS1 button[data-fbz-click="shell.r-next"]').textContent=expecting?'Сохранить ожидание':'Продолжить →';
   rBack();
 }
@@ -141,12 +137,10 @@ function selScore(value,labels=matchRatingLabels()){
   if(value===0){clearMatchScore();return;}
   if(!Number.isInteger(value)||value<1||value>10)return;
   rScore=value;
-  document.getElementById('starsR').value=String(value);
   const display=document.getElementById('rScoreDisp');
   renderRatingValue(display,value);
   display.classList.add('active');
   display.dataset.tone=window.FBZDomain.ratingTone(value);
-  document.getElementById('starsR').dataset.tone=window.FBZDomain.ratingTone(value);
   document.getElementById('rScoreLabel').textContent=labels[value]||'';
   updateMatchRatingRail(value);
 }
@@ -179,8 +173,6 @@ function updateMatchRatingRail(score){
 
 function clearMatchScore(){
   rScore=null;
-  document.getElementById('starsR').value='0';
-  document.getElementById('starsR').dataset.tone='neutral';
   const display=document.getElementById('rScoreDisp');
   renderRatingValue(display,null);
   display.classList.remove('active');

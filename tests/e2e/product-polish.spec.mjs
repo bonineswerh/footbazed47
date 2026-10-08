@@ -3,7 +3,7 @@ import {expect,test} from '@playwright/test';
 import {installSupabaseMock} from './mock-supabase.mjs';
 
 const own='3615141a-7700-46b8-9ba5-e4f4450537fc';
-test.beforeEach(async({page})=>{await installSupabaseMock(page);});
+test.beforeEach(async({page},info)=>{await installSupabaseMock(page,info.title.startsWith('гостевой экран')?{sessionUser:null}:{});});
 
 test('профиль показывает факты, загружается по запросу и экспортирует чёткую карточку',async({page},testInfo)=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -131,7 +131,6 @@ for(const theme of ['dark','light']){
 for(const width of [320,390,1440]){
   test('гостевой экран и вход сохраняют читаемость на '+width+'px',async({page},testInfo)=>{
     await page.setViewportSize({width,height:900});
-    await page.addInitScript(()=>{window.__FOOTBAZED_TEST_CLIENT__.auth.getSession=async()=>({data:{session:null},error:null});});
     await page.goto('/?__e2e=1');
     await expect(page.locator('.hero h1')).toContainText('Футбол, который');
     await expect(page.locator('.guest-guide')).toBeVisible();
@@ -164,10 +163,10 @@ for(const width of [390,1440]){
 test('девятка и десятка используют одинаковый голубой для матча и игрока',async({page})=>{
   await page.goto('/match/101?__e2e=1');
   await page.locator('.md-primary-action').click();
-  await page.locator('#starsR').selectOption('9');
+  await page.locator('#matchRatingRange').fill('9');
   await expect(page.locator('#rScoreDisp')).toHaveAttribute('data-tone','elite');
   await expect(page.locator('#rScoreDisp')).toHaveCSS('color','rgb(56, 189, 248)');
-  await page.locator('#starsR').selectOption('10');
+  await page.locator('#matchRatingRange').fill('10');
   await expect(page.locator('#rScoreDisp')).toHaveCSS('color','rgb(56, 189, 248)');
   await page.getByRole('button',{name:/Продолжить/}).click();
   await page.locator('#rating-player-5292').click();

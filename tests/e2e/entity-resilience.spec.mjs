@@ -207,7 +207,7 @@ test('переоткрытая оценка игнорирует поздние 
   await expect(page.locator('#rDelete')).toBeHidden();
   await page.locator('.rating-supporter-options label').filter({has:page.locator('input[value="neutral"]')}).click();
   await expect(page.locator('input[name="ratingSupporterSide"][value="neutral"]')).toBeChecked();
-  await page.locator('#starsR').selectOption('7');
+  await page.locator('#matchRatingRange').fill('7');
   await page.getByRole('button',{name:/Продолжить/u}).click();
   await page.locator('#rSave').click();
   await expect(page.locator('#rateOv')).toBeHidden();
@@ -238,7 +238,7 @@ test('сохранение закрытой оценки не закрывает
   await page.getByRole('button',{name:'Закрыть окно оценки'}).click();
   await page.evaluate(()=>openRate(101));
   await expect(page.locator('#rSave')).toBeEnabled();
-  await page.locator('#starsR').selectOption('6');
+  await page.locator('#matchRatingRange').fill('6');
   await page.evaluate(async()=>{window.releaseSave();await window.slowSave;});
   await expect(page.locator('#rateOv')).toBeVisible();
   await expect(page.locator('#rScoreDisp')).toHaveText('6/10');

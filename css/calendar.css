@@ -4,7 +4,7 @@
 .load-more-wrap{display:flex;justify-content:center;padding:30px 0 10px}.load-more{min-width:220px;justify-content:center}.load-more span{color:var(--accent2)}
 .league-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--b1)}
 .league-tab{padding:7px 16px;border-radius:8px;font-size:var(--type-small);font-weight:600;min-height:44px;cursor:pointer;border:1px solid var(--b2);background:var(--bg2);color:var(--text2);transition:color var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease);font-family:inherit}
-.league-tab:hover{border-color:var(--b3);color:var(--snow)}.league-tab.on{background:var(--grad);color:#fff;border-color:transparent}
+.league-tab:hover{border-color:var(--b3);color:var(--snow)}.league-tab.on{background:var(--grad);color:var(--onAccent);border-color:transparent}
 .league-group{margin-bottom:32px}.league-group-hd{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--b1)}
 .league-group-count{font-size:var(--type-meta);color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:5px;font-weight:600}
 #matchCalendar{margin:0 0 20px;max-width:100%;min-width:0}

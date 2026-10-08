@@ -33,13 +33,15 @@ for(const language of ['ru','en'])test(`expectations use one short form, explici
   await expect(page.locator('.md-grid')).toBeHidden();await expect(page.locator('.pred-input')).toHaveCount(0);
   await page.locator('.md-primary-action').click();
   await expect(page.locator('#rateTitle')).toHaveText(language==='ru'?'Оценить ожидание':'Rate your expectation');
-  await expect(page.locator('#rateScorePrompt')).toHaveText(language==='ru'?'Какой игры вы ожидаете?':'What quality of game do you expect?');
+  await expect(page.locator('#rateScorePrompt')).toHaveText(language==='ru'?'Какую игру вы ожидаете?':'What kind of game do you expect?');
   await expect(page.locator('#rS2')).toBeHidden();await expect(page.locator('.rate-steps')).toBeHidden();await expect(page.locator('.rating-public-toggle')).toBeHidden();
   const rail=page.locator('#matchRatingRange'),save=page.locator('#rS1 button[data-fbz-click="shell.r-next"]');
   await expect(rail).toHaveValue('0');await expect(page.locator('#rScoreDisp')).toHaveText('—');
   await page.locator('input[name="ratingSupporterSide"][value="neutral"]').locator('..').click();await save.click();
   expect(await page.evaluate(()=>window.__FOOTBAZED_TEST_AUTH__.lastExpectation())).toBeNull();
   for(let i=0;i<5;i++)await rail.press('ArrowRight');
+  await expect(page.locator('#rS1 select')).toHaveCount(0);
+  await expect(page.locator('#rScoreLabel')).toHaveText(language==='ru'?'Среднюю игру':'An average game');
   await expect(rail).toHaveValue('5');expect(await rail.evaluate(el=>el.style.getPropertyValue('--rating-progress'))).toBe('50%');
   const labels=await page.locator('#rS1 .rating-rail-labels').evaluate(el=>{const parent=el.getBoundingClientRect(),middle=el.children[5].getBoundingClientRect();return{centre:parent.x+parent.width/2,label:middle.x+middle.width/2};});
   expect(Math.abs(labels.centre-labels.label)).toBeLessThanOrEqual(1);

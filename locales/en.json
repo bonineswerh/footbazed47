@@ -1526,5 +1526,19 @@
   "Найти вариант": "Find an option",
   "Поиск вариантов": "Search options",
   "Выбор": "Selection",
-  "Точное ожидание": "Exact expectation"
+  "Точное ожидание": "Exact expectation",
+  "Какую игру вы ожидаете?": "What kind of game do you expect?",
+  "Очень слабую игру": "A very poor game",
+  "Слабую игру": "A poor game",
+  "Невыразительную игру": "An uninspiring game",
+  "Игру ниже среднего": "A below-average game",
+  "Среднюю игру": "An average game",
+  "Неплохую игру": "A decent game",
+  "Хорошую игру": "A good game",
+  "Отличную игру": "An excellent game",
+  "Великолепную игру": "A superb game",
+  "Исключительную игру": "An exceptional game",
+  "Передвиньте ползунок. С клавиатуры используйте стрелки для выбора оценки.": "Move the slider. Use arrow keys to choose a score with the keyboard.",
+  "Поиск клубов": "Search clubs",
+  "Поиск турниров": "Search competitions"
 }
