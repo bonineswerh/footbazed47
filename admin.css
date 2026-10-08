@@ -72,16 +72,17 @@
 
 .admin-freshness,.admin-audit-panel{margin-bottom:20px}
 .admin-freshness[hidden],.admin-audit-panel[hidden],#adminAuditMore[hidden]{display:none}
-.admin-freshness-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.admin-freshness-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:0 20px 20px}
 .admin-freshness-grid>div{display:grid;gap:6px;align-content:start;min-width:0}
 .admin-freshness-grid small,.admin-freshness-grid span{color:var(--text2);font-size:var(--type-small);line-height:1.5}
 .admin-freshness-grid strong{color:var(--snow);font-size:var(--type-body);font-weight:650;font-variant-numeric:tabular-nums}
 .admin-freshness-grid span{font-size:var(--type-meta);overflow-wrap:anywhere}
-.admin-freshness-warning{margin:20px 0 0;padding:12px 14px;border-radius:var(--radius-control);color:var(--snow);background:var(--bg3);font-size:var(--type-small);line-height:1.6}
+.admin-freshness-warning{margin:0 20px 20px;padding:12px 14px;border-radius:var(--radius-control);color:var(--snow);background:var(--bg3);font-size:var(--type-small);line-height:1.6}
+.admin-audit-list{padding:0 20px}
 .admin-audit-row{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:12px;align-items:start;padding:16px 0;border-bottom:1px solid var(--b1)}
 .admin-audit-row>span{color:var(--accent)}
 .admin-audit-row.failed>span{color:var(--rating-low)}
 .admin-audit-row strong{display:block;color:var(--snow);font-size:var(--type-small);font-weight:600;line-height:1.5;overflow-wrap:anywhere}
 .admin-audit-row small,.admin-audit-row time{display:block;color:var(--text2);font-size:var(--type-meta);line-height:1.7;font-variant-numeric:tabular-nums}
-#adminAuditMore{margin-top:16px}
+#adminAuditMore{margin:16px 20px 20px}
 @media(max-width:620px){.admin-freshness-grid{grid-template-columns:1fr;gap:18px}.admin-audit-row{grid-template-columns:20px minmax(0,1fr)}.admin-audit-row time{grid-column:2}.admin-freshness .admin-panel-head,.admin-audit-panel .admin-panel-head{flex-wrap:wrap;gap:8px}}

@@ -83,7 +83,7 @@ document.addEventListener('keydown',openFormControl,true);
 document.addEventListener('keydown',event=>{if(event.key==='Escape')controlIntent++;},true);
 
 function ensureAdminModule(){
-  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=20261008-data-health',script:'js/admin.js?v=20261008-data-health',ready:()=>window.FBZAdmin});
+  return ensureFeatureModule({key:'admin',styleId:'adminStyles',style:'admin.css?v=20261008-data-health2',script:'js/admin.js?v=20261008-data-health',ready:()=>window.FBZAdmin});
 }
 function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=20261007-community',script:'js/entities.js?v=20261007-details',ready:()=>window.FBZEntities});
