@@ -398,7 +398,7 @@
     const console=document.getElementById('adminConsole');if(console){console.hidden=true;console.inert=true;}
     const user=CU.id,route=routeVersion;
     try{
-      const security=await FBZFeatures.load({key:'adminSecurity',script:'js/admin-security.js?v=20261008-admin-mfa',ready:()=>window.FBZAdminSecurity});
+      const security=await FBZFeatures.load({key:'adminSecurity',script:'js/admin-security.js?v=20261009-admin-mfa-qr1',ready:()=>window.FBZAdminSecurity});
       if(user!==CU?.id||CP!=='admin'||route!==routeVersion||!await security.mount())return;
     }catch{
       if(user===CU?.id&&CP==='admin'){
