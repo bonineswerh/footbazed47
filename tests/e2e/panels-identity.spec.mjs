@@ -51,7 +51,7 @@ for(const width of [320,390,1440])test(`scores and crests occupy separate centra
   const row=page.locator('.statistics-row').first();await expect(row).toBeVisible();
   const teams=await row.locator('.statistics-team').all(),score=await row.locator('.statistics-result').boundingBox();
   const left=await teams[0].boundingBox(),right=await teams[1].boundingBox();expect(left.x+left.width).toBeLessThanOrEqual(score.x);expect(score.x+score.width).toBeLessThanOrEqual(right.x);
-  for(const team of teams){const mark=await team.locator('.collection-mark').boundingBox(),name=await team.locator('span').last().boundingBox();expect(mark.y+mark.height).toBeLessThanOrEqual(name.y);expect(mark.width).toBeGreaterThanOrEqual(36);}
+  for(const [index,team] of teams.entries()){const mark=await team.locator('.collection-mark').boundingBox(),name=await team.locator('span').last().boundingBox();if(width>900){if(index===0)expect(mark.x+mark.width).toBeLessThanOrEqual(name.x);else expect(name.x+name.width).toBeLessThanOrEqual(mark.x);}else expect(mark.y+mark.height).toBeLessThanOrEqual(name.y);expect(mark.width).toBeGreaterThanOrEqual(36);}
   await page.getByRole('button',{name:'Клубы',exact:true}).click();const styles=await page.locator('.statistics-row').evaluateAll(rows=>rows.map(row=>({primary:row.style.getPropertyValue('--club-home'),secondary:row.style.getPropertyValue('--club-home-secondary'),paint:getComputedStyle(row).backgroundImage})));
   expect(styles.length).toBe(2);expect(styles[0].primary).not.toBe(styles[1].primary);expect(styles[0].paint).not.toBe(styles[1].paint);await noOverflow(page);
 });

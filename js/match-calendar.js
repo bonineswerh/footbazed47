@@ -49,6 +49,7 @@ function setPeriod(open){
 function renderPeriod(){
   const months=document.getElementById('calendarPeriodMonths'),years=document.getElementById('calendarPeriodYears');
   months.innerHTML=Array.from({length:12},(_,month)=>`<button type="button" data-period-month="${month}" tabindex="${month===periodMonth?0:-1}" aria-pressed="${month===periodMonth}" ${FBZActions.attrs('calendar.period-month',[month])}>${esc(new Date(2026,month,1).toLocaleDateString(language(),{month:'long'}))}</button>`).join('');
+  months.querySelector(`[data-period-month="${periodMonth}"]`)?.scrollIntoView({block:'center'});
   const from=Math.max(1000,yearWindow-60),until=Math.min(9999,yearWindow+60);
   document.getElementById('calendarYearsRange').textContent=from+'–'+until;
   const arrows=document.querySelectorAll('.calendar-year-range button');arrows[0].disabled=from===1000;arrows[1].disabled=until===9999;

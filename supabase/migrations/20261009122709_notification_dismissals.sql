@@ -16,12 +16,20 @@ create policy "Owners dismiss visible notifications" on public.notification_dism
     select 1 from public.notifications n where n.id=notification_id and n.user_id=(select auth.uid())));
 create policy "Owners restore their notifications" on public.notification_dismissals
   for delete to authenticated using(user_id=(select auth.uid()));
+-- Break the policy cycle: dismissal INSERT checks the visible inbox, while
+-- inbox SELECT checks dismissal metadata. This private predicate only reveals
+-- the caller's own dismissal and never reads the underlying notification.
+create function private.is_notification_dismissed(p_notification_id integer)
+returns boolean language sql stable security definer set search_path='' as $function$
+  select exists(select 1 from public.notification_dismissals d
+    where d.notification_id=p_notification_id and d.user_id=(select auth.uid()));
+$function$;
+revoke all on function private.is_notification_dismissed(integer) from public,anon,authenticated,service_role;
+grant execute on function private.is_notification_dismissed(integer) to authenticated;
 -- Applied to existing readers, pagination and badge counts alike. Other privacy
 -- restrictions remain in force; clearing an event never changes its read state.
 create policy "Dismissed notifications leave the inbox" on public.notifications
-  as restrictive for select to authenticated using(not exists(
-    select 1 from public.notification_dismissals d
-    where d.notification_id=notifications.id and d.user_id=(select auth.uid())));
+  as restrictive for select to authenticated using(not private.is_notification_dismissed(id));
 create function public.set_notification_dismissed(p_notification_id integer,p_dismissed boolean default true)
 returns jsonb language plpgsql volatile security invoker set search_path='' as $function$
 declare viewer uuid:=auth.uid(); affected integer;

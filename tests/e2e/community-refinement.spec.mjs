@@ -46,8 +46,8 @@ for(const width of [320,390,1440])test(`tall Tottenham logo stays inside mark an
 });
 test('confirmed like becomes red and filled, unliking restores outline',async({page})=>{
   await installSupabaseMock(page);await page.goto('/feed?__e2e=1');const like=page.locator('.like-action:not([disabled])').first();await expect(like).toHaveAttribute('aria-pressed','false');await like.click();await expect(like).toHaveAttribute('aria-pressed','true');
-  const red=await page.evaluate(()=>{const probe=document.createElement('i');probe.style.color='var(--rating-low)';document.body.append(probe);const value=getComputedStyle(probe).color;probe.remove();return value;});await expect(like).toHaveCSS('color',red);
-  await expect(like.locator('svg')).toHaveCSS('fill',await like.evaluate(b=>getComputedStyle(b).color));await like.click();await expect(like).toHaveAttribute('aria-pressed','false');await expect(like.locator('svg')).toHaveCSS('fill','none');
+  const red=await page.evaluate(()=>{const probe=document.createElement('i');probe.style.color='var(--rating-low)';document.body.append(probe);const value=getComputedStyle(probe).color;probe.remove();return value;});await expect(like.locator('.ico')).toHaveCSS('color',red);await expect(like.locator('small')).toHaveCSS('color',red);
+  await expect(like.locator('svg')).toHaveCSS('fill',red);await like.click();await expect(like).toHaveAttribute('aria-pressed','false');await expect(like.locator('svg')).toHaveCSS('fill','none');
 });
 test('expert feed displays the server-authorized label without labelling ordinary authors',async({page})=>{
   await installSupabaseMock(page);

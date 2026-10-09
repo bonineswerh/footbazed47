@@ -18,6 +18,8 @@ Every event has a separate 44px dismiss action. `notification_dismissals` retain
 
 The last dismissal can be undone while this account remains active. An error retains the confirmed event and count. Session changes clear undo state. No raw notification DELETE/INSERT grants were added. The compatible additive database migration must be deployed before this client release.
 
+The mutation remains invoker. A fixed-path private definer predicate reads only the caller's own dismissal metadata to break the cycle between inbox SELECT and dismissal INSERT policies. It neither reads event content nor bypasses existing inbox privacy or block checks; anonymous execution is denied.
+
 ## Calendar contract
 
 The period browser lives inside the existing modal and focus trap. Month/year browsing does not fetch or select a day. Keyboard arrows navigate the scrollable month/year choices; Escape returns to days first. Years are rendered in a bounded 121-year window with earlier/later navigation, covering the existing 1000–9999 model range without thousands of controls.
