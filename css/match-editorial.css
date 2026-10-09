@@ -1,13 +1,15 @@
 /* Tribuna: a shared opening screen, followed by the personal diary. */
-.home-league-ribbon{max-width:1260px;margin:0 auto;overflow:hidden;border-bottom:1px solid var(--b1);color:var(--text3);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.home-ribbon-shell{position:relative;max-width:1260px;margin:0 auto;border-bottom:1px solid var(--b1)}
+.home-ribbon-shell[hidden]{display:none}
+.home-league-ribbon{margin-right:48px;overflow:hidden;color:var(--text2);mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
 .home-league-ribbon[hidden]{display:none}
-.home-league-track{display:flex;width:max-content;animation:league-ribbon 42s linear infinite}
-.home-league-track>div{display:flex;align-items:center;gap:32px;padding:14px 16px;font-size:var(--type-meta);font-weight:500;white-space:nowrap}
-.home-league-track span{display:inline-flex;align-items:center;gap:8px}.home-league-track .ico{color:var(--accent2);opacity:.7}
+.home-league-track{display:flex;width:max-content;animation:league-ribbon 80s linear infinite}
+.home-league-track>div{display:flex;flex:none;min-width:1260px;align-items:center;justify-content:space-around;gap:24px;padding:8px 12px;font-size:var(--type-meta);font-weight:600;white-space:nowrap}
+.home-league-track span{display:inline-flex;flex:1;justify-content:center;align-items:center;gap:8px;padding:4px 10px;border:1px solid var(--b1);border-radius:99px;background:var(--bg2)}.home-league-track .ico{color:var(--accent2)}
+.home-ribbon-toggle{position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;border:1px solid transparent;border-radius:var(--radius-control);background:var(--bg2);color:var(--text2);cursor:pointer}.home-ribbon-toggle:hover{border-color:var(--b3);color:var(--accent2)}.home-ribbon-toggle:focus-visible{outline:2px solid var(--accent2);outline-offset:-2px}.home-ribbon-shell.is-paused .home-league-track{animation-play-state:paused}
 .home-pending-club{display:flex;align-items:center;gap:6px;min-width:0}.home-pending-club>span:last-child{min-width:0;overflow-wrap:anywhere}.home-pending-club .home-club-mark{flex:none;width:24px;height:24px}.home-pending-club:last-child{justify-content:flex-end}
-.home-league-ribbon:hover{color:var(--text2)}
 @keyframes league-ribbon{to{transform:translateX(-50%)}}
-@media(prefers-reduced-motion:reduce){.home-league-track{animation:none;width:auto}.home-league-track>div{flex-wrap:wrap;justify-content:center;gap:16px;white-space:normal}.home-league-track>div+div{display:none}.home-league-track span::before{margin-right:16px}}
+@media(prefers-reduced-motion:reduce){.home-ribbon-toggle{display:none}.home-league-ribbon{margin-right:0}.home-league-track{animation:none;width:auto}.home-league-track>div{min-width:0;flex-wrap:wrap;justify-content:center;gap:8px;white-space:normal}.home-league-track>div+div,.home-league-track span[data-repeat]{display:none}}
 .home-editorial{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:center;gap:32px;max-width:1260px;margin:0 auto;padding:48px 32px}
 .home-editorial .hero{min-width:0;min-height:0;margin:0;padding:0;overflow:visible;background:none;align-items:flex-start;justify-content:center;text-align:left}
 .home-editorial .hero::before,.home-editorial .hero::after{display:none}

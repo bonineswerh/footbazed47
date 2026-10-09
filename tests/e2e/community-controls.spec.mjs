@@ -30,11 +30,12 @@ test('calendar period browser does not fetch; exact entry validates and selects 
   await page.locator('#matchDay').fill('01.08.2016');await page.locator('#matchDay').press('Enter');await expect(page.locator('#calendarDateOv')).toBeHidden();await expect(page).toHaveURL(/m_day=2016-08-01/);await expect(page.locator('.calendar-caption')).toContainText('1 августа 2016');
   const calls=await page.evaluate(()=>window.__FOOTBAZED_TEST_CALENDAR__.calls());expect(calls.at(-1).p_filters).toMatchObject({from:'2016-07-31T21:00:00.000Z',until:'2016-08-01T21:00:00.000Z'});
 });
-test('liked state colors the heart and label while retaining the neutral surface',async({page})=>{
+test('liked state colors the heart and count while retaining the neutral surface',async({page})=>{
   await start(page,'/feed');const button=page.locator('.like-action:not([disabled])').first();await expect(button).toBeVisible();
   const surface=()=>button.evaluate(el=>({background:getComputedStyle(el).backgroundColor,border:getComputedStyle(el).borderColor,color:getComputedStyle(el).color}));
   await page.mouse.move(0,0);const before=await surface();await button.click();await expect(button).toHaveAttribute('aria-pressed','true');await page.mouse.move(0,0);await expect.poll(surface).toEqual(before);
-  expect(await button.locator('.ico').evaluate(el=>getComputedStyle(el).color)).toBe(await button.locator('small').evaluate(el=>getComputedStyle(el).color));
+  expect(await button.locator('.ico').evaluate(el=>getComputedStyle(el).color)).toBe(await button.locator('span').evaluate(el=>getComputedStyle(el).color));
+  await expect(button.locator('small')).toHaveCount(0);await expect(button).toHaveAttribute('aria-label','Убрать лайк');
 });
 test('profile prioritizes the diary and histogram opens exact rating records',async({page})=>{
   await start(page,'/profile/'+own);await expect(page.locator('#diaryList .rh-row').first()).toBeVisible();

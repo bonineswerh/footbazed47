@@ -1,0 +1,49 @@
+/* One selection family, independent of each screen's responsive layout. */
+body :is(.feed-filters,.community-tabs,.statistics-tabs:not(.statistics-participation),.entity-tabs,.rating-team-tabs,.md-segments,.notif-toolbar>div){
+  gap:6px;padding:6px;border:1px solid var(--surface-edge);border-radius:16px;background:var(--bg2);
+}
+body :is(.feed-filters,.community-tabs,.statistics-tabs:not(.statistics-participation),.entity-tabs,.rating-team-tabs,.md-segments,.notif-toolbar>div)>button{
+  min-height:44px;border:1px solid transparent;border-radius:var(--radius-control);background:transparent;color:var(--text2);font-weight:650;
+  box-shadow:none;transition:background var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease),color var(--motion-normal) var(--ease),box-shadow var(--motion-normal) var(--ease);
+}
+body :is(.feed-filters,.community-tabs,.statistics-tabs:not(.statistics-participation),.entity-tabs,.rating-team-tabs,.md-segments,.notif-toolbar>div)>button:is(.on,[aria-pressed=true],[aria-selected=true]){
+  background:var(--accent4);border-color:color-mix(in srgb,var(--accent2) 45%,var(--b2));color:var(--snow);box-shadow:inset 0 -2px var(--accent2);
+}
+body :is(.league-tab,.calendar-all,.calendar-day,.calendar-favorites,.statistics-confidence button,.search-categories button,.filters .btn){
+  border:1px solid var(--b2);border-radius:var(--radius-control);background:var(--bg2);color:var(--text2);
+  transition:background var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease),color var(--motion-normal) var(--ease),box-shadow var(--motion-normal) var(--ease);
+}
+body :is(.league-tab,.calendar-all,.calendar-day,.calendar-favorites,.statistics-confidence button,.search-categories button,.filters .btn):is(.on,.btn-l,[aria-pressed=true]){
+  background:var(--accent4);border-color:color-mix(in srgb,var(--accent2) 45%,var(--b2));color:var(--snow);box-shadow:inset 0 -2px var(--accent2);
+}
+body :is(.feed-filters,.community-tabs,.statistics-tabs:not(.statistics-participation),.entity-tabs,.rating-team-tabs,.md-segments,.notif-toolbar>div)>button:focus-visible,
+body :is(.league-tab,.calendar-all,.calendar-day,.calendar-favorites,.statistics-confidence button,.search-categories button,.filters .btn):focus-visible{
+  outline:2px solid var(--accent2);outline-offset:2px;
+}
+/* The entity's name and mark own their hover target; the score keeps its link. */
+body :is(.entity-text-link,.md-club-link,.feed-team,.feed-players button,.home-team-list>button,.profile-favorite-clubs>button){
+  border:1px solid transparent;border-radius:var(--radius-control);transition:background var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease),color var(--motion-normal) var(--ease);
+}
+body :is(.entity-text-link,.md-club-link){padding:3px 6px;margin-inline:-6px;text-decoration:none}
+body :is(.home-team-list>button,.profile-favorite-clubs>button){min-height:44px}
+body .feed-team{width:fit-content;max-width:100%;min-height:44px;padding:7px 8px;justify-self:start}
+body .feed-team.away{justify-self:end}
+body :is(.entity-text-link,.md-club-link,.feed-team,.feed-players button,.home-team-list>button,.profile-favorite-clubs>button):focus-visible{
+  outline:2px solid var(--accent2);outline-offset:2px;
+}
+body :is(.entity-match-club,.squad-player,.performance-row,.teammate-card,.competition-club-card):focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+@media(hover:hover){
+  body :is(.feed-filters,.community-tabs,.statistics-tabs:not(.statistics-participation),.entity-tabs,.rating-team-tabs,.md-segments,.notif-toolbar>div)>button:hover:not(:disabled):not(.on):not([aria-pressed=true]):not([aria-selected=true]),
+  body :is(.league-tab,.calendar-all,.calendar-day,.calendar-favorites,.statistics-confidence button,.search-categories button,.filters .btn):hover:not(:disabled):not(.on):not(.btn-l):not([aria-pressed=true]){background:var(--bg3);border-color:var(--b3);color:var(--snow)}
+  body :is(.entity-text-link,.md-club-link,.feed-team,.feed-players button,.home-team-list>button,.profile-favorite-clubs>button):hover{
+    background:var(--accent4);border-color:color-mix(in srgb,var(--accent2) 45%,var(--b2));color:var(--accent2);
+  }
+  body :is(.entity-match-club,.squad-player,.performance-row,.teammate-card,.competition-club-card):hover{border-color:color-mix(in srgb,var(--accent2) 45%,var(--b2));color:var(--accent2)}
+}
+body .rating-supporter-options .supporter-neutral-mark{background:var(--bg4);color:var(--snow);border:1px solid var(--b3)}
+body .rating-supporter-options .supporter-neutral-mark .ico{width:24px;height:24px;fill:currentColor}
+body .rating-supporter-options input:checked+span>.supporter-neutral-mark{background:var(--accent3);color:var(--snow);border-color:var(--accent2)}
+@media(prefers-reduced-motion:reduce){
+  body :is(.feed-filters,.community-tabs,.statistics-tabs,.entity-tabs,.rating-team-tabs,.md-segments,.notif-toolbar>div)>button,
+  body :is(.league-tab,.calendar-all,.calendar-day,.calendar-favorites,.statistics-confidence button,.search-categories button,.filters .btn,.entity-text-link,.md-club-link,.feed-team,.feed-players button,.home-team-list>button,.profile-favorite-clubs>button){transition:none}
+}

@@ -20,6 +20,17 @@ test('manual dates require a real exact day without rollover or partial years',(
   assert.equal(model.formatted('2016-08-01'),'01.08.2016');
   assert.equal(model.formatted('invalid'),'');
 });
+test('catalogue years follow imported dates, stop at this year and fail safely',()=>{
+  const now=new Date(2026,9,9);
+  assert.deepEqual(model.yearRange('2026-08-29T11:30:00Z','2026-10-21T19:00:00Z',now),{from:2026,until:2026,min:'2026-01-01',max:'2026-12-31'});
+  const historic=model.yearRange('2016-08-01T20:00:00Z','2099-01-01T20:00:00Z',now);
+  assert.equal(historic.from,2016);assert.equal(historic.until,2026);
+  assert.equal(model.within('2016-01-01',historic),true);assert.equal(model.within('2027-01-01',historic),false);
+  assert.equal(model.within('2015-12-31',historic),false);assert.equal(model.within('2026-02-30',historic),false);
+  assert.equal(model.clamp('2086-01-01',historic),'2026-12-31');assert.equal(model.clamp('1966-01-01',historic),'2016-01-01');
+  for(const dates of [[null,null],['bad','bad'],['2026-01-01','2016-01-01']])assert.equal(model.yearRange(...dates,now).from,2026);
+  assert.equal(model.yearRange('2016-01-01','2027-12-31',new Date(2027,0,1)).until,2027);
+});
 test('month navigation begins on the first day and respects the supported range',()=>{
   assert.equal(model.month('2024-03-31',-1),'2024-02-01');
   assert.equal(model.month('2026-12-31',1),'2027-01-01');

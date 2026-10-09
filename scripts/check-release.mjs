@@ -45,11 +45,16 @@ export async function enforceProductionRelease({environment=process.env,fetcher=
   wait=delay,now=Date.now,timeoutMs=25*60_000,pollMs=60_000,log=console.log}={}){
   const identity=releaseIdentity(environment);
   if(!identity)return {verified:false,commit:null,qualityRunId:null};
+  // Optional, build-only access to this repository's Actions for private repos.
+  const readToken=String(environment.FOOTBAZED_GITHUB_READ_TOKEN||'').trim();
+  if(readToken&&(!/^[\x21-\x7e]+$/.test(readToken)||readToken.length>4096))throw new Error('quality_read_token_invalid');
+  const headers={Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2026-03-10'};
+  if(readToken)headers.Authorization=`Bearer ${readToken}`;
   const deadline=now()+timeoutMs;
   let observed='';
   async function read(path){
     const response=await fetcher(`https://api.github.com/repos/${repository}/${path}`,{
-      headers:{Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2026-03-10'},
+      headers,
       redirect:'error',signal:AbortSignal.timeout(Math.max(1,Math.min(12_000,deadline-now())))
     });
     if(!response.ok){

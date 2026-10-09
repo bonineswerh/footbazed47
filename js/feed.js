@@ -82,7 +82,7 @@
       ${item.comment?`<blockquote>${esc(item.comment)}</blockquote>`:''}
       ${playerHighlights(item.player_highlights)}
       <footer class="feed-actions">
-        <button class="feed-action like-action${item.liked_by_me?' on':''}" type="button" ${own?'disabled title="Свою запись нельзя оценить"':FBZActions.attrs('feed.toggle-like',[Number(item.rating_id)])} aria-pressed="${item.liked_by_me?'true':'false'}">${ico('heart',16)}<span>${Number(item.like_count)||0}</span><small>Нравится</small></button>
+        <button class="feed-action like-action${item.liked_by_me?' on':''}" type="button" ${own?'disabled title="Свою запись нельзя оценить"':FBZActions.attrs('feed.toggle-like',[Number(item.rating_id)])} aria-pressed="${item.liked_by_me?'true':'false'}" aria-label="${item.liked_by_me?'Убрать лайк':'Поставить лайк'}">${ico('heart',18)}<span>${Number(item.like_count)||0}</span></button>
         <button class="feed-action" type="button" ${FBZActions.attrs("feed.toggle-comments",[Number(item.rating_id)])} aria-expanded="false" aria-controls="feed-comments-${Number(item.rating_id)}" aria-label="Обсудить оценку">${ico('chat',16)}<span data-comment-count>${Number(item.comment_count)||0}</span><small>Обсудить</small></button>
         ${own?`<button class="feed-action feed-edit" type="button" ${FBZActions.attrs("feed.open-rate",[Number(item.match_id)])} aria-label="Изменить оценку" title="Изменить оценку">${ico('edit',15)}<small>Изменить</small></button>`:''}
         ${!own&&CU?`<button class="feed-action feed-report" type="button" ${FBZActions.attrs('app.report-content',['rating',String(item.rating_id)])} aria-label="Пожаловаться на запись" title="Пожаловаться на запись">${ico('shield',16)}</button>`:''}
@@ -223,6 +223,7 @@
       if(user!==CU?.id||session!==sessionVersion||!button.isConnected)return;
       button.classList.toggle('on',Boolean(data?.liked));
       button.setAttribute('aria-pressed',String(Boolean(data?.liked)));
+      button.setAttribute('aria-label',data?.liked?'Убрать лайк':'Поставить лайк');
       const count=button.querySelector('span');
       if(count)count.textContent=Number(data?.like_count)||0;
     }catch(error){

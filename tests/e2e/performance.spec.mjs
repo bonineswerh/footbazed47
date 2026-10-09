@@ -53,5 +53,7 @@ for(const language of ['ru','en'])test(`home stays inside the frontend performan
   expect(result.assetPaths).not.toContain('/css/notifications.css');
   expect(result.assetPaths).not.toContain('/js/entities.js');
   expect(result.assetPaths).not.toContain('/css/entities.css');
+  expect(result.assetPaths).not.toContain('/js/calendar-data.js');
+  expect(result.assetPaths).not.toContain('/css/interaction-patterns.css');
   for(const path of ['/js/search.js','/js/profile.js','/css/profile.css','/js/share.js','/js/ratings.js','/css/ratings.css'])expect(result.assetPaths).not.toContain(path);
 });

@@ -6,9 +6,19 @@
   function leagues(names){
     const target=document.getElementById('homeLeagueRibbon');if(!target)return;
     const items=[...new Set((Array.isArray(names)?names:[]).filter(name=>typeof name==='string'&&name.trim()))].slice(0,12);
-    target.hidden=!items.length;
-    const batch=items.map(name=>`<span>${root.ico('football',14)} ${esc(FBZNames.competition(name))}</span>`).join('');
+    target.hidden=target.parentElement.hidden=!items.length;
+    // Each identical half covers the widest ribbon, even with one short name.
+    const repeated=Array.from({length:Math.ceil(12/(items.length||1))},()=>items).flat();
+    const batch=repeated.map((name,index)=>`<span${index>=items.length?' data-repeat':''}>${root.ico('football',14)} ${esc(FBZNames.competition(name))}</span>`).join('');
     target.innerHTML=items.length?`<div class="home-league-track"><div>${batch}</div><div>${batch}</div></div>`:'';
+  }
+
+  function toggleRibbon(event,button){
+    const paused=button.getAttribute('aria-pressed')!=='true';
+    button.setAttribute('aria-pressed',String(paused));
+    button.setAttribute('aria-label',paused?'Продолжить движение турниров':'Остановить движение турниров');
+    button.innerHTML=root.ico(paused?'play':'pause',16);
+    document.getElementById('homeLeagueRibbon').parentElement.classList.toggle('is-paused',paused);
   }
 
   function preferredName(user){
@@ -137,11 +147,12 @@
     root.refreshHomeDashboard?.();
   }
 
-  root.FBZHome=Object.freeze({reload,sync,spotlight,leagues});
+  root.FBZHome=Object.freeze({reload,sync,spotlight,leagues,toggleRibbon});
 })(window);
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "home.toggle-ribbon":(event,button)=>FBZHome.toggleRibbon(event,button),
   "home.go-club":(event,element,[id])=>go('club',{id:id}),
   "home.go-md":(event,element,[id])=>FBZActions.follow(event,element,()=>go('md',{mid:id})),
   "home.open-rate":(event,element,[id])=>openRate(id),

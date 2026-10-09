@@ -47,6 +47,14 @@
     return page;
   }
 
+  async function getMatchCalendarRange({force=false}={}){
+    const version=sessionVersion;
+    const calendar=await root.FBZFeatures.load({key:'calendar-data',script:'js/calendar-data.js?v=20261009-controls',ready:()=>root.FBZCalendarData});
+    if(version!==sessionVersion)throw Object.assign(new Error('Session changed'),{name:'AbortError'});
+    calendar.setSessionUser(sessionUserId);
+    return calendar.getRange({force});
+  }
+
   async function enrichMatchMedia(matches,{force=false}={}){
     const ids=[...new Set(matches.flatMap(match=>[match.home_club_id,match.away_club_id]).map(Number).filter(id=>Number.isSafeInteger(id)&&id>0))].slice(0,96).sort((a,b)=>a-b);
     if(!ids.length)return matches;
@@ -98,8 +106,9 @@
     if(next===sessionUserId)return;
     sessionUserId=next;
     sessionVersion++;
+    root.FBZCalendarData?.setSessionUser(next);
     invalidate();
   }
 
-  root.FBZData=Object.freeze({getMatchesPage,getProfilePage,getProfileDiary,getFootballStatistics,getProfileComparisonPage,enrichMatchMedia,invalidate,invalidateVisibility,setSessionUser});
+  root.FBZData=Object.freeze({getMatchesPage,getMatchCalendarRange,getProfilePage,getProfileDiary,getFootballStatistics,getProfileComparisonPage,enrichMatchMedia,invalidate,invalidateVisibility,setSessionUser});
 })(window);

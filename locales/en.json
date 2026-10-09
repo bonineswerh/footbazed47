@@ -1665,5 +1665,16 @@
   "От 5": "5 or more",
   "От 10": "10 or more",
   " — ${x.n} из 10. Показать в истории": " — ${x.n} out of 10. Show in diary",
-  "из 10. Показать в истории": "out of 10. Show in diary"
+  "из 10. Показать в истории": "out of 10. Show in diary",
+  "Выберите дату в доступном диапазоне:": "Choose a date in the available range:",
+  "Не удалось обновить диапазон дат.": "Could not update the date range.",
+  "Проверяем доступные годы…": "Checking available years…",
+  "Убрать лайк": "Remove like",
+  "Поставить лайк": "Like",
+  "Остановить движение турниров": "Pause tournament ribbon",
+  "Продолжить движение турниров": "Resume tournament ribbon",
+  "Цветовая шкала оценок": "Rating colour scale",
+  "Ожидание зрителей": "Fans’ expectation",
+  "Публичных ожиданий": "Public expectations",
+  "Оценка после игры": "Rating after the match"
 }

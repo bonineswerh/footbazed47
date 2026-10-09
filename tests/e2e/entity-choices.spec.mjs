@@ -36,8 +36,9 @@ test('late catalogue remains searchable without stealing keyboard focus',async({
   await search.fill('Манчестер Сити');await expect(search).toBeFocused();await expect(page.getByRole('option',{name:'Ман Сити',exact:true})).toBeVisible();await expect(search).toHaveValue('Манчестер Сити');await expect(search).toBeFocused();
   await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');await expect(page.locator('#statisticsFilters-club_id')).toHaveValue('31');
 });
-for(const theme of ['dark','light'])test(`selected league uses primary button text color: ${theme}`,async({page})=>{
+for(const theme of ['dark','light'])test(`selected league shares the calendar selection style: ${theme}`,async({page})=>{
   await installSupabaseMock(page);await page.addInitScript(theme=>localStorage.setItem('fbz_appearance',JSON.stringify({theme,accent:'ice'})),theme);await page.goto('/matches?__e2e=1');await expect(page.locator('.league-tab.on')).toBeVisible();
-  const leagueColor=await page.locator('.league-tab.on').evaluate(el=>getComputedStyle(el).color),buttonColor=await page.locator('.mbtn.lime').first().evaluate(el=>getComputedStyle(el).color);
-  expect(leagueColor).toBe(buttonColor);if(theme==='dark')expect(leagueColor).toBe('rgb(6, 17, 13)');
+  const style=el=>{const s=getComputedStyle(el);return {color:s.color,background:s.backgroundColor,border:s.borderTopColor,radius:s.borderRadius,shadow:s.boxShadow};};
+  const expected=await page.locator('.calendar-all.on').evaluate(style);await expect.poll(()=>page.locator('.league-tab.on').evaluate(style)).toEqual(expected);
+  await expect(page.locator('.league-tab.on')).toHaveCSS('background-image','none');
 });

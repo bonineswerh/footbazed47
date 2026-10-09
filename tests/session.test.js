@@ -5,13 +5,46 @@ const assert=require('node:assert/strict');
 const {readFileSync}=require('node:fs');
 const vm=require('node:vm');
 const dataSource=readFileSync(require.resolve('../js/data.js'),'utf8');
+const calendarDataSource=readFileSync(require.resolve('../js/calendar-data.js'),'utf8');
 const authSource=readFileSync(require.resolve('../js/auth.js'),'utf8');
 
-function dataHarness(rpc){
-  const window={sb:{rpc},FBZDomain:require('../js/domain.js')};
-  vm.runInNewContext(dataSource,{window,structuredClone,setTimeout,clearTimeout});
+function dataHarness(rpc,from){
+  const window={sb:{rpc,from},FBZDomain:require('../js/domain.js')};
+  const context={window,structuredClone,setTimeout,clearTimeout,AbortController};
+  vm.runInNewContext(calendarDataSource,context);
+  window.FBZFeatures={load:async({ready})=>ready()};
+  vm.runInNewContext(dataSource,context);
   return window.FBZData;
 }
+function calendarHarness(resolve){
+  const queries=[];
+  const data=dataHarness(()=>assert.fail('Calendar coverage must not call a provider or RPC'),table=>{
+    const query={table};queries.push(query);
+    const builder={select(fields){query.fields=fields;return builder;},lt(column,value){query.cutoff={column,value};return builder;},order(column,options){query.order={column,...options};return builder;},limit(value){query.limit=value;return builder;},abortSignal(signal){query.signal=signal;return builder;},then(yes,no){return Promise.resolve(resolve(query)).then(yes,no);}};
+    return builder;
+  });
+  return {data,queries};
+}
+test('calendar coverage reads only two date edges, excludes next year and caches a copy',async()=>{
+  const {data,queries}=calendarHarness(q=>({data:[{match_date:q.order.ascending?'2016-08-01T12:00:00Z':'2026-10-09T12:00:00Z'}]}));
+  const range=await data.getMatchCalendarRange();range.first='mutated';
+  assert.equal((await data.getMatchCalendarRange()).first,'2016-08-01T12:00:00Z');assert.equal(queries.length,2);
+  for(const q of queries){assert.equal(q.table,'matches');assert.equal(q.fields,'match_date');assert.equal(q.limit,1);assert.equal(q.order.column,'match_date');assert.equal(q.cutoff.column,'match_date');assert.equal(new Date(q.cutoff.value).getFullYear(),new Date().getFullYear()+1);assert.ok(q.signal instanceof AbortSignal);}
+  assert.equal(queries[0].order.ascending,true);assert.equal(queries[1].order.ascending,false);
+  await data.getMatchCalendarRange({force:true});assert.equal(queries.length,4);
+});
+test('calendar coverage errors and a late old-account response never populate the cache',async()=>{
+  let fail=true;
+  const first=calendarHarness(()=>fail?{error:{message:'offline'}}:{data:[]});
+  await assert.rejects(first.data.getMatchCalendarRange(),{message:'offline'});fail=false;
+  assert.equal((await first.data.getMatchCalendarRange()).first,null);assert.equal(first.queries.length,4);
+  const pending=[];let delay=true;
+  const second=calendarHarness(()=>delay?new Promise(resolve=>pending.push(resolve)):{data:[]});
+  second.data.setSessionUser('owner');const request=second.data.getMatchCalendarRange();
+  await new Promise(resolve=>setImmediate(resolve));second.data.setSessionUser(null);for(const resolve of pending)resolve({data:[{match_date:'2016-08-01T12:00:00Z'}]});
+  await assert.rejects(request,{name:'AbortError'});delay=false;
+  assert.equal((await second.data.getMatchCalendarRange()).first,null);assert.equal(second.queries.length,4);
+});
 test('comparison responses cannot cross account changes and are not cached',async()=>{
   let complete;
   const data=dataHarness(()=>new Promise(resolve=>{complete=resolve;}));
