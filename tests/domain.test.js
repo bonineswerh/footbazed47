@@ -4,6 +4,11 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const domain=require('../js/domain.js');
 
+test('only transient read failures can preserve an already authorized result',()=>{
+  for(const error of [new TypeError('Failed to fetch'),{code:'',message:'network unavailable'},{code:'PGRST003'},{status:503}])assert.equal(domain.canRetainReadResult(error),true);
+  for(const error of [{name:'AbortError'},{code:'42501'},{code:'PGRST301'},{code:'FBZ_PROFILE_UNAVAILABLE'},{status:403},{status:404},{code:'unexpected'},{code:'PGRST003',status:401},null])assert.equal(domain.canRetainReadResult(error),false);
+});
+
 test('match presentation distinguishes a real goalless draw from missing scores',()=>{
   const draw=domain.matchScorePresentation({status:'finished',home_score:0,away_score:0});
   assert.equal(draw.hasScore,true);

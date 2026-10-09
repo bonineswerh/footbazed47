@@ -1,4 +1,13 @@
 {
+  "Найти в истории": "Search this history",
+  "Введите существующую дату": "Enter a valid date",
+  "Оценка должна быть целым числом от 1 до 10": "Rating must be a whole number from 1 to 10",
+  "Число голов должно быть целым числом от 0 до 99": "Goals must be a whole number from 0 to 99",
+  "Проверьте значение фильтра": "Check the filter value",
+  "Загрузка страницы…": "Loading page…",
+  "Не удалось открыть страницу. Показаны предыдущие результаты.": "This page could not be loaded. Previous results are still shown.",
+  "Показать без фильтров": "Show without filters",
+  "Показать всю историю": "Show full history",
   "Язык и оформление": "Language and appearance",
   "Язык интерфейса": "Interface language",
   "Русский": "Русский",

@@ -128,7 +128,7 @@
   }
 
   function renderClubOverview(payload){
-    const upcoming=payload.matches.filter(match=>match.status==='live'||match.status==='scheduled').slice(0,5);
+    const upcoming=FBZDomain.sortMatches(payload.matches.filter(match=>match.status==='live'||match.status==='scheduled')).slice(0,5);
     const rated=Array.isArray(payload.rated_performers)?payload.rated_performers:topPlayers(payload.squad);
     return`<div class="entity-overview-grid">
       <section class="entity-section">

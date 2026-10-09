@@ -304,5 +304,14 @@ c05958 e8e3dd|Спартак|Спартак Москва|Spartak Moscow
     return [...groups].map(([kind,items])=>({kind,items}));
   }
 
-  return Object.freeze({authErrorMessage,canonicalClubName,clubDisplayName,matchTeamName,matchScorePresentation,ratingEvidence,searchResultGroups,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft});
+  // Only transient read failures may leave an already authorized result visible.
+  // Access changes, cancellation and unknown database errors fail closed.
+  function canRetainReadResult(error){
+    if(!error||error.name==='AbortError')return false;
+    const code=String(error.code||''),status=Number(error.status||error.statusCode||0);
+    if([401,403,404].includes(status))return false;
+    if(code)return ['PGRST000','PGRST001','PGRST002','PGRST003','57014','53300','53400','57P01','57P02','57P03','08000','08003','08006'].includes(code);
+    return !status||status>=500&&status<600;
+  }
+  return Object.freeze({authErrorMessage,canonicalClubName,clubDisplayName,matchTeamName,matchScorePresentation,ratingEvidence,searchResultGroups,clubPalette,clubColor,matchPaletteStyle,countLabel,profileActivity,normalizeSearchQuery,ratingPresentation,ratingTone,sortMatches,validateRatingDraft,canRetainReadResult});
 });
