@@ -1630,5 +1630,10 @@
   "Защита подтверждена": "Security verified",
   "Сессия завершена. Выйдите из аккаунта и войдите снова.": "Your session has ended. Sign out and sign in again.",
   "Подтвердите защиту администратора и повторите действие.": "Verify administrator security and repeat the action.",
-  "Не удалось загрузить защиту администратора. Повторите вход в раздел.": "Unable to load administrator security. Reopen this section."
+  "Не удалось загрузить защиту администратора. Повторите вход в раздел.": "Unable to load administrator security. Reopen this section.",
+  "Не удалось получить данные подключения. Закройте окно, удалите незавершённый черновик и попробуйте снова.": "Unable to obtain setup details. Close this dialog, remove the unfinished setup and try again.",
+  "Не удалось показать QR-код. Добавьте FOOTBAZED вручную с ключом ниже, затем введите код из приложения.": "Unable to display the QR code. Add FOOTBAZED manually using the key below, then enter the code from your app.",
+  "Подключаем…": "Connecting…",
+  "Добавьте аккаунт вручную": "Add the account manually",
+  "В приложении-аутентификаторе выберите ввод ключа вручную. После добавления аккаунта введите полученные шесть цифр.": "Choose manual key entry in your authenticator app. After adding the account, enter its six-digit code."
 }

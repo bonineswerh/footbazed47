@@ -23,8 +23,25 @@
   }
   function errorText(error){
     if(error?.code==='admin_session_invalid')return 'Сессия завершена. Выйдите из аккаунта и войдите снова.';
+    if(error?.code==='mfa_setup_response_invalid')return 'Не удалось получить данные подключения. Закройте окно, удалите незавершённый черновик и попробуйте снова.';
     const codes={mfa_verification_failed:'Неверный или устаревший код. Введите текущие шесть цифр из приложения.',mfa_challenge_expired:'Код устарел. Введите новый код из приложения.',over_request_rate_limit:'Слишком много попыток. Подождите и попробуйте снова.',over_mfa_rate_limit:'Слишком много попыток. Подождите и попробуйте снова.',mfa_factor_name_conflict:'Устройство с таким именем уже существует. Выберите другое имя.',too_many_enrolled_mfa_factors:'Достигнут лимит устройств. Удалите незавершённое подключение и повторите.',insufficient_aal:'Сначала подтвердите код с уже подключённого устройства.'};
     return codes[error?.code]||'Не удалось проверить защиту. Повторите попытку; доступ к админке пока закрыт.';
+  }
+  function qrImageSource(value){
+    // Auth's pixel-by-pixel SVG can exceed 100 kB. Keep a bounded image only,
+    // never insert SVG markup into the document or accept an external URL.
+    if(typeof value!=='string'||value.length>1024*1024||!/^data:image\/svg\+xml[;,]/i.test(value))return null;
+    const comma=value.indexOf(','),header=value.slice(0,comma);let payload=value.slice(comma+1);
+    if(comma<0||!payload)return null;
+    if(/;base64$/i.test(header))return `data:image/svg+xml;base64,${payload}`;
+    if(!payload.trimStart().startsWith('<')){try{payload=decodeURIComponent(payload);}catch{return null;}}
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(payload)}`;
+  }
+  function manualFallback(stamp){
+    if(!valid(stamp))return;
+    document.getElementById('adminMfaQr')?.remove();
+    const details=document.querySelector('#adminMfaModal .admin-security-manual');if(details)details.open=true;
+    status('Не удалось показать QR-код. Добавьте FOOTBAZED вручную с ключом ниже, затем введите код из приложения.');
   }
   function status(message){const el=document.getElementById('adminMfaStatus');if(el)el.textContent=message;}
   function shell(title,body){
@@ -62,19 +79,22 @@
     if(busy||setup)return;const stamp=version;busy=true;
     const name=document.getElementById('adminMfaName')?.value.trim();
     if(!name){busy=false;status('Укажите название устройства.');return;}
+    const button=document.querySelector('#adminMfaModal [data-fbz-click="admin-security.enroll"]');
+    if(button){button.disabled=true;button.textContent='Подключаем…';}
     try{
       const {data,error}=await api().enroll({factorType:'totp',friendlyName:name,issuer:'FOOTBAZED'});
       if(!valid(stamp))return;if(error)throw error;
-      if(!data?.id||!/^data:image\/svg\+xml[;,]/.test(data.totp?.qr_code||'')||data.totp.qr_code.length>100000)throw new Error('invalid_qr');
+      if(typeof data?.id!=='string'||!data.id||typeof data.totp?.secret!=='string'||!/^([A-Z2-7]{16,128})={0,6}$/.test(data.totp.secret))throw Object.assign(new Error('mfa_setup_response_invalid'),{code:'mfa_setup_response_invalid'});
+      const qr=qrImageSource(data.totp.qr_code);
       // Only a temporary factor ID is retained. QR/secret/code never enter storage or logs.
       root.FBZOverlay.close('adminMfaModal');const current=version;
-      shell('Сканируйте QR-код',`<p>Откройте аутентификатор, добавьте аккаунт по QR-коду и введите полученные шесть цифр.</p><img id="adminMfaQr" class="admin-security-qr" alt="QR-код для приложения-аутентификатора" width="220" height="220"><details class="admin-security-manual"><summary>Не могу сканировать QR-код</summary><p>Добавьте аккаунт вручную: название FOOTBAZED, ключ ниже, тип — по времени. Храните ключ только в своём аутентификаторе.</p><code id="adminMfaManualKey"></code></details>${codeForm()}`);
-      setup={id:data.id};const qr=data.totp.qr_code;
-      document.getElementById('adminMfaQr').src=qr.includes(';base64,')?qr:`data:image/svg+xml;charset=utf-8,${encodeURIComponent(qr.slice(qr.indexOf(',')+1))}`;
-      document.getElementById('adminMfaManualKey').textContent=String(data.totp.secret||'');
+      shell(qr?'Сканируйте QR-код':'Добавьте аккаунт вручную',`<p>${qr?'Откройте аутентификатор, добавьте аккаунт по QR-коду и введите полученные шесть цифр.':'В приложении-аутентификаторе выберите ввод ключа вручную. После добавления аккаунта введите полученные шесть цифр.'}</p>${qr?'<img id="adminMfaQr" class="admin-security-qr" alt="QR-код для приложения-аутентификатора" width="220" height="220">':''}<details class="admin-security-manual"><summary>Не могу сканировать QR-код</summary><p>Добавьте аккаунт вручную: название FOOTBAZED, ключ ниже, тип — по времени. Храните ключ только в своём аутентификаторе.</p><code id="adminMfaManualKey"></code></details>${codeForm()}`);
+      setup={id:data.id};document.getElementById('adminMfaManualKey').textContent=data.totp.secret;
+      if(qr){const image=document.getElementById('adminMfaQr');image.addEventListener('error',()=>manualFallback(current),{once:true});image.src=qr;}
+      else manualFallback(current);
       if(current!==version)setup=null;
     }catch(error){if(valid(stamp))status(errorText(error));}
-    finally{busy=false;}
+    finally{if(stamp===version){busy=false;if(button){button.disabled=false;button.textContent='Подключить';}}}
   }
   async function verify(event){
     event.preventDefault();if(busy)return;
