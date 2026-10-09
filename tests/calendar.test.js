@@ -13,6 +13,13 @@ test('day navigation crosses leap, month and year boundaries',()=>{
   assert.equal(model.shift('1000-01-01',-1),null);
   assert.equal(model.shift('9999-12-31',1),null);
 });
+test('manual dates require a real exact day without rollover or partial years',()=>{
+  assert.equal(model.exact('01.08.2016'),'2016-08-01');
+  assert.equal(model.exact(' 29.02.2024 '),'2024-02-29');
+  for(const value of ['31.02.2024','29.02.2026','1.8.2016','01.08.16','2016-08-01','00.01.2026','01.13.2026','01.01.0999',''])assert.equal(model.exact(value),null);
+  assert.equal(model.formatted('2016-08-01'),'01.08.2016');
+  assert.equal(model.formatted('invalid'),'');
+});
 test('month navigation begins on the first day and respects the supported range',()=>{
   assert.equal(model.month('2024-03-31',-1),'2024-02-01');
   assert.equal(model.month('2026-12-31',1),'2027-01-01');

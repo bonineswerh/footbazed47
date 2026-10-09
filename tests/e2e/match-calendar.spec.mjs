@@ -11,7 +11,7 @@ test('calendar date and favorites filter the complete catalogue before paging',a
   await page.goto('/matches?__e2e=1');
   await expect(page.locator('#matchG .mcard')).toHaveCount(24);
   await page.getByRole('button',{name:'Выбрать дату',exact:true}).click();
-  await page.locator('#matchDay').fill('2099-10-07');
+  await page.locator('#matchDay').fill('07.10.2099');await page.locator('#matchDay').press('Enter');
   await expect(page.locator('.calendar-caption')).toContainText('7 октября 2099');
   await page.getByRole('button',{name:'Матчи любимых клубов',exact:true}).click();
   await expect(page.locator('.match-results-summary')).toContainText('Показано 24 из 27');
@@ -29,10 +29,10 @@ test('calendar date and favorites filter the complete catalogue before paging',a
 test('date navigation and empty results remain recoverable with keyboard focus',async({page})=>{
   await installSupabaseMock(page,{matches:fixtures()});
   await page.goto('/matches?__e2e=1&m_day=2099-10-07');
-  await expect(page.locator('#matchDay')).toHaveValue('2099-10-07');
+  await expect(page.locator('#matchDay')).toHaveValue('07.10.2099');
   await page.getByRole('button',{name:'Следующий день'}).focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('#matchDay')).toHaveValue('2099-10-08');
+  await expect(page.locator('#matchDay')).toHaveValue('08.10.2099');
   await expect(page.getByRole('button',{name:'Следующий день'})).toBeFocused();
   await expect(page.locator('#matchG .mcard')).toHaveCount(1);
   await page.getByRole('button',{name:'Следующий день'}).click();
@@ -128,7 +128,7 @@ test('English calendar stays lazy on home and uses localized day controls',async
   await expect(page.getByRole('button',{name:'Favourite club matches',exact:true})).toBeVisible();
   await expect(page.locator('.calendar-caption')).toContainText('7 October 2099');
   await page.getByRole('button',{name:'Next day'}).click();
-  await expect(page.locator('#matchDay')).toHaveValue('2099-10-08');
+  await expect(page.locator('#matchDay')).toHaveValue('08.10.2099');
 });
 test.describe('viewer timezone',()=>{
   test.use({timezoneId:'Europe/Moscow'});

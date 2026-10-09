@@ -2,13 +2,13 @@
 'use strict';
 const model=root.FBZCalendarModel;
 let day=null,favorites=false,owner=null,mounted=false;
-let pickerMonth=null,pickerFocus=null;
+let pickerMonth=null,pickerFocus=null,periodMonth=null,periodYear=null,yearWindow=null;
 const language=()=>root.FBZLocale.language==='en'?'en-GB':'ru-RU';
 function close(){root.FBZOverlay.close('calendarDateOv',false);}
 function ensurePicker(){
   if(document.getElementById('calendarDateOv'))return;
   const overlay=document.createElement('div');overlay.id='calendarDateOv';overlay.className='overlay calendar-overlay';overlay.dataset.closeBackdrop='true';overlay.tabIndex=-1;overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-hidden','true');overlay.setAttribute('aria-labelledby','calendarDateTitle');
-  overlay.innerHTML=`<section class="calendar-panel"><header><div><span class="section-kicker">Матчи</span><h2 id="calendarDateTitle">Выбрать дату</h2></div><button class="btn btn-g calendar-close" type="button" aria-label="Закрыть календарь" data-fbz-click="calendar.close">${ico('close',18)}</button></header><div class="calendar-panel-body"><div class="calendar-month-nav"><button class="calendar-arrow" type="button" aria-label="Предыдущий месяц" ${FBZActions.attrs('calendar.month',[-1])}>‹</button><strong id="calendarMonthLabel" aria-live="polite"></strong><button class="calendar-arrow" type="button" aria-label="Следующий месяц" ${FBZActions.attrs('calendar.month',[1])}>›</button></div><div class="calendar-weekdays" aria-hidden="true">${Array.from({length:7},(_,i)=>`<span>${new Date(2026,9,5+i).toLocaleDateString(language(),{weekday:'short'})}</span>`).join('')}</div><div class="calendar-month-grid" id="calendarMonthGrid" role="group" aria-labelledby="calendarMonthLabel"></div><label class="calendar-exact" for="matchDay"><span>Перейти к дате</span><input class="input" type="date" id="matchDay" min="1000-01-01" max="9999-12-31" aria-label="Выбрать дату" data-fbz-change="calendar.date"></label></div><footer><button class="btn btn-g" type="button" data-fbz-click="calendar.all">Все даты</button><button class="btn btn-l" type="button" data-fbz-click="calendar.today">Сегодня</button></footer></section>`;
+  overlay.innerHTML=`<section class="calendar-panel"><header><div><span class="section-kicker">Матчи</span><h2 id="calendarDateTitle">Выбрать дату</h2></div><button class="btn btn-g calendar-close" type="button" aria-label="Закрыть календарь" data-fbz-click="calendar.close">${ico('close',18)}</button></header><div class="calendar-panel-body"><div class="calendar-month-nav"><button class="calendar-arrow" type="button" aria-label="Предыдущий месяц" ${FBZActions.attrs('calendar.month',[-1])}>‹</button><button class="calendar-period-trigger" type="button" id="calendarPeriodTrigger" aria-expanded="false" aria-controls="calendarMonthPicker" data-fbz-click="calendar.period"><strong id="calendarMonthLabel" aria-live="polite"></strong>${ico('chevron',14)}</button><button class="calendar-arrow" type="button" aria-label="Следующий месяц" ${FBZActions.attrs('calendar.month',[1])}>›</button></div><div id="calendarDayPicker"><div class="calendar-weekdays" aria-hidden="true">${Array.from({length:7},(_,i)=>`<span>${new Date(2026,9,5+i).toLocaleDateString(language(),{weekday:'short'})}</span>`).join('')}</div><div class="calendar-month-grid" id="calendarMonthGrid" role="group" aria-labelledby="calendarMonthLabel"></div><form class="calendar-exact" data-fbz-submit="calendar.exact" novalidate><label for="matchDay">Перейти к дате</label><div><input class="input" type="text" inputmode="numeric" id="matchDay" maxlength="10" placeholder="ДД.ММ.ГГГГ" autocomplete="off" aria-describedby="calendarExactError" aria-label="Введите дату" data-fbz-input="calendar.exact-input"><button class="btn btn-l" type="submit" aria-label="Перейти к введённой дате">${ico('chevron',18)}</button></div><p id="calendarExactError" role="status" hidden></p></form></div><section class="calendar-period-picker" id="calendarMonthPicker" aria-labelledby="calendarBrowseTitle" hidden><h3 id="calendarBrowseTitle">Месяц и год</h3><div class="calendar-period-columns"><div id="calendarPeriodMonths" role="group" aria-label="Месяц"></div><div><div class="calendar-year-range"><button type="button" aria-label="Предыдущие годы" data-fbz-click="calendar.years" data-fbz-args="[-100]">‹</button><span id="calendarYearsRange"></span><button type="button" aria-label="Следующие годы" data-fbz-click="calendar.years" data-fbz-args="[100]">›</button></div><div id="calendarPeriodYears" role="group" aria-label="Год"></div></div></div><button class="btn btn-l calendar-period-apply" type="button" data-fbz-click="calendar.period-apply">Показать месяц</button></section></div><footer><button class="btn btn-g" type="button" data-fbz-click="calendar.all">Все даты</button><button class="btn btn-l" type="button" data-fbz-click="calendar.today">Сегодня</button></footer></section>`;
   document.body.append(overlay);
   overlay.addEventListener('keydown',event=>{
     const button=event.target.closest('[data-picker-day]');if(!button)return;
@@ -22,6 +22,44 @@ function ensurePicker(){
     event.preventDefault();if(!next)return;
     pickerFocus=next;pickerMonth=model.month(next);renderPicker();overlay.querySelector('[data-picker-day="'+next+'"]')?.focus({preventScroll:true});
   });
+  // A secondary view stays inside the same focus trap. Escape returns to days
+  // before it closes the calendar; browsing never changes the server filters.
+  overlay.addEventListener('keydown',event=>{
+    if(document.getElementById('calendarMonthPicker').hidden)return;
+    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();setPeriod(false);document.getElementById('calendarPeriodTrigger').focus();return;}
+    const button=event.target.closest('[data-period-month],[data-period-year]');
+    if(!button||!['ArrowUp','ArrowDown','Home','End'].includes(event.key))return;
+    event.preventDefault();
+    const siblings=[...button.parentElement.querySelectorAll('button')],index=siblings.indexOf(button);
+    const next=event.key==='Home'?0:event.key==='End'?siblings.length-1:Math.max(0,Math.min(siblings.length-1,index+(event.key==='ArrowDown'?1:-1)));
+    siblings[next]?.focus();
+  },true);
+}
+function exactError(invalid){
+  const input=document.getElementById('matchDay'),message=document.getElementById('calendarExactError');
+  input.setAttribute('aria-invalid',String(invalid));message.hidden=!invalid;
+  message.textContent=invalid?'Введите существующую дату в формате ДД.ММ.ГГГГ.':'';
+}
+function setPeriod(open){
+  document.getElementById('calendarDayPicker').hidden=open;
+  document.getElementById('calendarMonthPicker').hidden=!open;
+  document.getElementById('calendarPeriodTrigger').setAttribute('aria-expanded',String(open));
+  document.querySelectorAll('#calendarDateOv .calendar-month-nav>.calendar-arrow').forEach(button=>button.hidden=open);
+}
+function renderPeriod(){
+  const months=document.getElementById('calendarPeriodMonths'),years=document.getElementById('calendarPeriodYears');
+  months.innerHTML=Array.from({length:12},(_,month)=>`<button type="button" data-period-month="${month}" tabindex="${month===periodMonth?0:-1}" aria-pressed="${month===periodMonth}" ${FBZActions.attrs('calendar.period-month',[month])}>${esc(new Date(2026,month,1).toLocaleDateString(language(),{month:'long'}))}</button>`).join('');
+  const from=Math.max(1000,yearWindow-60),until=Math.min(9999,yearWindow+60);
+  document.getElementById('calendarYearsRange').textContent=from+'–'+until;
+  const arrows=document.querySelectorAll('.calendar-year-range button');arrows[0].disabled=from===1000;arrows[1].disabled=until===9999;
+  const focusYear=Math.max(from,Math.min(until,periodYear));
+  years.innerHTML=Array.from({length:until-from+1},(_,i)=>from+i).map(year=>`<button type="button" data-period-year="${year}" tabindex="${year===focusYear?0:-1}" aria-pressed="${year===periodYear}" ${FBZActions.attrs('calendar.period-year',[year])}>${year}</button>`).join('');
+  years.querySelector(`[data-period-year="${focusYear}"]`)?.scrollIntoView({block:'center'});
+}
+function openPeriod(){
+  if(!document.getElementById('calendarMonthPicker').hidden){setPeriod(false);return;}
+  const date=model.parse(pickerMonth);periodMonth=date.getMonth();periodYear=date.getFullYear();yearWindow=Math.max(1060,Math.min(9939,periodYear));
+  setPeriod(true);renderPeriod();document.querySelector(`[data-period-month="${periodMonth}"]`)?.focus({preventScroll:true});
 }
 function renderPicker(){
   const overlay=document.getElementById('calendarDateOv'),first=model.parse(pickerMonth);if(!overlay||!first)return;
@@ -34,7 +72,7 @@ function renderPicker(){
   }).join('');
 }
 function openPicker(){
-  ensurePicker();pickerFocus=day||model.key();pickerMonth=model.month(pickerFocus);renderPicker();document.getElementById('matchDay').value=day||'';root.FBZOverlay.open('calendarDateOv','[data-picker-day="'+pickerFocus+'"]');
+  ensurePicker();pickerFocus=day||model.key();pickerMonth=model.month(pickerFocus);renderPicker();document.getElementById('matchDay').value=model.formatted(day);setPeriod(false);exactError(false);root.FBZOverlay.open('calendarDateOv','[data-picker-day="'+pickerFocus+'"]');
 }
 function writeLocation(){
   const url=new URL(location.href);
@@ -53,7 +91,7 @@ function render(){
     const date=model.parse(value),selected=value===day;
     return `<button type="button" class="calendar-day${selected?' on':''}${value===today?' today':''}" aria-pressed="${selected}" aria-label="${date.toLocaleDateString(language,{weekday:'long',day:'numeric',month:'long',year:'numeric'})}" data-calendar-focus="${value}" ${FBZActions.attrs('calendar.day',[value])}><span>${value===today?'Сегодня':date.toLocaleDateString(language,{weekday:'short'})}</span><b>${date.getDate()}</b></button>`;
   }).join('')}</div><button type="button" class="calendar-arrow" aria-label="Следующий день" data-calendar-focus="next" data-fbz-click="calendar.shift" data-fbz-args="[1]">›</button></div><p class="calendar-caption" role="status">${label}${favorites?' · Любимые клубы':''}</p>`;
-  const input=document.getElementById('matchDay');if(input)input.value=day||'';
+  const input=document.getElementById('matchDay');if(input)input.value=model.formatted(day);
   if(focus){const control=[...target.querySelectorAll('[data-calendar-focus]')].find(el=>el.dataset.calendarFocus===focus);control?.focus({preventScroll:true});}
   target.querySelector('.calendar-day.on')?.scrollIntoView({block:'nearest',inline:'center',behavior:'instant'});
 }
@@ -100,7 +138,13 @@ FBZActions.register({
   'calendar.month':(event,element,[amount])=>{const next=model.month(pickerMonth,Number(amount));if(next){pickerMonth=next;pickerFocus=next;renderPicker();}},
   'calendar.all':()=>update(null),
   'calendar.day':(event,element,[value])=>update(value),
-  'calendar.date':(event,element)=>update(element.value||null),
+  'calendar.exact':()=>{const value=model.exact(document.getElementById('matchDay').value);if(value)update(value);else{exactError(true);document.getElementById('matchDay').focus();}},
+  'calendar.exact-input':()=>exactError(false),
+  'calendar.period':()=>openPeriod(),
+  'calendar.period-month':(event,element,[value])=>{periodMonth=Number(value);renderPeriod();document.querySelector(`[data-period-month="${periodMonth}"]`)?.focus({preventScroll:true});},
+  'calendar.period-year':(event,element,[value])=>{periodYear=Number(value);renderPeriod();document.querySelector(`[data-period-year="${periodYear}"]`)?.focus({preventScroll:true});},
+  'calendar.years':(event,element,[value])=>{yearWindow=Math.max(1060,Math.min(9939,yearWindow+Number(value)));renderPeriod();},
+  'calendar.period-apply':()=>{const next=String(periodYear).padStart(4,'0')+'-'+String(periodMonth+1).padStart(2,'0')+'-01';if(!model.parse(next))return;pickerMonth=next;pickerFocus=next;setPeriod(false);renderPicker();document.getElementById('calendarPeriodTrigger').focus({preventScroll:true});},
   'calendar.shift':(event,element,[amount])=>{const next=model.shift(day||model.key(),Number(amount));if(next)update(next);},
   'calendar.favorites':()=>{if(!CU){openAuth();return;}favorites=!favorites;writeLocation();render();loadM(true);}
 });

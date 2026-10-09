@@ -1,5 +1,6 @@
 const fixture={
   expectations:[],
+  notificationDismissals:[],
   userBlocks:[],
   sessionUser:{id:'3615141a-7700-46b8-9ba5-e4f4450537fc',email:'bazed@example.test'},
   profile:{
@@ -151,7 +152,7 @@ export async function installSupabaseMock(page,overrides={}){
         return promiseResult(structuredClone(expectationSummary(args.p_match_id)));
       }
       if(name==='get_notifications_page'||name==='get_notifications_page_v2'){
-        const visible=state.notifications.filter(n=>n.user_id===state.sessionUser?.id&&contactClear(n.from_user_id));
+        const visible=state.notifications.filter(n=>n.user_id===state.sessionUser?.id&&contactClear(n.from_user_id)&&!state.notificationDismissals.some(d=>d.notification_id===n.id&&d.user_id===state.sessionUser.id));
         const filtered=visible.filter(n=>(!args.p_unread_only||!n.read)&&(!args.p_cursor_created_at||n.created_at<args.p_cursor_created_at||(n.created_at===args.p_cursor_created_at&&n.id<args.p_cursor_id))).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id-a.id);
         const limit=Math.min(50,Math.max(1,args.p_limit||20)),rows=filtered.slice(0,limit),last=rows.at(-1);
         const items=rows.map(n=>{
@@ -167,6 +168,15 @@ export async function installSupabaseMock(page,overrides={}){
         if(args.p_notification_id&&!rows.some(n=>n.id===args.p_notification_id))return promiseResult(null,{message:'notification_unavailable'});
         let affected=0;for(const n of rows)if((n.id===args.p_notification_id||(args.p_through_id&&n.id<=args.p_through_id))&&n.read!==args.p_read){n.read=args.p_read;affected++;}
         return promiseResult({affected,unread_count:rows.filter(n=>!n.read).length});
+      }
+      if(name==='set_notification_dismissed'){
+        const user=state.sessionUser?.id,id=args.p_notification_id;
+        const owned=state.notifications.find(n=>n.id===id&&n.user_id===user&&contactClear(n.from_user_id));
+        const existing=state.notificationDismissals.find(d=>d.notification_id===id&&d.user_id===user);
+        if(!user||!owned||(!args.p_dismissed&&!existing))return promiseResult(null,{message:'notification_unavailable'});
+        if(args.p_dismissed&&!existing)state.notificationDismissals.push({notification_id:id,user_id:user});
+        else if(!args.p_dismissed)state.notificationDismissals=state.notificationDismissals.filter(d=>d!==existing);
+        return promiseResult({affected:1,unread_count:state.notifications.filter(n=>n.user_id===user&&!n.read&&contactClear(n.from_user_id)&&!state.notificationDismissals.some(d=>d.notification_id===n.id&&d.user_id===user)).length});
       }
       if(name==='get_rating_entry')return promiseResult(structuredClone(state.feed.find(r=>r.rating_id===args.p_rating_id&&contactClear(r.user_id))||null));
       if(name==='get_rating_comment')return promiseResult(structuredClone((state.comments[args.p_rating_id]||[]).find(c=>c.id===args.p_comment_id&&contactClear(c.user_id))||null));
@@ -460,7 +470,7 @@ export async function installSupabaseMock(page,overrides={}){
       if(table==='matches')return structuredClone(state.matches);
       if(table==='ratings')return state.feed.map(item=>({id:item.rating_id,user_id:item.user_id,match_id:item.match_id,match_rating:item.match_rating,comment:item.comment,is_public:true,created_at:item.created_at}));
       if(table==='friendships')return structuredClone(state.friendships.filter(item=>contactClear(item.user_id)&&contactClear(item.friend_id)));
-      if(table==='notifications')return structuredClone(state.notifications.filter(item=>contactClear(item.from_user_id)));
+      if(table==='notifications')return structuredClone(state.notifications.filter(item=>contactClear(item.from_user_id)&&!state.notificationDismissals.some(d=>d.notification_id===item.id&&d.user_id===state.sessionUser?.id)));
       if(table==='players')return structuredClone(state.players);
       if(table==='player_ratings')return state.playerRatings.map(r=>({...structuredClone(r),player:{name:state.players.find(p=>p.id===r.player_id)?.name||'Legacy Player'}}));
       if(table==='rating_likes'||table==='rating_comments'||table==='predictions'||table==='chat_messages')return[];

@@ -28,8 +28,8 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20261008-refine">
-  <link rel="stylesheet" href="css/match-editorial.css?v=20261007-community">
+  <link rel="stylesheet" href="styles.css?v=20261009-community1">
+  <link rel="stylesheet" href="css/match-editorial.css?v=20261009-community1">
   <link rel="stylesheet" href="css/typography.css?v=20261008-refine">
   <link rel="stylesheet" href="css/club-palettes.css?v=20261007-community">
 </head>
@@ -74,7 +74,7 @@
       </div>
       <button class="notif-update" id="notifUpdate" type="button" data-fbz-click="notifications.refresh" hidden>Есть обновления · Показать</button>
       <div class="notif-list" id="notifList" aria-busy="false"></div>
-      <div class="notif-footer"><span id="notifStatus" role="status"></span><button id="notifMore" class="btn btn-g btn-sm" type="button" data-fbz-click="notifications.more" hidden>Показать ещё</button></div>
+      <div class="notif-undo" id="notifUndo" hidden><span>Уведомление убрано</span><button type="button" id="notifRestore" data-fbz-click="notifications.restore">Отменить</button></div><div class="notif-footer"><span id="notifStatus" role="status"></span><button id="notifMore" class="btn btn-g btn-sm" type="button" data-fbz-click="notifications.more" hidden>Показать ещё</button></div>
     </div>
   </div>
 
@@ -552,9 +552,9 @@
         <fieldset class="rating-supporter-choice">
           <legend>За кого болеете?</legend>
           <div class="rating-supporter-options">
-            <label><input type="radio" name="ratingSupporterSide" value="home" data-fbz-change="shell.select-supporter-side"><span><i data-i="shield"></i><b id="rSupportHome">Первая команда</b><small>Болею за хозяев</small></span></label>
-            <label><input type="radio" name="ratingSupporterSide" value="neutral" data-fbz-change="shell.select-supporter-side"><span><i data-i="football"></i><b>Нейтральный зритель</b><small>Смотрю без клубной стороны</small></span></label>
-            <label><input type="radio" name="ratingSupporterSide" value="away" data-fbz-change="shell.select-supporter-side"><span><i data-i="shield"></i><b id="rSupportAway">Вторая команда</b><small>Болею за гостей</small></span></label>
+            <label><input type="radio" name="ratingSupporterSide" value="home" data-fbz-change="shell.select-supporter-side"><span><i id="rSupportHomeMark" aria-hidden="true" data-i="shield"></i><b id="rSupportHome">Первая команда</b><small>Болею за хозяев</small></span></label>
+            <label><input type="radio" name="ratingSupporterSide" value="neutral" data-fbz-change="shell.select-supporter-side"><span><i data-i="profile" aria-hidden="true"></i><b>Нейтральный зритель</b><small>Смотрю без клубной стороны</small></span></label>
+            <label><input type="radio" name="ratingSupporterSide" value="away" data-fbz-change="shell.select-supporter-side"><span><i id="rSupportAwayMark" aria-hidden="true" data-i="shield"></i><b id="rSupportAway">Вторая команда</b><small>Болею за гостей</small></span></label>
           </div>
         </fieldset>
         <p id="rExpectationNote" class="rating-rail-hint" hidden>Можно изменить до начала игры. В общий показатель входят ожидания открытых профилей.</p>
@@ -761,7 +761,7 @@
   <script src="js/home.js?v=20261007-community"></script>
   <script src="js/feature-loader.js?v=20261005"></script>
   <script src="js/notification-counter.js?v=20261008"></script>
-  <script src="app.js?v=20261009-admin-mfa-qr1"></script>
+  <script src="app.js?v=20261009-community1"></script>
   <script src="js/auth.js?v=46"></script>
   <script src="js/rating-loader.js?v=20261008-refine"></script>
   <script src="js/matches.js?v=20261008-refine"></script>

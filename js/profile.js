@@ -79,11 +79,11 @@ function renderRatingDistribution(ratings,summary){
   const max=Math.max(...counts.map(x=>x.c),1);
   return`<section class="pcard" aria-labelledby="profileDistributionTitle"><h2 class="pcard-title" id="profileDistributionTitle">${ico('chart',14)} Распределение оценок</h2>
     <div class="prdist">${counts.map(x=>`
-      <div class="prdist-row" data-tone="${FBZDomain.ratingTone(x.n)}">
+      <button class="prdist-row" type="button" data-tone="${FBZDomain.ratingTone(x.n)}" ${FBZActions.attrs('profile.rating-filter',[x.n])} aria-label="${esc(FBZDomain.countLabel(x.c,{one:'оценка',few:'оценки',many:'оценок'}))} — ${x.n} из 10. Показать в истории" ${x.c?'':'disabled'}>
         <span>${x.n}</span>
         <div class="prdist-bar"><i style="width:${Math.max((x.c/max)*100, x.c?8:0)}%"></i></div>
         <b>${x.c}</b>
-      </div>`).join('')}
+      </button>`).join('')}
     </div>
     <div class="prdist-note">${FBZDomain.countLabel(total,{one:'доступная оценка',few:'доступные оценки',many:'доступных оценок'})}. ${summary?'Вся '+(summary.scope==='own'?'ваша':'публичная')+' история.':'Полная история может быть больше.'}</div>
   </section>`;
@@ -170,10 +170,10 @@ async function loadProfile(uid){
     </div>
     <div class="pgrid">
       <div>
-        ${profileInsights}
         ${diaryMarkup()}
       </div>
       <div>
+        ${profileInsights}
         ${footballDiary}
         ${ratingDistribution}
         ${isMe&&u.invite_code?`<div class="pcard"><div class="pcard-title">${ico('link',14)} Пригласи друга</div><div style="background:var(--bg3);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:12px;word-break:break-all;font-size:var(--type-meta);color:var(--accent2)">${esc(invitationUrl(u.invite_code))}</div><button class="btn btn-l" style="width:100%" ${FBZActions.attrs("profile.copy-inv",[u.invite_code])}>${ico('copy',13)} Копировать ссылку</button></div>`:''}
@@ -237,7 +237,15 @@ async function mutateProfileFriendship(fid,accept){
     }catch(error){if(CU?.id===user&&route===routeVersion)toast('Не удалось открыть сравнение. Попробуйте ещё раз.','err');}
     finally{if(button.isConnected)button.disabled=false;}
   }
-  root.FBZProfile=Object.freeze({mount:loadProfile,mutateFriendship:mutateProfileFriendship,diaryPage:changeDiaryPage,retryDiary:loadDiary,compare,relationshipMenu,removeFriend});
+  function ratingFilter(value){
+    if(!diaryCurrent(diary)||!Number.isInteger(value)||value<1||value>10)return;
+    const form=document.getElementById('diaryFilters');
+    for(const field of form.elements)if(field.name)field.value='';
+    form.elements.namedItem('min_rating').value=String(value);form.elements.namedItem('max_rating').value=String(value);
+    form.dispatchEvent(new Event('submit',{cancelable:true}));
+    const title=document.getElementById('diaryTitle');title.tabIndex=-1;title.focus({preventScroll:true});title.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
+  }
+  root.FBZProfile=Object.freeze({mount:loadProfile,mutateFriendship:mutateProfileFriendship,diaryPage:changeDiaryPage,retryDiary:loadDiary,compare,relationshipMenu,removeFriend,ratingFilter});
 })(window);
 
 // Explicit action bindings; parameters are JSON data, never executable code.
@@ -252,6 +260,7 @@ FBZActions.register({
   "profile.diary-next":()=>FBZProfile.diaryPage(1),
   "profile.go-md":(event,element,[id])=>go('md',{mid:id}),
   "profile.retry-diary":()=>FBZProfile.retryDiary(),
+  "profile.rating-filter":(event,element,[value])=>FBZProfile.ratingFilter(value),
   "profile.accept-friend-from-profile":(event,element,[userId])=>acceptFriendFromProfile(userId),
   "profile.add-friend-from-profile":(event,element,[userId])=>addFriendFromProfile(userId),
   "profile.edit-profile":(event,element)=>{element.focus({preventScroll:true});editProfile();},
