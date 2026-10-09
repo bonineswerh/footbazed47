@@ -51,9 +51,9 @@
     form.insertAdjacentHTML('beforeend',`<div class="statistics-tabs statistics-participation" id="statisticsParticipation" role="group" aria-label="Подтверждение выступлений" hidden><select name="participation" hidden aria-label="Режим выступлений"><option value="confirmed">Только подтверждённые</option><option value="all">Вся история оценок</option></select><button type="button" data-participation="confirmed" ${FBZActions.attrs('statistics.participation',['confirmed'])}>Только подтверждённые</button><button type="button" data-participation="all" ${FBZActions.attrs('statistics.participation',['all'])}>Вся история оценок</button></div>`);
     root.FBZExplore.restore(form,s.filters);participationControls();kindControls();
     document.querySelectorAll('.statistics-tabs [data-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.kind===s.kind)));
-    dispose=root.FBZExplore.bind(form,(filters,mode)=>{if(current(s)){s.filters=filters;s.offset=0;participationControls();root.FBZExplore.writeLocation(form,filters,{kind:s.kind},mode);load();}},()=>{if(current(s)){s.version++;s.loading=true;s.hasMore=false;controls();}},()=>{
+    dispose=root.FBZExplore.bind(form,(filters,mode)=>{if(current(s)){s.filters=filters;participationControls();root.FBZExplore.writeLocation(form,filters,{kind:s.kind},mode);load({offset:0});}},()=>{if(current(s)){s.version++;s.loading=true;controls();}},()=>{
       if(!current(s))return;
-      s.loading=false;s.offset=0;s.hasMore=false;controls();
+      s.loading=false;s.offset=0;s.hasMore=false;s.resultScope=null;s.retryRequest=null;controls();
       for(const id of ['statisticsSummary','statisticsContext','statisticsCount','statisticsPage','statisticsError','statisticsList'])document.getElementById(id).replaceChildren();
       document.getElementById('statisticsContext').hidden=true;
       document.getElementById('statisticsList').setAttribute('aria-busy','false');
@@ -61,23 +61,27 @@
     form.insertAdjacentHTML('beforeend',`<div class="statistics-confidence" role="group" aria-label="Размер выборки"><span>Оценок на результат</span>${[[1,'Любое число'],[5,'От 5'],[10,'От 10']].map(([n,label])=>`<button type="button" data-statistics-votes="${n}" aria-pressed="${Number(s.filters.min_votes||1)===n}" ${FBZActions.attrs('statistics.votes',[n])}>${label}</button>`).join('')}</div>`);
     return load();
   }
-  async function load(){
+  async function load({offset=state?.offset||0,origin=null}={}){
     const s=state;if(!s||!current(s))return;
-    const version=++s.version;s.loading=true;controls();
+    const scope=JSON.stringify([s.kind,s.filters]),retain=s.resultScope===scope;
+    const version=++s.version;s.loading=true;s.retryRequest=null;controls();
     const target=document.getElementById('statisticsList');target.setAttribute('aria-busy','true');
-    document.getElementById('statisticsError').innerHTML='';
+    document.getElementById('statisticsError').innerHTML=retain?'<p class="collection-loading" role="status">Загрузка страницы…</p>':'';
+    if(!retain){
+    s.resultScope=null;s.hasMore=false;s.offset=0;
     document.getElementById('statisticsCount').textContent='';
     document.getElementById('statisticsPage').textContent='Загрузка…';
     document.getElementById('statisticsSummary').replaceChildren();
     document.getElementById('statisticsContext').replaceChildren();
     document.getElementById('statisticsContext').hidden=true;
+    target.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
+    }
     document.getElementById('statisticsTitle').textContent=kinds[s.kind];
     document.getElementById('statisticsMethod').textContent=methodology[s.kind]+(s.kind==='players'?(s.filters.participation==='all'?' Вся история включает прежние оценки без подтверждения участия; они отмечены отдельно.':' Включены только стартовые игроки и вышедшие на замену. Оставшиеся на скамейке не учитываются.')+' При выборе клуба показаны только подтверждённые выступления за него.':'')+' Обзор включает публичные оценки открытых профилей. Оценки «Только вам» не участвуют. Средние на страницах матчей учитывают все публичные оценки, поэтому могут отличаться от обзора. При менее чем пяти оценках или пяти авторах результат отмечен как предварительный.';
-    target.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
     try{
-      const data=await root.FBZData.getFootballStatistics(s.kind,{filters:{...s.filters,confirmed_only:s.kind==='players'&&s.filters.participation!=='all'},offset:s.offset,limit:12});
+      const data=await root.FBZData.getFootballStatistics(s.kind,{filters:{...s.filters,confirmed_only:s.kind==='players'&&s.filters.participation!=='all'},offset,limit:12});
       if(!current(s)||version!==s.version)return;
-      s.hasMore=Boolean(data.has_more);root.FBZExplore.populate(document.getElementById('statisticsFilters'),data);
+      s.offset=offset;s.resultScope=scope;s.hasMore=Boolean(data.has_more);root.FBZExplore.populate(document.getElementById('statisticsFilters'),data);
       kindControls();
       const summary=data.summary||{},items=data.items||[];
       document.getElementById('statisticsSummary').innerHTML=[['matches','Матчей'],[s.kind==='players'?'performance_votes':'votes',s.kind==='players'?'Оценок выступлений':'Оценок матчей'],['voters','Авторов']].map(([key,label])=>`<div><strong>${summary[key]==null?'—':Number(summary[key]).toLocaleString('ru-RU')}</strong><span>${label}</span></div>`).join('');
@@ -89,15 +93,24 @@
       document.getElementById('statisticsCount').textContent={matches:count(data.total||0,'матч','матча','матчей'),clubs:count(data.total||0,'клуб','клуба','клубов'),players:count(data.total||0,'игрок','игрока','игроков'),leagues:count(data.total||0,'турнир','турнира','турниров')}[s.kind];
       document.getElementById('statisticsPage').textContent=items.length?`${s.offset+1}–${s.offset+items.length} из ${Number(data.total)}`:'Нет результатов';
       const heading={matches:'Матч',clubs:'Клуб',players:'Игрок',leagues:'Турнир'}[s.kind];
-      target.innerHTML=items.length?`<div class="statistics-columns" aria-hidden="true"><span>№</span><span>${heading}</span><span>Оценки / авторы</span><span>Средняя</span></div>`+items.map(item=>row(item,s.kind)).join(''):`<div class="empty-state"><strong>Для этой выборки пока нет оценок${s.kind==='players'&&s.filters.participation!=='all'?' подтверждённых выступлений':''}</strong><p>${s.kind==='players'&&s.filters.participation!=='all'?'Можно посмотреть прежние сохранённые оценки в режиме «Вся история оценок». Они не подтверждают участие в матче.':'Измените фильтры или оцените завершённый матч.'}</p><button class="btn btn-g" data-fbz-click="shell.go-matches">Открыть календарь</button></div>`;
-    }catch(error){if(current(s)&&version===s.version){s.hasMore=false;target.innerHTML='';document.getElementById('statisticsPage').textContent='';document.getElementById('statisticsError').innerHTML='<div class="collection-error" role="status"><span>Не удалось загрузить обзор</span><button class="btn btn-g btn-sm" data-fbz-click="statistics.retry">Повторить</button></div>';}}
+      target.innerHTML=items.length?`<div class="statistics-columns" aria-hidden="true"><span>№</span><span>${heading}</span><span>Оценки / авторы</span><span>Средняя</span></div>`+items.map(item=>row(item,s.kind)).join(''):`<div class="empty-state"><strong>Для этой выборки пока нет оценок${s.kind==='players'&&s.filters.participation!=='all'?' подтверждённых выступлений':''}</strong><p>${s.kind==='players'&&s.filters.participation!=='all'?'Можно посмотреть прежние сохранённые оценки в режиме «Вся история оценок». Они не подтверждают участие в матче.':'Измените фильтры или оцените завершённый матч.'}</p>${root.FBZExplore.activeCount(document.getElementById('statisticsFilters'))?'<button class="btn btn-g" data-fbz-click="statistics.clear-filters">Показать без фильтров</button>':'<button class="btn btn-g" data-fbz-click="shell.go-matches">Открыть календарь</button>'}</div>`;
+      document.getElementById('statisticsError').replaceChildren();
+      root.FBZExplore.focusResults('statisticsTitle',origin);
+    }catch(error){if(current(s)&&version===s.version){
+      const keep=retain&&root.FBZDomain.canRetainReadResult(error);
+      s.retryRequest={offset,origin};
+      if(!keep){s.hasMore=false;s.resultScope=null;target.replaceChildren();for(const id of ['statisticsPage','statisticsCount','statisticsSummary','statisticsContext'])document.getElementById(id).replaceChildren();document.getElementById('statisticsContext').hidden=true;}
+      document.getElementById('statisticsError').innerHTML=`<div class="collection-error" role="status"><span>${keep?'Не удалось открыть страницу. Показаны предыдущие результаты.':'Не удалось загрузить обзор'}</span><button class="btn btn-g btn-sm" data-fbz-click="statistics.retry">Повторить</button></div>`;
+    }}
     finally{if(current(s)&&version===s.version){s.loading=false;target.setAttribute('aria-busy','false');controls();}}
   }
   function changeKind(kind){if(!state||!kinds[kind]||state.kind===kind)return;state.kind=kind;state.offset=0;participationControls();kindControls();document.querySelectorAll('.statistics-tabs [data-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.kind===kind)));document.getElementById('statisticsFilters').dispatchEvent(new Event('submit',{cancelable:true}));}
   function participation(mode){if(!state||state.kind!=='players'||!['all','confirmed'].includes(mode))return;const form=document.getElementById('statisticsFilters');if(form.elements.namedItem('participation').value===mode)return;form.elements.namedItem('participation').value=mode;form.dispatchEvent(new Event('submit',{cancelable:true}));}
   function votes(value){if(!state||![1,5,10].includes(value))return;const form=document.getElementById('statisticsFilters');form.elements.namedItem('min_votes').value=String(value);form.dispatchEvent(new Event('submit',{cancelable:true}));kindControls();}
-  function page(direction){if(!state||state.loading)return;if(direction>0&&!state.hasMore||direction<0&&state.offset===0)return;state.offset=Math.max(0,state.offset+direction*12);load();}
-  root.FBZStatistics=Object.freeze({mount,changeKind,participation,votes,page,retry:load});
+  function page(direction){if(!state||state.loading)return;if(direction>0&&!state.hasMore||direction<0&&state.offset===0)return;load({offset:Math.max(0,state.offset+direction*12),origin:document.activeElement});}
+  function retry(){return load({...state?.retryRequest,origin:state?.retryRequest?.origin?document.activeElement:null});}
+  function clearFilters(){document.getElementById('statisticsFilters')?.reset();}
+  root.FBZStatistics=Object.freeze({mount,changeKind,participation,votes,page,retry,clearFilters});
 })(window);
 
 // Explicit action bindings; parameters are JSON data, never executable code.
@@ -106,7 +119,8 @@ FBZActions.register({
   "statistics.change-kind":(event,element,[kind])=>FBZStatistics.changeKind(kind),
   "statistics.previous-page":()=>FBZStatistics.page(-1),
   "statistics.next-page":()=>FBZStatistics.page(1),
-  "statistics.retry":()=>FBZStatistics.retry()
+  "statistics.retry":()=>FBZStatistics.retry(),
+  "statistics.clear-filters":()=>FBZStatistics.clearFilters()
 });
 FBZActions.register({'statistics.votes':(event,element,[value])=>FBZStatistics.votes(value)});
 FBZActions.register({'statistics.participation':(event,element,[mode])=>FBZStatistics.participation(mode)});

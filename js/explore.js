@@ -3,15 +3,15 @@
   const escape=value=>root.esc(String(value??'')),model=root.FBZExploreModel,catalogues=new WeakMap();
   const labels={query:'Поиск',competition_id:'Турнир',club_id:'Клуб',from:'С',to:'По',min_rating:'Оценка от',max_rating:'Оценка до',home_score:'Голы хозяев',away_score:'Голы гостей',min_votes:'Минимум оценок',sort:'Порядок',participation:'Выступления'};
   const sheet=form=>document.getElementById(form.id+'-sheet');
-  function filters(id,{diary=false}={}){
+  function filters(id,{diary=false,owner=true}={}){
     const field=(name,label,type='text',extra='')=>`<label for="${id}-${name}"><span>${label}</span><input class="input" id="${id}-${name}" name="${name}" type="${type}" ${extra}></label>`;
     const select=(name,label,options)=>`<label for="${id}-${name}"><span>${label}</span><select class="input" id="${id}-${name}" name="${name}">${options}</select></label>`;
     const picker=(name,label,all)=>`<div class="explore-picker"><label for="${id}-${name}">${label}</label><select class="input" id="${id}-${name}" name="${name}" data-choice-kind="${name==='club_id'?'club':'competition'}"><option value="">${all}</option></select><span class="explore-option-count" data-options-count="${name}" aria-live="polite"></span></div>`;
     return `<form class="explore-filters" id="${id}" data-diary="${diary}" data-scope="${diary?'di':'ov'}" novalidate aria-label="${diary?'Фильтры дневника':'Фильтры обзора'}">
-      <div class="explore-toolbar"><div class="explore-search">${root.ico('search',18)}<label class="sr-only" for="${id}-query">${diary?'Найти оценённый матч':'Поиск в обзоре'}</label><input id="${id}-query" name="query" type="search" maxlength="80" placeholder="${diary?'Найти в своей истории':'Матч, клуб или игрок'}" autocomplete="off"></div><button class="btn btn-g explore-open" id="${id}-open" type="button" aria-haspopup="dialog" aria-controls="${id}-sheet">${root.ico('filter',16)} Фильтры <span class="explore-active-count"></span></button></div>
+      <div class="explore-toolbar"><div class="explore-search">${root.ico('search',18)}<label class="sr-only" for="${id}-query">${diary?'Найти оценённый матч':'Поиск в обзоре'}</label><input id="${id}-query" name="query" type="search" maxlength="80" placeholder="${diary?(owner?'Найти в своей истории':'Найти в истории'):'Матч, клуб или игрок'}" autocomplete="off"></div><button class="btn btn-g explore-open" id="${id}-open" type="button" aria-haspopup="dialog" aria-controls="${id}-sheet">${root.ico('filter',16)} Фильтры <span class="explore-active-count"></span></button></div>
       <div class="explore-filter-footer"><div class="explore-chips" aria-label="Выбранные фильтры"></div><button class="text-action" type="reset">Сбросить фильтры</button></div>
       <p class="explore-inline-validation" id="${id}-inline-validation" role="status" hidden></p>
-      <div class="overlay explore-sheet" id="${id}-sheet" aria-hidden="true" data-close-backdrop="true"><div class="explore-panel" role="dialog" aria-modal="true" aria-labelledby="${id}-title" tabindex="-1"><header><div><span class="section-kicker">${diary?'Ваш дневник':'Футбол глазами сообщества'}</span><h2 id="${id}-title">Фильтры</h2></div><button class="btn btn-g explore-close" type="button" aria-label="Закрыть фильтры">${root.ico('close',18)}</button></header><div class="explore-panel-body">
+      <div class="overlay explore-sheet" id="${id}-sheet" aria-hidden="true" data-close-backdrop="true"><div class="explore-panel" role="dialog" aria-modal="true" aria-labelledby="${id}-title" tabindex="-1"><header><div><span class="section-kicker">${diary?(owner?'Ваш дневник':'История оценок'):'Футбол глазами сообщества'}</span><h2 id="${id}-title">Фильтры</h2></div><button class="btn btn-g explore-close" type="button" aria-label="Закрыть фильтры">${root.ico('close',18)}</button></header><div class="explore-panel-body">
       <div class="explore-filter-row">${picker('competition_id','Турнир','Все турниры')}${picker('club_id','Клуб','Все клубы')}</div><div class="explore-filter-grid">${field('from','Матчи с','date')}${field('to','Матчи по','date')}
       ${diary?field('min_rating','Оценка от','number','min="1" max="10" step="1" placeholder="1"')+field('max_rating','Оценка до','number','min="1" max="10" step="1" placeholder="10"')+field('home_score','Голы хозяев','number','min="0" max="99" step="1" placeholder="Любые"')+field('away_score','Голы гостей','number','min="0" max="99" step="1" placeholder="Любые"'):select('min_votes','Минимум оценок','<option value="1">От 1 оценки</option><option value="5">От 5 оценок</option><option value="10">От 10 оценок</option><option value="25">От 25 оценок</option>')+select('sort','Порядок','<option value="average">По средней оценке</option><option value="votes">По числу оценок</option><option value="recent">По дате матча</option>')}
       </div><p class="explore-hint">Фильтры применяются автоматически. Период относится к дате матча. Клубы доступны по участию в выбранном турнире.</p><p class="explore-validation" id="${id}-validation" role="status" hidden></p></div><footer><button class="btn btn-g explore-panel-reset" type="button">Сбросить</button><button class="btn btn-l explore-done" type="button">Готово</button></footer></div></div>
@@ -27,7 +27,8 @@
     const invalid=[...form.elements].filter(field=>field.willValidate&&!field.validity.valid);
     const open=sheet(form).classList.contains('on');
     for(const field of form.elements){if(!field.willValidate)continue;field.setAttribute('aria-invalid',String(invalid.includes(field)));if(invalid.includes(field))field.setAttribute('aria-describedby',`${form.id}-${open?'':'inline-'}validation`);else field.removeAttribute('aria-describedby');}
-    for(const message of [sheet(form).querySelector('.explore-validation'),form.querySelector('.explore-inline-validation')]){message.hidden=!invalid.length||message.classList.contains('explore-inline-validation')&&open;message.textContent=invalid[0]?.validationMessage||'';}return !invalid.length;
+    const field=invalid[0],messageText=!field?'':field.validity.customError?field.validationMessage:field.type==='date'?'Введите существующую дату':field.name==='min_rating'||field.name==='max_rating'?'Оценка должна быть целым числом от 1 до 10':field.name==='home_score'||field.name==='away_score'?'Число голов должно быть целым числом от 0 до 99':'Проверьте значение фильтра';
+    for(const message of [sheet(form).querySelector('.explore-validation'),form.querySelector('.explore-inline-validation')]){message.hidden=!invalid.length||message.classList.contains('explore-inline-validation')&&open;message.textContent=messageText;}return !invalid.length;
   }
   function activeCount(form){return Object.keys(entered(form)).length+[...form.elements].filter(f=>f.willValidate&&f.validity.badInput).length;}
   function options(form,name){
@@ -106,5 +107,11 @@
     const state={...root.history.state,fbzIndex:(Number(root.history.state?.fbzIndex)||0)+(mode==='push'?1:0)};root.history[mode==='replace'?'replaceState':'pushState'](state,'',url);
   }
   function closePanels(){document.querySelectorAll('.explore-sheet.on').forEach(panel=>root.FBZOverlay.close(panel.id,false));}
-  root.FBZExplore=Object.freeze({filters,read,restore,bind,populate,activeCount,writeLocation,closePanels,locationFilters:model.locationFilters});
+  function focusResults(id,origin){
+    if(!origin||document.querySelector('.overlay.on')||document.activeElement!==origin&&document.activeElement!==document.body)return;
+    const heading=document.getElementById(id);if(!heading)return;
+    heading.tabIndex=-1;heading.focus({preventScroll:true});
+    heading.scrollIntoView({block:'start',behavior:root.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+  }
+  root.FBZExplore=Object.freeze({filters,read,restore,bind,populate,activeCount,writeLocation,closePanels,focusResults,locationFilters:model.locationFilters});
 })(window);
