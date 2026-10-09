@@ -1,6 +1,6 @@
 # Inbox, calendar and diary interaction review
 
-The diary is the core action on a profile: it now precedes aggregate panels on desktop and mobile. Statistics remain computed from the complete authorized history. Clicking a nonempty score bucket clears unrelated diary filters and opens that exact score across the authorized history; it never filters only the eight loaded records.
+The diary is the core action on a profile: it now precedes aggregate panels on desktop and mobile. The distribution follows the diary in the main column, keeping its filtering actions beside the records and preventing an excessively tall sidebar. Statistics remain computed from the complete authorized history. Clicking a nonempty score bucket clears unrelated diary filters and opens that exact score across the authorized history; it never filters only the eight loaded records.
 
 Overview keeps one comparable list and a visible order control. Added quick minimum-vote thresholds share the existing server-side filter and URL state. They mean ratings, not independent authors; preliminary results still identify small author samples. Scoreboards center both club marks and score, and retain each club's palette.
 
@@ -29,3 +29,9 @@ Exact dates use a text field and explicit submit/Enter. DD.MM.YYYY is parsed by 
 ## Release evidence
 
 Focused browser checks cover inbox persistence/undo/failures, exact dates, invalid dates, keyboard navigation, neutral likes, profile-to-diary filtering, server thresholds, actual safe crest assets, button lift and reduced motion. Responsive and accessibility checks include 320px, 390px and 1440px in both themes. Cross-browser checks run in Chromium, Firefox and WebKit. Full application, clean database and secret checks are required before main is merged; production must subsequently confirm the exact merge SHA.
+
+Production applied the compatible migration as `20261009131330_notification_dismissals`. The unapplied local draft filename was aligned with this returned canonical version; no existing production migration or journal entry was rewritten. Clean database reset, generated public type diff, lint and all 743 SQL checks passed. An additional transaction on production verified owner dismissal, persistence, undo, unchanged read status, pagination/counts, foreign-account denial and blocked-source denial; synthetic fixtures were rolled back.
+
+Before DDL, notification policy metadata and the migration history were recorded. The change only adds dismissal metadata; no existing source event is altered. Rollback should first roll back the client, then use a new corrective migration to remove the dismissal restrictive policy while retaining metadata. Never replay or reset production.
+
+Advisor comparison: existing private tables without client policies (8) and unused indexes (31) remain unchanged. The new owner-scoped table adds one GraphQL discoverability warning: RLS behavior is verified and no foreign dismissal IDs are returned. Existing public-function/discoverability warnings and [leaked-password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) remain broader audit items; this release does not claim a zero-warning security audit.

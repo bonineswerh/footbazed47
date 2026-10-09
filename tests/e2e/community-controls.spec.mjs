@@ -39,6 +39,7 @@ test('liked state colors the heart and label while retaining the neutral surface
 test('profile prioritizes the diary and histogram opens exact rating records',async({page})=>{
   await start(page,'/profile/'+own);await expect(page.locator('#diaryList .rh-row').first()).toBeVisible();
   await expect(page.locator('.pgrid>div').first()).toContainText('История оценок');expect(await page.locator('.pgrid>div').first().locator('#profileInsightsTitle').count()).toBe(0);
+  await expect(page.locator('.pgrid>div').first().locator('.prdist')).toBeVisible();
   const bucket=page.locator('button.prdist-row:not([disabled])').first(),value=JSON.parse(await bucket.getAttribute('data-fbz-args'))[0];await bucket.click();
   await expect(page).toHaveURL(new RegExp('di_min_rating='+value));await expect(page).toHaveURL(new RegExp('di_max_rating='+value));await expect(page.locator('#diaryTitle')).toBeFocused();
   await expect(page.locator('#diaryList .rh-v').first()).toContainText(String(value));

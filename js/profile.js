@@ -171,11 +171,11 @@ async function loadProfile(uid){
     <div class="pgrid">
       <div>
         ${diaryMarkup()}
+        ${ratingDistribution}
       </div>
       <div>
         ${profileInsights}
         ${footballDiary}
-        ${ratingDistribution}
         ${isMe&&u.invite_code?`<div class="pcard"><div class="pcard-title">${ico('link',14)} Пригласи друга</div><div style="background:var(--bg3);border:1px solid var(--b1);border-radius:9px;padding:12px;margin-bottom:12px;word-break:break-all;font-size:var(--type-meta);color:var(--accent2)">${esc(invitationUrl(u.invite_code))}</div><button class="btn btn-l" style="width:100%" ${FBZActions.attrs("profile.copy-inv",[u.invite_code])}>${ico('copy',13)} Копировать ссылку</button></div>`:''}
         <div class="pcard"><div class="pcard-title">${ico('share',14)} Поделиться</div>
           <button class="btn btn-l" style="width:100%;margin-bottom:8px" ${FBZActions.attrs("profile.open-share-profile",[u.display_name||'',u.username||'user',cnt,avg,tl,friendCount,FBZDomain.profileActivity(cnt).label])}>${ico('photo',13)} Создать карточку</button>
