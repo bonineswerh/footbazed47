@@ -28,8 +28,8 @@
   <link rel="stylesheet" href="css/fonts.css?v=1">
   <script src="/api/config.js"></script>
   <script src="assets/vendor/supabase-2.112.2.js"></script>
-  <link rel="stylesheet" href="styles.css?v=20261009-community1">
-  <link rel="stylesheet" href="css/match-editorial.css?v=20261009-community1">
+  <link rel="stylesheet" href="styles.css?v=20261009-controls">
+  <link rel="stylesheet" href="css/match-editorial.css?v=20261009-controls">
   <link rel="stylesheet" href="css/typography.css?v=20261008-refine">
   <link rel="stylesheet" href="css/club-palettes.css?v=20261007-community">
 </head>
@@ -82,7 +82,7 @@
   
   <!-- HOME -->
   <div class="page on" id="page-home">
-    <div class="home-league-ribbon" id="homeLeagueRibbon" aria-hidden="true" hidden></div>
+    <div class="home-ribbon-shell" hidden><div class="home-league-ribbon" id="homeLeagueRibbon" aria-hidden="true" hidden></div><button class="home-ribbon-toggle" type="button" data-fbz-click="home.toggle-ribbon" aria-label="Остановить движение турниров" aria-pressed="false"><i data-i="pause" aria-hidden="true"></i></button></div>
     <section class="home-editorial" aria-labelledby="homeEditorialTitle">
       <section class="hero">
         <span class="hero-tag">ТВОЙ ВЗГЛЯД НА ФУТБОЛ</span>
@@ -553,7 +553,7 @@
           <legend>За кого болеете?</legend>
           <div class="rating-supporter-options">
             <label><input type="radio" name="ratingSupporterSide" value="home" data-fbz-change="shell.select-supporter-side"><span><i id="rSupportHomeMark" aria-hidden="true" data-i="shield"></i><b id="rSupportHome">Первая команда</b><small>Болею за хозяев</small></span></label>
-            <label><input type="radio" name="ratingSupporterSide" value="neutral" data-fbz-change="shell.select-supporter-side"><span><i data-i="profile" aria-hidden="true"></i><b>Нейтральный зритель</b><small>Смотрю без клубной стороны</small></span></label>
+            <label><input type="radio" name="ratingSupporterSide" value="neutral" data-fbz-change="shell.select-supporter-side"><span><i class="supporter-neutral-mark" data-i="spectator" aria-hidden="true"></i><b>Нейтральный зритель</b><small>Смотрю без клубной стороны</small></span></label>
             <label><input type="radio" name="ratingSupporterSide" value="away" data-fbz-change="shell.select-supporter-side"><span><i id="rSupportAwayMark" aria-hidden="true" data-i="shield"></i><b id="rSupportAway">Вторая команда</b><small>Болею за гостей</small></span></label>
           </div>
         </fieldset>
@@ -753,18 +753,18 @@
   <script src="js/core.js?v=54"></script>
   <script src="js/media.js?v=5"></script>
   <script src="js/seo.js?v=20261005"></script>
-  <script src="js/data.js?v=20261007-expectations"></script>
+  <script src="js/data.js?v=20261009-controls"></script>
   <script src="js/overlays.js?v=20261008"></script>
   <script src="js/confirm.js?v=42"></script>
   <script src="js/actions.js?v=2"></script>
   <script src="js/shell-actions.js?v=20261007-community"></script>
-  <script src="js/home.js?v=20261007-community"></script>
-  <script src="js/feature-loader.js?v=20261005"></script>
+  <script src="js/home.js?v=20261009-controls"></script>
+  <script src="js/feature-loader.js?v=20261009-controls"></script>
   <script src="js/notification-counter.js?v=20261008"></script>
-  <script src="app.js?v=20261009-discovery2"></script>
+  <script src="app.js?v=20261009-controls"></script>
   <script src="js/auth.js?v=46"></script>
-  <script src="js/rating-loader.js?v=20261008-refine"></script>
-  <script src="js/matches.js?v=20261008-refine"></script>
+  <script src="js/rating-loader.js?v=20261009-controls"></script>
+  <script src="js/matches.js?v=20261009-controls"></script>
   <script src="js/account.js?v=43"></script>
 </body>
 </html>

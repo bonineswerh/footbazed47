@@ -187,8 +187,8 @@ async function loadM(reset=true){
   target.setAttribute('aria-busy','true');
   target.innerHTML='<div class="loading"><div class="spin"></div><span>Загружаем календарь</span></div>';
   try{
-    await FBZFeatures.load({key:'calendar-model',script:'js/calendar-model.js?v=20261009-community1',ready:()=>window.FBZCalendarModel});
-    const calendar=await FBZFeatures.load({key:'match-calendar',styleId:'calendarStyles',style:'css/calendar.css?v=20261009-community1',script:'js/match-calendar.js?v=20261009-community1',ready:()=>window.FBZMatchCalendar});
+    await FBZFeatures.load({key:'calendar-model',script:'js/calendar-model.js?v=20261009-controls',ready:()=>window.FBZCalendarModel});
+    const calendar=await FBZFeatures.load({key:'match-calendar',styleId:'calendarStyles',style:'css/calendar.css?v=20261009-controls',script:'js/match-calendar.js?v=20261009-controls',ready:()=>window.FBZMatchCalendar});
     if(!current())return;
     calendar.mount();
     const page=await fetchMatchPage({offset:0,force:reset});
@@ -327,13 +327,14 @@ async function loadMD(id){
         </div>
         <div class="md-meta">${ico('calendar',12)} ${new Date(match.match_date).toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}${competitionMeta?`<span>·</span>${esc(competitionMeta)}`:''}</div>
         ${match.status==='finished'?communityMarkup:''}
+        ${match.status==='scheduled'?'<div id="mdExpectationSummary" aria-busy="true"></div>':''}
       </section>
-      <div id="mdExpectations" aria-busy="true"></div>
       <div class="md-actions">
         ${match.status==='scheduled'&&Date.parse(match.match_date)>Date.now()?`<button class="btn btn-l md-primary-action" type="button" data-expectation-action ${FBZActions.attrs('matches.open-rate',[match.id,'expectation'])}>${ico('star',16)} Оценить ожидание</button>`:''}
         ${match.status==='finished'?`<button class="btn btn-l md-primary-action" ${FBZActions.attrs("matches.open-rate",[match.id])}>${ico('star',16)} ${ownRating?'Изменить оценку':'Оценить матч'}</button>`:''}
         <button class="btn btn-g" ${FBZActions.attrs("matches.copy-app-link",[match.id])}>${ico('link',14)} Ссылка</button>
       </div>
+      <div id="mdExpectations" aria-busy="true"></div>
       ${ownRatingMarkup}
       <div class="md-grid" ${match.status!=='finished'?'hidden':''}>
         <div>
@@ -356,11 +357,12 @@ async function loadMD(id){
 window.setMatchRatingSegment=setMatchRatingSegment;
 
 function loadMatchExpectations(match,ownRating,isCurrent){
-  FBZFeatures.load({key:'expectations',styleId:'expectationStyles',script:'js/match-expectations.js?v=20261008-sheets',style:'css/expectations.css?v=20261008-sheets',ready:()=>window.FBZExpectations}).then(()=>{
+  FBZFeatures.load({key:'expectations',styleId:'expectationStyles',script:'js/match-expectations.js?v=20261009-controls',style:'css/expectations.css?v=20261008-sheets',ready:()=>window.FBZExpectations}).then(()=>{
     if(isCurrent())window.FBZExpectations.mount(match,ownRating);
   }).catch(()=>{
     if(!isCurrent())return;
     document.getElementById('mdExpectations').setAttribute('aria-busy','false');
+    document.getElementById('mdExpectationSummary')?.setAttribute('aria-busy','false');
     document.getElementById('mdExpectations').innerHTML='<div class="empty-state compact"><strong>Не удалось загрузить ожидания</strong><button type="button" class="btn btn-g btn-sm" '+FBZActions.attrs('matches.retry-match',[match.id])+'>Повторить</button></div>';
   });
 }

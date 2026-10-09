@@ -21,9 +21,9 @@ test('calendar browses without loading matches, clamps leap dates and restores t
 });
 test('calendar cannot browse past supported years and is closed on a route change',async({page})=>{
   await installSupabaseMock(page);await page.goto('/matches?__e2e=1&m_day=1000-01-01');await page.getByRole('button',{name:'Выбрать дату',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Предыдущий месяц'})).toBeDisabled();
+  await expect(page.locator('#calendarMonthLabel')).toContainText('2016');await expect(page.getByRole('button',{name:'Предыдущий месяц'})).toBeDisabled();
   await page.keyboard.press('Escape');await page.goto('/matches?__e2e=1&m_day=9999-12-31');await page.getByRole('button',{name:'Выбрать дату',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Следующий месяц'})).toBeDisabled();
+  await expect(page.locator('#calendarMonthLabel')).toContainText('2026');await expect(page.getByRole('button',{name:'Следующий месяц'})).toBeDisabled();
   await page.evaluate(()=>go('leaderboard'));await expect(page.locator('#calendarDateOv')).toBeHidden();expect(await page.locator('body').evaluate(el=>el.classList.contains('modal-open'))).toBe(false);
 });
 for(const theme of ['dark','light'])for(const accent of ['emerald','ice','gold','mono'])test(`calendar selection has accessible contrast in ${theme} ${accent}`,async({page})=>{

@@ -33,7 +33,16 @@ function monthDays(day){
   const offset=(first.getDay()+6)%7,start=key(first);
   return Array.from({length:42},(_,index)=>shift(start,index-offset));
 }
-const api=Object.freeze({parse,key,exact,formatted,shift,bounds,month,monthDays});
+function yearRange(first,last,now=new Date()){
+  const current=now.getFullYear(),start=new Date(first),end=new Date(last);
+  const valid=typeof first==='string'&&typeof last==='string'&&Number.isFinite(start.getTime())&&Number.isFinite(end.getTime())&&start<=end;
+  const from=valid?Math.max(1000,Math.min(current,start.getFullYear())):current;
+  const until=valid?Math.max(from,Math.min(current,end.getFullYear())):current;
+  return {from,until,min:`${from}-01-01`,max:`${until}-12-31`};
+}
+function within(day,range){return Boolean(parse(day)&&range&&day>=range.min&&day<=range.max);}
+function clamp(day,range){return parse(day)?day<range.min?range.min:day>range.max?range.max:day:range.min;}
+const api=Object.freeze({parse,key,exact,formatted,shift,bounds,month,monthDays,yearRange,within,clamp});
 if(typeof module==='object'&&module.exports)module.exports=api;
 else root.FBZCalendarModel=api;
 })(globalThis);

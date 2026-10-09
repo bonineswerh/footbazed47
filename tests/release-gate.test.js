@@ -77,3 +77,24 @@ test('failure, invalid payload and network unavailability fail closed with bound
     assert.equal(clock,25);assert.equal(calls,3);
   }
 });
+
+test('private repository token is confined to fixed GitHub reads and never logs or release metadata',async()=>{
+  const {enforceProductionRelease}=await import('../scripts/check-release.mjs');
+  const token='test-only-read-credential',logs=[],requests=[];
+  const result=await enforceProductionRelease({environment:{...environment,FOOTBAZED_GITHUB_READ_TOKEN:token},
+    log:text=>logs.push(text),fetcher:async(url,options)=>{
+      requests.push(url);assert.match(url,/^https:\/\/api\.github\.com\/repos\/bonineswerh\/footbazed47\/actions\//);
+      assert.equal(options.headers.Authorization,`Bearer ${token}`);assert.equal(options.redirect,'error');
+      return{ok:true,json:async()=>url.includes('/jobs?')?jobs():{workflow_runs:[run()]}};
+    }});
+  assert.equal(requests.length,2);assert.deepEqual(result,{verified:true,commit:sha,qualityRunId:17});
+  assert.equal(JSON.stringify({logs,result}).includes(token),false);
+  await assert.rejects(enforceProductionRelease({environment:{...environment,FOOTBAZED_GITHUB_READ_TOKEN:token},log:()=>{},fetcher:async()=>({ok:false,status:401})}),/quality_request_rejected/);
+});
+
+test('malformed read credentials fail before network access, preview still needs no credential',async()=>{
+  const {enforceProductionRelease}=await import('../scripts/check-release.mjs');
+  for(const token of ['not a token','test\nsecret','x'.repeat(4097)])await assert.rejects(enforceProductionRelease({
+    environment:{...environment,FOOTBAZED_GITHUB_READ_TOKEN:token},fetcher:()=>assert.fail('no network')}),/quality_read_token_invalid/);
+  assert.equal((await enforceProductionRelease({environment:{...environment,VERCEL_ENV:'preview',FOOTBAZED_GITHUB_READ_TOKEN:'invalid token'},fetcher:()=>assert.fail('no network')})).verified,false);
+});

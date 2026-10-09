@@ -7,7 +7,7 @@
 .fbtn:hover{border-color:var(--accent);color:var(--accent2);background:var(--accent3)}
 .fbtn.accept{background:var(--accent3);color:var(--accent2)}.fbtn.accept:hover{background:var(--accent);color:#fff}.fbtn.chat{display:grid;place-items:center;width:44px;padding:0;color:var(--accent2)}
 .fbtn.remove,.fbtn.reject{color:var(--text3)}.fbtn.remove:hover,.fbtn.reject:hover{color:var(--danger);border-color:var(--danger);background:var(--danger2)}
-.ftab2.on,.ftab2.btn-l{background:var(--grad)!important;color:var(--onAccent)!important;border:none!important}
+
 .friends-empty{padding:60px 20px;text-align:center;color:var(--text3);font-size:var(--type-small);line-height:1.7;grid-column:1/-1}
 
 .community-page{max-width:1040px;padding-top:48px}
@@ -16,7 +16,7 @@
 .community-search{position:relative;margin-bottom:22px}.community-search>[data-i]{position:absolute;top:17px;left:16px;color:var(--text3)}.community-search .input{margin:0;padding-left:44px;background:var(--bg2);min-height:50px}
 .community-tabs{display:flex;gap:4px;padding:4px;background:var(--bg2);border:1px solid var(--b2);border-radius:8px;margin-bottom:20px;overflow-x:auto}
 .community-tabs .ftab2{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;flex:1;padding:8px 14px;white-space:nowrap;border:0;border-radius:5px;background:transparent;color:var(--text2);font-size:var(--type-small);font-weight:650;cursor:pointer}.community-tabs .ftab2:hover{background:var(--bg3);color:var(--snow)}
-.community-tabs .ftab2.on{background:var(--bg4)!important;color:var(--snow)!important;border:0!important;box-shadow:inset 0 -2px var(--accent)}
+
 .community-badge{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:5px;background:var(--accent3);color:var(--accent2);font-size:var(--type-meta)}.community-badge[hidden]{display:none}
 .community-page .friend-card{padding:8px 12px;margin-bottom:10px;border-radius:8px;cursor:default;gap:16px;transition:background var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease)}
 .friend-profile{display:flex;align-items:center;gap:14px;min-height:64px;min-width:0;flex:1;padding:6px 0;color:var(--snow);text-decoration:none;border-radius:5px}.friend-profile:hover .fcard-name{color:var(--accent2)}

@@ -1,5 +1,8 @@
 // ─── SVG ICONS (Heroicons style) ───
 const I={
+  play:`<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>`,
+  pause:`<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>`,
+  spectator:`<svg class="ico" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="3.75"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0v1h-15z"/></svg>`,
   info:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 11v6m0-10v.01"/></svg>`,
   filter:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M4 7h6m4 0h6M4 17h10m4 0h2"/><circle cx="12" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></svg>`,
   close:`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18"/></svg>`,
@@ -72,7 +75,7 @@ async function openFormControl(event){
   event.preventDefault();event.stopPropagation();field.focus({preventScroll:true});
   const intent=++controlIntent,route=routeVersion;
   try{
-    await ensureFeatureModule({key:'calendar-model',script:'js/calendar-model.js?v=20261009-community1',ready:()=>window.FBZCalendarModel});
+    await ensureFeatureModule({key:'calendar-model',script:'js/calendar-model.js?v=20261009-controls',ready:()=>window.FBZCalendarModel});
     const controls=await ensureFeatureModule({key:'form-controls',styleId:'formControlStyles',style:'css/form-controls.css?v=20261008-refine',script:'js/form-controls.js?v=20261008-refine',ready:()=>window.FBZFormControls});
     if(intent===controlIntent&&route===routeVersion&&document.activeElement===field&&field.isConnected&&!field.disabled&&field.getClientRects().length)controls.open(field);
   }catch{if(intent===controlIntent&&field.isConnected&&field.getClientRects().length)field.focus({preventScroll:true});}
@@ -89,7 +92,7 @@ function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=20261007-community',script:'js/entities.js?v=20261009-discovery2',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=20261009-community1',script:'js/feed.js?v=20261007-community',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=20261009-controls',script:'js/feed.js?v=20261009-controls',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
   return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=20261007-search',script:'js/search.js?v=20261007-details',ready:()=>window.FBZSearch});
@@ -383,7 +386,7 @@ async function loadLB(){
   const token=++leaderboardVersion,route=routeVersion,user=CU?.id;
   document.getElementById('statisticsRoot').innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка обзора</span></div>';
   try{
-    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=20261009-discovery2',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
+    const [statistics]=await Promise.all([ensureFeatureModule({key:'statistics',script:'js/statistics.js?v=20261009-controls',ready:()=>window.FBZStatistics}),ensureExploreModule()]);
     if(token===leaderboardVersion&&route===routeVersion&&user===CU?.id&&CP==='leaderboard')return statistics.mount();
   }catch(error){if(token===leaderboardVersion&&CP==='leaderboard')document.getElementById('statisticsRoot').innerHTML='<div class="empty-state"><strong>Не удалось загрузить обзор</strong><button class="btn btn-g" data-fbz-click="app.load-lb">Повторить</button></div>';}
 }
@@ -414,7 +417,7 @@ function ensureProfileModule(){
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});
-  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=20261009-discovery2',script:'js/explore.js?v=20261009-discovery2',ready:()=>window.FBZExplore});
+  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=20261009-controls',script:'js/explore.js?v=20261009-discovery2',ready:()=>window.FBZExplore});
 }
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
@@ -445,7 +448,7 @@ function editProfile(){
 
 // ─── COMMUNITY LOADER ───
 function ensureCommunityModule(){
-  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=3',script:'js/community.js?v=20261007-community',ready:()=>window.FBZCommunity});
+  return ensureFeatureModule({key:'community',styleId:'communityCss',style:'css/community.css?v=20261009-controls',script:'js/community.js?v=20261007-community',ready:()=>window.FBZCommunity});
 }
 function loadFriendsTab(tab){
   FT=tab;
@@ -507,7 +510,7 @@ function injectIcons(){
     const icon=navIcons[a.dataset.fbzClick],t=a.textContent.trim();if(icon)a.innerHTML=ico(icon,15)+' '+esc(t);
   });
   // Mobile nav
-  document.querySelectorAll('[data-i]').forEach(s=>{s.innerHTML=ico(s.dataset.i,s.classList.contains('mob-nav-icon')?20:16);});
+  document.querySelectorAll('[data-i]').forEach(s=>{s.innerHTML=ico(s.dataset.i,s.classList.contains('supporter-neutral-mark')?24:s.classList.contains('mob-nav-icon')?20:16);});
   // Page titles
   const pgIcons={'page-matches':'football','page-feed':'feed','page-leaderboard':'chart','page-friends':'users','page-admin':'settings'};
   document.querySelectorAll('.page-title').forEach(h=>{

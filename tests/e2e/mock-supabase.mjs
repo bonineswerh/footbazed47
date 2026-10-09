@@ -1,4 +1,5 @@
 const fixture={
+  calendarDates:['2016-01-01T00:00:00Z','2026-12-31T12:00:00Z','2027-01-01T12:00:00Z'],
   expectations:[],
   notificationDismissals:[],
   userBlocks:[],
@@ -98,7 +99,8 @@ export async function installSupabaseMock(page,overrides={}){
     let nextDirectMessageId=2000;
     let authListener=null;
     const calendarCalls=[];
-    window.__FOOTBAZED_TEST_CALENDAR__={calls:()=>structuredClone(calendarCalls),error:value=>{state.calendarError=value;}};
+    const calendarRangeCalls=[];
+    window.__FOOTBAZED_TEST_CALENDAR__={calls:()=>structuredClone(calendarCalls),error:value=>{state.calendarError=value;},rangeCalls:()=>structuredClone(calendarRangeCalls),rangeError:value=>{state.calendarRangeError=value;}};
 
     function promiseResult(data,error=null,count=null){
       const result=Promise.resolve({data,error,count});
@@ -485,12 +487,13 @@ export async function installSupabaseMock(page,overrides={}){
           return Promise.resolve({data:structuredClone(rows.slice(query.offset,query.offset+query.limit)),count:rows.length,error:null}).then(resolve,reject);
         }};return builder;
       }
-      const query={filters:[],limitValue:null,head:false,countMode:null,orderBy:null,writeData:null,operation:'select',signal:null};
+      const query={filters:[],limitValue:null,head:false,countMode:null,orderBy:null,writeData:null,operation:'select',signal:null,fields:null};
       const builder={
-        select(_fields,options={}){query.head=Boolean(options.head);query.countMode=options.count||null;return builder;},
+        select(_fields,options={}){query.fields=_fields;query.head=Boolean(options.head);query.countMode=options.count||null;return builder;},
         abortSignal(signal){query.signal=signal;return builder;},
         eq(column,value){query.filters.push(row=>String(row[column])===String(value));return builder;},
         neq(column,value){query.filters.push(row=>String(row[column])!==String(value));return builder;},
+        lt(column,value){query.filters.push(row=>new Date(row[column])<new Date(value));return builder;},
         in(column,values){query.filters.push(row=>values.map(String).includes(String(row[column])));return builder;},
         ilike(column,value){const needle=String(value).replaceAll('%','').toLocaleLowerCase();query.filters.push(row=>String(row[column]||'').toLocaleLowerCase().includes(needle));return builder;},
         order(column,{ascending=true}={}){query.orderBy={column,ascending};return builder;},
@@ -505,7 +508,12 @@ export async function installSupabaseMock(page,overrides={}){
       };
       function resolve(single){
         if(query.signal?.aborted)return Promise.resolve({data:null,error:{name:'AbortError'},count:null});
-        let rows=rowsFor(table).filter(row=>query.filters.every(filter=>filter(row)));
+        if(table==='matches'&&query.fields==='match_date'){
+          calendarRangeCalls.push({fields:query.fields,limit:query.limitValue,order:query.orderBy});
+          if(state.calendarRangeError)return Promise.resolve({data:null,error:{message:'offline'},count:null});
+        }
+        const source=table==='matches'&&query.fields==='match_date'?state.calendarDates.map(match_date=>({match_date})):rowsFor(table);
+        let rows=source.filter(row=>query.filters.every(filter=>filter(row)));
         if(query.orderBy)rows.sort((a,b)=>String(a[query.orderBy.column]||'').localeCompare(String(b[query.orderBy.column]||''))*(query.orderBy.ascending?1:-1));
         if(query.limitValue!==null)rows=rows.slice(0,query.limitValue);
         const count=table==='users'?6:table==='matches'?202:table==='ratings'?16:rows.length;
@@ -519,7 +527,8 @@ export async function installSupabaseMock(page,overrides={}){
           state.notifications=state.notifications.map(row=>matchingIds.has(row.id)?{...row,...structuredClone(query.writeData)}:row);
         }
         if(query.operation!=='select')return Promise.resolve({data:query.writeData,error:null,count:null});
-        return Promise.resolve({data:query.head?null:(single?(rows[0]||null):rows),error:null,count:query.countMode?count:null});
+        const result={data:query.head?null:(single?(rows[0]||null):rows),error:null,count:query.countMode?count:null};
+        return table==='matches'&&query.fields==='match_date'&&state.calendarRangeDelay?new Promise(resolve=>setTimeout(()=>resolve(query.signal?.aborted?{data:null,error:{name:'AbortError'}}:result),state.calendarRangeDelay)):Promise.resolve(result);
       }
       return builder;
     }
