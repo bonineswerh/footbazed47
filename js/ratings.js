@@ -44,7 +44,7 @@ async function openRatingForm(mid,mode='rating'){
   window.FBZOverlay?.open('rateOv','.rate-close');
   try{
     const[{data:match,error:matchError},{data:existing,error:ratingError},{data:playerScores,error:playerError}]=await Promise.all([
-      sb.from('matches').select('home_team_name,away_team_name,status,match_date').eq('id',matchId).single(),
+      sb.from('matches').select('home_team_name,away_team_name,home_club_id,away_club_id,status,match_date').eq('id',matchId).single(),
       context.mode==='expectation'?sb.rpc('get_match_expectations',{p_match_id:matchId}):sb.from('ratings').select('match_rating,comment,is_public,supporter_side').eq('user_id',context.userId).eq('match_id',matchId).maybeSingle(),
       context.mode==='expectation'?Promise.resolve({data:[],error:null}):sb.from('player_ratings').select('player_id,rating,is_best_player,player:players(name)').eq('user_id',context.userId).eq('match_id',matchId)
     ]);
@@ -61,6 +61,12 @@ async function openRatingForm(mid,mode='rating'){
     document.getElementById('rMI').textContent=FBZNames.matchTitle(match);
     document.getElementById('rSupportHome').textContent=FBZDomain.matchTeamName(match,'home');
     document.getElementById('rSupportAway').textContent=FBZDomain.matchTeamName(match,'away');
+    // Optional media shares the bounded club reader with every match surface.
+    // A missing crest never holds up the rating form or its existing draft.
+    window.FBZData.enrichMatchMedia([match]).then(()=>{
+      if(!isRatingCurrent(context))return;
+      for(const side of ['home','away'])document.getElementById(side==='home'?'rSupportHomeMark':'rSupportAwayMark').innerHTML=matchClubMark(match,side,'supporter-club-mark');
+    }).catch(()=>{});
     if(context.mode==='expectation'){
       const own=existing?.own;
       context.match=match;
@@ -104,6 +110,7 @@ function resetRatingForm(){
   updateMatchRatingRail(null);
   document.getElementById('rSupportHome').textContent='Первая команда';
   document.getElementById('rSupportAway').textContent='Вторая команда';
+  for(const id of ['rSupportHomeMark','rSupportAwayMark'])document.getElementById(id).innerHTML=ico('shield',20);
   document.getElementById('rCmt').value='';
   document.getElementById('rPub').checked=true;
   document.querySelectorAll('input[name="ratingSupporterSide"]').forEach(input=>{input.checked=false;});

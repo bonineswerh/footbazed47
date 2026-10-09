@@ -9,7 +9,7 @@
 .feed-filter.on{background:var(--bg4);color:var(--snow);box-shadow:inset 0 0 0 1px var(--b1)}
 .feed-stream{display:grid;gap:22px}
 .feed-expert-label{display:inline-block;margin-left:8px;padding:2px 5px;border:1px solid var(--b2);border-radius:5px;color:var(--accent2);font-size:.6875rem;letter-spacing:.01em}
-.feed-action.like-action.on{color:var(--rating-low);border-color:color-mix(in srgb,var(--rating-low) 35%,var(--b2));background:color-mix(in srgb,var(--rating-low) 8%,var(--bg2))}.like-action.on .ico{fill:currentColor}
+.feed-action.like-action.on .ico,.feed-action.like-action.on small{color:var(--rating-low)}.like-action.on .ico{fill:currentColor}
 .feed-report{margin-left:auto;min-width:44px;min-height:44px;justify-content:center}.comment-report{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--text3);cursor:pointer}.comment-report:hover{background:var(--bg3);color:var(--snow)}
 .feed-entry{overflow:hidden;border:1px solid var(--b2);border-radius:8px;background:var(--bg2);box-shadow:0 8px 28px rgba(0,0,0,.1)}
 .feed-entry.focused{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent3)}
@@ -55,7 +55,7 @@ button.feed-team{position:relative;z-index:2;border-radius:8px;padding:8px;min-h
 .feed-actions{display:flex;align-items:center;min-height:48px;padding:5px 10px;border-top:1px solid var(--b1)}
 .feed-action{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:0;border-radius:6px;background:transparent;color:var(--text3);font-size:var(--type-small);font-weight:700;cursor:pointer;transition:background var(--motion-fast) var(--ease),color var(--motion-fast) var(--ease)}
 .feed-action:hover{background:var(--bg3);color:var(--snow)}
-.feed-action.on{color:var(--accent2)}
+.feed-action.on:not(.like-action){color:var(--accent2)}
 .feed-action:disabled{cursor:default;opacity:.55}.feed-action:disabled:hover{background:transparent;color:var(--text3)}
 .feed-action small{font-size:var(--type-meta)}.feed-edit{margin-left:auto}
 .feed-comments:not(:empty){padding:0 16px 14px;border-top:1px solid var(--b1);background:color-mix(in srgb,var(--bg3) 55%,transparent)}

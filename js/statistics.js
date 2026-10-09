@@ -8,6 +8,7 @@
     const input=document.getElementById('statisticsFilters-query');
     input.placeholder={matches:'Найти матч',clubs:'Найти клуб',players:'Найти игрока',leagues:'Найти турнир'}[state.kind];
     document.getElementById('statisticsList').dataset.kind=state.kind;
+    document.querySelectorAll('[data-statistics-votes]').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.statisticsVotes)===Number(state.filters.min_votes||1))));
   }
   function row(item,kind){
     const rating=root.FBZDomain.ratingPresentation(item.average,1),evidence=root.FBZDomain.ratingEvidence({votes:item.votes,voters:item.voters,unverified:item.unverified_votes}),id=Number(item.entity_id),route={matches:'md',clubs:'club',players:'player',leagues:'competition'}[kind];
@@ -57,6 +58,7 @@
       document.getElementById('statisticsContext').hidden=true;
       document.getElementById('statisticsList').setAttribute('aria-busy','false');
     });
+    form.insertAdjacentHTML('beforeend',`<div class="statistics-confidence" role="group" aria-label="Размер выборки"><span>Оценок на результат</span>${[[1,'Любое число'],[5,'От 5'],[10,'От 10']].map(([n,label])=>`<button type="button" data-statistics-votes="${n}" aria-pressed="${Number(s.filters.min_votes||1)===n}" ${FBZActions.attrs('statistics.votes',[n])}>${label}</button>`).join('')}</div>`);
     return load();
   }
   async function load(){
@@ -76,6 +78,7 @@
       const data=await root.FBZData.getFootballStatistics(s.kind,{filters:{...s.filters,confirmed_only:s.kind==='players'&&s.filters.participation!=='all'},offset:s.offset,limit:12});
       if(!current(s)||version!==s.version)return;
       s.hasMore=Boolean(data.has_more);root.FBZExplore.populate(document.getElementById('statisticsFilters'),data);
+      kindControls();
       const summary=data.summary||{},items=data.items||[];
       document.getElementById('statisticsSummary').innerHTML=[['matches','Матчей'],[s.kind==='players'?'performance_votes':'votes',s.kind==='players'?'Оценок выступлений':'Оценок матчей'],['voters','Авторов']].map(([key,label])=>`<div><strong>${summary[key]==null?'—':Number(summary[key]).toLocaleString('ru-RU')}</strong><span>${label}</span></div>`).join('');
       const context=document.getElementById('statisticsContext'),contextNotes=[];
@@ -92,8 +95,9 @@
   }
   function changeKind(kind){if(!state||!kinds[kind]||state.kind===kind)return;state.kind=kind;state.offset=0;participationControls();kindControls();document.querySelectorAll('.statistics-tabs [data-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.kind===kind)));document.getElementById('statisticsFilters').dispatchEvent(new Event('submit',{cancelable:true}));}
   function participation(mode){if(!state||state.kind!=='players'||!['all','confirmed'].includes(mode))return;const form=document.getElementById('statisticsFilters');if(form.elements.namedItem('participation').value===mode)return;form.elements.namedItem('participation').value=mode;form.dispatchEvent(new Event('submit',{cancelable:true}));}
+  function votes(value){if(!state||![1,5,10].includes(value))return;const form=document.getElementById('statisticsFilters');form.elements.namedItem('min_votes').value=String(value);form.dispatchEvent(new Event('submit',{cancelable:true}));kindControls();}
   function page(direction){if(!state||state.loading)return;if(direction>0&&!state.hasMore||direction<0&&state.offset===0)return;state.offset=Math.max(0,state.offset+direction*12);load();}
-  root.FBZStatistics=Object.freeze({mount,changeKind,participation,page,retry:load});
+  root.FBZStatistics=Object.freeze({mount,changeKind,participation,votes,page,retry:load});
 })(window);
 
 // Explicit action bindings; parameters are JSON data, never executable code.
@@ -104,4 +108,5 @@ FBZActions.register({
   "statistics.next-page":()=>FBZStatistics.page(1),
   "statistics.retry":()=>FBZStatistics.retry()
 });
+FBZActions.register({'statistics.votes':(event,element,[value])=>FBZStatistics.votes(value)});
 FBZActions.register({'statistics.participation':(event,element,[mode])=>FBZStatistics.participation(mode)});

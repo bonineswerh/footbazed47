@@ -76,8 +76,10 @@ body .mc-score-name{hyphens:none}
 .mc-bottom{min-height:46px;padding-top:10px}
 .mc-meta-date{display:inline-flex;align-items:center;gap:4px;font-size:var(--type-meta)}
 .mc-acts .mbtn{min-height:44px;border-radius:var(--radius-control);padding:0 14px;border:1px solid color-mix(in srgb,var(--accent2) 65%,var(--b2));background:var(--grad);color:var(--onAccent);box-shadow:0 0 16px var(--accent4)}
-:is(.mc-acts .mbtn,.home-spotlight-primary){transition:filter var(--motion-normal) var(--ease),box-shadow var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease)}
+:is(.mc-acts .mbtn,.home-spotlight-primary){transition:transform var(--motion-normal) var(--ease),filter var(--motion-normal) var(--ease),box-shadow var(--motion-normal) var(--ease),border-color var(--motion-normal) var(--ease)}
 .mc-acts .mbtn:hover{background:var(--grad);filter:brightness(1.06);box-shadow:0 0 20px var(--accent3)}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){:is(.mc-acts .mbtn,.home-spotlight-primary):hover:not(:disabled){transform:translateY(-2px) scale(1.025);box-shadow:0 7px 18px var(--accent3),inset 0 1px 0 color-mix(in srgb,var(--snow) 25%,transparent)}:is(.mc-acts .mbtn,.home-spotlight-primary):active:not(:disabled){transform:translateY(0) scale(.99)}}
+@media(prefers-reduced-motion:reduce){:is(.mc-acts .mbtn,.home-spotlight-primary){transform:none!important;transition:none}}
 
 /* The detail header is an editorial scoreboard; lower analytics remain neutral. */
 .md-hero{padding:28px 32px 24px;border:1px solid color-mix(in srgb,var(--accent) 25%,#263b36);border-radius:var(--radius-card);background:radial-gradient(circle at 86% 20%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 33%),#0d1716;color:#f5fbf8}

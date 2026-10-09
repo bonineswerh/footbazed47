@@ -872,6 +872,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_dismissals: {
+        Row: {
+          created_at: string
+          notification_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          notification_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          notification_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_dismissals_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: true
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_dismissals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           comment_id: number | null
@@ -1710,6 +1743,10 @@ export type Database = {
       }
       set_favorite_club: {
         Args: { p_club_id: number; p_favorite?: boolean }
+        Returns: Json
+      }
+      set_notification_dismissed: {
+        Args: { p_dismissed?: boolean; p_notification_id: number }
         Returns: Json
       }
       set_notification_read: {

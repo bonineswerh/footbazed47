@@ -1,6 +1,7 @@
 (function(){
   'use strict';
   const el=id=>document.getElementById(id),pending=new Set();
+  let lastDismissed=null;
   let session=0,view=0,request=0,opened=false,items=[],cursor=null,hasMore=false,throughId=null,unreadOnly=false,busy=false,writing=false,totalUnread=0,loadedFilter=null,countChangedDuringLoad=false;
   function controls(){
     el('notifSummary').textContent=totalUnread?`Непрочитанных: ${totalUnread}`:'Всё прочитано';
@@ -10,7 +11,8 @@
     el('notifUpdate').disabled=busy||writing||pending.size>0;
     el('notifMore').hidden=!hasMore;el('notifMore').disabled=busy||writing||pending.size>0;
     el('notifMarkAll').disabled=!throughId||!totalUnread||busy||writing||pending.size>0;
-    for(const button of el('notifList').querySelectorAll('.notif-open,.notif-read'))button.disabled=busy||writing||pending.size>0;
+    for(const button of el('notifList').querySelectorAll('.notif-open,.notif-read,.notif-dismiss'))button.disabled=busy||writing||pending.size>0;
+    el('notifUndo').hidden=!lastDismissed;el('notifRestore').disabled=busy||writing||pending.size>0;
     el('notifList').setAttribute('aria-busy',String(busy));
   }
   function render(){
@@ -21,7 +23,7 @@
       const actor=item.actor?.display_name||item.actor?.username||'Болельщик';
       const title={friend_request:item.friend_status==='pending'?'Заявка в друзья':item.friend_status==='accepted'?'Вы теперь друзья':'Заявка закрыта',friend_accepted:'Заявка в друзья принята',like:'Понравилась ваша оценка',comment:'Комментарий к вашей оценке',system:'Сообщение FOOTBAZED',match_ready:'Матч завершён'}[item.type]||'Уведомление';
       const context=item.match?`${FBZDomain.matchTeamName(item.match,'home')} — ${FBZDomain.matchTeamName(item.match,'away')}`:item.type==='system'?item.message:actor;
-      return`${group}<div class="notif-item${item.read?'':' unread'}" data-notification-id="${Number(item.id)}"><button class="notif-open" type="button" aria-label="${esc(`${title}. ${item.match&&item.actor?actor+'. ':''}${context||''}`)}" ${FBZActions.attrs('notifications.open-item',[Number(item.id)])} ${pending.has(item.id)?'disabled':''}><span class="notif-ico">${ico({friend_request:'users',friend_accepted:'users',like:'heart',comment:'chat'}[item.type]||'bell',18)}</span><span class="notif-content"><strong class="notif-text">${esc(title)}</strong>${item.match&&item.actor?`<span class="notif-actor">${esc(actor)}</span>`:''}<span class="notif-context">${esc(context||'')}</span><time class="notif-time" datetime="${esc(item.created_at)}">${date.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}${item.target_available===false?' · Запись недоступна':''}</time></span></button><button class="notif-read" type="button" ${FBZActions.attrs('notifications.read',[Number(item.id),!item.read])} aria-label="${item.read?'Отметить непрочитанным':'Отметить прочитанным'}" title="${item.read?'Отметить непрочитанным':'Отметить прочитанным'}" ${pending.has(item.id)||writing?'disabled':''}><span class="notif-dot"></span></button></div>`;
+      return`${group}<div class="notif-item${item.read?'':' unread'}" data-notification-id="${Number(item.id)}"><button class="notif-open" type="button" aria-label="${esc(`${title}. ${item.match&&item.actor?actor+'. ':''}${context||''}`)}" ${FBZActions.attrs('notifications.open-item',[Number(item.id)])} ${pending.has(item.id)?'disabled':''}><span class="notif-ico">${ico({friend_request:'users',friend_accepted:'users',like:'heart',comment:'chat'}[item.type]||'bell',18)}</span><span class="notif-content"><strong class="notif-text">${esc(title)}</strong>${item.match&&item.actor?`<span class="notif-actor">${esc(actor)}</span>`:''}<span class="notif-context">${esc(context||'')}</span><time class="notif-time" datetime="${esc(item.created_at)}">${date.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}${item.target_available===false?' · Запись недоступна':''}</time></span></button><button class="notif-read" type="button" ${FBZActions.attrs('notifications.read',[Number(item.id),!item.read])} aria-label="${item.read?'Отметить непрочитанным':'Отметить прочитанным'}" title="${item.read?'Отметить непрочитанным':'Отметить прочитанным'}" ${pending.has(item.id)||writing?'disabled':''}><span class="notif-dot"></span></button><button class="notif-dismiss" type="button" ${FBZActions.attrs('notifications.dismiss',[Number(item.id)])} aria-label="Убрать уведомление" title="Убрать уведомление">${ico('close',16)}</button></div>`;
     }).join(''):`<div class="notif-empty">${ico('bell',26)}<strong>${unreadOnly?(totalUnread?'Есть новые уведомления':'Всё прочитано'):'Пока тихо'}</strong><p>${unreadOnly?'Новые отклики появятся здесь.':'Заявки в друзья и отклики на ваши оценки появятся здесь.'}</p>${unreadOnly&&totalUnread?'<button class="btn btn-g" type="button" data-fbz-click="notifications.refresh">Показать новые</button>':''}</div>`;
     controls();
   }
@@ -91,7 +93,27 @@
     finally{if(epoch===session){writing=false;if(opened){if(intent!==view)load();else render();}}}
   }
   function filter(value){if(writing||pending.size)return;unreadOnly=Boolean(value);load();}
-  function resetSession(){session++;request++;view++;items=[];cursor=null;hasMore=false;throughId=null;unreadOnly=false;loadedFilter=null;totalUnread=0;countChangedDuringLoad=false;pending.clear();writing=false;busy=false;close();el('notifUpdate').hidden=true;render();}
+  async function dismiss(id,restore=false){
+    const user=CU?.id,epoch=session,intent=view,index=items.findIndex(row=>row.id===id);
+    if(!opened||!user||busy||writing||pending.size||(!restore&&index<0))return;
+    pending.add(id);render();
+    try{
+      const result=await sb.rpc('set_notification_dismissed',{p_notification_id:id,p_dismissed:!restore});
+      if(result.error)throw result.error;
+      if(epoch!==session||CU?.id!==user)return;
+      totalUnread=Number(result.data?.unread_count)||0;window.FBZNotificationCounter.set(totalUnread);
+      if(restore){lastDismissed=null;}else{lastDismissed=id;items=items.filter(row=>row.id!==id);}
+      if(!opened||intent!==view)return;
+      el('notifStatus').textContent=restore?'Уведомление возвращено':'Уведомление убрано';
+    }catch{if(epoch===session&&CU?.id===user&&opened)toast('Не удалось изменить уведомление. Попробуйте ещё раз.','err');}
+    finally{
+      if(epoch===session){pending.delete(id);if(opened){
+        if(restore||intent!==view){await load();if(restore&&epoch===session&&opened)el('notifList').querySelector(`[data-notification-id="${id}"] .notif-dismiss`)?.focus({preventScroll:true});}
+        else{render();const next=items[Math.min(index,items.length-1)];(next?el('notifList').querySelector(`[data-notification-id="${next.id}"] .notif-dismiss`):el('notifAll'))?.focus({preventScroll:true});}
+      }}
+    }
+  }
+  function resetSession(){lastDismissed=null;session++;request++;view++;items=[];cursor=null;hasMore=false;throughId=null;unreadOnly=false;loadedFilter=null;totalUnread=0;countChangedDuringLoad=false;pending.clear();writing=false;busy=false;close();el('notifUpdate').hidden=true;render();}
   document.addEventListener('fbz:notification-count',event=>{if(opened&&event.detail.count!==totalUnread){el('notifUpdate').hidden=false;if(busy)countChangedDuringLoad=true;}});
   window.FBZNotifications={load,toggle,close,markAll,resetSession,isOpen:()=>opened};
   FBZActions.register({
@@ -101,4 +123,5 @@
     'notifications.filter':(event,element,[value])=>filter(value),
     'notifications.more':()=>load(true)
   });
+  FBZActions.register({'notifications.dismiss':(event,element,[id])=>dismiss(id),'notifications.restore':()=>lastDismissed&&dismiss(lastDismissed,true)});
 })();

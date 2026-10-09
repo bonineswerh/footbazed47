@@ -194,6 +194,7 @@
 - Не логируй токены, service key, email, тело пользовательского комментария или полный upstream payload.
 - Микрофон запрещён Permissions Policy, media-src содержит none; realtime origin не нужен продукту.
 - Любой новый ввод валидируй и в UI, и на доверенной границе: RPC, constraint или server function.
+- Персональная очистка уведомлений хранится отдельно в `notification_dismissals`; `set_notification_dismissed` работает как invoker, допускает только свои доступные события и обратную отмену. Restrictive SELECT policy исключает очищенные события до pagination и из всех unread counts. Её private definer predicate читает только own dismissal metadata, разрывая рекурсию с INSERT policy; события и их privacy scopes не обходит. Raw notifications DELETE/INSERT и identity updates остаются закрыты; очистка не отвечает на заявку в друзья и не меняет read state.
 - Не вставляй непроверенные URL в `src`, `href`, CSS или canvas.
 - `.vercelignore` обязан исключать `supabase/`, `tests/`, `scripts/`, `docs/`, `types/`, `README.md`, `AGENTS.md`, `tsconfig.json` и `.env.example` из публичной статики.
 - Локальный E2E hook `window.__FOOTBAZED_TEST_CLIENT__` разрешён только на `localhost`/`127.0.0.1` при `?__e2e=1`.

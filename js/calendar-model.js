@@ -9,6 +9,12 @@ function parse(day){
 function key(date=new Date()){
   return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
 }
+function exact(value){
+  const parts=/^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(value||'').trim());
+  const day=parts?`${parts[3]}-${parts[2]}-${parts[1]}`:null;
+  return parse(day)?day:null;
+}
+function formatted(day){return parse(day)?day.slice(8)+'.'+day.slice(5,7)+'.'+day.slice(0,4):'';}
 function shift(day,amount){
   const date=parse(day);if(!date||!Number.isInteger(amount))return null;
   date.setDate(date.getDate()+amount);return parse(key(date))?key(date):null;
@@ -27,7 +33,7 @@ function monthDays(day){
   const offset=(first.getDay()+6)%7,start=key(first);
   return Array.from({length:42},(_,index)=>shift(start,index-offset));
 }
-const api=Object.freeze({parse,key,shift,bounds,month,monthDays});
+const api=Object.freeze({parse,key,exact,formatted,shift,bounds,month,monthDays});
 if(typeof module==='object'&&module.exports)module.exports=api;
 else root.FBZCalendarModel=api;
 })(globalThis);
