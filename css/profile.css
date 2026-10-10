@@ -90,5 +90,12 @@
 .profile-actions-panel{width:min(400px,calc(100% - 24px));padding:22px;border:1px solid var(--surface-edge);border-radius:var(--radius-card);background:var(--bg2);box-shadow:var(--shadow)}
 .profile-actions-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.profile-actions-panel h2{font-size:1.25rem;overflow-wrap:anywhere}.profile-actions-panel>.btn{display:flex;width:100%;min-height:48px;border-radius:var(--radius-control);margin-top:8px;justify-content:flex-start}
 .profile-actions-panel header .profile-more{width:44px;min-width:44px;height:44px;flex:none;justify-content:center}
+/* One metric strip keeps the diary header readable without nested cards. */
+.phero .pstats{gap:0;border:1px solid var(--b1);border-radius:var(--radius-control);background:var(--bg3);overflow:hidden}
+.phero .pst{border:0;border-inline-end:1px solid var(--b1);border-radius:0;background:transparent;padding:16px}
+.phero .pst:last-child{border-inline-end:0}
+.phero .pst-link:focus-visible{outline-offset:-3px}
+.phero .pst-l{margin-top:6px;line-height:1.4}
+@media(max-width:620px){.phero .pst{padding:14px 12px}.phero .pst:nth-child(2n){border-inline-end:0}.phero .pst:nth-child(n+3){border-top:1px solid var(--b1)}}
 @media(max-width:900px){.phero{grid-template-columns:72px minmax(0,1fr)}}
 @media(max-width:620px){.phero{grid-template-columns:56px minmax(0,1fr)}.phero-acts{grid-template-columns:minmax(0,1fr) 44px;gap:12px}.profile-relationship{grid-column:1;grid-row:1}.phero-acts>.profile-link{grid-column:2;grid-row:1}.phero-acts>.profile-compare{grid-column:1/-1;grid-row:2;width:100%;min-width:0}.profile-relationship>.btn{white-space:normal;line-height:1.4}.phero .pstats{grid-row:7}}

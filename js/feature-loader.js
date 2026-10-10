@@ -3,7 +3,7 @@
 const featureModulePromises=new Map();
 let interactionStyles=null;
 function ensureInteractionStyles(){
-  if(!interactionStyles)interactionStyles=stylesheet({key:'interaction-patterns',styleId:'interactionStyles',style:'css/interaction-patterns.css?v=20261009-controls'}).catch(error=>{interactionStyles=null;throw error;});
+  if(!interactionStyles)interactionStyles=stylesheet({key:'interaction-patterns',styleId:'interactionStyles',style:'css/interaction-patterns.css?v=20261010-polish'}).catch(error=>{interactionStyles=null;throw error;});
   return interactionStyles;
 }
 function stylesheet({key,styleId,style}){

@@ -88,8 +88,9 @@ test('deleted or expired session and disconnected factor reject stale AAL2 token
   const unavailable=api({sessionStatus:503}),result=await unavailable.send({action:'sync_matches'});
   assert.equal(result.status,503);assert.equal(unavailable.calls.some(c=>c.method==='POST'),false);
 });
-test('cleanup requires recent TOTP even with active AAL2, never trusts password or future timestamps',async()=>{
-  const now=Math.floor(Date.now()/1000);
+test('cleanup requires recent TOTP even with active AAL2, never trusts password or future timestamps',async t=>{
+  const now=1790000000;
+  t.mock.method(Date,'now',()=>now*1000);
   for(const amr of [[],null,{},[{method:'totp',timestamp:now-301}],[{method:'password',timestamp:now}],[{method:'totp',timestamp:now+1}]]){
     const app=api(),result=await app.send({action:'cleanup_development_data',scope:'ratings',confirmation:'DELETE FOOTBAZED DATA'},{authorization:bearer({amr})});
     assert.equal(result.status,403);assert.equal(result.body.code,'admin_mfa_recent_required');assert.equal(app.calls.some(c=>c.method==='POST'),false);
