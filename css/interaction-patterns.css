@@ -43,6 +43,9 @@ body :is(.entity-match-club,.squad-player,.performance-row,.teammate-card,.compe
 body .rating-supporter-options .supporter-neutral-mark{background:var(--bg4);color:var(--snow);border:1px solid var(--b3)}
 body .rating-supporter-options .supporter-neutral-mark .ico{width:24px;height:24px;fill:currentColor}
 body .rating-supporter-options input:checked+span>.supporter-neutral-mark{background:var(--accent3);color:var(--snow);border-color:var(--accent2)}
+/* Audience names remain readable on tablets as well as narrow phones. */
+body .md-segment span{white-space:normal;overflow-wrap:break-word;line-height:1.4;text-overflow:clip}
+@media(max-width:900px){body .md-segments{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){
   body :is(.feed-filters,.community-tabs,.statistics-tabs,.entity-tabs,.rating-team-tabs,.md-segments,.notif-toolbar>div)>button,
   body :is(.league-tab,.calendar-all,.calendar-day,.calendar-favorites,.statistics-confidence button,.search-categories button,.filters .btn,.entity-text-link,.md-club-link,.feed-team,.feed-players button,.home-team-list>button,.profile-favorite-clubs>button){transition:none}
