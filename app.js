@@ -92,7 +92,7 @@ function ensureEntitiesModule(){
   return ensureFeatureModule({key:'entities',styleId:'entityStyles',style:'css/entities.css?v=20261007-community',script:'js/entities.js?v=20261009-discovery2',ready:()=>window.FBZEntities});
 }
 function ensureFeedModule(){
-  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=20261009-controls',script:'js/feed.js?v=20261009-controls',ready:()=>window.FBZFeed});
+  return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=20261010-polish',script:'js/feed.js?v=20261009-controls',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
   return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=20261007-search',script:'js/search.js?v=20261007-details',ready:()=>window.FBZSearch});
@@ -413,11 +413,11 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261009-community1',script:'js/profile.js?v=20261009-discovery2',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261010-polish',script:'js/profile.js?v=20261009-discovery2',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});
-  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=20261009-controls',script:'js/explore.js?v=20261009-discovery2',ready:()=>window.FBZExplore});
+  return ensureFeatureModule({key:'explore',styleId:'exploreStyles',style:'css/explore.css?v=20261010-polish',script:'js/explore.js?v=20261009-discovery2',ready:()=>window.FBZExplore});
 }
 async function loadProfile(uid){
   const route=routeVersion,user=CU?.id;
