@@ -4,6 +4,26 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const domain=require('../js/domain.js');
 
+test('passing kickoff cannot turn an unconfirmed schedule into live or a fake result',()=>{
+  const start=Date.parse('2026-10-11T16:00:00Z');
+  const match={status:'scheduled',match_date:new Date(start).toISOString(),home_score:0,away_score:0};
+  assert.equal(domain.matchScorePresentation(match,start-1).status,'Предстоит');
+  const overdue=domain.matchScorePresentation(match,start);
+  assert.equal(overdue.status,'Статус уточняется');
+  assert.equal(overdue.hasScore,false);
+  assert.equal(overdue.home,'—');
+  assert.equal(match.status,'scheduled');
+});
+
+test('a six-hour-old live entry retains its reported score without promising a live broadcast',()=>{
+  const kickoff=Date.parse('2026-10-11T16:00:00Z');
+  const match={status:'live',match_date:new Date(kickoff).toISOString(),home_score:2,away_score:1};
+  assert.equal(domain.matchScorePresentation(match,kickoff+3600000).isLive,true);
+  const stale=domain.matchScorePresentation(match,kickoff+21600001);
+  assert.equal(stale.isLive,false);assert.equal(stale.status,'Статус уточняется');
+  assert.equal(stale.home,'2');assert.equal(stale.label,'Последний счёт');assert.equal(match.status,'live');
+});
+
 test('only transient read failures can preserve an already authorized result',()=>{
   for(const error of [new TypeError('Failed to fetch'),{code:'',message:'network unavailable'},{code:'PGRST003'},{status:503}])assert.equal(domain.canRetainReadResult(error),true);
   for(const error of [{name:'AbortError'},{code:'42501'},{code:'PGRST301'},{code:'FBZ_PROFILE_UNAVAILABLE'},{status:403},{status:404},{code:'unexpected'},{code:'PGRST003',status:401},null])assert.equal(domain.canRetainReadResult(error),false);

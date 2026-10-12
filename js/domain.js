@@ -78,13 +78,15 @@
 
   // An absent result is different from a real 0:0. Provider placeholders for
   // upcoming, postponed or unknown states must never look like played scores.
-  function matchScorePresentation(match={}){
+  function matchScorePresentation(match={},now=Date.now()){
     const state=String(match.status||'');
+    const kickoff=Date.parse(match.match_date);
+    const awaitingUpdate=Number.isFinite(kickoff)&&((state==='scheduled'&&kickoff<=now)||(state==='live'&&now-kickoff>21600000));
     const hasScore=['live','finished'].includes(state)&&[match.home_score,match.away_score].every(value=>Number.isInteger(value)&&value>=0);
     const labels={live:'LIVE',finished:'Завершён',scheduled:'Предстоит',postponed:'Перенесён',cancelled:'Отменён'};
-    return{status:Object.hasOwn(labels,state)?labels[state]:'Статус уточняется',hasScore,
+    return{status:awaitingUpdate?'Статус уточняется':Object.hasOwn(labels,state)?labels[state]:'Статус уточняется',hasScore,isLive:state==='live'&&!awaitingUpdate,
       home:hasScore?String(match.home_score):'—',away:hasScore?String(match.away_score):'—',
-      label:hasScore?(state==='live'?'Текущий счёт':'Итоговый счёт'):['live','finished'].includes(state)?'Счёт уточняется':'Без счёта'};
+      label:hasScore?(state==='live'?(awaitingUpdate?'Последний счёт':'Текущий счёт'):'Итоговый счёт'):['live','finished'].includes(state)?'Счёт уточняется':'Без счёта'};
   }
 
   // Editorial matte swatches based on home-kit identities; sources in docs/sources/club-palettes.md.

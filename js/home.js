@@ -60,7 +60,7 @@
     if(!target)return;
     const matches=Array.isArray(items)?items:[];
     const now=Date.now();
-    const match=matches.find(item=>item.status==='live')
+    const match=matches.find(item=>root.FBZDomain.matchScorePresentation(item).isLive)
       ||matches.find(item=>item.status==='scheduled'&&new Date(item.match_date).getTime()>=now)
       ||matches.find(item=>item.status==='finished')
       ||matches[0];
@@ -72,8 +72,8 @@
     if(!Number.isSafeInteger(id)||id<=0){target.replaceChildren();return;}
     const date=new Date(match.match_date);
     const dateLabel=Number.isFinite(date.getTime())?date.toLocaleDateString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'}):'Дата уточняется';
-    const finished=match.status==='finished',live=match.status==='live';
     const presentation=root.FBZDomain.matchScorePresentation(match);
+    const finished=match.status==='finished',live=presentation.isLive;
     const homeName=root.FBZDomain.matchTeamName(match,'home');
     const awayName=root.FBZDomain.matchTeamName(match,'away');
     target.innerHTML=`<article class="home-spotlight${live?' is-live':''}" style="${root.FBZDomain.matchPaletteStyle(match)}" aria-label="Матч в фокусе: ${root.esc(homeName)} — ${root.esc(awayName)}">

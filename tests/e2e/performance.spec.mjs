@@ -48,6 +48,7 @@ for(const language of ['ru','en'])test(`home stays inside the frontend performan
   expect(result.metrics.cls,JSON.stringify(result.shifts,null,2)).toBeLessThanOrEqual(0.1);
   expect(result.assetBytes).toBeLessThanOrEqual(500*1024);
   expect(result.assetPaths).not.toContain('/js/admin.js');
+  expect(result.assetPaths).not.toContain('/js/match-detail.js');
   expect(result.assetPaths).not.toContain('/admin.css');
   expect(result.assetPaths).not.toContain('/js/notifications.js');
   expect(result.assetPaths).not.toContain('/css/notifications.css');
