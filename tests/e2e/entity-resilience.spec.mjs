@@ -164,8 +164,10 @@ test('медленный ответ матча не заменяет новый 
       return result;
     };
     window.slowMatch=loadMD(101);
-    go('md',{mid:102});
   });
+  // The detail module loads asynchronously; first hold an actual in-flight request.
+  await expect.poll(()=>page.evaluate(()=>typeof window.releaseMatch)).toBe('function');
+  await page.evaluate(()=>go('md',{mid:102}));
   await expect(page.locator('.md-hero')).toContainText('Барселона');
   await page.evaluate(async()=>{window.releaseMatch();await window.slowMatch;});
   await expect(page.locator('.md-hero')).toContainText('Барселона');
