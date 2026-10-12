@@ -260,6 +260,7 @@ function go(p,d){
   const page=document.getElementById(`page-${p}`);
   if(!page)return;
   routeVersion++;
+  window.FBZMatchUpdates?.stop();
   if(p!=='admin')window.FBZAdminSecurity?.syncRoute(p);
   controlIntent++;window.FBZFormControls?.close(false);
   window.FBZExplore?.closePanels();

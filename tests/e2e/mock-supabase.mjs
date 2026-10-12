@@ -87,6 +87,7 @@ export async function installSupabaseMock(page,overrides={}){
   await page.addInitScript(data=>{
     localStorage.setItem('fbz_session_hint','1');
     const state=structuredClone(data);
+    window.__FOOTBAZED_TEST_MATCHES__={update:rows=>{for(const row of rows){const match=state.matches.find(item=>Number(item.id)===Number(row.id));if(match)Object.assign(match,row);}}};
     const participationVerified=(matchId,playerId)=>!Object.hasOwn(state,'lineup')||Boolean(state.lineup?.players?.some(p=>Number(p.id)===Number(playerId)&&['starter','substitute'].includes(p.participation)));
     const performanceClub=(matchId,playerId)=>Object.hasOwn(state,'lineup')?state.lineup?.players?.find(p=>Number(p.id)===Number(playerId)&&['starter','substitute'].includes(p.participation))?.club_id:[5290,5291,5292,5293,5294,5295].includes(Number(playerId))?24:31;
     state.club.matches=structuredClone(state.matches);
