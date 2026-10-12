@@ -4,8 +4,8 @@
 async function loadMD(id,{quiet=false}={}){
   if(!id)return;
   const request=quiet?matchDetailRequest:++matchDetailRequest;
-  const userId=CU?.id||null;
-  const isCurrent=()=>request===matchDetailRequest&&CP==='md'&&Number(mdID)===Number(id)&&(CU?.id||null)===userId;
+  const userId=CU?.id||null,route=routeVersion;
+  const isCurrent=()=>route===routeVersion&&request===matchDetailRequest&&CP==='md'&&Number(mdID)===Number(id)&&(CU?.id||null)===userId;
   const target=document.getElementById('mdC');
   if(!quiet)activeMatchRatingSegments=null;
   target.setAttribute('aria-busy','true');
