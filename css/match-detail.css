@@ -1,0 +1,15 @@
+/* Detail-only refinements: no extra bytes on the homepage. */
+.md-hero .md-community-empty{display:flex;align-items:center;justify-content:center;gap:10px;max-width:950px;margin:20px auto 0;padding:14px 18px;border-style:solid;border-radius:14px;font-size:var(--type-small);line-height:1.5}
+.md-community-empty svg{flex:none;opacity:.75}
+.md-grid .mdcard[hidden]{display:none}
+@media(max-width:620px){
+  .md-hero .md-sl{grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr);grid-template-rows:auto auto auto;align-items:center;row-gap:8px}
+  .md-hero .md-team,.md-hero .md-team:last-child{display:contents}
+  .md-hero .md-team>*{grid-column:1;justify-self:center}
+  .md-hero .md-team:last-child>*{grid-column:3}
+  .md-hero .md-team .md-team-mark{grid-row:1}
+  .md-hero .md-team .md-tname{grid-row:2;min-height:0;align-self:center;text-align:center}
+  .md-hero .md-team .md-score{grid-row:3;line-height:1.1}
+  .md-hero .md-vs{grid-column:2;grid-row:3;align-self:center;padding-top:0}
+  .md-hero .md-community-empty{margin-top:16px;padding:12px;text-align:center}
+}

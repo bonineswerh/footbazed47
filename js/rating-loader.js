@@ -2,6 +2,7 @@
   'use strict';
 
   let loading=null;
+  let openVersion=0;
 
   function loadRatings(){
     if(loading)return loading;
@@ -10,11 +11,15 @@
   }
 
   async function openRateLazy(matchId,mode='rating'){
+    const intent=++openVersion,route=routeVersion,user=CU?.id||null;
+    const current=()=>intent===openVersion&&route===routeVersion&&(CU?.id||null)===user;
     try{
       await loadRatings();
+      if(!current())return;
       if(!root.FBZRatings?.open)throw new Error('ratings_not_initialized');
       return root.FBZRatings.open(matchId,mode);
     }catch(error){
+      if(!current())return;
       console.error('Rating module error:',error);
       root.toast?.('Не удалось открыть форму оценки','err');
     }

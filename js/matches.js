@@ -305,7 +305,7 @@ async function loadMD(id,options){
   const target=document.getElementById('mdC');
   target.innerHTML='<div class="loading" role="status"><div class="spin"></div><span>Загружаем матч</span></div>';
   try{
-    const detail=await FBZFeatures.load({key:'match-detail',script:'js/match-detail.js?v=20261012-freshness',ready:()=>window.FBZMatchDetail});
+    const detail=await FBZFeatures.load({key:'match-detail',styleId:'matchDetailStyles',style:'css/match-detail.css?v=20261013-refinement',script:'js/match-detail.js?v=20261013-refinement',ready:()=>window.FBZMatchDetail});
     if(current())return detail.load(id,options);
   }catch{
     if(current())target.innerHTML='<div class="empty-state"><strong>Не удалось открыть матч</strong><button class="btn btn-g btn-sm" '+FBZActions.attrs('matches.retry-match',[Number(id)])+'>Повторить</button></div>';
