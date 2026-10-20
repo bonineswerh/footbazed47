@@ -151,7 +151,7 @@ async function tableCount(table, filter = '', key = 'id') {
 
 async function getOverview() {
   const now = new Date().toISOString();
-  const [matches, players, ratings, users, predictions, upcoming, legacyAvatars, recentResponse, missingEmblems, latestFinished, nextMatch, overdue, lineups, latestImport, activity] = await Promise.all([
+  const [matches, players, ratings, users, predictions, upcoming, legacyAvatars, recentResponse, missingEmblems, latestFinished, nextMatch, overdue, lineups, latestImport, activity, latestAutomation] = await Promise.all([
     tableCount('matches'),
     tableCount('players'),
     tableCount('ratings'),
@@ -165,8 +165,11 @@ async function getOverview() {
     supabase(`/rest/v1/matches?status=in.(scheduled,live)&match_date=gte.${encodeURIComponent(now)}&select=match_date&order=match_date.asc&limit=1`),
     tableCount('matches', `&status=in.(scheduled,live)&match_date=lt.${encodeURIComponent(new Date(Date.parse(now)-6*3600000).toISOString())}`),
     tableCount('match_lineups', '', 'match_id'),
-    supabase('/rest/v1/admin_audit_logs?action=eq.sync_matches&select=id,action,target_type,target_id,metadata,created_at&order=id.desc&limit=1'),
-    getAuditPage()
+    supabase('/rest/v1/admin_audit_logs?action=in.(sync_matches,auto_sync_succeeded)&select=id,action,target_type,target_id,metadata,created_at&order=id.desc&limit=1'),
+    getAuditPage(),
+    Promise.all(['PL','PD','BL1','SA','FL1','CL'].map(league =>
+      supabase(`/rest/v1/admin_audit_logs?action=in.(auto_sync_succeeded,auto_sync_failed)&target_id=eq.${league}&select=id,action,target_type,target_id,metadata,created_at&order=id.desc&limit=1`)
+        .then(response => ({league,item:auditItem(parseJson(response.raw,[])[0])}))))
   ]);
 
   return {
@@ -180,6 +183,7 @@ async function getOverview() {
       nextMatchAt:timestamp(parseJson(nextMatch.raw,[])[0]?.match_date),
       overdueMatches:overdue,
       confirmedLineups:lineups,
+      automation:latestAutomation,
       latestImport:auditItem(parseJson(latestImport.raw,[])[0])
     },
     activity,
@@ -467,7 +471,11 @@ async function syncMatches(input) {
     method:'POST',body:[...new Set([...clubIds.values()])].map(club_id=>({club_id,competition_id:Number(competitions[0].id)})),
     headers:{Prefer:'resolution=ignore-duplicates,return=minimal'}
   });
-  const rows = matches.map(match => ({
+  const previousResponse=await supabase(`/rest/v1/matches?external_id=in.(${matches.map(match=>match.id).join(',')})&select=external_id,status&limit=1000`);
+  const previous=parseJson(previousResponse.raw);
+  if(!Array.isArray(previous))throw Object.assign(new Error('invalid_previous_matches'),{status:502});
+  const finishedIds=new Set(previous.filter(match=>match.status==='finished').map(match=>Number(match.external_id)));
+  const rows = matches.filter(match=>!finishedIds.has(match.id)||mapStatus(match.status)==='finished').map(match => ({
     external_id: match.id,
     league_code: league,
     league_name: LEAGUES[league],
@@ -737,3 +745,6 @@ module.exports = async function handler(req, res) {
     return sendJson(res, safeStatus, { error: message, ...(['FootballProviderError','AdminAccessError'].includes(error.name)?{code:error.code}: {}) });
   }
 };
+
+// Internal server reuse only; these functions are not actions exposed by the admin endpoint.
+module.exports.catalog=Object.freeze({syncMatches,supabase,recordAdminAction});

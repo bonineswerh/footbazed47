@@ -1,6 +1,20 @@
 import {expect,test} from '@playwright/test';
 import {installSupabaseMock} from './mock-supabase.mjs';
 
+for(const state of ['active','error','delayed','pending']){
+  test(`автообновление учитывает все шесть турниров: ${state}`,async({page})=>{
+    await page.setViewportSize({width:390,height:844});await installSupabaseMock(page);
+    const automation=['PL','PD','BL1','SA','FL1','CL'].map(league=>({league,item:{at:new Date().toISOString(),failed:false}}));
+    if(state==='error')automation[4].item.failed=true;
+    if(state==='delayed')automation[2].item.at=new Date(Date.now()-3600000).toISOString();
+    if(state==='pending')automation[5].item=null;
+    await page.route('**/api/admin*',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({counts:{},recentMatches:[],freshness:{automation},activity:{items:[]}})}));
+    await page.goto('/admin?__e2e=1');
+    await expect(page.locator('.admin-sync-state')).toHaveAttribute('data-state',state);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
+  });
+}
+
 for(const width of [390,1280])for(const theme of ['dark','light']){
   test(`админка: актуальность и постоянный журнал ${width}px ${theme}`,async({page})=>{
     await page.setViewportSize({width,height:844});await installSupabaseMock(page);

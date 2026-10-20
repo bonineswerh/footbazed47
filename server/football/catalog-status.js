@@ -1,6 +1,6 @@
 'use strict';
 
-const ACTIONS = new Set(['sync_matches','sync_squads','sync_matches_failed','sync_squads_failed','test_connection','update_match','apply_club_emblems','apply_match_lineup','prepare_catalog','cleanup_development_data','migrate_legacy_avatars','moderation.report_review']);
+const ACTIONS = new Set(['auto_sync_started','auto_sync_succeeded','auto_sync_failed','sync_matches','sync_squads','sync_matches_failed','sync_squads_failed','test_connection','update_match','apply_club_emblems','apply_match_lineup','prepare_catalog','cleanup_development_data','migrate_legacy_avatars','moderation.report_review']);
 const LEAGUES = new Set(['PL','PD','BL1','SA','FL1','CL']);
 const timestamp = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : null;
 const date = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && timestamp(value)?.slice(0,10) === value ? value : null;

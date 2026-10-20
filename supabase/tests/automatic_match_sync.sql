@@ -1,0 +1,13 @@
+begin;
+select plan(7);
+select ok(not has_function_privilege('anon','public.claim_automatic_match_sync(text,text)','EXECUTE'),'anon cannot claim');
+select ok(not has_function_privilege('authenticated','public.claim_automatic_match_sync(text,text)','EXECUTE'),'users cannot claim');
+set local role service_role;
+select is(public.claim_automatic_match_sync('PL','999999999999999999999991'),true,'service can claim');
+select is(public.claim_automatic_match_sync('PL','999999999999999999999991'),false,'same run cannot replay');
+select is(public.claim_automatic_match_sync('PL','999999999999999999999992'),false,'different run respects cooldown');
+select is(public.claim_automatic_match_sync('PD','999999999999999999999991'),true,'another league can proceed');
+select throws_ok($$select public.claim_automatic_match_sync('INVALID','1')$$,'22023','invalid_sync_claim','invalid league denied');
+reset role;
+select * from finish();
+rollback;
