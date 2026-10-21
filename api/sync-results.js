@@ -14,7 +14,7 @@ function createHandler({identity=verifySyncIdentity,service=catalog,now=()=>new 
     if(process.env.VERCEL_ENV!=='production')return reply(res,503,{error:'production_only'});
     let league,run;
     try{
-      ({runId:run}=await identity(req.headers?.authorization));
+      ({runId:run}=await identity(req.headers?.authorization,{league:req.query?.league}));
       league=req.query?.league;
       if(!LEAGUES.has(league))return reply(res,400,{error:'invalid_league'});
       const claim=await service.supabase('/rest/v1/rpc/claim_automatic_match_sync',{method:'POST',body:{p_league:league,p_run_id:run}});
