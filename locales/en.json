@@ -1,4 +1,10 @@
 {
+  "Ожидает автозапуска": "Waiting for automatic sync",
+  "Ошибка автообновления": "Automatic sync failed",
+  "Автообновление задерживается": "Automatic sync delayed",
+  "Автообновление · 15 мин": "Automatic sync · 15 min",
+  "Запуск автообновления": "Automatic sync started",
+  "Автообновление матчей": "Automatic match sync",
   "Публичных оценок пока нет": "No public ratings yet",
   "Последний счёт": "Last reported score",
   "Найти в истории": "Search this history",
@@ -1562,7 +1568,6 @@
   "Время проверки панели и время импорта показаны отдельно. Последний импорт относится к одной указанной лиге и периоду, а не ко всему календарю. Дата завершённого матча — дата игры. Отсутствие игр в промежутке само по себе не доказывает сбой: проверьте расписание поставщика.": "Panel check time and import time are shown separately. The latest import covers only the specified league and date range, not the entire calendar. The finished match date is its kickoff date. A gap does not by itself prove an error: check the provider schedule.",
   "Сохраняется в базе и остаётся после перезагрузки. Нажмите «Ещё операции», чтобы открыть более ранние записи. Показывает выполненные действия и ошибки импорта матчей; личные тексты жалоб и ключи не выводятся. Это журнал, а не резервная копия.": "Saved in the database and retained after reload. Select More operations to see earlier entries. Shows completed actions and match import failures; private report text and keys are omitted. This is a log, not a backup.",
   "Автоматическое обновление": "Automatic updates",
-  "Планировщик пока не включён. Обновляйте нужные лиги и даты вручную; кнопка «Обновить» только перечитывает базу. Сообщение «Ключ настроен» не доказывает доступность поставщика — для этого есть отдельная проверка API.": "No scheduler is enabled yet. Update the required leagues and dates manually; Refresh only rereads the database. Key configured does not prove provider availability: use the separate API check.",
   "Импорт матчей": "Match import",
   "Каталог игроков": "Player catalogue",
   "Ошибка импорта матчей": "Match import failed",
@@ -1678,5 +1683,6 @@
   "Цветовая шкала оценок": "Rating colour scale",
   "Ожидание зрителей": "Fans’ expectation",
   "Публичных ожиданий": "Public expectations",
-  "Оценка после игры": "Rating after the match"
+  "Оценка после игры": "Rating after the match",
+  "Планировщик GitHub Actions запускает обновление шести турниров примерно каждые 15 минут: за два предыдущих дня и семь следующих. Расписание GitHub и бесплатный источник могут задерживать результаты. Голубой статус означает свежие успешные проверки всех шести турниров. При ошибке откройте журнал; при долгой задержке проверьте Actions → Automatic match results в GitHub. Более старые даты обновляйте вручную. Кнопка «Обновить» только перечитывает базу.": "GitHub Actions requests updates for six competitions roughly every 15 minutes, covering the previous two days and the next seven. GitHub scheduling and the free provider may delay results. Blue means all six competitions have recent successful checks. For errors, open the log; for a long delay, check Actions → Automatic match results on GitHub. Import older dates manually. Refresh only rereads the database."
 }

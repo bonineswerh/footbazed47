@@ -231,7 +231,7 @@ test('provider and database failures do not disclose upstream text or credential
 });
 test('a repeated provider match is upserted once with a stable external identity',async()=>{
   const match={id:1,homeTeam:{id:2,name:'Home'},awayTeam:{id:3,name:'Away'},utcDate:'2026-09-24T19:00:00Z',status:'FINISHED',score:{fullTime:{home:2,away:1}}};
-  const app=api({route:call=>call.url.includes('football-data.org')?{data:{matches:[match,match]}}:call.url.includes('/competitions?')?{data:[{id:7}]}:call.url.includes('/clubs?')?{data:[{id:20,external_id:2},{id:30,external_id:3}]}:{data:{}}});
+  const app=api({route:call=>call.url.includes('football-data.org')?{data:{matches:[match,match]}}:call.url.includes('/matches?external_id=')?{data:[]}:call.url.includes('/competitions?')?{data:[{id:7}]}:call.url.includes('/clubs?')?{data:[{id:20,external_id:2},{id:30,external_id:3}]}:{data:{}}});
   for(let i=0;i<2;i++)assert.equal((await app.send({action:'sync_matches',league:'PL',dateFrom:'2026-09-24',dateTo:'2026-09-25'})).body.processed,1);
   const writes=app.calls.filter(call=>call.url.includes('/rest/v1/matches?')&&call.method==='POST');
   assert.equal(writes.length,2);writes.forEach(call=>{assert.match(call.url,/on_conflict=external_id/);assert.equal(call.body.length,1);assert.equal(call.body[0].home_club_id,20);assert.equal(call.body[0].competition_id,7);assert.equal(Object.hasOwn(call.body[0],'season'),false);assert.match(call.headers.Prefer,/merge-duplicates/);});
@@ -241,6 +241,18 @@ test('squad duplicates are deduplicated on the existing name/team contract',asyn
   const app=api({route:call=>call.url.includes('football-data.org')?{data:{teams:[{id:2,name:'Team',squad:[player,player]}]}}:call.url.includes('/clubs?')?{data:[{id:20,external_id:2}]}:{data:{}}});
   assert.equal((await app.send({action:'sync_squads',league:'PL'})).body.processed,1);
   const write=app.calls.find(call=>call.url.includes('/players?'));assert.match(write.url,/on_conflict=name,team/);assert.equal(write.body[0].club_id,20);
+});
+
+test('provider refresh preserves finished fixtures but accepts corrected final scores',async()=>{
+  for(const status of ['TIMED','FINISHED']){
+    const match={id:1,homeTeam:{id:2,name:'Home'},awayTeam:{id:3,name:'Away'},utcDate:'2026-09-24T19:00:00Z',status,score:{fullTime:{home:3,away:1}}};
+    const app=api({route:call=>call.url.includes('football-data.org')?{data:{matches:[match]}}:call.url.includes('/matches?external_id=')?{data:[{external_id:1,status:'finished'}]}:call.url.includes('/competitions?')?{data:[{id:7}]}:call.url.includes('/clubs?')?{data:[{id:20,external_id:2},{id:30,external_id:3}]}:{data:{}}});
+    const result=await app.send({action:'sync_matches',league:'PL',dateFrom:'2026-09-24',dateTo:'2026-09-25'});
+    assert.equal(result.status,200);
+    const writes=app.calls.filter(call=>call.url.includes('/rest/v1/matches?')&&call.method==='POST');
+    assert.equal(writes.length,status==='FINISHED'?1:0);
+    if(writes.length)assert.equal(writes[0].body[0].home_score,3);
+  }
 });
 
 test('calendar freshness and durable audit history are protected, sanitized and do not call providers',async()=>{

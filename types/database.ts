@@ -1458,6 +1458,10 @@ export type Database = {
         Args: { p_user_a: string; p_user_b: string }
         Returns: boolean
       }
+      claim_automatic_match_sync: {
+        Args: { p_league: string; p_run_id: string }
+        Returns: boolean
+      }
       delete_match_expectation: { Args: { p_match_id: number }; Returns: Json }
       delete_match_rating: {
         Args: { p_match_id: number }

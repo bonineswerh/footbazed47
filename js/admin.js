@@ -147,7 +147,7 @@
     renderActivity();
   }
 
-  const auditLabels={sync_matches:'Импорт матчей',sync_squads:'Каталог игроков',sync_matches_failed:'Ошибка импорта матчей',sync_squads_failed:'Ошибка импорта игроков',test_connection:'Проверка football-data.org',update_match:'Ручное изменение матча',apply_club_emblems:'Публикация эмблем',apply_match_lineup:'Публикация состава',prepare_catalog:'Подготовка каталога',cleanup_development_data:'Очистка тестовых данных',migrate_legacy_avatars:'Перенос аватаров',other:'Административная операция'};
+  const auditLabels={auto_sync_started:'Запуск автообновления',auto_sync_succeeded:'Автообновление матчей',auto_sync_failed:'Ошибка автообновления',sync_matches:'Импорт матчей',sync_squads:'Каталог игроков',sync_matches_failed:'Ошибка импорта матчей',sync_squads_failed:'Ошибка импорта игроков',test_connection:'Проверка football-data.org',update_match:'Ручное изменение матча',apply_club_emblems:'Публикация эмблем',apply_match_lineup:'Публикация состава',prepare_catalog:'Подготовка каталога',cleanup_development_data:'Очистка тестовых данных',migrate_legacy_avatars:'Перенос аватаров',other:'Административная операция'};
   function auditText(item){
     return (auditLabels[item.action] || auditLabels.other)+(item.league?' · '+item.league:'')+(Number.isSafeInteger(item.processed)?' · '+item.processed+' записей':'');
   }
@@ -174,8 +174,12 @@
   function renderFreshness(data){
     const host=document.getElementById('adminFreshness');if(!host||!data)return;
     host.hidden=false;
-    const last=data.latestImport;
-    host.innerHTML=`<div class="admin-panel-head"><h3>Актуальность данных</h3><span>Обновление запускается вручную</span></div><div class="admin-freshness-grid"><div><small>Последний импорт матчей</small><strong>${last?esc(formatDate(last.at)):'Ещё не зафиксирован'}</strong><span>${last?esc(last.league||'')+(last.dateFrom?' · '+esc(last.dateFrom)+' — '+esc(last.dateTo):' · период не записан'):''}</span></div><div><small>Последний завершённый матч</small><strong>${data.latestFinishedAt?esc(formatDate(data.latestFinishedAt)):'Нет данных'}</strong><span>Дата игры, не время импорта</span></div><div><small>Ближайший матч</small><strong>${data.nextMatchAt?esc(formatDate(data.nextMatchAt)):'В календаре нет'}</strong><span>По сохранённому календарю</span></div><div><small>Подтверждённые составы</small><strong>${Number(data.confirmedLineups)||0}</strong><span>Историческое участие игроков</span></div></div>${Number(data.overdueMatches)>0?`<p class="admin-freshness-warning">Проверьте статусы: ${Number(data.overdueMatches)} матчей начались более 6 часов назад и ещё не завершены в базе.</p>`:''}`;
+    const last=data.latestImport,automatic=Array.isArray(data.automation)?data.automation:[];
+    const autoState=automatic.some(entry=>entry.item?.failed)?'error':
+      automatic.length!==6||automatic.some(entry=>!entry.item)?'pending':
+      automatic.some(entry=>!Number.isFinite(Date.parse(entry.item.at))||Date.now()-Date.parse(entry.item.at)>45*60000)?'delayed':'active';
+    const autoLabel={pending:'Ожидает автозапуска',error:'Ошибка автообновления',delayed:'Автообновление задерживается',active:'Автообновление · 15 мин'}[autoState];
+    host.innerHTML=`<div class="admin-panel-head"><h3>Актуальность данных</h3><span class="admin-sync-state" data-state="${autoState}">${esc(autoLabel)}</span></div><div class="admin-freshness-grid"><div><small>Последний импорт матчей</small><strong>${last?esc(formatDate(last.at)):'Ещё не зафиксирован'}</strong><span>${last?esc(last.league||'')+(last.dateFrom?' · '+esc(last.dateFrom)+' — '+esc(last.dateTo):' · период не записан'):''}</span></div><div><small>Последний завершённый матч</small><strong>${data.latestFinishedAt?esc(formatDate(data.latestFinishedAt)):'Нет данных'}</strong><span>Дата игры, не время импорта</span></div><div><small>Ближайший матч</small><strong>${data.nextMatchAt?esc(formatDate(data.nextMatchAt)):'В календаре нет'}</strong><span>По сохранённому календарю</span></div><div><small>Подтверждённые составы</small><strong>${Number(data.confirmedLineups)||0}</strong><span>Историческое участие игроков</span></div></div>${Number(data.overdueMatches)>0?`<p class="admin-freshness-warning">Проверьте статусы: ${Number(data.overdueMatches)} матчей начались более 6 часов назад и ещё не завершены в базе.</p>`:''}`;
   }
 
   function setApiState(configured, checked){
@@ -742,7 +746,7 @@ FBZActions.register({
   "admin.help-open":async(event,element)=>{
     const user=CU?.id,version=routeVersion;
     try{
-      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261008-admin-mfa',ready:()=>window.FBZAdminGuide});
+      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261020-sync',ready:()=>window.FBZAdminGuide});
       if(CU?.id===user&&CU?.is_admin&&CP==='admin'&&routeVersion===version){FBZAdminGuide.mount();FBZAdmin.showView('help',element);}
     }catch{if(CU?.id===user&&CP==='admin')toast('Не удалось открыть инструкцию','err');}
   },

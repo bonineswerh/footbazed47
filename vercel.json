@@ -3,6 +3,9 @@
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
   "functions": {
+    "api/sync-results.js": {
+      "maxDuration": 60
+    },
     "api/admin.js": {
       "maxDuration": 60
     },
