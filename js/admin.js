@@ -746,7 +746,7 @@ FBZActions.register({
   "admin.help-open":async(event,element)=>{
     const user=CU?.id,version=routeVersion;
     try{
-      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261020-sync',ready:()=>window.FBZAdminGuide});
+      await FBZFeatures.load({key:'adminGuide',script:'js/admin-guide.js?v=20261021-scheduler',ready:()=>window.FBZAdminGuide});
       if(CU?.id===user&&CU?.is_admin&&CP==='admin'&&routeVersion===version){FBZAdminGuide.mount();FBZAdmin.showView('help',element);}
     }catch{if(CU?.id===user&&CP==='admin')toast('Не удалось открыть инструкцию','err');}
   },

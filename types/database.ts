@@ -1462,6 +1462,10 @@ export type Database = {
         Args: { p_league: string; p_run_id: string }
         Returns: boolean
       }
+      consume_match_sync_ticket: {
+        Args: { p_league: string; p_token: string }
+        Returns: string
+      }
       delete_match_expectation: { Args: { p_match_id: number }; Returns: Json }
       delete_match_rating: {
         Args: { p_match_id: number }

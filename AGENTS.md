@@ -19,6 +19,7 @@
 - Рабочий источник футбольного каталога — football-data.org через `api/admin.js`. API-Football используется для защищённой диагностики, staged подключения эмблем и preview/apply исторического состава точно сопоставленного матча. Массовый импорт матчей/игроков новым провайдером пока не включён.
 - Production — Vercel из GitHub-ветки `main`.
 - Автосинхронизация результатов: `.github/workflows/sync-results.yml` → `api/sync-results.js`, короткоживущий GitHub OIDC, только main/production. Service-only `claim_automatic_match_sync` защищает от повторов. Шесть турниров, окно UTC −2/+7 дней, запланировано раз в 15 минут, без гарантии LIVE. Подробности и остановка: `docs/automatic-match-sync.md`.
+- Основной планировщик результатов — Supabase Cron `footbazed-match-results`: `private.dispatch_match_sync` → `api/sync-results-db.js`. Каждая лига раз в 15 минут, шесть минутных слотов, одноразовые 3-минутные пропуски в закрытой таблице (только SHA-256). GitHub остаётся резервом; оба пути используют общий cooldown. Миграции НЕ включают расписание: только после проверки Production. Никогда не читать/логировать заголовки очереди net, сырые пропуски или токены. Запускать в CI/локальной БД запрещено.
 - Тесты — встроенный `node:test`, pgTAP и Playwright Test с Axe. Требуется Node.js 22+.
 - Менеджер зависимостей — pnpm: изменяя зависимости, обновляй и коммить `pnpm-lock.yaml`; не добавляй параллельный `package-lock.json`.
 
