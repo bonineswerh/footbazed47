@@ -14,7 +14,7 @@
   let lineupBatch=null;
   let catalogBatch=null,catalogReady=false;
   const audit={items:[],nextCursor:null,hasMore:false,busy:false,version:0};
-  let apiCheck=null;
+  let apiCheck=null,latestImportAt=null;
   const reports={version:0,offset:0,total:0,hasMore:false,status:'open',type:'all',items:[],busy:false};
   const STATUS_LABELS = {
     scheduled: 'Запланирован', live: 'LIVE', finished: 'Завершен',
@@ -102,8 +102,8 @@
 
   function matchRow(match){
     return `<article class="admin-match-row">
-      <div class="admin-match-date"><b>${formatDate(match.match_date)}</b><small>${esc(match.league_name || match.league_code || 'Лига')}</small></div>
-      <div class="admin-match-teams"><span>${esc(match.home_team_name)}</span><span>${esc(match.away_team_name)}</span></div>
+      <div class="admin-match-date"><b>${formatDate(match.match_date)}</b><small>${esc(FBZNames.competition(match.league_name || match.league_code || 'Лига'))}</small></div>
+      <div class="admin-match-teams"><span title="${esc(match.home_team_name)}">${esc(FBZNames.club(match.home_team_name))}</span><span title="${esc(match.away_team_name)}">${esc(FBZNames.club(match.away_team_name))}</span></div>
       <div class="admin-match-score">${score(match)}</div>
       <span class="admin-status ${esc(match.status || 'scheduled')}">${esc(STATUS_LABELS[match.status] || match.status || '—')}</span>
       <button class="admin-row-action" type="button" ${FBZActions.attrs("admin.admin-open-editor",[Number(match.id)])} aria-label="Редактировать матч" title="Редактировать">${ico('edit',15)}</button>
@@ -123,7 +123,9 @@
     if (!host) return;
     const query = document.getElementById('adminMatchSearch')?.value.trim().toLocaleLowerCase('ru-RU') || '';
     const rows = query ? state.matches.filter(match => [
-      match.home_team_name, match.away_team_name, match.league_name, match.league_code
+      match.home_team_name, match.away_team_name, match.league_name, match.league_code,
+      FBZNames.club(match.home_team_name),FBZNames.club(match.away_team_name),
+      FBZNames.club(match.home_team_name,'',true),FBZNames.club(match.away_team_name,'',true),FBZNames.competition(match.league_name || match.league_code)
     ].some(value => String(value || '').toLocaleLowerCase('ru-RU').includes(query))) : state.matches;
     host.innerHTML = rows.length
       ? rows.map(matchRow).join('')
@@ -174,12 +176,17 @@
   function renderFreshness(data){
     const host=document.getElementById('adminFreshness');if(!host||!data)return;
     host.hidden=false;
-    const last=data.latestImport,automatic=Array.isArray(data.automation)?data.automation:[];
-    const autoState=automatic.some(entry=>entry.item?.failed)?'error':
-      automatic.length!==6||automatic.some(entry=>!entry.item)?'pending':
-      automatic.some(entry=>!Number.isFinite(Date.parse(entry.item.at))||Date.now()-Date.parse(entry.item.at)>45*60000)?'delayed':'active';
-    const autoLabel={pending:'Ожидает автозапуска',error:'Ошибка автообновления',delayed:'Автообновление задерживается',active:'Автообновление · 15 мин'}[autoState];
+    const last=data.latestImport,automatic=Array.isArray(data.automation)?data.automation:[],now=Date.now();
+    const leagues=['PL','PD','BL1','SA','FL1','CL'].map(league=>{
+      const item=automatic.find(entry=>entry.league===league)?.item;
+      const time=Date.parse(item?.at),valid=Number.isFinite(time)&&time<=now+60000;
+      const status=item?.failed?'error':!item?'pending':!valid||now-time>45*60000?'delayed':'active';
+      return {league,item,valid,status};
+    });
+    const autoState=['error','pending','delayed'].find(status=>leagues.some(entry=>entry.status===status))||'active';
+    const autoLabel={pending:'Ожидает автозапуска',error:'Ошибка автообновления',delayed:'Автообновление задерживается',active:'Данные обновляются'}[autoState];
     host.innerHTML=`<div class="admin-panel-head"><h3>Актуальность данных</h3><span class="admin-sync-state" data-state="${autoState}">${esc(autoLabel)}</span></div><div class="admin-freshness-grid"><div><small>Последний импорт матчей</small><strong>${last?esc(formatDate(last.at)):'Ещё не зафиксирован'}</strong><span>${last?esc(last.league||'')+(last.dateFrom?' · '+esc(last.dateFrom)+' — '+esc(last.dateTo):' · период не записан'):''}</span></div><div><small>Последний завершённый матч</small><strong>${data.latestFinishedAt?esc(formatDate(data.latestFinishedAt)):'Нет данных'}</strong><span>Дата игры, не время импорта</span></div><div><small>Ближайший матч</small><strong>${data.nextMatchAt?esc(formatDate(data.nextMatchAt)):'В календаре нет'}</strong><span>По сохранённому календарю</span></div><div><small>Подтверждённые составы</small><strong>${Number(data.confirmedLineups)||0}</strong><span>Историческое участие игроков</span></div></div>${Number(data.overdueMatches)>0?`<p class="admin-freshness-warning">Проверьте статусы: ${Number(data.overdueMatches)} матчей начались более 6 часов назад и ещё не завершены в базе.</p>`:''}`;
+    host.insertAdjacentHTML('beforeend',`<div class="admin-sync-details"><div class="admin-sync-caption"><strong>Обновление турниров</strong><span>Расписание — каждые 15 минут</span></div><ul class="admin-sync-leagues">${leagues.map(entry=>`<li data-state="${entry.status}"><span class="admin-sync-league-name">${esc(FBZNames.competition(entry.league))}</span><span class="admin-sync-league-status">${esc({active:'Обновлён',error:'Ошибка импорта',pending:'Нет запусков',delayed:'Данные устарели'}[entry.status])}</span>${entry.valid?`<time datetime="${esc(entry.item.at)}">${esc(formatDate(entry.item.at))}</time>`:'<span class="admin-sync-no-time">—</span>'}</li>`).join('')}</ul></div>`);
   }
 
   function setApiState(configured, checked){
@@ -188,12 +195,13 @@
     const badge = document.getElementById('adminApiState');
     const status = document.getElementById('adminFootballStatus');
     if (badge) {
-      badge.textContent = !configured?'API не настроен':verified==='ok'?'API отвечает':verified==='bad'?'Ошибка проверки':'Ключ настроен · API не проверен';
+      badge.textContent = !configured?'API не настроен':verified==='ok'?'API отвечает':verified==='bad'?'Ошибка проверки':'Нет свежей ручной проверки';
       badge.classList.toggle('ok', verified==='ok');
       badge.classList.toggle('bad', !configured||verified==='bad');
     }
     if (status) {
-      status.textContent = !configured?'Не настроен':verified==='ok'?'Отвечает':verified==='bad'?'Проверка не прошла':'Не проверен';
+      const recent=Number.isFinite(Date.parse(latestImportAt))&&Date.now()-Date.parse(latestImportAt)>=0&&Date.now()-Date.parse(latestImportAt)<45*60000;
+      status.textContent = !configured?'Не настроен':verified==='ok'?'Отвечает':verified==='bad'?'Проверка не прошла':recent?'Импорт получен':'Нет свежего импорта';
       status.className = verified==='ok'?'ok':!configured||verified==='bad'?'bad':'';
     }
   }
@@ -374,6 +382,7 @@
       state.loaded = true;
       renderMetrics(data.counts);
       renderMatches();
+      latestImportAt=data.freshness?.latestImport?.at||null;
       setApiState(Boolean(data.footballApiConfigured));
       setProviderConfigured(Boolean(data.apiFootballConfigured));
       setLegacyAvatarState(data.counts?.legacyAvatars);
