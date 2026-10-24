@@ -111,3 +111,17 @@
 .admin-sync-state::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
 .admin-sync-state[data-state="active"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,transparent)}
 .admin-sync-state[data-state="delayed"],.admin-sync-state[data-state="error"]{color:var(--warning,#f5b545)}
+.admin-sync-details{padding:0 20px 20px}
+.admin-sync-caption{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--b1);margin-bottom:12px}
+.admin-sync-caption strong{font-size:var(--type-small);font-weight:600}
+.admin-sync-caption>span{font-size:var(--type-meta);color:var(--text2)}
+.admin-sync-leagues{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.admin-sync-leagues li{display:grid;gap:5px;min-width:0;padding:12px;border:1px solid var(--b1);border-radius:var(--radius-control);background:var(--bg2)}
+.admin-sync-league-name{font-size:var(--type-small);font-weight:600;overflow-wrap:anywhere}
+.admin-sync-league-status{display:flex;align-items:center;gap:6px;font-size:var(--type-meta);color:var(--text2)}
+.admin-sync-league-status::before{content:"";width:5px;height:5px;flex:none;border-radius:50%;background:currentColor}
+.admin-sync-leagues [data-state="active"] .admin-sync-league-status{color:var(--accent)}
+.admin-sync-leagues [data-state="error"] .admin-sync-league-status,.admin-sync-leagues [data-state="delayed"] .admin-sync-league-status{color:var(--warning,#f5b545)}
+.admin-sync-leagues time,.admin-sync-no-time{font-size:var(--type-meta);color:var(--text2);font-variant-numeric:tabular-nums}
+@media(max-width:760px){.admin-sync-leagues{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:360px){.admin-sync-leagues{grid-template-columns:1fr}}

@@ -11,6 +11,8 @@ for(const state of ['active','error','delayed','pending']){
     await page.route('**/api/admin*',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({counts:{},recentMatches:[],freshness:{automation},activity:{items:[]}})}));
     await page.goto('/admin?__e2e=1');
     await expect(page.locator('.admin-sync-state')).toHaveAttribute('data-state',state);
+    await expect(page.locator('.admin-sync-leagues li')).toHaveCount(6);
+    if(state!=='active')await expect(page.locator(`.admin-sync-leagues li[data-state="${state}"]`)).toHaveCount(1);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
   });
 }
@@ -30,7 +32,7 @@ for(const width of [390,1280])for(const theme of ['dark','light']){
     await expect(page.locator('#adminFreshness')).toContainText('2026-10-01 — 2026-10-07');
     await expect(page.locator('#adminFreshness')).toContainText('Проверьте статусы: 3');
     await expect(page.locator('#adminUpdatedAt')).toContainText('Проверено');
-    await expect(page.locator('#adminFootballStatus')).toHaveText('Не проверен');
+    await expect(page.locator('#adminFootballStatus')).toHaveText('Нет свежего импорта');
     await page.screenshot({path:test.info().outputPath(`admin-freshness-${width}-${theme}.png`),fullPage:true});
     await page.getByRole('button',{name:'Журнал',exact:true}).click();
     await expect(page.locator('#adminAuditList .admin-audit-row')).toHaveCount(20);
@@ -42,7 +44,7 @@ for(const width of [390,1280])for(const theme of ['dark','light']){
     expect(calls).toEqual([{action:'audit_history',before_id:21}]);
     await page.reload();await page.getByRole('button',{name:'Журнал',exact:true}).click();await expect(page.locator('#adminAuditList .admin-audit-row')).toHaveCount(20);
     await page.getByRole('button',{name:'Синхронизация',exact:true}).click();
-    await expect(page.locator('#adminApiState')).toHaveText('Ключ настроен · API не проверен');
+    await expect(page.locator('#adminApiState')).toHaveText('Нет свежей ручной проверки');
     await page.getByRole('button',{name:'Проверить API',exact:true}).click();
     await expect(page.locator('#adminApiState')).toHaveText('API отвечает');
     await expect(page.locator('#adminFootballStatus')).toHaveText('Отвечает');
@@ -56,10 +58,42 @@ test('админка: английская версия показателей �
   await page.route('**/api/admin*',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({counts:{},recentMatches:[],footballApiConfigured:true,checkedAt:'2026-10-08T14:00:00Z',freshness:{confirmedLineups:0,latestFinishedAt:null,nextMatchAt:null,overdueMatches:0,latestImport:null},activity:{items:[],hasMore:false,nextCursor:null}})}));
   await page.goto('/en/admin?__e2e=1');
   await expect(page.locator('#adminFreshness')).toContainText('Latest match import');
+  await expect(page.locator('.admin-sync-caption')).toContainText('Competition updates');
+  await expect(page.locator('.admin-sync-leagues')).toContainText('No runs yet');
   await page.getByRole('button',{name:'Log',exact:true}).click();
   await expect(page.locator('#adminAuditPanel')).toContainText('No operations yet.');
   await expect(page.locator('#adminUpdatedAt')).toContainText('Checked');
   await expect(page.locator('#adminUpdatedAt')).toContainText('Oct');
-  await expect(page.locator('#adminFootballStatus')).toHaveText('Not checked');
+  await expect(page.locator('#adminFootballStatus')).toHaveText('No recent import');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1)).toBe(true);
+});
+
+test('админка: свежий импорт и русский поиск клубов без вызова поставщика',async({page})=>{
+  await installSupabaseMock(page);const calls=[];
+  await page.route('**/api/admin*',route=>{
+    calls.push(route.request().postDataJSON()?.action||'overview');
+    return route.fulfill({contentType:'application/json',body:JSON.stringify({counts:{},footballApiConfigured:true,
+      recentMatches:[{id:451,home_team_name:'Tottenham Hotspur FC',away_team_name:'Manchester City FC',league_name:'Premier League',match_date:'2026-10-23T18:00:00Z',status:'scheduled'}],
+      freshness:{latestImport:{at:new Date().toISOString(),league:'PL'}},activity:{items:[]}})});
+  });
+  await page.goto('/admin?__e2e=1');
+  await expect(page.locator('#adminFootballStatus')).toHaveText('Импорт получен');
+  await page.getByRole('navigation',{name:'Разделы админ-панели'}).getByRole('button',{name:'Матчи',exact:true}).click();
+  await page.locator('#adminMatchSearch').fill('Тоттенхэм');
+  await expect(page.locator('#adminMatchesList .admin-match-row')).toHaveCount(1);
+  await expect(page.locator('#adminMatchesList')).toContainText('Ман Сити');
+  await page.locator('#adminMatchSearch').fill('Манчестер Сити');
+  await expect(page.locator('#adminMatchesList .admin-match-row')).toHaveCount(1);
+  await page.locator('#adminMatchSearch').fill('Tottenham');
+  await expect(page.locator('#adminMatchesList .admin-match-row')).toHaveCount(1);
+  expect(calls).not.toContain('test_connection');
+});
+
+test('админка: повторные записи лиги не скрывают отсутствующий турнир',async({page})=>{
+  await installSupabaseMock(page);
+  const automation=Array.from({length:6},()=>({league:'PL',item:{at:new Date().toISOString(),failed:false}}));
+  await page.route('**/api/admin*',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({counts:{},recentMatches:[],freshness:{automation},activity:{items:[]}})}));
+  await page.goto('/admin?__e2e=1');
+  await expect(page.locator('.admin-sync-state')).toHaveAttribute('data-state','pending');
+  await expect(page.locator('.admin-sync-leagues [data-state="pending"]')).toHaveCount(5);
 });
