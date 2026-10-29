@@ -160,7 +160,7 @@ async function loadProfile(uid){
     const ownerActions=isMe?`<button class="btn btn-g btn-sm" data-fbz-click="profile.edit-profile">${ico('edit',13)} Редактировать</button>`:friendBtn;
 
     w.innerHTML=`
-    <div class="phero">
+    <div class="phero${isMe?' is-own-profile':''}">
       ${avatarHtml}
       <h1 class="phero-name">${esc(u.display_name||u.username||'Болельщик')}</h1><p class="phero-hand">@${esc(u.username||'user')}</p>
       ${u.bio?`<div class="phero-bio">${esc(u.bio)}</div>`:''}
@@ -171,7 +171,7 @@ async function loadProfile(uid){
         <span class="pbadge pb-j">С ${j.getDate()} ${ms2[j.getMonth()]} ${j.getFullYear()}</span>
       </div>
       <div class="pstats">
-        <div class="pst"><div class="pst-v">${cnt}</div><div class="pst-l">${summary&&summary.scope==='public'?'Публичных оценок':'Оценок'}</div></div>
+        <button class="pst pst-link" type="button" data-fbz-click="profile.open-diary" aria-label="Перейти к истории оценок"><span class="pst-v">${cnt}</span><span class="pst-l">${summary&&summary.scope==='public'?'Публичных оценок':'Оценок'}</span></button>
         <div class="pst"><div class="pst-v rating-ink" data-tone="${FBZDomain.ratingTone(Number(avg))}">${avg}</div><div class="pst-l">Средняя</div></div>
         <div class="pst"><div class="pst-v">${tl}</div><div class="pst-l">Лайков</div></div>
         ${isMe?`<button class="pst pst-link" type="button" data-fbz-click="shell.go-friends" aria-label="Открыть друзей: ${friendCount}"><span class="pst-v">${friendCount}</span><span class="pst-l">Друзей</span></button>`:`<div class="pst"><div class="pst-v">${friendCount}</div><div class="pst-l">Друзей</div></div>`}
@@ -264,6 +264,7 @@ async function mutateProfileFriendship(fid,accept){
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "profile.open-diary":()=>{const title=document.getElementById('diaryTitle');if(!title)return;title.tabIndex=-1;title.focus({preventScroll:true});title.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});},
   "profile.relationship-menu":(event,element,[uid,name,accepted])=>{element.focus({preventScroll:true});FBZProfile.relationshipMenu(uid,name,accepted);},
   "profile.actions-close":()=>FBZOverlay.close('profileActionsOv'),
   "profile.remove-friend":(event,element,[uid])=>FBZProfile.removeFriend(uid),

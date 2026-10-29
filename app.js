@@ -218,6 +218,10 @@ function renderNav(){
   const nr=document.getElementById('navRight');
   const hb=document.getElementById('heroBtns');
   document.body.classList.toggle('signed-in',Boolean(CU));
+  const editorialTitle=document.getElementById('homeEditorialTitle');
+  const editorialLead=document.getElementById('homeEditorialLead');
+  if(editorialTitle)editorialTitle.innerHTML=CU?'Матчи, которые стоит обсудить':'Футбол, который<br>остаётся с тобой.';
+  if(editorialLead)editorialLead.textContent=CU?'Выберите матч, поделитесь оценкой или вернитесь к своему дневнику.':'Оценивай матчи, замечай игроков. Сохраняй моменты, о которых хочется спорить.';
   if(CU){
     const n=CU.username||CU.email?.split('@')[0]||'U';
     const safeName=esc(n);
@@ -414,7 +418,7 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261010-polish',script:'js/profile.js?v=20261009-discovery2',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261028-personal',script:'js/profile.js?v=20261028-personal',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});

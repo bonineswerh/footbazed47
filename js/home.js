@@ -136,7 +136,7 @@
     const lead=document.getElementById('homeDashboardLead');
     const title=document.getElementById('homeDashboardTitle');
     if(title)title.textContent=`С возвращением, ${preferredName(user)}`;
-    if(lead)lead.textContent='Ваши оценки, ближайшие матчи и сообщество — без лишних шагов.';
+    if(lead)lead.textContent='Недавние матчи и любимые клубы.';
     renderOverview(user);
     renderFavorites(user);
     const version=requestVersion;

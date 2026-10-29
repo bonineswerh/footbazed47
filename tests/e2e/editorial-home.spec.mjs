@@ -26,7 +26,7 @@ for(const theme of ['dark','light'])for(const accent of ['emerald','ice','gold',
     await page.addInitScript(value=>localStorage.setItem('fbz_appearance',JSON.stringify(value)),{theme,accent});
     await page.setViewportSize({width:320,height:844});
     await page.goto('/en?__e2e=1');
-    await expect(page.locator('#homeEditorialTitle')).toContainText('Football that');
+    await expect(page.locator('#homeEditorialTitle')).toHaveText('Matches worth talking about');
     await expect(page.locator('#homeMatchSpotlight .mc-score-num')).toHaveText('2:1');
     await page.evaluate(()=>document.fonts.ready);
     const geometry=await page.locator('.home-spotlight-score').evaluate(el=>{
