@@ -221,7 +221,7 @@ function renderNav(){
   const editorialTitle=document.getElementById('homeEditorialTitle');
   const editorialLead=document.getElementById('homeEditorialLead');
   if(editorialTitle)editorialTitle.innerHTML=CU?'Матчи, которые стоит обсудить':'Футбол, который<br>остаётся с тобой.';
-  if(editorialLead)editorialLead.textContent=CU?'Выберите матч, поделитесь оценкой или вернитесь к своему дневнику.':'Оценивай матчи, замечай игроков. Сохраняй моменты, о которых хочется спорить.';
+  if(editorialLead)editorialLead.textContent=CU?'Оценивайте матчи и ведите свой дневник.':'Оценивай матчи, замечай игроков. Сохраняй моменты, о которых хочется спорить.';
   if(CU){
     const n=CU.username||CU.email?.split('@')[0]||'U';
     const safeName=esc(n);
