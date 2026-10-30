@@ -95,7 +95,7 @@ function ensureFeedModule(){
   return ensureFeatureModule({key:'feed',styleId:'feedStyles',style:'css/feed.css?v=20261010-polish',script:'js/feed.js?v=20261009-controls',ready:()=>window.FBZFeed});
 }
 function ensureSearchModule(){
-  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=20261007-search',script:'js/search.js?v=20261007-details',ready:()=>window.FBZSearch});
+  return ensureFeatureModule({key:'search',styleId:'searchStyles',style:'css/search.css?v=20261007-search',script:'js/search.js?v=20261030-journey',ready:()=>window.FBZSearch});
 }
 let reportOpenVersion=0;
 function reportContent(type,id){
@@ -129,13 +129,13 @@ window.addEventListener('fbz:community-visibility-change',()=>{
   go('home');loadNotifications();
 });
 
-function openGlobalSearch(){
+function openGlobalSearch(category='all'){
   window.FBZAccount?.close();
   const route=routeVersion,user=CU?.id;
   ensureSearchModule().then(search=>{
     if(routeVersion!==route||CU?.id!==user)return;
     search.init();
-    search.open();
+    search.open(category);
   }).catch(()=>{});
 }
 
@@ -322,7 +322,10 @@ function syncRoute(p,d){
   else if(p==='competition'&&d?.id)path=`/competition/${encodeURIComponent(d.id)}`;
   else if(p==='leaderboard')path='/discover';
   else if(['matches','feed','friends','admin'].includes(p))path=`/${p}`;
-  const next=window.FBZLocale?.path(`${path}${window.location.search}`)||`${path}${window.location.search}`;
+  const params=new URLSearchParams(window.location.search);
+  if(p==='matches'&&d?.favoritesOnly===true){params.set('m_favorites','1');params.delete('m_day');}
+  const query=params.size?'?'+params.toString():'';
+  const next=window.FBZLocale?.path(`${path}${query}`)||`${path}${query}`;
   const current=`${window.location.pathname}${window.location.search}${window.location.hash}`;
   if(next!==current)history.pushState({fbzIndex:(Number(history.state?.fbzIndex)||0)+1},'',next);
 }
@@ -418,7 +421,7 @@ async function addFriend(fid){
   }catch(error){if(CU?.id===user)toast('Не удалось отправить заявку','err');return false;}
 }
 function ensureProfileModule(){
-  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261028-personal',script:'js/profile.js?v=20261028-personal',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
+  return Promise.all([ensureFeatureModule({key:'profile',styleId:'profileStyles',style:'css/profile.css?v=20261028-personal',script:'js/profile.js?v=20261030-journey',ready:()=>window.FBZProfile}),ensureExploreModule()]).then(([profile])=>profile);
 }
 async function ensureExploreModule(){
   await ensureFeatureModule({key:'explore-model',script:'js/explore-model.js?v=2',ready:()=>window.FBZExploreModel});
