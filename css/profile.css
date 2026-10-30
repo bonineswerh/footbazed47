@@ -76,7 +76,7 @@
 .profile-tournament,.rh-row{border-radius:10px;transition:background var(--motion-fast) var(--ease)}
 @media(hover:hover){.profile-tournament:hover,.rh-row:hover{background:var(--bg3)}}
 @media(max-width:620px){.phero,.pcard,.profile-diary{border-radius:16px}.phero .pst{padding:12px}.phero-badges{gap:6px}}
-.phero{grid-template-columns:88px minmax(0,1fr)}
+.phero{grid-template-columns:88px minmax(0,1fr);padding:24px;column-gap:20px}
 .phero-name{font-family:var(--font-ui);font-weight:650;letter-spacing:-.035em}
 .phero-acts{grid-column:1/-1;grid-row:6;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);max-width:none;align-items:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--b1)}
 .profile-relationship{display:flex;align-items:center;gap:8px;min-width:0}.profile-relationship>.btn{min-height:44px;border-radius:var(--radius-control)}.profile-relationship>.btn:not(.profile-more){flex:1;min-width:0;white-space:normal;line-height:1.4}.profile-relationship>.profile-more{flex:0 0 44px}
@@ -99,3 +99,9 @@
 @media(max-width:620px){.phero .pst{padding:14px 12px}.phero .pst:nth-child(2n){border-inline-end:0}.phero .pst:nth-child(n+3){border-top:1px solid var(--b1)}}
 @media(max-width:900px){.phero{grid-template-columns:72px minmax(0,1fr)}}
 @media(max-width:620px){.phero{grid-template-columns:56px minmax(0,1fr)}.phero-acts{grid-template-columns:minmax(0,1fr) 44px;gap:12px}.profile-relationship{grid-column:1;grid-row:1}.phero-acts>.profile-link{grid-column:2;grid-row:1}.phero-acts>.profile-compare{grid-column:1/-1;grid-row:2;width:100%;min-width:0}.profile-relationship>.btn{white-space:normal;line-height:1.4}.phero .pstats{grid-row:7}}
+@media(min-width:901px){
+  .phero.is-own-profile{grid-template-columns:88px minmax(0,1fr) auto}
+  .is-own-profile .phero-acts{grid-column:3;grid-row:1/4;display:flex;gap:10px;margin:0;padding:0;border:0;align-items:start}
+  .phero.is-own-profile .pstats{grid-row:6}
+}
+@media(max-width:620px){.phero{padding:20px 16px;column-gap:16px}.phero-acts{margin-top:18px;padding-top:16px}.phero .pstats{margin-top:16px}}

@@ -17,6 +17,11 @@
 .home-editorial .hero h1{font-size:clamp(2.25rem,3.7vw,3.25rem);font-weight:700;letter-spacing:-.045em;line-height:1.1;margin:0;padding:0}
 .home-editorial .hero p{max-width:40ch;margin:18px 0 24px;font-size:1rem;line-height:1.6}
 .home-editorial .hero-btns{margin:0;padding:0;gap:10px;flex-wrap:wrap}
+.signed-in .home-editorial{padding-block:28px;gap:28px}
+.signed-in .home-editorial .hero h1{font-size:clamp(1.75rem,3vw,2.5rem);line-height:1.15;letter-spacing:-.035em}
+.signed-in .home-editorial .hero p{margin:14px 0 20px}
+.signed-in .home-spotlight-main{padding:22px 24px}
+.signed-in .home-spotlight .home-spotlight-score{min-height:130px;margin:16px 0}
 #page-home .home-dashboard{max-width:1260px;padding:24px 32px 32px}
 .home-dashboard-head{margin-bottom:24px;padding-bottom:0;border:0}
 .home-dashboard-head h2{margin-top:4px;font-size:clamp(1.375rem,2vw,1.75rem);font-weight:650;line-height:1.25;letter-spacing:-.035em;overflow-wrap:anywhere}
