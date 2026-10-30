@@ -246,7 +246,7 @@ async function mutateProfileFriendship(fid,accept){
     if(!CU||uid===CU.id||CP!=='profile'||button.disabled)return;
     const user=CU.id,route=routeVersion,profile=profileVersion;button.disabled=true;
     try{
-      const comparison=await ensureFeatureModule({key:'comparison',styleId:'comparisonStyles',style:'css/comparison.css?v=1',script:'js/comparison.js?v=20261005',ready:()=>root.FBZComparison});
+      const comparison=await ensureFeatureModule({key:'comparison',styleId:'comparisonStyles',style:'css/comparison.css?v=1',script:'js/comparison.js?v=20261030-journey',ready:()=>root.FBZComparison});
       if(CU?.id===user&&route===routeVersion&&profile===profileVersion&&CP==='profile'){button.disabled=false;button.focus({preventScroll:true});await comparison.open(uid);}
     }catch(error){if(CU?.id===user&&route===routeVersion)toast('Не удалось открыть сравнение. Попробуйте ещё раз.','err');}
     finally{if(button.isConnected)button.disabled=false;}

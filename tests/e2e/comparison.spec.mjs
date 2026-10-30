@@ -2,6 +2,45 @@ import {expect,test} from '@playwright/test';
 import {installSupabaseMock} from './mock-supabase.mjs';
 const target='cd291181-2db6-42cb-9f3d-ef84ab3a9660';
 const common=Array.from({length:18},(_,i)=>({match_id:101,competition_id:i<9?7:8,home_team_name:'Real Madrid CF',away_team_name:'Manchester City FC',home_club_id:24,away_club_id:31,league_name:i<9?'Champions League':'La Liga',match_date:`2026-09-${String(20-i).padStart(2,'0')}T19:00:00Z`,home_score:2,away_score:1,my_score:9,their_score:i<3?9:i<6?8:5,gap:i<3?0:i<6?1:4}));
+test('failed comparison continuation retains its page and retries the same offset',async({page})=>{
+  await prepare(page);
+  await page.evaluate(()=>{const rpc=window.__FOOTBAZED_TEST_CLIENT__.rpc;let failed=false;window.comparisonOffsets=[];window.__FOOTBAZED_TEST_CLIENT__.rpc=(name,args)=>{if(name==='get_profile_comparison_page'){window.comparisonOffsets.push(args.p_offset);if(args.p_offset===12&&!failed){failed=true;return Promise.resolve({data:null,error:{message:'offline'}});}}return rpc(name,args);};});
+  await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();
+  await expect(page.locator('.comparison-match')).toHaveCount(12);
+  await page.locator('#comparisonOverlay').getByRole('button',{name:'Далее →',exact:true}).click();
+  await expect(page.locator('#comparisonContent .collection-error')).toBeVisible();
+  await expect(page.locator('.comparison-match')).toHaveCount(12);
+  await expect(page.locator('#comparisonContent .collection-pagination')).toContainText('1–12 из 18');
+  await page.getByRole('button',{name:'Повторить',exact:true}).click();
+  await expect(page.locator('.comparison-match')).toHaveCount(6);
+  await expect(page.locator('#comparisonContent .collection-pagination')).toContainText('13–18 из 18');
+  expect(await page.evaluate(()=>window.comparisonOffsets)).toEqual([0,12,12]);
+});
+
+test('comparison removes retained results when the profile becomes unavailable',async({page})=>{
+  await prepare(page);
+  await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();
+  await expect(page.locator('.comparison-match')).toHaveCount(12);
+  await page.evaluate(()=>{const rpc=window.__FOOTBAZED_TEST_CLIENT__.rpc;window.__FOOTBAZED_TEST_CLIENT__.rpc=(name,args)=>name==='get_profile_comparison_page'?Promise.resolve({data:null,error:null}):rpc(name,args);});
+  await page.locator('#comparisonOverlay').getByRole('button',{name:'Далее →',exact:true}).click();
+  await expect(page.locator('#comparisonContent')).toContainText('Сравнение недоступно');
+  await expect(page.locator('.comparison-match')).toHaveCount(0);
+  await expect(page.locator('.comparison-summary')).toHaveCount(0);
+});
+
+test('empty comparison offers match search and an empty tournament can be cleared',async({page})=>{
+  await prepare(page,{comparisonItems:common.filter(x=>x.competition_id===7)});
+  await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();
+  await page.locator('#comparisonFilters').getByLabel('Турнир',{exact:true}).selectOption('8');
+  await page.locator('#comparisonContent').getByRole('button',{name:'Все общие турниры',exact:true}).click();
+  await expect(page.locator('.comparison-match')).toHaveCount(9);
+  await page.keyboard.press('Escape');
+  await prepare(page,{comparisonItems:[]});
+  await page.getByRole('button',{name:'Сравнить оценки',exact:true}).click();
+  await page.getByRole('button',{name:'Найти просмотренный матч',exact:true}).click();
+  await expect(page.locator('#comparisonOverlay')).toHaveAttribute('aria-hidden','true');
+  await expect(page.locator('.search-categories').getByRole('button',{name:'Матчи',exact:true})).toHaveAttribute('aria-pressed','true');
+});
 async function prepare(page,overrides={}){await installSupabaseMock(page,{comparisonItems:common,...overrides});await page.goto(`/profile/${target}?__e2e=1`);await expect(page.getByRole('button',{name:'Сравнить оценки',exact:true})).toBeVisible();}
 test('сравнение загружается по нажатию, имеет реальные метрики, страницы и фильтры',async({page})=>{
   await prepare(page);
