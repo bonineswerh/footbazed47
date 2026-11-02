@@ -37,26 +37,37 @@
     const metrics=[['Общих матчей',total],['Точно совпали',Number(sum.exact_matches)||0],['Близкие мнения',total?Number(sum.similar_percent)+'%':'—'],['Средняя разница',total?Number(sum.average_gap).toFixed(1):'—']];
     const summary='<div class="comparison-summary">'+metrics.map(([label,value])=>'<div><strong>'+value+'</strong><span>'+label+'</span></div>').join('')+'</div>';
     const sample=total?'<p class="comparison-sample">Близкие оценки в '+similar+' из '+total+' общих матчей.'+(total<5?' Пока мало общих оценок — результат может заметно меняться.':'')+' Средняя разница измеряется в баллах из 10.</p>':'';
-    const page=items.length?'<ol class="comparison-matches" aria-label="Общие оценки матчей">'+items.map(row).join('')+'</ol>':'<div class="empty-state"><strong>'+(s.filters.competition_id?'Нет общих оценок этого турнира':'Общих оценок пока нет')+'</strong><p>Сравнение появится, когда вы оба публично оцените один завершённый матч.</p></div>';
+    const page=items.length?'<ol class="comparison-matches" aria-label="Общие оценки матчей">'+items.map(row).join('')+'</ol>':'<div class="empty-state"><strong>'+(s.filters.competition_id?'Нет общих оценок этого турнира':'Общих оценок пока нет')+'</strong><p>Сравнение появится, когда вы оба публично оцените один завершённый матч.</p><button class="btn btn-g" type="button" data-fbz-click="'+(s.filters.competition_id?'comparison.clear-filter':'comparison.find-match')+'">'+(s.filters.competition_id?'Все общие турниры':'Найти просмотренный матч')+'</button></div>';
     const pagination='<div class="collection-pagination"><span role="status">'+(items.length?(s.offset+1)+'–'+(s.offset+items.length)+' из '+total:'Нет записей')+'</span><div><button class="btn btn-g btn-sm" type="button" data-fbz-click="comparison.previous" '+(s.offset===0?'disabled':'')+'>Назад</button><button class="btn btn-g btn-sm" type="button" data-fbz-click="comparison.next" '+(!data.has_more?'disabled':'')+'>Далее →</button></div></div>';
     return summary+sample+page+pagination+interests(data);
   }
   async function load(){
     const s=state;if(!s||!current(s))return;
     const version=++s.version;s.loading=true;
+    const query={filters:{...s.filters},offset:s.offset};
+    const retained=s.confirmed&&JSON.stringify(s.confirmed.filters)===JSON.stringify(query.filters)?s.confirmed:null;
     const content=document.getElementById('comparisonContent');content.setAttribute('aria-busy','true');
-    content.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка сравнения</span></div>';
+    content.querySelector('.collection-error')?.remove();
+    if(retained)content.querySelectorAll('.collection-pagination button').forEach(button=>button.disabled=true);
+    else {s.confirmed=null;content.innerHTML='<div class="loading" role="status"><div class="spin"></div><span class="sr-only">Загрузка сравнения</span></div>';}
     try{
-      const data=await root.FBZData.getProfileComparisonPage(s.uid,{filters:s.filters,offset:s.offset,limit:12});
+      const data=await root.FBZData.getProfileComparisonPage(s.uid,{filters:query.filters,offset:query.offset,limit:12});
       if(!current(s)||version!==s.version)return;
-      if(!data){content.innerHTML='<div class="empty-state"><strong>Сравнение недоступно</strong><p>Профиль закрыт или больше недоступен.</p></div>';return;}
+      if(!data){s.confirmed=null;s.hasMore=false;content.innerHTML='<div class="empty-state"><strong>Сравнение недоступно</strong><p>Профиль закрыт или больше недоступен.</p></div>';return;}
       const select=document.getElementById('comparisonFilters').elements.competition_id;
       const selected=s.filters.competition_id;
       select.innerHTML='<option value="">Все общие турниры</option>'+(data.competitions||[]).map(c=>'<option value="'+Number(c.id)+'">'+esc(FBZNames.competition(c.name))+'</option>').join('');
       select.value=selected;
       document.getElementById('comparisonWith').textContent='Вы и @'+(data.profile?.username||'болельщик');
+      const restoreFocus=retained&&(content.contains(document.activeElement)||document.activeElement===document.body);
+      s.confirmed={...query,data};s.failed=false;
       s.hasMore=Boolean(data.has_more);s.nextOffset=Number(data.next_offset);content.innerHTML=render(data,s);
-    }catch(error){if(current(s)&&version===s.version){content.innerHTML='<div class="collection-error" role="status"><span>Не удалось загрузить сравнение</span><button class="btn btn-g btn-sm" type="button" data-fbz-click="comparison.retry">Повторить</button></div>';}}
+      if(restoreFocus){const status=content.querySelector('.collection-pagination [role="status"]');status.tabIndex=-1;status.focus({preventScroll:true});}
+    }catch(error){if(current(s)&&version===s.version){
+      s.failed=true;
+      const errorMarkup='<div class="collection-error" role="status"><span>Не удалось загрузить сравнение</span><button class="btn btn-g btn-sm" type="button" data-fbz-click="comparison.retry">Повторить</button></div>';
+      if(retained)content.insertAdjacentHTML('afterbegin',errorMarkup);else content.innerHTML=errorMarkup;
+    }}
     finally{if(current(s)&&version===s.version){s.loading=false;content.setAttribute('aria-busy','false');}}
   }
   function open(uid){
@@ -66,11 +77,13 @@
     root.FBZOverlay.open(overlayId,'.comparison-close');return load();
   }
   function close(restore=true){root.FBZOverlay.close(overlayId,restore);state=null;}
-  function page(direction){if(!state||state.loading)return;if(direction>0&&state.hasMore)state.offset=state.nextOffset;else if(direction<0&&state.offset>0)state.offset=Math.max(0,state.offset-12);else return;load();document.querySelector('.comparison-body')?.scrollTo({top:0,behavior:'instant'});}
+  function page(direction){if(!state||state.loading||state.failed)return;if(direction>0&&state.hasMore)state.offset=state.nextOffset;else if(direction<0&&state.offset>0)state.offset=Math.max(0,state.offset-12);else return;load();}
   root.FBZComparison=Object.freeze({open,close});
   root.FBZActions.register({
     'comparison.close':()=>close(),'comparison.retry':()=>load(),
     'comparison.previous':()=>page(-1),'comparison.next':()=>page(1),
+    'comparison.clear-filter':()=>{if(!state)return;state.filters.competition_id='';state.offset=0;document.getElementById('comparisonCompetition').value='';load();},
+    'comparison.find-match':()=>{close(false);openGlobalSearch('match');},
     'comparison.match':(event,element,[id])=>{close(false);go('md',{mid:id});},
     'comparison.club':(event,element,[id])=>{close(false);go('club',{id});},
     'comparison.player':(event,element,[id])=>{close(false);go('player',{id});}

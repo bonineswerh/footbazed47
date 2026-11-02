@@ -51,6 +51,10 @@
 .home-public-stats{display:flex;width:100%;max-width:1260px;margin:0 auto 32px;padding:0 32px;justify-content:flex-start}
 #homeF{grid-template-columns:repeat(2,minmax(0,1fr))}
 .home-overview{border-radius:10px}.home-overview-item{min-height:118px}.home-overview-item strong{font-size:42px}
+.home-overview .home-first-step strong{font-family:var(--font-ui,'Onest Variable',sans-serif);font-size:1.125rem;font-weight:650;line-height:1.35;margin:12px 0 8px}
+.home-first-step{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start}
+.home-first-step small{line-height:1.5}
+@media(max-width:620px){.home-overview.is-first-steps{grid-template-columns:1fr}.home-first-step{border-right:0;border-bottom:1px solid var(--b1);padding:18px;min-height:0}.home-first-step:last-child{border-bottom:0}}
 
 /* Calendar cards use the same score hierarchy at a smaller scale. */
 .mcard{isolation:isolate;border-radius:var(--radius-card);background:var(--bg2);transition:border-color var(--motion-normal) var(--ease),transform var(--motion-normal) var(--ease),box-shadow var(--motion-normal) var(--ease)}

@@ -53,10 +53,10 @@
     input?.removeAttribute('aria-activedescendant');input?.setAttribute('aria-expanded','false');
   }
 
-  function open(){
+  function open(initialCategory='all'){
     window.FBZAccount?.close();
     cancelRequest();
-    category='all';
+    category=Object.hasOwn(categories,initialCategory)?initialCategory:'all';
     const input=document.getElementById('globalSearchInput');
     input.value='';
     syncInput();announce('');

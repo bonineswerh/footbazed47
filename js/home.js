@@ -29,6 +29,14 @@
     const target=document.getElementById('homeOverview');
     if(!target)return;
     const ratings=Number(user?.ratings_count)||0;
+    target.classList.toggle('is-first-steps',ratings===0);
+    if(!ratings){
+      const hasClubs=Boolean(user?.favorite_clubs?.length);
+      target.innerHTML=`<button class="home-overview-item home-first-step" type="button" data-fbz-click="home.find-match"><span>${root.ico('star',17)} Дневник матчей</span><strong>Оценить первый матч</strong><small>Впечатление от игры по шкале 1–10. Текст и игроки — по желанию.</small></button>
+        <button class="home-overview-item home-first-step" type="button" data-fbz-click="${hasClubs?'home.favorite-matches':'home.find-club'}"><span>${root.ico('football',17)} Клубы</span><strong>${hasClubs?'Избранное':'Выбрать любимый клуб'}</strong><small>${hasClubs?'Календарь встреч выбранных клубов.':'Звёздочка на странице клуба добавит его в ваш календарь.'}</small></button>
+        <button class="home-overview-item home-first-step" type="button" data-fbz-click="shell.go-feed"><span>${root.ico('users',17)} Лента</span><strong>Посмотреть оценки</strong><small>Читайте впечатления болельщиков. Сравнить оценки можно в их профиле.</small></button>`;
+      return;
+    }
     const average=Number(user?.avg_rating);
     const streak=root.activeProfileStreak(user);
     const streakDays=new Intl.PluralRules('ru-RU').select(streak);
@@ -49,10 +57,10 @@
     if(!target)return;
     const clubs=Array.isArray(user?.favorite_clubs)?user.favorite_clubs.slice(0,6):[];
     if(clubs.length){
-      target.innerHTML=`<div class="home-team-list">${clubs.map(club=>`<button type="button" ${FBZActions.attrs("home.go-club",[Number(club.id)])}>${root.FBZMedia.visual({entity:club,kind:'club',className:'home-club-mark'})}<span>${root.esc(FBZNames.club(club))}</span></button>`).join('')}</div><p>Откройте клуб, чтобы посмотреть его состав и календарь.</p><button class="text-action" type="button" data-fbz-click="shell.open-global-search">Добавить клуб →</button>`;
+      target.innerHTML=`<div class="home-team-list">${clubs.map(club=>`<button type="button" ${FBZActions.attrs("home.go-club",[Number(club.id)])}>${root.FBZMedia.visual({entity:club,kind:'club',className:'home-club-mark'})}<span>${root.esc(FBZNames.club(club))}</span></button>`).join('')}</div><button class="btn btn-g btn-sm" type="button" data-fbz-click="home.favorite-matches">Избранное</button><button class="text-action" type="button" data-fbz-click="home.find-club">Добавить клуб →</button>`;
       return;
     }
-    target.innerHTML=`<div class="home-club-empty">${root.ico('football',21)}<strong>Клубы пока не выбраны</strong><p>Добавьте любимые клубы в избранное, чтобы быстро открывать их составы и матчи.</p><button class="btn btn-g btn-sm" type="button" data-fbz-click="shell.open-global-search">Найти клуб</button></div>`;
+    target.innerHTML=`<div class="home-club-empty">${root.ico('football',21)}<strong>Клубы пока не выбраны</strong><p>Добавьте любимые клубы в избранное, чтобы быстро открывать их составы и матчи.</p><button class="btn btn-g btn-sm" type="button" data-fbz-click="home.find-club">Найти клуб</button></div>`;
   }
 
   function spotlight(items,error=false){
@@ -135,8 +143,9 @@
     dashboard.removeAttribute('aria-hidden');
     const lead=document.getElementById('homeDashboardLead');
     const title=document.getElementById('homeDashboardTitle');
-    if(title)title.textContent=`С возвращением, ${preferredName(user)}`;
-    if(lead)lead.textContent='Недавние матчи и любимые клубы.';
+    const first=!(Number(user.ratings_count)>0);
+    if(title)title.textContent=first?'Ваш первый матч в FOOTBAZED':`С возвращением, ${preferredName(user)}`;
+    if(lead)lead.textContent=first?'Оцените игру, которую смотрели. Она останется в вашей истории.':'Недавние матчи и любимые клубы.';
     renderOverview(user);
     renderFavorites(user);
     const version=requestVersion;
@@ -147,11 +156,26 @@
     root.refreshHomeDashboard?.();
   }
 
-  root.FBZHome=Object.freeze({reload,sync,spotlight,leagues,toggleRibbon});
+  function favoriteMatches(){
+    if(!CU){openAuth();return;}
+    MF='all';ML='all';
+    const input=document.getElementById('msearch');if(input)input.value='';
+    document.querySelectorAll('#mf .btn').forEach(button=>{
+      const selected=button.dataset.fbzClick==='shell.set-mf-all';
+      button.className=selected?'btn btn-l btn-sm':'btn btn-g btn-sm';
+      button.setAttribute('aria-pressed',String(selected));
+    });
+    go('matches',{favoritesOnly:true});
+  }
+
+  root.FBZHome=Object.freeze({reload,sync,spotlight,leagues,toggleRibbon,favoriteMatches});
 })(window);
 
 // Explicit action bindings; parameters are JSON data, never executable code.
 FBZActions.register({
+  "home.find-match":()=>openGlobalSearch('match'),
+  "home.find-club":()=>openGlobalSearch('club'),
+  "home.favorite-matches":()=>FBZHome.favoriteMatches(),
   "home.toggle-ribbon":(event,button)=>FBZHome.toggleRibbon(event,button),
   "home.go-club":(event,element,[id])=>go('club',{id:id}),
   "home.go-md":(event,element,[id])=>FBZActions.follow(event,element,()=>go('md',{mid:id})),
